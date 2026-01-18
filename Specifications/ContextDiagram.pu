@@ -1,0 +1,51 @@
+@startuml
+
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+' left to right direction
+
+' モジュール定義（黒枠）
+rectangle "RaceScheduleCenter\n[Chronos]" as Chronos
+rectangle "RaceContextCenter\n[Chronicle]" as Chronicle
+rectangle "RacePredictionEngine\n[Oracle]" as Oracle
+rectangle "HTMLFactory\n[Forge]" as Forge
+rectangle "PredictionDelivery\n[Herald]" as Herald
+rectangle "DatasetHub\n[Atlas]" as Atlas
+rectangle "DataHarvester\n[Reaper]" as Reaper
+
+' 外部サービス（黄色枠）
+rectangle "Netkeiba" as Netkeiba #FFE599
+rectangle "Gmail" as Gmail #FFE599
+rectangle "X" as XPlatform #FFE599
+
+
+' 接続関係
+
+Chronos --> Chronicle : date,\n place_id
+Chronicle --> Chronos : race_id,\n race_time
+
+Chronos --> Oracle : race_id
+Chronos --> Herald : race_id
+
+' Forge --> Chronicle : date,\n place_id
+' Chronicle --> Forge : race_id
+
+Oracle --> Atlas : race_id
+Atlas --> Oracle : HorseDatasets（DataFrame）
+
+Herald --> Atlas : race_id
+Atlas --> Herald : PredictionResult
+
+Herald --> Gmail : text_data
+Herald --> XPlatform : text_data
+
+
+Forge --> Atlas : race_id,\n horse_id
+Atlas --> Forge : RaceResultsDatasets,\n RaceInfoDatasets,\n HorseDatasets\n
+
+Atlas --> Reaper : horse_id,\n race_id
+Reaper --> Netkeiba : horse_id,\n race_id
+Netkeiba --> Reaper : RaceResultsDatasets,\n RaceInfoDatasets,\n HorseDatasets
+Reaper --> Atlas : RaceResultsDatasets,\n RaceInfoDatasets,\n HorseDatasets
+
+@enduml
