@@ -1,0 +1,27 @@
+@startuml
+actor User
+participant "get_race_results()" as API
+participant "load_race_results_from_csv()" as CSV
+participant "scrape_race_results()" as Scraper
+participant "save_race_results_to_csv()" as Saver
+participant "FileSystem" as FS
+
+User -> API: get_race_results()
+API -> FS: check exists("race_results.csv")
+FS --> API: exists? (yes/no)
+
+alt CSV exists
+    API -> CSV: load_race_results_from_csv()
+    CSV --> API: race_results_data
+    API --> User: race_results_data
+else CSV not exists
+    API -> Scraper: scrape_race_results()
+    Scraper --> API: scraped_data
+
+    API -> Saver: save_race_results_to_csv(scraped_data)
+    Saver --> API: saved
+
+    API --> User: scraped_data
+end
+
+@enduml

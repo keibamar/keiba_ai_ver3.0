@@ -1,0 +1,22 @@
+@startuml
+title RaceScheduleCenter Context Diagram
+left to right direction
+' skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+rectangle "RaceScheduleCenter\n(Chronos)" as Chronos
+rectangle "RaceContextCenter\n(Chronicle)" as Chronicle
+rectangle "RacePredictionEngine\n(Oracle)" as Oracle
+rectangle "HTMLFactory\n(Forge)" as Forge
+rectangle "PredictionDelivery\n(Herald)" as Herald
+
+' --- Chronos → Chronicle ---
+Chronos ..> Chronicle : date_str
+Chronicle --> Chronos : race_id, time_list
+
+' --- Chronos → 各モジュール（起動トリガー） ---
+Chronos --> Oracle : race_id
+Chronos --> Forge : race_id, time_list
+Chronos --> Herald : race_id, time_list
+
+@enduml

@@ -1,0 +1,23 @@
+@startuml
+title RaceContextCenter Context Diagram
+left to right direction
+' skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+rectangle "RaceScheduleCenter\n(Chronos)" as Chronos
+rectangle "HTMLFactory\n(Forge)" as Forge
+rectangle "RaceContextCenter\n(Chronicle)" as Chronicle
+rectangle "DataHarvester\n(Reaper)" as Reaper
+
+Chronos ..> Chronicle : date_str
+Chronicle --> Chronos : race_id, time_list
+
+Forge ..> Chronicle : date_str
+Chronicle --> Forge : race_id, time_list
+
+' Oracle ..> Chronicle : date_str
+' Chronicle --> Oracle : race_id
+
+Chronicle --> Reaper : race_id
+Reaper --> Chronicle : DataFrame
+@enduml

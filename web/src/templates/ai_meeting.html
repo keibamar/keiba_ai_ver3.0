@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ track | capitalize }} {{ times }}回 開催成績</h1>
+
+<h2>開催日一覧</h2>
+<ul>
+{% for d in days %}
+    <li>{{ d.date.strftime("%Y-%m-%d") }}（{{ d.day }}日目）</li>
+{% endfor %}
+</ul>
+
+<p><a href="../../annual/{{year}}.html">← {{year}}年 年間成績へ戻る</a></p>
+<p><a href="../../index.html">← AI成績メインへ戻る</a></p>
+{% endblock %}

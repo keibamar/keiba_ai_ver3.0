@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ track_name | capitalize }}競馬場 {{ surface }} {{ distance }}m</h1>
+
+<p>このコースのAI成績や傾向をここに表示します。</p>
+
+<ul>
+    <li>的中率: {{ ai_hit_rate if ai_hit_rate else "データ準備中" }}</li>
+    <li>回収率: {{ ai_return_rate if ai_return_rate else "データ準備中" }}</li>
+</ul>
+
+<a href="index.html">← 競馬場トップへ戻る</a>
+
+{% endblock %}

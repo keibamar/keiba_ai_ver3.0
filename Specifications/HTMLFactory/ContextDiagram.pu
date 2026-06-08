@@ -1,0 +1,22 @@
+@startuml
+title HTMLFactory Context Diagram
+left to right direction
+' skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+rectangle "RaceScheduleCenter\n(Chronos)" as Chronos
+rectangle "HTMLFactory\n(Forge)" as Forge
+rectangle "RaceContextCenter\n(Chronicle)" as Chronicle
+rectangle "DatasetHub\n(Atlas)" as Atlas
+
+Chronos --> Forge : race_id
+
+Forge ..> Chronicle : date_str
+Chronicle --> Forge : race_id
+
+Forge ..> Atlas : race_id, horse_id\n
+Atlas --> Forge : DataFrame
+
+
+
+@enduml

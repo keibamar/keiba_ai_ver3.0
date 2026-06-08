@@ -1,0 +1,18 @@
+@startuml
+title RacePredictionEngine Context Diagram
+left to right direction
+' skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+rectangle "RaceScheduleCenter\n(Chronos)" as Chronos
+rectangle "RacePredictionEngine\n(Oracle)" as Oracle
+rectangle "DatasetHub\n(Atlas)" as Atlas
+
+Chronos --> Oracle : race_id\n(予想対象)
+
+Oracle ..> Atlas : race_id, horse_id
+Oracle --> Atlas : race_prediction
+Atlas --> Oracle : DataFrame
+
+
+@enduml

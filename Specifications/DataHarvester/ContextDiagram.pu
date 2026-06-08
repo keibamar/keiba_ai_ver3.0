@@ -1,0 +1,20 @@
+@startuml
+title DataHarvester Context Diagram
+' skinparam linetype ortho
+skinparam defaultTextAlignment center
+left to right direction
+
+rectangle "RaceContextCenter\n(Chronicle)" as Chronicle
+rectangle "DatasetHub\n(Atlas)" as Atlas
+rectangle "DataHarvester\n(Reaper)" as Reaper
+rectangle "Netkeiba" as Netkeiba #FFE599
+
+Chronicle ..> Reaper : race_id
+Reaper ..> Netkeiba : HTTPリクエスト(race_id,horse_id)
+Netkeiba --> Reaper : HTML
+Reaper --> Chronicle : DataFrame
+
+Atlas ..> Reaper : horse_id,\nrace_id
+Reaper --> Atlas : DataFrame
+
+@enduml

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>競馬場別成績</h1>
+
+<ul>
+{% for t in tracks %}
+    <li><a href="{{ t }}/index.html">{{ t | capitalize }}</a></li>
+{% endfor %}
+</ul>
+
+<p><a href="../index.html">← AIメインへ戻る</a></p>
+
+{% endblock %}

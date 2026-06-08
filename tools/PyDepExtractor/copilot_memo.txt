@@ -1,0 +1,296 @@
+
+
+指定したフォルダ内のPythonコードから必要なライブラリを抽出し、requirements.txtに出力するスクリプト
+以下は、指定したフォルダ内のPythonコードから必要なライブラリを抽出し、requirements.txtに出力するPythonスクリプトです。
+
+python
+import os
+import ast
+
+def extract_imports(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        node = ast.parse(file.read(), filename=file_path)
+    imports = set()
+    for n in ast.walk(node):
+        if isinstance(n, ast.Import):
+            for alias in n.names:
+                imports.add(alias.name.split('.')[0])
+        elif isinstance(n, ast.ImportFrom):
+            if n.module:
+                imports.add(n.module.split('.')[0])
+    return imports
+
+def get_all_imports(directory):
+    imported_modules = set()
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.endswith('.py'):
+                file_path = os.path.join(root, file)
+                imported_modules.update(extract_imports(file_path))
+    return imported_modules
+
+def exclude_standard_libs(modules):
+    import sys
+    if sys.version_info >= (3, 10):
+        from stdlib_list import stdlib_list
+        standard_libs = set(stdlib_list())
+    else:
+        import pkgutil
+        standard_libs = set([module.name for module in pkgutil.iter_modules()])
+    return modules - standard_libs
+
+def main():
+    directory = input("解析したいフォルダのパスを入力してください: ")
+    all_imports = get_all_imports(directory)
+    external_imports = exclude_standard_libs(all_imports)
+    with open('requirements.txt', 'w', encoding='utf-8') as f:
+        for module in sorted(external_imports):
+            f.write(f"{module}\n")
+    print("requirements.txtが生成されました。")
+
+if __name__ == '__main__':
+    main()
+スクリプトの詳細な解説
+インポートの抽出：
+
+extract_imports関数は、各Pythonファイルからインポートされているモジュールを抽出します。
+
+PythonのAST（抽象構文木）モジュールを使用して、importやfrom ... import文を解析しています。
+
+ディレクトリ内の全ファイルの解析：
+
+get_all_imports関数は、指定したディレクトリ内のすべての.pyファイルを再帰的に探索し、インポートされたモジュールを収集します。
+
+標準ライブラリの除外：
+
+exclude_standard_libs関数は、標準ライブラリのモジュールを除外します。
+
+Pythonのバージョンに応じて、標準ライブラリのリストを取得する方法を切り替えています。
+
+requirements.txtへの書き込み：
+
+収集した外部ライブラリをアルファベット順に並べ、requirements.txtに書き込んでいます。
+
+ローカルファイルのインポートを表示しないように修正
+ローカルモジュールのimportを除外するようにスクリプトを修正しました。
+
+python
+import os
+import ast
+
+def extract_imports(file_path, project_root):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        try:
+            node = ast.parse(file.read(), filename=file_path)
+        except SyntaxError:
+            return set()
+    imports = set()
+    for n in ast.walk(node):
+        if isinstance(n, ast.Import):
+            for alias in n.names:
+                module_name = alias.name.split('.')[0]
+                if not is_local_module(module_name, project_root):
+                    imports.add(module_name)
+        elif isinstance(n, ast.ImportFrom):
+            if n.module:
+                module_name = n.module.split('.')[0]
+                if n.level == 0 and not is_local_module(module_name, project_root):
+                    imports.add(module_name)
+    return imports
+
+def is_local_module(module_name, project_root):
+    for root, dirs, files in os.walk(project_root):
+        if f"{module_name}.py" in files or module_name in dirs:
+            return True
+    return False
+
+def get_all_imports(directory):
+    imported_modules = set()
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.endswith('.py'):
+                file_path = os.path.join(root, file)
+                imported_modules.update(extract_imports(file_path, directory))
+    return imported_modules
+
+def exclude_standard_libs(modules):
+    import sys
+    import pkgutil
+    std_libs = set()
+    for module_info in pkgutil.iter_modules():
+        if module_info.module_finder.path == sys.base_prefix:
+            std_libs.add(module_info.name)
+    return modules - std_libs
+
+def main():
+    directory = input("解析したいフォルダのパスを入力してください: ")
+    all_imports = get_all_imports(directory)
+    external_imports = exclude_standard_libs(all_imports)
+    with open('requirements.txt', 'w', encoding='utf-8') as f:
+        for module in sorted(external_imports):
+            f.write(f"{module}\n")
+    print("requirements.txtが生成されました。")
+
+if __name__ == '__main__':
+    main()
+修正点の説明
+ローカルモジュールの判定：
+
+is_local_module関数を追加し、モジュール名がプロジェクト内のファイルまたはフォルダとして存在するかをチェックしています。
+
+ローカルのPythonファイルやパッケージをインポートしている場合、それらを依存関係から除外します。
+
+構文エラーのハンドリング：
+
+extract_imports関数内で、SyntaxErrorをキャッチし、構文エラーがあるファイルでもスクリプトが停止しないようにしました。
+
+相対インポートの除外：
+
+n.level == 0をチェックすることで、相対インポートを除外し、外部ライブラリのみを対象としています。
+
+ライブラリがどのファイルで使われているのかを明確にし、フォルダごとに分類
+各ライブラリが使用されているファイルを明確にし、フォルダごとにインポートしているライブラリを分類してrequirements.txtに出力するようにスクリプトを更新しました。
+
+python
+import os
+import ast
+from collections import defaultdict
+
+def extract_imports(file_path, project_root):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        try:
+            node = ast.parse(file.read(), filename=file_path)
+        except SyntaxError:
+            return set()
+    imports = set()
+    for n in ast.walk(node):
+        if isinstance(n, ast.Import):
+            for alias in n.names:
+                module_name = alias.name.split('.')[0]
+                if not is_local_module(module_name, project_root):
+                    imports.add(module_name)
+        elif isinstance(n, ast.ImportFrom):
+            if n.module:
+                module_name = n.module.split('.')[0]
+                if n.level == 0 and not is_local_module(module_name, project_root):
+                    imports.add(module_name)
+    return imports
+
+def is_local_module(module_name, project_root):
+    for root, dirs, files in os.walk(project_root):
+        if f"{module_name}.py" in files or module_name in dirs:
+            return True
+    return False
+
+def get_imports_by_folder(directory):
+    folder_imports = defaultdict(lambda: defaultdict(set))
+    for root, _, files in os.walk(directory):
+        py_files = [file for file in files if file.endswith('.py')]
+        if py_files:
+            relative_root = os.path.relpath(root, directory)
+            for file in py_files:
+                file_path = os.path.join(root, file)
+                imports = extract_imports(file_path, directory)
+                if imports:
+                    folder_imports[relative_root][file].update(imports)
+    return folder_imports
+
+def exclude_standard_libs(modules):
+    import sys
+    import pkgutil
+    std_libs = set()
+    if hasattr(sys, 'base_prefix'):
+        prefixes = [sys.base_prefix, sys.prefix]
+    else:
+        prefixes = [sys.prefix]
+    for module_info in pkgutil.iter_modules():
+        if any(module_info.module_finder.path.startswith(prefix) for prefix in prefixes):
+            std_libs.add(module_info.name)
+    return modules - std_libs
+
+def main():
+    directory = input("解析したいフォルダのパスを入力してください: ")
+    folder_imports = get_imports_by_folder(directory)
+    with open('requirements.txt', 'w', encoding='utf-8') as f:
+        for folder, files in folder_imports.items():
+            f.write(f"# フォルダ: {folder}\n")
+            for file, imports in files.items():
+                external_imports = exclude_standard_libs(imports)
+                if external_imports:
+                    f.write(f"## ファイル: {file}\n")
+                    for module in sorted(external_imports):
+                        f.write(f"{module}\n")
+            f.write("\n")
+    print("requirements.txtが生成されました。")
+    
+if __name__ == '__main__':
+    main()
+修正点の説明
+ファイルとフォルダごとのインポート収集：
+
+get_imports_by_folder関数を拡張し、フォルダごとに各ファイルで使用されているライブラリを収集しています。
+
+データ構造として、入れ子になったdefaultdictを使用し、{フォルダ: {ファイル名: セット(ライブラリ)}}の形式で保存しています。
+
+requirements.txtの出力形式の変更：
+
+各フォルダとその中のファイルをセクションとしてまとめ、それぞれで使用されている外部ライブラリをリストしています。
+
+出力例：
+
+# フォルダ: src
+## ファイル: main.py
+numpy
+pandas
+
+## ファイル: utils.py
+requests
+仮想環境への対応強化：
+
+exclude_standard_libs関数で、sys.base_prefixとsys.prefixを考慮し、仮想環境と標準ライブラリの区別を明確にしました。
+
+さらなる改善提案
+1. ライブラリのバージョン情報の取得
+目的：各ライブラリのバージョンを取得し、requirements.txtに正確な依存関係を書き込む。
+
+方法：
+
+importlib.metadata（Python 3.8以降）やpkg_resourcesを使用してバージョン情報を取得できます。
+
+例：
+
+python
+import pkg_resources
+
+def get_package_version(package_name):
+    try:
+        version = pkg_resources.get_distribution(package_name).version
+        return version
+    except pkg_resources.DistributionNotFound:
+        return None
+2. コマンドライン引数の導入
+利点：スクリプトの柔軟性と使い勝手を向上させる。
+
+実装：
+
+argparseモジュールを使用して、ディレクトリパスや出力ファイル名をコマンドライン引数として受け取れるようにします。
+
+例：
+
+python
+import argparse
+
+def main():
+    parser = argparse.ArgumentParser(description='Python依存関係解析ツール')
+    parser.add_argument('directory', help='解析したいフォルダのパス')
+    parser.add_argument('-o', '--output', default='requirements.txt', help='出力ファイル名')
+    args = parser.parse_args()
+
+    folder_imports = get_imports_by_folder(args.directory)
+    # 以下、args.outputを使用してファイルに書き込む
+3. 既存のツールとの比較と活用
+pipreqsやpoetryなどのツールは、依存関係の管理を自動化するための機能を提供しています。これらのツールを検討することで、より効率的な開発が可能になります。
+
+このスクリプトを活用して、プロジェクトの依存関係を明確に管理できます。開発環境の再現性やチーム開発での一貫性向上に役立つはずです。
+
+もし、さらなる機能追加やカスタマイズについてアイデアがあれば、ぜひ共有してください。あなたのプロジェクトについてもっと知り、一緒により良いソリューションを見つけていきたいと思っています！

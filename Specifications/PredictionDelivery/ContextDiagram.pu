@@ -1,0 +1,21 @@
+@startuml
+title PredictionDelivery Context Diagram
+left to right direction
+' skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+rectangle "RaceContextCenter\n(Chronicle)" as Chronicle
+rectangle "PredictionDelivery\n(Herald)" as Herald
+rectangle "DatasetHub\n(Atlas)" as Atlas
+rectangle "Gmail" as Gmail #FFE599
+rectangle "X" as XPlatform #FFE599
+
+Chronicle --> Herald : race_id
+
+Herald ..> Atlas : race_id
+Atlas --> Herald : PredictionResult
+
+Herald --> Gmail : PredictionText
+Herald --> XPlatform : PredictionText
+
+@enduml

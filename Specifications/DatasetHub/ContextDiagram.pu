@@ -1,0 +1,26 @@
+@startuml
+title DatasetHub Context Diagram
+left to right direction
+' skinparam linetype ortho
+skinparam defaultTextAlignment center
+
+rectangle "RacePredictionEngine\n(Oracle)" as Oracle
+rectangle "HTMLFactory\n(Forge)" as Forge
+rectangle "PredictionDelivery\n(Herald)" as Herald
+rectangle "DatasetHub\n(Atlas)" as Atlas
+rectangle "DataHarvester\n(Reaper)" as Reaper
+
+
+
+Atlas ..> Reaper : horse_id,\nrace_id
+Reaper --> Atlas : DataFrame
+
+Oracle ..> Atlas : horse_id,\nrace_id
+Atlas --> Oracle : DataFrame
+
+Forge ..> Atlas : horse_id,\nrace_id
+Atlas --> Forge : DataFrame
+
+Herald ..> Atlas : race_id
+Atlas --> Herald : DataFrame
+@enduml
