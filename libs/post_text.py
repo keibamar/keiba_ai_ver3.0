@@ -2,15 +2,19 @@ import os
 import sys
 
 import tweepy
+from dotenv import find_dotenv, load_dotenv
 import warnings
 warnings.simplefilter('ignore')
 
 sys.dont_write_bytecode = True
 
-API_KEY = "Hp0u29yZGFzIWvlKgyUGkABun"
-API_SECRET = "2SzoytDpmzaHDfRXm4Pp4rJXpbYfi28obgGd9K3z43U7Y1GPGv"
-ACCESS_KEY = "1764156736586514432-CDRClN7pEsZcfVFmpDzOIJuMQ62P1K"
-ACCESS_SECRET = "4ICSIwirvOPDxCEafpx365NGisCxiVWsITOj7jCWbwllA"
+load_dotenv(find_dotenv())
+
+# X(Twitter) APIキー（.envのX_API_KEY等で設定）
+API_KEY = os.environ["X_API_KEY"]
+API_SECRET = os.environ["X_API_SECRET"]
+ACCESS_KEY = os.environ["X_ACCESS_TOKEN"]
+ACCESS_SECRET = os.environ["X_ACCESS_TOKEN_SECRET"]
 
 def post_text_error(e):
     """ エラー時動作を記載する 

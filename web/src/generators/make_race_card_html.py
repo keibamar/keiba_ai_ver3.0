@@ -16,8 +16,8 @@ LIBS_PATH = os.path.join(PROJECT_ROOT, "libs")
 if LIBS_PATH not in sys.path:
     sys.path.insert(0, LIBS_PATH)
 
-# src/Datasets を import パスに追加
-DATAS_PATH = os.path.join(PROJECT_ROOT, "src/Datasets")
+# src/legacy_datasets を import パスに追加
+DATAS_PATH = os.path.join(PROJECT_ROOT, "src/legacy_datasets")
 if DATAS_PATH not in sys.path:
     sys.path.insert(0, DATAS_PATH)
 

@@ -1,16 +1,21 @@
+import os
 import smtplib
 import ssl
 from email.mime.text import MIMEText
 
+from dotenv import find_dotenv, load_dotenv
+
 import name_header
 
-#ご自身のgmailアドレス
-account = "keibamar18@gmail.com"
-#アプリパスワード（１６桁）
-password = "zgor pdzu aaun pwzj"
+load_dotenv(find_dotenv())
 
-# 送信先のアドレスを登録します
-send_address = "taired999@gmail.com"
+#ご自身のgmailアドレス（.envのGMAIL_ACCOUNTで設定）
+account = os.environ["GMAIL_ACCOUNT"]
+#アプリパスワード（１６桁）（.envのGMAIL_APP_PASSWORDで設定）
+password = os.environ["GMAIL_APP_PASSWORD"]
+
+# 送信先のアドレスを登録します（.envのGMAIL_SEND_TOで設定）
+send_address = os.environ["GMAIL_SEND_TO"]
 
 # メインの関数
 def send_email(file_path):
