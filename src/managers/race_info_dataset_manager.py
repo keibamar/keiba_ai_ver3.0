@@ -1,0 +1,248 @@
+"""race_info（レース基本情報・集計）データセットのManager層
+
+CSVの読み込み・書き込み・永続化を担う。
+変換ロジック自体は src/datasets/race_info/transform.py に切り出している。
+
+旧 src/legacy_datasets/analysis_race_info.py からの移植。
+race_resultsデータは src/managers/race_result_dataset_manager.py から取得する。
+
+出力先は data/race_info/ 配下のスネークケースのサブディレクトリに配置する
+（旧実装の AveragePops/AverageWeights/AverageFrames、data/horse_id_map.csv に相当）。
+
+旧実装の update_average_pops / update_average_frame_and_horse は、top3用・全期間用の
+保存判定に誤って result_top.empty（1年分・勝ち馬のみの結果）を使っていたが、
+新実装ではそれぞれの結果（result_top3 / total_top / total_top3）の空判定に修正している。
+"""
+
+import os
+from datetime import date
+
+import pandas as pd
+
+from src.config import paths
+from src.config.constants import PLACE_LIST
+from src.config.lists import COURSE_LISTS
+from src.datasets.race_info import model, transform
+from src.managers import race_result_dataset_manager
+from src.utils.file_utils import read_csv_or_empty
+
+HORSE_ID_MAP_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "horse_id_map.csv")
+AVERAGE_POPS_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_pops")
+AVERAGE_WEIGHTS_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_weights")
+AVERAGE_FRAMES_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_frames")
+
+
+def _get_race_results_with_race_id(place_id, year):
+    """race_resultsを取得し、"race_id"列を持つDataFrameにして返す"""
+    df_raw = race_result_dataset_manager.get_race_results_csv(place_id, year)
+    if df_raw.empty:
+        return df_raw
+    return df_raw.reset_index().rename(columns={"index": "race_id"})
+
+
+# --- 勝ち馬の平均馬体重 -----------------------------------------------------
+
+
+def analyze_winner_weights(place_id, year):
+    """勝ち馬の「馬体重」平均を race_type, course_len, ground_state, class ごとに算出する"""
+    df_raw = _get_race_results_with_race_id(place_id, year)
+    if df_raw.empty:
+        return pd.DataFrame()
+    return transform.analyze_winner_weights(df_raw, COURSE_LISTS[place_id - 1])
+
+
+def analyze_winner_weights_multi_years(place_id, start_year=2019, current_year=date.today().year):
+    """各年度（start_year〜current_year）について勝ち馬の平均馬体重を算出し、全期間の平均を返す"""
+    results_by_year = {}
+    for year in range(start_year, current_year + 1):
+        df_year = analyze_winner_weights(place_id, year)
+        if not df_year.empty:
+            df_year["year"] = year
+            results_by_year[year] = df_year
+    return transform.aggregate_winner_weights(results_by_year)
+
+
+# --- 人気 -------------------------------------------------------------------
+
+
+def analyze_average_pops(place_id, year, top3=False):
+    """勝ち馬または3着内馬の平均人気と人気別勝利数を集計する"""
+    df_raw = _get_race_results_with_race_id(place_id, year)
+    if df_raw.empty:
+        return pd.DataFrame()
+    return transform.analyze_average_pops(df_raw, COURSE_LISTS[place_id - 1], top3=top3)
+
+
+def analyze_average_pop_multi_years(place_id, start_year=2019, current_year=date.today().year, top3=False):
+    """各年度（start_year〜current_year）について人気データを集計し、全期間の平均を返す"""
+    results_by_year = {}
+    for year in range(start_year, current_year + 1):
+        df_year = analyze_average_pops(place_id, year, top3=top3)
+        if not df_year.empty:
+            df_year["year"] = year
+            results_by_year[year] = df_year
+    return transform.aggregate_average_pops(results_by_year)
+
+
+# --- 枠番・馬番（勝ち馬） -----------------------------------------------------
+
+
+def analyze_average_frame_and_horse(place_id, year):
+    """勝ち馬の「平均枠番」「平均馬番」「勝利数」および各枠・馬番の勝ち数を集計する"""
+    df_raw = _get_race_results_with_race_id(place_id, year)
+    if df_raw.empty:
+        return pd.DataFrame()
+    return transform.analyze_average_frame_and_horse(df_raw, COURSE_LISTS[place_id - 1])
+
+
+def analyze_frame_and_horse_multi_years(place_id, start_year=2019, current_year=date.today().year):
+    """各年度（start_year〜current_year）について枠・馬番の平均と勝ち数を算出し、全期間の平均・合計を返す"""
+    results_by_year = {}
+    for year in range(start_year, current_year + 1):
+        df_year = analyze_average_frame_and_horse(place_id, year)
+        if not df_year.empty:
+            df_year["year"] = year
+            results_by_year[year] = df_year
+    return transform.aggregate_average_frame_and_horse(results_by_year)
+
+
+# --- 枠番・馬番（3着内） ------------------------------------------------------
+
+
+def analyze_average_frame_and_horse_top3(place_id, year):
+    """3着以内馬の「平均枠番」「平均馬番」「3着内馬数」および各枠・馬番ごとの3着内回数を集計する"""
+    df_raw = _get_race_results_with_race_id(place_id, year)
+    if df_raw.empty:
+        return pd.DataFrame()
+    return transform.analyze_average_frame_and_horse_top3(df_raw, COURSE_LISTS[place_id - 1])
+
+
+def analyze_frame_and_horse_top3_multi_years(place_id, start_year=2019, current_year=date.today().year):
+    """各年度（start_year〜current_year）について3着以内馬の枠・馬番分析を算出し、全期間の平均・合計を返す"""
+    results_by_year = {}
+    for year in range(start_year, current_year + 1):
+        df_year = analyze_average_frame_and_horse_top3(place_id, year)
+        if not df_year.empty:
+            df_year["year"] = year
+            results_by_year[year] = df_year
+    return transform.aggregate_average_frame_and_horse_top3(results_by_year)
+
+
+# --- horse_id_map ------------------------------------------------------------
+
+
+def get_horse_id_list():
+    """data/race_info/horse_id_map.csv から horse_id のリストを作成して返す"""
+    df = read_csv_or_empty(HORSE_ID_MAP_PATH, dtype=str)
+    if df.empty or "horse_id" not in df.columns:
+        return []
+    horse_ids = df["horse_id"].str.strip()
+    return horse_ids.dropna().unique().tolist()
+
+
+def update_horse_name_id_map_from_results(place_id, year):
+    """指定の開催場・年のrace_resultsから、horse_id_map.csv を更新する"""
+    if os.path.isfile(HORSE_ID_MAP_PATH):
+        existing_df = pd.read_csv(HORSE_ID_MAP_PATH, dtype=str)
+    else:
+        existing_df = pd.DataFrame(columns=model.HORSE_ID_MAP_COLUMNS)
+
+    df = race_result_dataset_manager.get_race_results_csv(place_id, year)
+    if df.empty or not {"馬名", "horse_id"}.issubset(df.columns):
+        return
+
+    new_df = df[["馬名", "horse_id"]].dropna()
+
+    merged_df = transform.merge_horse_id_map(existing_df, new_df)
+
+    os.makedirs(paths.RACE_INFO_DATA_PATH, exist_ok=True)
+    merged_df.to_csv(HORSE_ID_MAP_PATH, index=False, encoding="utf-8-sig")
+
+
+def add_horse_name_id_map(horse_id, horse_name):
+    """horse_id_map.csv に1件追加する（horse_id・馬名どちらかが既存と重複する場合はスキップ）"""
+    if not os.path.isfile(HORSE_ID_MAP_PATH):
+        return
+
+    existing_df = pd.read_csv(HORSE_ID_MAP_PATH, dtype=str)
+    updated_df = transform.add_horse_id_map_entry(existing_df, horse_id, horse_name)
+    if updated_df is None:
+        return
+
+    updated_df.to_csv(HORSE_ID_MAP_PATH, index=False, encoding="utf-8-sig")
+
+
+def update_horse_name_id_map(race_card_df):
+    """出馬表DataFrame（馬名・horse_id列を持つ）から horse_id_map.csv を更新する"""
+    if not {"馬名", "horse_id"}.issubset(race_card_df.columns):
+        return
+
+    for _, row in race_card_df.iterrows():
+        horse_name = str(row["馬名"]).strip()
+        horse_id = str(row["horse_id"]).strip()
+
+        if horse_name == "" or horse_id == "" or horse_id.lower() == "nan":
+            continue
+
+        add_horse_name_id_map(horse_id, horse_name)
+
+
+# --- 集計結果の更新 -----------------------------------------------------------
+
+
+def update_average_pops(place_id, year):
+    """指定の開催場・年について、平均人気の集計結果を更新する"""
+    out_dir = os.path.join(AVERAGE_POPS_DATA_PATH, PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+
+    result_top = analyze_average_pops(place_id, year, top3=False)
+    if not result_top.empty:
+        result_top.to_csv(os.path.join(out_dir, f"{year}_average_pops.csv"))
+
+    result_top3 = analyze_average_pops(place_id, year, top3=True)
+    if not result_top3.empty:
+        result_top3.to_csv(os.path.join(out_dir, f"{year}_average_pops_top3.csv"))
+
+    total_top = analyze_average_pop_multi_years(place_id, start_year=2019, current_year=year, top3=False)
+    if not total_top.empty:
+        total_top.to_csv(os.path.join(out_dir, "total_average_pops.csv"))
+
+    total_top3 = analyze_average_pop_multi_years(place_id, start_year=2019, current_year=year, top3=True)
+    if not total_top3.empty:
+        total_top3.to_csv(os.path.join(out_dir, "total_average_pops_top3.csv"))
+
+
+def update_winners_weight(place_id, year):
+    """指定の開催場・年について、勝ち馬の平均馬体重の集計結果を更新する"""
+    out_dir = os.path.join(AVERAGE_WEIGHTS_DATA_PATH, PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+
+    result_winner = analyze_winner_weights(place_id, year)
+    if not result_winner.empty:
+        result_winner.to_csv(os.path.join(out_dir, f"{year}_winner_weight.csv"))
+
+    total_winner = analyze_winner_weights_multi_years(place_id, start_year=2019, current_year=year)
+    if not total_winner.empty:
+        total_winner.to_csv(os.path.join(out_dir, "total_winner_weight.csv"))
+
+
+def update_average_frame_and_horse(place_id, year):
+    """指定の開催場・年について、枠番・馬番の集計結果を更新する"""
+    out_dir = os.path.join(AVERAGE_FRAMES_DATA_PATH, PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+
+    result_top = analyze_average_frame_and_horse(place_id, year)
+    if not result_top.empty:
+        result_top.to_csv(os.path.join(out_dir, f"{year}_average_frames.csv"))
+
+    result_top3 = analyze_average_frame_and_horse_top3(place_id, year)
+    if not result_top3.empty:
+        result_top3.to_csv(os.path.join(out_dir, f"{year}_average_frames_top3.csv"))
+
+    total_top = analyze_frame_and_horse_multi_years(place_id, start_year=2019, current_year=year)
+    if not total_top.empty:
+        total_top.to_csv(os.path.join(out_dir, "total_average_frames.csv"))
+
+    total_top3 = analyze_frame_and_horse_top3_multi_years(place_id, start_year=2019, current_year=year)
+    if not total_top3.empty:
+        total_top3.to_csv(os.path.join(out_dir, "total_average_frames_top3.csv"))
