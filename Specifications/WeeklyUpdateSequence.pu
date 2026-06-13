@@ -1,0 +1,208 @@
+' 週次更新フロー シーケンス図（実装済み: race_result / horse / race_info / race_returns）
+'
+' src/logic/scheduler/race_result_scheduler.py, horse_scheduler.py,
+' race_info_scheduler.py, race_returns_scheduler.py の週次更新関数（weekly_update_*）を、
+' tests/ で新旧実装の出力一致・期待値との一致を確認済みの範囲で図示する。
+
+@startuml
+title 週次更新シーケンス ① race_result（race_result_scheduler.weekly_update_race_results）
+skinparam defaultTextAlignment center
+
+participant "週次バッチ" as Batch
+
+box "RaceScheduleCenter\n[Chronos]" #E6F2FF
+  participant "race_schedule_dataset_manager" as Chronos
+end box
+
+box "DatasetHub\n[Atlas]" #E6FFE6
+  participant "race_result_scheduler" as Scheduler
+  participant "race_result_dataset_manager" as AtlasResult
+end box
+
+box "DataHarvester\n[Reaper]" #FFF2CC
+  participant "netkeiba_scraper" as Reaper
+end box
+
+participant "Netkeiba" as Netkeiba #FFE599
+
+Batch -> Scheduler : weekly_update_race_results(day)
+loop PLACE_LIST の各 place_id
+  Scheduler -> Chronos : get_past_weekly_id(place_id, day)
+  Chronos --> Scheduler : race_id_list
+  Scheduler -> AtlasResult : get_race_results_csv(place_id, day.year)
+  AtlasResult --> Scheduler : old_race_results_df
+  Scheduler -> Reaper : scrape_race_results_dataframe(race_id_list)
+  loop race_id_list の各 race_id
+    Reaper -> Netkeiba : GET race/{race_id}
+    Netkeiba --> Reaper : HTML
+  end
+  Reaper --> Scheduler : new_race_results_df
+  Scheduler -> Scheduler : old/new を結合・重複排除\ncourse_len を数値化
+  Scheduler -> AtlasResult : save_race_results_dataset(place_id, year, df)
+  Scheduler -> AtlasResult : export_race_info_per_race(place_id, year)
+  Scheduler -> AtlasResult : split_race_results_by_year(place_id, year)
+end
+@enduml
+
+
+@startuml
+title 週次更新シーケンス ② horse（horse_scheduler.weekly_update_horse_peds / weekly_update_pedsdata / weekly_update_past_performance）
+skinparam defaultTextAlignment center
+
+participant "週次バッチ" as Batch
+
+box "RaceScheduleCenter\n[Chronos]" #E6F2FF
+  participant "race_schedule_dataset_manager" as Chronos
+end box
+
+box "DatasetHub\n[Atlas]" #E6FFE6
+  participant "horse_scheduler" as Scheduler
+  participant "race_result_dataset_manager" as AtlasResult
+  participant "past_performance_dataset_manager" as AtlasPastPerf
+  participant "horse_peds_dataset_manager" as AtlasPeds
+  participant "peds_results_dataset_manager" as AtlasPedsResults
+end box
+
+box "DataHarvester\n[Reaper]" #FFF2CC
+  participant "netkeiba_scraper" as Reaper
+end box
+
+participant "Netkeiba" as Netkeiba #FFE599
+
+== weekly_update_horse_peds(day) ==
+Batch -> Scheduler : weekly_update_horse_peds(day)
+loop PLACE_LIST の各 place_id
+  Scheduler -> Chronos : get_past_weekly_id(place_id, day)
+  Chronos --> Scheduler : race_id_list
+  Scheduler -> AtlasPastPerf : get_horse_id_list_from_race_id_list(race_id_list)
+  AtlasPastPerf -> AtlasResult : get_race_results_csv(place_id, year)\n（race_idごとに出走馬を取得）
+  AtlasResult --> AtlasPastPerf : race_results_df
+  AtlasPastPerf --> Scheduler : horse_id_list
+  Scheduler -> AtlasPeds : make_horse_peds_datasets_from_horse_id_list(horse_id_list)
+  loop horse_id_list のうち未取得分
+    AtlasPeds -> Reaper : scrape_horse_peds(horse_id)
+    Reaper -> Netkeiba : GET horse/ped/{horse_id}
+    Netkeiba --> Reaper : HTML
+    Reaper --> AtlasPeds : peds_df
+    AtlasPeds -> AtlasPeds : save_horse_peds_dataset(horse_id, peds_df)
+  end
+end
+
+== weekly_update_pedsdata(day) ==
+Batch -> Scheduler : weekly_update_pedsdata(day)
+loop PLACE_LIST の各 place_id
+  Scheduler -> AtlasPedsResults : update_peds_dataset(place_id, day)
+  AtlasPedsResults -> Chronos : get_past_weekly_id(place_id, day)
+  Chronos --> AtlasPedsResults : race_id_list
+  AtlasPedsResults -> AtlasPastPerf : get_horse_id_list_from_race_id_list(race_id_list)
+  AtlasPastPerf --> AtlasPedsResults : horse_id_list
+  AtlasPedsResults -> AtlasPedsResults : horse_peds を集約・保存
+  Scheduler -> AtlasPedsResults : merge_pedsdata_with_race_results(place_id, year)
+  AtlasPedsResults -> AtlasResult : get_race_results_csv(place_id, year)
+  AtlasResult --> AtlasPedsResults : race_results_df
+  AtlasPedsResults -> AtlasPedsResults : 血統情報とレース結果を結合・保存
+  Scheduler -> AtlasPedsResults : aggregate_peds_results(place_id, year)
+  Scheduler -> AtlasPedsResults : aggregate_total_peds_results(place_id, end_year=year)
+end
+
+== weekly_update_past_performance(day) ==
+Batch -> Scheduler : weekly_update_past_performance(day)
+loop PLACE_LIST の各 place_id
+  Scheduler -> Chronos : get_past_weekly_id(place_id, day)
+  Chronos --> Scheduler : race_id_list
+  Scheduler -> AtlasPastPerf : get_horse_id_list_from_race_id_list(race_id_list)
+  AtlasPastPerf --> Scheduler : horse_id_list
+  loop horse_id_list の各 horse_id
+    Scheduler -> AtlasPastPerf : update_past_performance(horse_id)
+    AtlasPastPerf -> AtlasResult : data/race_result 全体を走査して\n出走履歴を取得
+    AtlasResult --> AtlasPastPerf : race_results_df（全年）
+    AtlasPastPerf -> AtlasPastPerf : 既存past_performanceと統合・保存
+  end
+end
+
+note over AtlasPastPerf, Netkeiba
+  旧実装はnetkeibaの馬個別ページをスクレイピングして
+  past_performanceを作成していたが、新実装では
+  data/race_result から再構築するため、この処理で
+  Reaper / Netkeiba への通信は発生しない。
+end note
+@enduml
+
+
+@startuml
+title 週次更新シーケンス ③ race_info（race_info_scheduler.weekly_update_*）
+skinparam defaultTextAlignment center
+
+participant "週次バッチ" as Batch
+
+box "DatasetHub\n[Atlas]" #E6FFE6
+  participant "race_info_scheduler" as Scheduler
+  participant "race_info_dataset_manager" as AtlasInfo
+  participant "race_result_dataset_manager" as AtlasResult
+end box
+
+Batch -> Scheduler : weekly_update_horse_name_id_map(year)\nweekly_update_average_pops(year)\nweekly_update_winners_weight(year)\nweekly_update_average_frame_and_horse(year)\nweekly_update_winner_time(year)\nweekly_update_average_time(year)
+loop PLACE_LIST の各 place_id
+  loop 各集計種別\n（horse_name_id_map / average_pops / winners_weight /\naverage_frame_and_horse / winner_time / average_time）
+    Scheduler -> AtlasInfo : update_xxx(place_id, year)
+    AtlasInfo -> AtlasResult : get_race_results_csv(place_id, year)
+    AtlasResult --> AtlasInfo : race_results_df
+    AtlasInfo -> AtlasInfo : 未集計分のrace_idを集計し\n既存csvに追記・保存
+  end
+end
+
+note over Scheduler, AtlasResult
+  race_info の週次更新は、Chronos（race_schedule）や
+  Reaper（スクレイピング）には依存せず、Atlas内部に保存済みの
+  race_result データを再集計するバッチ処理として完結する。
+  race_returns（配当結果）の週次更新は④を参照。
+end note
+@enduml
+
+
+@startuml
+title 週次更新シーケンス ④ race_returns（race_returns_scheduler.weekly_update_race_returns）
+skinparam defaultTextAlignment center
+
+participant "週次バッチ" as Batch
+
+box "RaceScheduleCenter\n[Chronos]" #E6F2FF
+  participant "race_schedule_dataset_manager" as Chronos
+end box
+
+box "DatasetHub\n[Atlas]" #E6FFE6
+  participant "race_returns_scheduler" as Scheduler
+  participant "race_info_dataset_manager" as AtlasInfo
+end box
+
+box "DataHarvester\n[Reaper]" #FFF2CC
+  participant "netkeiba_scraper" as Reaper
+end box
+
+participant "Netkeiba" as Netkeiba #FFE599
+
+Batch -> Scheduler : weekly_update_race_returns(day)
+loop PLACE_LIST の各 place_id
+  Scheduler -> Chronos : get_past_weekly_id(place_id, day)
+  Chronos --> Scheduler : race_id_list
+  Scheduler -> AtlasInfo : get_race_returns_csv(place_id, day.year)
+  AtlasInfo --> Scheduler : old_race_returns_df
+  Scheduler -> Reaper : scrape_race_returns_dataframe(race_id_list)
+  loop race_id_list の各 race_id
+    Reaper -> Netkeiba : GET race/{race_id}
+    Netkeiba --> Reaper : HTML
+    Reaper -> Reaper : extract_race_return_table\nformat_race_return_dataframe\nformat_type_returns_dataframe（各式別）
+  end
+  Reaper --> Scheduler : new_race_returns_df
+  Scheduler -> Scheduler : old/new を結合
+  Scheduler -> AtlasInfo : save_race_returns_dataset(place_id, year, df)
+  Scheduler -> AtlasInfo : split_race_returns_csv(place_id, year)
+end
+
+note over Reaper
+  旧実装のscrape_race_returns_dataframeは、format_type_returns_dataframeの
+  戻り値（列名"式別","馬番","配当","人気"）に対し.set_index(0)を呼んでおり
+  KeyErrorで処理全体が失敗するバグがあったが、新実装ではこの呼び出しを
+  行わず修正している（Phase 4d）。
+end note
+@enduml

@@ -10,6 +10,9 @@ import re
 import pandas as pd
 from tqdm import tqdm
 
+from src.config.constants import BETTING_TYPE_LIST
+from src.datasets.race_info import model as race_info_model
+from src.datasets.race_info import transform as race_info_transform
 from src.datasets.race_result import model, transform
 from src.logic.scraping import common
 
@@ -161,3 +164,47 @@ def scrape_race_results_dataframe(race_id_list):
         new_df = new_df.reindex(columns=base_columns)
         race_results_df = pd.concat([race_results_df, new_df], axis=0)
     return race_results_df
+
+
+def scrape_race_returns_dataframe(race_id_list):
+    """race_id_listの配当結果(race_returns)のDataFrameを作成
+
+    旧 src/legacy_datasets/race_returns.py の scrape_race_returns_dataframe を移植したもの。
+
+    旧実装は、format_type_returns_dataframeの戻り値（列名 "式別","馬番","配当","人気"）に対して
+    .set_index(0) を呼び出しており、存在しない列"0"を指定するためKeyErrorとなり処理全体が
+    失敗するバグがあった。新実装ではこの呼び出しを行わず、format_type_returns_dataframeの
+    戻り値をそのまま連結する。
+
+    Args:
+        race_id_list (list[str]): race_idのリスト
+
+    Returns:
+        pd.DataFrame: race_id_listのrace_returns（インデックス = race_id、
+            列は src.datasets.race_info.model.RACE_RETURNS_COLUMNS）
+    """
+    return_tables = {}
+    for race_id in tqdm(race_id_list):
+        url = "https://db.netkeiba.com/race/" + str(race_id)
+        tables = common.scrape_df(url)
+        race_return_df = race_info_transform.extract_race_return_table(tables)
+        race_return_df = race_info_transform.format_race_return_dataframe(race_return_df)
+        if race_return_df.empty:
+            continue
+
+        type_dfs = [
+            race_info_transform.format_type_returns_dataframe(race_return_df, bet_type)
+            for bet_type in BETTING_TYPE_LIST
+            if race_info_transform.type_check(race_return_df, bet_type)
+        ]
+        if not type_dfs:
+            continue
+
+        race_returns_df = pd.concat(type_dfs, ignore_index=True)
+        race_returns_df.index = [race_id] * len(race_returns_df)
+        return_tables[race_id] = race_returns_df
+
+    if not return_tables:
+        return pd.DataFrame(columns=race_info_model.RACE_RETURNS_COLUMNS)
+
+    return pd.concat([return_tables[key] for key in return_tables])
