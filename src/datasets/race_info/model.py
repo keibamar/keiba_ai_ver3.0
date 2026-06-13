@@ -37,3 +37,6 @@ WINNER_TIME_COLUMNS = ["race_type", "course_len", "ground_state", "class", "上�
 
 # make_average_time_datasets の出力列（旧 *_avg_time.csv）
 AVG_TIME_COLUMNS = ["race_type", "course_len", "ground_state", "class", "avg_time"]
+
+# format_type_returns_dataframe / split_race_returns_csv の出力列（旧 *_race_returns.csv）
+RACE_RETURNS_COLUMNS = ["式別", "馬番", "配当", "人気"]

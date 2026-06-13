@@ -573,6 +573,181 @@ def make_avg_time_dataset(race_type, course_len, class_name, avg_time_list):
     return pd.concat([course_data, avg_time], axis=1)
 
 
+def type_check(return_df, bet_type):
+    """配当結果のDataFrameに指定の式別(bet_type)の行があるかを判定する"""
+    for betting_type in return_df.index:
+        if str(betting_type) == bet_type:
+            return True
+    return False
+
+
+def extract_race_return_table(tables):
+    """scrape_df(url)が返すテーブル群から配当結果のテーブルを抽出する
+
+    Args:
+        tables (list[pd.DataFrame]): レース結果ページのテーブル一覧
+            （tables[1]=単勝/複勝/枠連/馬連、tables[2]=ワイド/馬単/三連複/三連単）
+
+    Returns:
+        pd.DataFrame: tables[1]とtables[2]を結合した配当結果テーブル
+            （取得に失敗した場合はtablesをそのまま返す）
+    """
+    try:
+        win_place_table = tables[1]
+        exotic_table = tables[2]
+        return pd.concat([win_place_table, exotic_table]).reset_index(drop=True)
+    except Exception:
+        return tables
+
+
+def format_race_return_dataframe(race_return_df):
+    """配当結果のテーブルのフォーマットを整える
+
+    各セルの半角スペースを"br"に置き換え、配当列(2)から"円"と","を取り除いたうえで、
+    式別の列(0)をインデックスにする。
+
+    Args:
+        race_return_df (pd.DataFrame): extract_race_return_tableの戻り値
+
+    Returns:
+        pd.DataFrame: 式別をインデックスにした配当結果テーブル（失敗時は空のDataFrame）
+    """
+    try:
+        for i in range(len(race_return_df.index)):
+            race_return_df.at[i, 1] = race_return_df.at[i, 1].replace(" ", "br")
+            race_return_df.at[i, 2] = race_return_df.at[i, 2].replace(" ", "br")
+            race_return_df.at[i, 3] = race_return_df.at[i, 3].replace(" ", "br")
+            race_return_df.at[i, 2] = race_return_df.at[i, 2].replace("円", "")
+            race_return_df.at[i, 2] = race_return_df.at[i, 2].replace(",", "")
+        return race_return_df.set_index(0)
+    except Exception:
+        return pd.DataFrame()
+
+
+def format_type_returns_dataframe(return_df, bet_type):
+    """配当結果のテーブルから、指定の式別(bet_type)の行を抽出して整形する
+
+    旧実装では三連複・三連単の判定にアラビア数字表記("3連複"/"3連単")を使っていたため、
+    src.config.constants.BETTING_TYPE_LISTの漢数字表記("三連複"/"三連単")と一致せず、
+    これら2式別は常に空の結果になっていた。新実装では漢数字表記に統一して正しく解析する。
+
+    Args:
+        return_df (pd.DataFrame): format_race_return_dataframeの戻り値
+        bet_type (str): 抽出する式別（src.config.constants.BETTING_TYPE_LISTの要素）
+
+    Returns:
+        pd.DataFrame: model.RACE_RETURNS_COLUMNS（式別/馬番/配当/人気）の行（複数件の場合あり）
+    """
+    try:
+        if return_df.index.name is not None or return_df.index[0] in [
+            "単勝", "複勝", "枠連", "馬連", "ワイド", "馬単", "三連複", "三連単"
+        ]:
+            return_df = return_df.reset_index().rename(columns={"index": "式別"})
+
+        cols = list(return_df.columns)
+        if len(cols) >= 4:
+            return_df.columns = ["式別", "col1", "col2", "col3"]
+        else:
+            return_df.columns = ["式別", "col1", "col2", "col3"][:len(cols)]
+
+        def clean_text(text):
+            if pd.isna(text):
+                return ""
+            text = str(text)
+            text = re.sub(r"<br\s*/?>", " ", text)
+            text = text.replace("br", " ")
+            text = text.replace("　", " ")
+            text = re.sub(r"\s+", " ", text)
+            return text.strip()
+
+        return_df = return_df.map(clean_text)
+
+        bet_type = str(bet_type).strip()
+        temp = return_df[return_df["式別"] == bet_type]
+        if temp.empty:
+            print(f"⚠️ 式別 '{bet_type}' が見つかりませんでした")
+            return pd.DataFrame(columns=model.RACE_RETURNS_COLUMNS)
+
+        row = temp.iloc[0, 1:].astype(str).tolist()
+        row = [r for r in row if r]
+
+        results = []
+
+        # === 複勝 ===
+        if bet_type == "複勝":
+            horses = re.findall(r"\d+", row[0])
+            pays = re.findall(r"\d+", row[1])
+            pops = re.findall(r"\d+", row[2]) if len(row) > 2 else []
+            for i in range(len(horses)):
+                results.append([
+                    bet_type,
+                    horses[i],
+                    pays[i] if i < len(pays) else None,
+                    pops[i] if i < len(pops) else None
+                ])
+
+        # === ワイド ===
+        elif bet_type == "ワイド":
+            horses = re.findall(r"\d+", row[0])
+            pays = re.findall(r"\d+", row[1])
+            pops = re.findall(r"\d+", row[2]) if len(row) > 2 else []
+            pairs = [f"{horses[i]}-{horses[i+1]}" for i in range(0, len(horses), 2)]
+            for i in range(len(pairs)):
+                results.append([
+                    bet_type,
+                    pairs[i],
+                    pays[i] if i < len(pays) else None,
+                    pops[i] if i < len(pops) else None
+                ])
+
+        # === 単勝・枠連・馬連・馬単 ===
+        elif bet_type in ["単勝", "枠連", "馬連", "馬単"]:
+            nums = re.findall(r"\d+", row[0])
+            pays = re.findall(r"\d+", row[1])
+            pops = re.findall(r"\d+", row[2]) if len(row) > 2 else []
+            for i in range(len(nums) // 2 if bet_type != "単勝" else len(nums)):
+                if bet_type == "単勝":
+                    results.append([bet_type, nums[i], pays[i], pops[i]])
+                else:
+                    sep = "→" if bet_type == "馬単" else "-"
+                    pair = f"{nums[i*2]}{sep}{nums[i*2+1]}"
+                    results.append([bet_type, pair, pays[i], pops[i]])
+
+        # === 三連複 ===
+        elif bet_type == "三連複":
+            nums = re.findall(r"\d+", row[0])
+            pays = re.findall(r"\d+", row[1])
+            pops = re.findall(r"\d+", row[2]) if len(row) > 2 else []
+            combos = [f"{nums[i]}-{nums[i+1]}-{nums[i+2]}" for i in range(0, len(nums), 3)]
+            for i, combo in enumerate(combos):
+                results.append([
+                    bet_type,
+                    combo,
+                    pays[i] if i < len(pays) else None,
+                    pops[i] if i < len(pops) else None
+                ])
+
+        # === 三連単 ===
+        elif bet_type == "三連単":
+            nums = re.findall(r"\d+", row[0])
+            pays = re.findall(r"\d+", row[1])
+            pops = re.findall(r"\d+", row[2]) if len(row) > 2 else []
+            combos = [f"{nums[i]}→{nums[i+1]}→{nums[i+2]}" for i in range(0, len(nums), 3)]
+            for i, combo in enumerate(combos):
+                results.append([
+                    bet_type,
+                    combo,
+                    pays[i] if i < len(pays) else None,
+                    pops[i] if i < len(pops) else None
+                ])
+
+        return pd.DataFrame(results, columns=model.RACE_RETURNS_COLUMNS)
+
+    except Exception as e:
+        print(f"Error in format_type_returns_dataframe({bet_type}): {repr(e)}")
+        return pd.DataFrame(columns=model.RACE_RETURNS_COLUMNS)
+
+
 def make_average_time_datasets(df_race_results, courses):
     """race_resultsからaverage_timeデータセットを作成する"""
     df_avg_time = pd.DataFrame()

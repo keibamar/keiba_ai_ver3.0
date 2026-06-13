@@ -16,6 +16,10 @@ CSVの読み込み・書き込み・永続化を担う。
 旧実装の winners_time_update(place_id, year) は引数を無視して全開催場・全年度
 （2019〜今年）を処理していたが、新実装の update_winner_time(place_id, year) は
 引数で指定した開催場・年のみを処理する。
+
+旧 src/legacy_datasets/race_returns.py のうち、配当結果のフォーマット・永続化
+（get_race_returns_csv, save_race_returns_dataset, split_race_returns_csv）を移植。
+スクレイピング・更新オーケストレーション（scrape_race_returns_dataframe 以降）は別フェーズで対応する。
 """
 
 import os
@@ -35,6 +39,7 @@ AVERAGE_POPS_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_pops")
 AVERAGE_WEIGHTS_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_weights")
 AVERAGE_FRAMES_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_frames")
 AVERAGE_TIMES_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_times")
+RACE_RETURNS_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "race_returns")
 
 
 def _get_race_results_with_race_id(place_id, year):
@@ -335,3 +340,37 @@ def update_total_average_time(place_id, year=date.today().year):
     os.makedirs(out_dir, exist_ok=True)
     df_avg_time.to_csv(os.path.join(out_dir, "total_avg_time.csv"))
     df_avg_time.to_pickle(os.path.join(out_dir, "total_avg_time.pickle"))
+
+
+# --- 配当結果（race_returns） --------------------------------------------------
+
+
+def get_race_returns_csv(place_id, year):
+    """data/race_info/race_returns/{place}/{year}_race_returns.csv を取得する"""
+    path = os.path.join(RACE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1], f"{year}_race_returns.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
+
+
+def save_race_returns_dataset(place_id, year, race_returns_df):
+    """race_returnsのDataFrameを重複排除のうえcsv/pickleに保存する"""
+    if race_returns_df.empty:
+        return
+
+    race_returns_df = race_returns_df.drop_duplicates(keep="first")
+
+    out_dir = os.path.join(RACE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+    race_returns_df.to_csv(os.path.join(out_dir, f"{year}_race_returns.csv"))
+    race_returns_df.to_pickle(os.path.join(out_dir, f"{year}_race_returns.pickle"))
+
+
+def split_race_returns_csv(place_id, year):
+    """race_returnsのcsvをrace_id（インデックス）ごとに分割して保存する"""
+    df = get_race_returns_csv(place_id, year)
+    if df.empty:
+        return
+
+    out_dir = os.path.join(RACE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1], str(year))
+    os.makedirs(out_dir, exist_ok=True)
+    for race_id, group in df.groupby(df.index):
+        group.to_csv(os.path.join(out_dir, f"{race_id}.csv"))
