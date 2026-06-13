@@ -1,0 +1,200 @@
+' 一括作成・月次更新フロー シーケンス図（実装済み: race_result / race_returns / horse / race_calendar）
+'
+' WeeklyUpdateSequence.pu の①〜④（weekly_update_*）に続き、各スケジューラの
+' make_all_* / monthly_update_* / make_yearly_*_dataset / make_up_to_day_dataset と、
+' race_idの基礎データであるrace_calendarを取得する jra_calendar_scraper の
+' 実装済みフローを図示する。
+
+@startuml
+title 一括作成・月次更新シーケンス ⑤ race_result（race_result_scheduler.make_all_race_results / monthly_update_race_results）
+skinparam defaultTextAlignment center
+
+participant "バッチ実行" as Batch
+
+box "RaceScheduleCenter\n[Chronos]" #E6F2FF
+  participant "race_schedule_dataset_manager" as Chronos
+end box
+
+box "DatasetHub\n[Atlas]" #E6FFE6
+  participant "race_result_scheduler" as Scheduler
+  participant "race_result_dataset_manager" as AtlasResult
+end box
+
+box "DataHarvester\n[Reaper]" #FFF2CC
+  participant "netkeiba_scraper" as Reaper
+end box
+
+participant "Netkeiba" as Netkeiba #FFE599
+
+== make_all_race_results(end_year) ==
+Batch -> Scheduler : make_all_race_results(end_year)
+loop 2019年 〜 end_year の各年y
+  loop PLACE_LIST の各 place_id
+    Scheduler -> Scheduler : make_yearly_race_results_dataset(place_id, y)
+    Scheduler -> Chronos : get_year_id_all(place_id, y)
+    Chronos --> Scheduler : race_id_list
+    Scheduler -> Reaper : scrape_race_results_dataframe(race_id_list)
+    loop race_id_list の各 race_id
+      Reaper -> Netkeiba : GET race/{race_id}
+      Netkeiba --> Reaper : HTML
+    end
+    Reaper --> Scheduler : race_results_df
+    Scheduler -> Scheduler : course_len を数値化
+    Scheduler -> AtlasResult : save_race_results_dataset(place_id, y, race_results_df)
+  end
+end
+
+== monthly_update_race_results(day) ==
+Batch -> Scheduler : monthly_update_race_results(day)
+loop PLACE_LIST の各 place_id
+  Scheduler -> Scheduler : make_up_to_day_dataset(place_id, day)
+  Scheduler -> Chronos : get_past_year_id(place_id, day)
+  Chronos --> Scheduler : race_id_list
+  Scheduler -> Reaper : scrape_race_results_dataframe(race_id_list)
+  loop race_id_list の各 race_id
+    Reaper -> Netkeiba : GET race/{race_id}
+    Netkeiba --> Reaper : HTML
+  end
+  Reaper --> Scheduler : race_results_df
+  Scheduler -> Scheduler : course_len を数値化
+  Scheduler -> AtlasResult : save_race_results_dataset(place_id, day.year, race_results_df)
+end
+
+note over Scheduler, AtlasResult
+  race_returns（race_returns_scheduler.make_all_race_returns /
+  monthly_update_race_returns）も同様の構造。
+  異なる点は scrape_race_results_dataframe → scrape_race_returns_dataframe、
+  save_race_results_dataset → save_race_returns_dataset、course_len変換なし、のみ。
+
+  weekly_update_race_results（WeeklyUpdateSequence.pu ①）との違いは、
+  race_idの取得元が get_past_weekly_id ではなく get_year_id_all（make_all）/
+  get_past_year_id（monthly）であること、old/newの結合・
+  export_race_info_per_race・split_race_results_by_yearを呼ばないこと。
+end note
+@enduml
+
+
+@startuml
+title 一括作成・月次更新シーケンス ⑥ horse（horse_scheduler.make_all_* / monthly_update_*）
+skinparam defaultTextAlignment center
+
+participant "バッチ実行" as Batch
+
+box "RaceScheduleCenter\n[Chronos]" #E6F2FF
+  participant "race_schedule_dataset_manager" as Chronos
+end box
+
+box "DatasetHub\n[Atlas]" #E6FFE6
+  participant "horse_scheduler" as Scheduler
+  participant "race_result_dataset_manager" as AtlasResult
+  participant "past_performance_dataset_manager" as AtlasPastPerf
+  participant "horse_peds_dataset_manager" as AtlasPeds
+  participant "peds_results_dataset_manager" as AtlasPedsResults
+end box
+
+box "DataHarvester\n[Reaper]" #FFF2CC
+  participant "netkeiba_scraper" as Reaper
+end box
+
+participant "Netkeiba" as Netkeiba #FFE599
+
+== make_all_horse_peds(end_year) / monthly_update_horse_peds(day) ==
+Batch -> Scheduler : make_all_horse_peds(end_year)\nまたは monthly_update_horse_peds(day)
+loop make_all: 2019年〜end_yearの各年y / monthly: 単年のみ
+  loop PLACE_LIST の各 place_id
+    Scheduler -> Chronos : get_year_id_all(place_id, y)\n※monthlyはget_past_year_id(place_id, day)
+    Chronos --> Scheduler : race_id_list
+    Scheduler -> AtlasPastPerf : get_horse_id_list_from_race_id_list(race_id_list)
+    AtlasPastPerf -> AtlasResult : get_race_results_csv(place_id, year)
+    AtlasResult --> AtlasPastPerf : race_results_df
+    AtlasPastPerf --> Scheduler : horse_id_list
+    Scheduler -> AtlasPeds : make_horse_peds_datasets_from_horse_id_list(horse_id_list)
+    loop horse_id_list のうち未取得分
+      AtlasPeds -> Reaper : scrape_horse_peds(horse_id)
+      Reaper -> Netkeiba : GET horse/ped/{horse_id}
+      Netkeiba --> Reaper : HTML
+      Reaper --> AtlasPeds : peds_df
+      AtlasPeds -> AtlasPeds : save_horse_peds_dataset(horse_id, peds_df)
+    end
+  end
+end
+
+== make_all_pedsdata(end_year) / monthly_update_pedsdata(day) ==
+Batch -> Scheduler : make_all_pedsdata(end_year)\nまたは monthly_update_pedsdata(day)
+loop make_all: 2019年〜end_yearの各年y / monthly: 単年のみ
+  loop PLACE_LIST の各 place_id
+    Scheduler -> AtlasPedsResults : make_peds_dataset_from_race_results(place_id, y)
+    AtlasPedsResults -> AtlasResult : get_race_results_csv(place_id, y)
+    AtlasResult --> AtlasPedsResults : race_results_df
+    AtlasPedsResults -> AtlasPeds : 馬ごとのhorse_pedsを取得
+    AtlasPedsResults -> AtlasPedsResults : 血統情報を保存
+    Scheduler -> AtlasPedsResults : merge_pedsdata_with_race_results(place_id, y)
+    Scheduler -> AtlasPedsResults : aggregate_peds_results(place_id, y)
+    Scheduler -> AtlasPedsResults : aggregate_total_peds_results(place_id, end_year=y)
+  end
+end
+
+== make_all_past_performance(end_year) / monthly_update_past_performance(day) ==
+Batch -> Scheduler : make_all_past_performance(end_year)\nまたは monthly_update_past_performance(day)
+loop make_all: 2019年〜end_yearの各年y / monthly: 単年のみ
+  loop PLACE_LIST の各 place_id
+    Scheduler -> Chronos : get_year_id_all(place_id, y)\n※monthlyはget_past_year_id(place_id, day)
+    Chronos --> Scheduler : race_id_list
+    Scheduler -> AtlasPastPerf : get_horse_id_list_from_race_id_list(race_id_list)
+    AtlasPastPerf --> Scheduler : horse_id_list
+    loop horse_id_list の各 horse_id
+      Scheduler -> AtlasPastPerf : update_past_performance(horse_id)
+      AtlasPastPerf -> AtlasResult : data/race_result 全体を走査して出走履歴を取得
+      AtlasResult --> AtlasPastPerf : race_results_df（全年）
+      AtlasPastPerf -> AtlasPastPerf : 既存past_performanceと統合・保存
+    end
+  end
+end
+
+note over Scheduler, AtlasPastPerf
+  WeeklyUpdateSequence.pu ②（weekly_update_horse_peds /
+  weekly_update_pedsdata / weekly_update_past_performance）との違いは、
+  race_idの取得元のみ（weekly: get_past_weekly_id →
+  make_all: get_year_id_all、monthly: get_past_year_id）。
+  past_performanceはここでもReaper/Netkeibaを使わず、
+  data/race_resultから再構築する。
+end note
+@enduml
+
+
+@startuml
+title race_calendar 取得フロー（jra_calendar_scraper.get_jra_calendar / save_race_calendar）
+skinparam defaultTextAlignment center
+
+participant "バッチ実行" as Batch
+
+box "RaceScheduleCenter\n[Chronos]" #E6F2FF
+  participant "jra_calendar_scraper" as Reaper
+  participant "race_schedule_dataset_manager" as Chronos
+end box
+
+participant "JRA公式サイト" as JRA #FFE599
+
+Batch -> Reaper : get_jra_calendar(year)
+loop 1〜12月
+  Reaper -> JRA : GET /keiba/common/calendar/json/{year}{month}.json
+  JRA --> Reaper : JSON
+  Reaper -> Reaper : extract_race_entries\n（"4回東京"等の表記からcourse/timesを抽出）
+end
+Reaper -> Reaper : assign_days\n（course, timesごとに開催日目を連番付与）
+Reaper --> Batch : calendar_df
+
+Batch -> Reaper : save_race_calendar(year, calendar_df)
+Reaper -> Reaper : data/race_schedule/{year}_race_calendar.csv に保存
+
+note over Reaper, Chronos
+  Chronos（race_schedule_dataset_manager.get_race_calendar）は、
+  ここで保存された{year}_race_calendar.csvを読み込む。これは
+  ①〜⑥の全フローにおけるrace_id算出の基礎データとなる。
+
+  本スクレイパーは@pytest.mark.networkのテストでJRA公式サイトとの
+  通信・出力形式を検証済みだが、weekly_update_*等の既存スケジューラ
+  からは未呼び出しであり、race_calendarの更新は現状
+  get_jra_calendar/save_race_calendarを手動で呼ぶ運用を想定している。
+end note
+@enduml
