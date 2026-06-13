@@ -14,3 +14,7 @@ RACE_INFO_DATA_PATH = os.path.join(DATA_PATH, "race_info")
 
 # HTML公開ディレクトリ（Git管理対象）
 PUBLIC_HTML_PATH = os.path.join(PROJECT_ROOT, "public_html")
+
+# テキストデータ（レースカレンダー等の補助データ）
+TEXTS_PATH = os.path.join(PROJECT_ROOT, "texts")
+RACE_TIME_ID_LIST_PATH = os.path.join(TEXTS_PATH, "race_calendar", "race_time_id_list")

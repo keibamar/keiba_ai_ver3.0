@@ -111,6 +111,39 @@ def scrape_race_results(race_id):
         return pd.DataFrame()
 
 
+def scrape_horse_peds(horse_id):
+    """horse_idから血統データを取得する
+
+    旧 src/legacy_datasets/horse_peds.py の make_horse_peds_dataset を移植したもの。
+
+    Args:
+        horse_id (str): horse_id
+
+    Returns:
+        pd.Series: 列名 peds_0..peds_61、Series名がhorse_idの血統データ
+            （取得に失敗した場合は空のDataFrame）
+    """
+    url = "https://db.netkeiba.com/horse/ped/" + str(horse_id)
+    try:
+        tables = common.scrape_df(url)
+        if not tables:
+            return pd.DataFrame()
+
+        peds_df = tables[0]
+        # 重複を削除して1列のSeries型データに直す
+        generations = {}
+        for i in reversed(range(5)):
+            generations[i] = peds_df[i]
+            peds_df = peds_df.drop([i], axis=1)
+            peds_df = peds_df.drop_duplicates()
+        ped = pd.concat([generations[i] for i in range(5)]).rename(str(horse_id))
+        # インデックスをpeds_0, ..., peds_61にする
+        return ped.reset_index(drop=True).T.add_prefix("peds_")
+    except Exception as e:
+        common.scraping_error(e)
+        return pd.DataFrame()
+
+
 def scrape_race_results_dataframe(race_id_list):
     """race_id_listのrace_resultsのDataFrameを作成
 

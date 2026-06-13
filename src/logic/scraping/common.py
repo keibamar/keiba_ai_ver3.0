@@ -3,6 +3,7 @@
 各ドメインのスクレイパー（netkeiba_scraper等）から共通利用するHTTP/HTMLチェック関数。
 """
 
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
@@ -64,6 +65,29 @@ def validate_soup(soup, url: str, func_name: str, require_table: bool = False, s
     except Exception as e:
         print(f"{func_name}: validate_soup error {e.__class__.__name__}: {e} for {url}")
         return False
+
+
+def scrape_df(url: str) -> list:
+    """urlからスクレイピングし、ページ内のテーブルをDataFrameのリストで返す。
+
+    URLが存在しない、テーブルが見つからない、エラーが発生した場合は空リストを返す。
+    """
+    if not url_exists(url):
+        print("scrape_df: URL not found, skip", url)
+        return []
+
+    try:
+        soup = fetch_soup(url)
+        if not validate_soup(soup, url, "scrape_df", require_table=True):
+            return []
+
+        tables = [pd.read_html(str(t))[0] for t in soup.select("table:has(tr td)")]
+        if not tables:
+            print("scrape_df: No table found ", url)
+        return tables
+    except Exception as e:
+        scraping_error(e)
+        return []
 
 
 def scraping_error(e):
