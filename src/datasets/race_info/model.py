@@ -31,3 +31,9 @@ AVERAGE_FRAMES_TOP3_COLUMNS = (
 
 # horse_id_map.csv の列
 HORSE_ID_MAP_COLUMNS = ["馬名", "horse_id"]
+
+# analyze_winners / analyze_winners_multi_years の出力列（旧 *_wineer_time.csv）
+WINNER_TIME_COLUMNS = ["race_type", "course_len", "ground_state", "class", "上り", "通過1", "通過2", "通過3", "通過4"]
+
+# make_average_time_datasets の出力列（旧 *_avg_time.csv）
+AVG_TIME_COLUMNS = ["race_type", "course_len", "ground_state", "class", "avg_time"]

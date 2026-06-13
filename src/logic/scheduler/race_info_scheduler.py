@@ -48,3 +48,24 @@ def weekly_update_average_frame_and_horse(year=date.today().year):
     """
     for place_id in range(1, len(PLACE_LIST) + 1):
         race_info_dataset_manager.update_average_frame_and_horse(place_id, year)
+
+
+def weekly_update_winner_time(year=date.today().year):
+    """全開催場について、勝ち馬の上り/通過の集計結果を更新する
+
+    Args:
+        year (int): 年（初期値：今年）
+    """
+    for place_id in range(1, len(PLACE_LIST) + 1):
+        race_info_dataset_manager.update_winner_time(place_id, year)
+
+
+def weekly_update_average_time(year=date.today().year):
+    """全開催場について、平均タイムの集計結果（年間・全期間）を更新する
+
+    Args:
+        year (int): 年（初期値：今年）
+    """
+    for place_id in range(1, len(PLACE_LIST) + 1):
+        race_info_dataset_manager.update_annual_average_time(place_id, year)
+        race_info_dataset_manager.update_total_average_time(place_id, year)

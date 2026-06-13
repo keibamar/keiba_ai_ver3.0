@@ -22,8 +22,11 @@ import pandas as pd
 import pytest
 
 from src.config import paths
+from src.config.lists import COURSE_LISTS
 from src.datasets.race_info import transform
 from src.legacy_datasets import analysis_race_info as old_analysis
+from src.legacy_datasets import analysis_race_time as old_time
+from src.legacy_datasets import average_time as old_avg_time
 from src.managers import race_info_dataset_manager as new_race_info
 
 SAMPLE_PLACE_ID = 2
@@ -136,6 +139,43 @@ def test_analyze_frame_and_horse_top3_multi_years_matches_old(old_data_root):
     assert old_result.equals(new_result)
 
 
+# --- 勝ち馬の上り/通過（analysis_race_time.py） -------------------------------------
+
+
+def test_analyze_winners_matches_old(old_data_root):
+    old_result = old_time.analyze_winners(SAMPLE_PLACE_ID, 2019)
+    new_result = new_race_info.analyze_winners(SAMPLE_PLACE_ID, 2019)
+
+    assert not old_result.empty
+    assert old_result.equals(new_result)
+
+
+def test_analyze_winners_multi_years_matches_old(old_data_root):
+    old_result = old_time.analyze_winners_multi_years(SAMPLE_PLACE_ID, start_year=2019, year=2021)
+    new_result = new_race_info.analyze_winners_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2021)
+
+    assert not old_result.empty
+    assert old_result.equals(new_result)
+
+
+# --- 平均タイム（average_time.py） --------------------------------------------------
+
+
+def test_make_average_time_datasets_matches_old():
+    path = os.path.join(paths.RACE_RESULT_DATA_PATH, SAMPLE_PLACE, "2019_race_results.csv")
+    df_race_results = pd.read_csv(path, dtype=str, index_col=0)
+
+    old_result = old_avg_time.make_average_time_datasets(df_race_results, SAMPLE_PLACE_ID).reset_index(drop=True)
+    new_result = transform.make_average_time_datasets(df_race_results, COURSE_LISTS[SAMPLE_PLACE_ID - 1])
+
+    assert not new_result.empty
+
+    # 旧実装の ground_state 列は ["全","良","稍重","重","不"] とハードコードされており
+    # "不良"であるべき箇所が"不"になっていた（新実装ではmodel.GROUNDSに合わせて"不良"に修正）
+    old_result["ground_state"] = old_result["ground_state"].replace("不", "不良")
+    assert old_result.equals(new_result)
+
+
 # --- horse_id_map / update_* 系（書き込み比較） -------------------------------------
 
 
@@ -153,7 +193,7 @@ def old_and_new_roots(tmp_path, monkeypatch):
         src = os.path.join(paths.RACE_RESULT_DATA_PATH, SAMPLE_PLACE, f"{year}_race_results.csv")
         shutil.copy(src, old_results_dir / f"{year}_race_results.csv")
 
-    for d in ("AveragePops", "AverageWeights", "AverageFrames"):
+    for d in ("AveragePops", "AverageWeights", "AverageFrames", "AverageTimes"):
         (old_root / d / SAMPLE_PLACE).mkdir(parents=True)
 
     new_race_info_dir = new_root / "race_info"
@@ -165,6 +205,7 @@ def old_and_new_roots(tmp_path, monkeypatch):
     monkeypatch.setattr(new_race_info, "AVERAGE_POPS_DATA_PATH", str(new_race_info_dir / "average_pops"))
     monkeypatch.setattr(new_race_info, "AVERAGE_WEIGHTS_DATA_PATH", str(new_race_info_dir / "average_weights"))
     monkeypatch.setattr(new_race_info, "AVERAGE_FRAMES_DATA_PATH", str(new_race_info_dir / "average_frames"))
+    monkeypatch.setattr(new_race_info, "AVERAGE_TIMES_DATA_PATH", str(new_race_info_dir / "average_times"))
 
     return old_root, new_root
 
@@ -302,3 +343,63 @@ def test_update_average_frame_and_horse_matches_old(old_and_new_roots):
         new_csv = new_root / "race_info" / "average_frames" / SAMPLE_PLACE / filename
         assert old_csv.is_file() and new_csv.is_file()
         assert pd.read_csv(old_csv, dtype=str).equals(pd.read_csv(new_csv, dtype=str))
+
+
+# --- update_winner_time / update_average_time（AverageTimes、書き込み比較） -----------
+
+
+def test_update_winner_time_matches_old(old_and_new_roots):
+    old_root, new_root = old_and_new_roots
+
+    out_dir = old_root / "AverageTimes" / SAMPLE_PLACE
+
+    # 旧 winners_time_update(place_id, year) はpalce_id/yearの引数を無視して
+    # 全開催場・全年度（2019〜今年）を処理しようとし、対象データが無い開催場で
+    # analyze_winners_multi_years が dict を返してクラッシュするため、ここでは
+    # 新 update_winner_time(place_id, year) と同等の処理（analyze_winners /
+    # analyze_winners_multi_years を1開催場・1年分のみ実行）を直接呼び出して比較する。
+    result = old_time.analyze_winners(SAMPLE_PLACE_ID, 2019)
+    result.to_csv(out_dir / "2019_winner_time.csv")
+    total_df = old_time.analyze_winners_multi_years(SAMPLE_PLACE_ID, start_year=2019, year=2019)
+    total_df.to_csv(out_dir / "total_winner_time.csv")
+
+    new_race_info.update_winner_time(SAMPLE_PLACE_ID, 2019)
+
+    for filename in ("2019_winner_time.csv", "total_winner_time.csv"):
+        old_csv = out_dir / filename
+        new_csv = new_root / "race_info" / "average_times" / SAMPLE_PLACE / filename
+        assert old_csv.is_file() and new_csv.is_file()
+        assert pd.read_csv(old_csv, dtype=str).equals(pd.read_csv(new_csv, dtype=str))
+
+
+def test_update_annual_average_time_matches_old(old_and_new_roots):
+    old_root, new_root = old_and_new_roots
+
+    old_avg_time.make_annual_average_time_datasets(SAMPLE_PLACE_ID, 2019)
+    new_race_info.update_annual_average_time(SAMPLE_PLACE_ID, 2019)
+
+    old_csv = old_root / "AverageTimes" / SAMPLE_PLACE / "2019_avg_time.csv"
+    new_csv = new_root / "race_info" / "average_times" / SAMPLE_PLACE / "2019_avg_time.csv"
+    assert old_csv.is_file() and new_csv.is_file()
+
+    old_df = pd.read_csv(old_csv, dtype=str)
+    new_df = pd.read_csv(new_csv, dtype=str)
+    # "不"->"不良" ラベル修正（test_make_average_time_datasets_matches_old と同様）
+    old_df["ground_state"] = old_df["ground_state"].replace("不", "不良")
+    assert old_df.equals(new_df)
+
+
+def test_update_total_average_time_matches_old(old_and_new_roots):
+    old_root, new_root = old_and_new_roots
+
+    old_avg_time.total_average_datas(SAMPLE_PLACE_ID, 2021)
+    new_race_info.update_total_average_time(SAMPLE_PLACE_ID, 2021)
+
+    old_csv = old_root / "AverageTimes" / SAMPLE_PLACE / "total_avg_time.csv"
+    new_csv = new_root / "race_info" / "average_times" / SAMPLE_PLACE / "total_avg_time.csv"
+    assert old_csv.is_file() and new_csv.is_file()
+
+    old_df = pd.read_csv(old_csv, dtype=str)
+    new_df = pd.read_csv(new_csv, dtype=str)
+    old_df["ground_state"] = old_df["ground_state"].replace("不", "不良")
+    assert old_df.equals(new_df)

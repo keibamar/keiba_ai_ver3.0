@@ -3,15 +3,19 @@
 CSVの読み込み・書き込み・永続化を担う。
 変換ロジック自体は src/datasets/race_info/transform.py に切り出している。
 
-旧 src/legacy_datasets/analysis_race_info.py からの移植。
-race_resultsデータは src/managers/race_result_dataset_manager.py から取得する。
+旧 src/legacy_datasets/analysis_race_info.py, analysis_race_time.py, average_time.py
+からの移植。race_resultsデータは src/managers/race_result_dataset_manager.py から取得する。
 
 出力先は data/race_info/ 配下のスネークケースのサブディレクトリに配置する
-（旧実装の AveragePops/AverageWeights/AverageFrames、data/horse_id_map.csv に相当）。
+（旧実装の AveragePops/AverageWeights/AverageFrames/AverageTimes、data/horse_id_map.csv に相当）。
 
 旧実装の update_average_pops / update_average_frame_and_horse は、top3用・全期間用の
 保存判定に誤って result_top.empty（1年分・勝ち馬のみの結果）を使っていたが、
 新実装ではそれぞれの結果（result_top3 / total_top / total_top3）の空判定に修正している。
+
+旧実装の winners_time_update(place_id, year) は引数を無視して全開催場・全年度
+（2019〜今年）を処理していたが、新実装の update_winner_time(place_id, year) は
+引数で指定した開催場・年のみを処理する。
 """
 
 import os
@@ -30,6 +34,7 @@ HORSE_ID_MAP_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "horse_id_map.csv")
 AVERAGE_POPS_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_pops")
 AVERAGE_WEIGHTS_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_weights")
 AVERAGE_FRAMES_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_frames")
+AVERAGE_TIMES_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_times")
 
 
 def _get_race_results_with_race_id(place_id, year):
@@ -246,3 +251,87 @@ def update_average_frame_and_horse(place_id, year):
     total_top3 = analyze_frame_and_horse_top3_multi_years(place_id, start_year=2019, current_year=year)
     if not total_top3.empty:
         total_top3.to_csv(os.path.join(out_dir, "total_average_frames_top3.csv"))
+
+
+# --- 勝ち馬の上り/通過 --------------------------------------------------------
+
+
+def analyze_winners(place_id, year):
+    """勝ち馬の「上り」と「通過1〜4」を race_type, course_len, ground_state, class ごとに算出する"""
+    df_raw = _get_race_results_with_race_id(place_id, year)
+    if df_raw.empty:
+        return pd.DataFrame()
+    return transform.analyze_winners(df_raw, COURSE_LISTS[place_id - 1])
+
+
+def analyze_winners_multi_years(place_id, start_year=2019, current_year=date.today().year):
+    """各年度（start_year〜current_year）について勝ち馬の上り/通過を算出し、全期間の平均を返す"""
+    results_by_year = {}
+    for year in range(start_year, current_year + 1):
+        df_year = analyze_winners(place_id, year)
+        if not df_year.empty:
+            df_year["year"] = year
+            results_by_year[year] = df_year
+    return transform.aggregate_winner_times(results_by_year)
+
+
+def update_winner_time(place_id, year):
+    """指定の開催場・年について、勝ち馬の上り/通過の集計結果を更新する"""
+    out_dir = os.path.join(AVERAGE_TIMES_DATA_PATH, PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+
+    result = analyze_winners(place_id, year)
+    if not result.empty:
+        result.to_csv(os.path.join(out_dir, f"{year}_winner_time.csv"))
+
+    total_df = analyze_winners_multi_years(place_id, start_year=2019, current_year=year)
+    if not total_df.empty:
+        total_df.to_csv(os.path.join(out_dir, "total_winner_time.csv"))
+
+
+# --- 平均タイム ---------------------------------------------------------------
+
+
+def get_annual_average_time_csv(place_id, year):
+    """data/race_info/average_times/{place}/{year}_avg_time.csv を取得する"""
+    path = os.path.join(AVERAGE_TIMES_DATA_PATH, PLACE_LIST[place_id - 1], f"{year}_avg_time.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
+
+
+def get_total_average_time_csv(place_id):
+    """data/race_info/average_times/{place}/total_avg_time.csv を取得する"""
+    path = os.path.join(AVERAGE_TIMES_DATA_PATH, PLACE_LIST[place_id - 1], "total_avg_time.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
+
+
+def update_annual_average_time(place_id, year):
+    """指定の開催場・年について、平均タイムの集計結果を更新する"""
+    df_race_results = race_result_dataset_manager.get_race_results_csv(place_id, year)
+    if df_race_results.empty:
+        return
+
+    df_avg_time = transform.make_average_time_datasets(df_race_results, COURSE_LISTS[place_id - 1])
+
+    out_dir = os.path.join(AVERAGE_TIMES_DATA_PATH, PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+    df_avg_time.to_csv(os.path.join(out_dir, f"{year}_avg_time.csv"))
+    df_avg_time.to_pickle(os.path.join(out_dir, f"{year}_avg_time.pickle"))
+
+
+def update_total_average_time(place_id, year=date.today().year):
+    """開催場について、2019年〜指定年までのrace_resultsを集計した平均タイムを更新する"""
+    df_race_results_all = pd.DataFrame()
+    for y in range(2019, year + 1):
+        df_race_results_all = pd.concat(
+            [df_race_results_all, race_result_dataset_manager.get_race_results_csv(place_id, y)]
+        )
+
+    if df_race_results_all.empty:
+        return
+
+    df_avg_time = transform.make_average_time_datasets(df_race_results_all, COURSE_LISTS[place_id - 1])
+
+    out_dir = os.path.join(AVERAGE_TIMES_DATA_PATH, PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+    df_avg_time.to_csv(os.path.join(out_dir, "total_avg_time.csv"))
+    df_avg_time.to_pickle(os.path.join(out_dir, "total_avg_time.pickle"))

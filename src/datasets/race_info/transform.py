@@ -1,12 +1,18 @@
 """race_infoデータセットの変換ロジック（純粋関数のみ・I/Oなし）
 
-旧 src/legacy_datasets/analysis_race_info.py の集計ロジックを移植したもの。
+旧 src/legacy_datasets/analysis_race_info.py, analysis_race_time.py, average_time.py
+の集計ロジックを移植したもの。
 race_resultsのDataFrame（"race_id"列を持つ、index_col=0でCSVを読み込んでreset_indexしたもの）
 を入力として、各種集計結果のDataFrameを返す。
 """
 
+import datetime
+import re
+
+import numpy as np
 import pandas as pd
 
+from src.config.constants import GROUND_STATE_LIST
 from src.datasets.race_info import model
 
 
@@ -412,3 +418,175 @@ def add_horse_id_map_entry(existing_df, horse_id, horse_name):
     new_row = pd.DataFrame([[horse_name, horse_id]], columns=model.HORSE_ID_MAP_COLUMNS)
     updated_df = pd.concat([existing_df, new_row], ignore_index=True)
     return updated_df.sort_values(by="horse_id", ascending=True, ignore_index=True)
+
+
+# --- 勝ち馬の上り/通過 --------------------------------------------------------
+
+
+def _parse_passages(pass_str):
+    """通過文字列から整数のリストを返す（例 "1-1-1-1" -> [1,1,1,1]）。空・NaN・不正は空リストを返す"""
+    if not isinstance(pass_str, str) or pass_str.strip() == "":
+        return []
+    nums = re.findall(r"\d+", pass_str)
+    return [int(n) for n in nums] if nums else []
+
+
+def analyze_winners(df_raw, courses):
+    """勝ち馬の「上り」と「通過1〜4」を race_type, course_len, ground_state, class ごとに算出する"""
+    runners_count = df_raw.groupby("race_id").apply(lambda g: g[g["着順"] != "除"].shape[0]).to_dict()
+
+    df = df_raw.copy()
+    df["着順"] = pd.to_numeric(df["着順"], errors="coerce")
+    df["上り"] = pd.to_numeric(df["上り"], errors="coerce")
+    df["course_len"] = pd.to_numeric(df["course_len"], errors="coerce")
+
+    winners = df[df["着順"] == 1].copy()
+    if winners.empty:
+        return pd.DataFrame()
+
+    all_results = []
+    for race_type, course_len in courses:
+        base_data = winners[
+            (winners["race_type"] == race_type) & (winners["course_len"] == float(course_len))
+        ]
+
+        for cls in model.CLASSES:
+            for grd in model.GROUNDS:
+                tmp = base_data.copy()
+                if cls != "all":
+                    tmp = tmp[tmp["class"] == cls]
+                if grd != "全":
+                    tmp = tmp[tmp["ground_state"] == grd]
+
+                avg_last = tmp["上り"].mean() if not tmp.empty else None
+
+                stage_vals = {1: [], 2: [], 3: [], 4: []}
+                for _, winner_row in tmp.iterrows():
+                    race_id = str(winner_row["race_id"])
+                    num_runners = runners_count.get(int(race_id), None)
+                    pass_str = df_raw.loc[df_raw["race_id"] == int(race_id), "通過"]
+                    pass_val = ""
+                    if not pass_str.empty:
+                        for v in pass_str.values:
+                            if isinstance(v, str) and v.strip() != "":
+                                pass_val = v
+                                break
+                    passages = _parse_passages(pass_val)
+                    if not passages or num_runners is None or num_runners == 0:
+                        continue
+                    for idx, pos in enumerate(passages[:4], start=1):
+                        normalized = (pos / num_runners) * 18.0
+                        stage_vals[idx].append(normalized)
+
+                avg_stage = {}
+                for i in range(1, 5):
+                    avg_stage[i] = round(float(np.mean(stage_vals[i])), 2) if stage_vals[i] else None
+
+                all_results.append({
+                    "race_type": race_type,
+                    "course_len": int(course_len),
+                    "ground_state": grd,
+                    "class": cls,
+                    "上り": round(avg_last, 2) if avg_last is not None else None,
+                    "通過1": avg_stage[1],
+                    "通過2": avg_stage[2],
+                    "通過3": avg_stage[3],
+                    "通過4": avg_stage[4],
+                })
+
+    df_result = pd.DataFrame(all_results).round(1)
+    return _sort_and_reindex(df_result, model.WINNER_TIME_COLUMNS)
+
+
+def aggregate_winner_times(results_by_year):
+    """年度別の analyze_winners 結果を結合し、全期間の平均を算出する"""
+    if not results_by_year:
+        return pd.DataFrame()
+
+    combined_df = pd.concat(results_by_year.values(), ignore_index=True)
+
+    numeric_cols = ["上り", "通過1", "通過2", "通過3", "通過4"]
+    group_cols = ["race_type", "course_len", "ground_state", "class"]
+    total_df = (
+        combined_df.groupby(group_cols, dropna=False)[numeric_cols]
+        .mean()
+        .round(1)
+        .reset_index()
+    )
+    return _sort_and_reindex(total_df, model.WINNER_TIME_COLUMNS)
+
+
+# --- 平均タイム ---------------------------------------------------------------
+
+
+def extract_course_race_results(race_type, course_len, race_results_df):
+    """race_resultsデータセットから該当コース・距離の勝ち馬の行を抽出する"""
+    course_race_results = race_results_df[race_results_df["race_type"] == str(race_type)]
+    course_race_results = course_race_results[course_race_results["course_len"] == str(course_len)]
+    return course_race_results[course_race_results["着順"] == "1"]
+
+
+def calc_avg_time(time_data):
+    """走破時計（文字列）のSeriesから平均タイム(ms)を算出する。データが無い場合はNaTを返す"""
+    if len(time_data) == 0:
+        return np.timedelta64("NaT")
+
+    time_format = "%H:%M:%S.%f"
+    for i in range(len(time_data)):
+        time_data[i] = datetime.datetime.strptime(time_data.iloc[i], time_format)
+
+    time_data = time_data.astype("datetime64[ms]").to_numpy()
+    base_time = np.datetime64(0, "ms")
+    avg_time = ((time_data - base_time) % np.timedelta64(1, "D")).mean()
+    return avg_time.astype(int)
+
+
+def get_avg_time_list_from_race_results_df(df_course_race_results):
+    """全馬場状態・各馬場状態（GROUND_STATE_LIST）ごとの平均タイムのリストを作成する"""
+    avg_time_list = []
+
+    all_time = df_course_race_results["タイム"].reset_index(drop=True)
+    avg_time_list.append(calc_avg_time(all_time))
+
+    for ground_state in GROUND_STATE_LIST:
+        df_temp = df_course_race_results[df_course_race_results["ground_state"] == ground_state]
+        time_temp = df_temp["タイム"].reset_index(drop=True)
+        avg_time_list.append(calc_avg_time(time_temp))
+
+    return avg_time_list
+
+
+def make_avg_time_dataset(race_type, course_len, class_name, avg_time_list):
+    """平均タイムのリストから avg_time データセットを作成する
+
+    ground_state列は model.GROUNDS（"全"+GROUND_STATE_LIST）に対応する。
+    旧実装ではこの列が ["全","良","稍重","重","不"] とハードコードされ"不良"であるべき
+    箇所が"不"になっていたが、新実装ではGROUNDSに合わせて"不良"に修正している。
+    """
+    avg_time = pd.DataFrame({"avg_time": avg_time_list})
+    course_data = pd.DataFrame({
+        "race_type": [str(race_type)] * len(model.GROUNDS),
+        "course_len": [str(course_len)] * len(model.GROUNDS),
+        "ground_state": model.GROUNDS,
+        "class": [class_name] * len(model.GROUNDS),
+    })
+    return pd.concat([course_data, avg_time], axis=1)
+
+
+def make_average_time_datasets(df_race_results, courses):
+    """race_resultsからaverage_timeデータセットを作成する"""
+    df_avg_time = pd.DataFrame()
+    for race_type, course_len in courses:
+        df_course = extract_course_race_results(race_type, course_len, df_race_results)
+
+        all_avg_time = get_avg_time_list_from_race_results_df(df_course)
+        df_avg_time = pd.concat([df_avg_time, make_avg_time_dataset(race_type, course_len, "all", all_avg_time)])
+
+        for class_name in model.CLASSES[1:]:
+            df_class = df_course[df_course["class"] == class_name]
+            class_avg_time = get_avg_time_list_from_race_results_df(df_class)
+            df_avg_time = pd.concat(
+                [df_avg_time, make_avg_time_dataset(race_type, course_len, class_name, class_avg_time)]
+            )
+
+    return df_avg_time.reset_index(drop=True)
