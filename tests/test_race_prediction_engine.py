@@ -1,8 +1,6 @@
 """src/logic/prediction/race_prediction_engine.py の出力が旧実装と一致することを
 確認するテスト（オフライン）。
 
-- get_race_time_msec / calc_time_diff: 旧 src/legacy_datasets/average_time.py の
-  対応関数と同一結果を返すことを確認する。
 - get_time_diff: 新 src/managers/race_info_dataset_manager.py と旧
   src/legacy_datasets/average_time.py が、同一のtotal_avg_time.csvを参照した場合に
   同一結果を返すことを確認する（旧実装はname_header.DATA_PATH(ver2.0側)を参照するため、
@@ -11,18 +9,19 @@
   用いて、想定どおりの列数・出力形式となること、および
   src/RacePrediction/day_race_prediction.rank_prediction（新エンジンへのリダイレクト後）
   が新エンジンと同一結果を返すことを確認する。
+
+get_race_time_msec / calc_time_diff の旧実装比較テストは tests/test_average_calculator.py
+に分離している。
 """
 
 import os
 import shutil
 
-import numpy as np
 import pandas as pd
 import pytest
 
 from src.logic.prediction import race_prediction_engine as engine
 from src.RacePrediction import day_race_prediction
-from src.datasets.race_info import transform as race_info_transform
 from src.legacy_datasets import average_time as old_avg_time
 from src.managers import past_performance_dataset_manager, race_info_dataset_manager
 
@@ -31,39 +30,6 @@ SAMPLE_PLACE = "02_hakodate"
 SAMPLE_RACE_ID = 202302010101
 SAMPLE_HORSE_ID = "2020102879"
 SAMPLE_COURSE_INFO = [SAMPLE_PLACE_ID, "芝", "1200", "稍重", "未勝利"]
-
-
-# --- 純粋関数の比較（旧 src/legacy_datasets/average_time.py vs 新 src/datasets/race_info/transform.py） ---
-
-
-@pytest.mark.parametrize("time_str", ["1:11.2", "1:39.8", "2:00.0"])
-def test_get_race_time_msec_matches_old(time_str):
-    old_result = old_avg_time.get_race_time_msec(time_str)
-    new_result = race_info_transform.get_race_time_msec(time_str)
-
-    assert old_result == new_result
-
-
-def test_get_race_time_msec_nan_matches_old():
-    old_result = old_avg_time.get_race_time_msec(np.nan)
-    new_result = race_info_transform.get_race_time_msec(np.nan)
-
-    assert np.isnan(old_result) and np.isnan(new_result)
-
-
-@pytest.mark.parametrize(("base_time", "race_time"), [("70000", 71000.0), (70000.0, 69000.0)])
-def test_calc_time_diff_matches_old(base_time, race_time):
-    old_result = old_avg_time.calc_time_diff(base_time, race_time)
-    new_result = race_info_transform.calc_time_diff(base_time, race_time)
-
-    assert old_result == new_result
-
-
-def test_calc_time_diff_nan_matches_old():
-    old_result = old_avg_time.calc_time_diff(np.nan, 70000.0)
-    new_result = race_info_transform.calc_time_diff(np.nan, 70000.0)
-
-    assert np.isnan(old_result) and np.isnan(new_result)
 
 
 # --- get_time_diff（旧 average_time.get_time_diff vs 新 race_info_dataset_manager.get_time_diff） ---

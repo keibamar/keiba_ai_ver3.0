@@ -31,6 +31,7 @@ from src.config import paths
 from src.config.constants import PLACE_LIST
 from src.config.lists import COURSE_LISTS
 from src.datasets.race_info import model, transform
+from src.logic.calculators import average_calculator
 from src.managers import race_result_dataset_manager
 from src.utils.file_utils import read_csv_or_empty
 
@@ -385,10 +386,10 @@ def get_time_diff(race_time, course_info):
         return [0, 0]
 
     avg_time = df_time[df_time["class"] == "all"].loc[:, ["avg_time"]].reset_index(drop=True).at[0, "avg_time"]
-    time_diff = transform.calc_time_diff(avg_time, race_time)
+    time_diff = average_calculator.calc_time_diff(avg_time, race_time)
 
     avg_time_class = df_time[df_time["class"] == race_class].loc[:, ["avg_time"]].reset_index(drop=True).at[0, "avg_time"]
-    time_diff_class = transform.calc_time_diff(avg_time_class, race_time)
+    time_diff_class = average_calculator.calc_time_diff(avg_time_class, race_time)
 
     return [time_diff, time_diff_class]
 
@@ -399,7 +400,7 @@ def update_annual_average_time(place_id, year):
     if df_race_results.empty:
         return
 
-    df_avg_time = transform.make_average_time_datasets(df_race_results, COURSE_LISTS[place_id - 1])
+    df_avg_time = average_calculator.make_average_time_datasets(df_race_results, COURSE_LISTS[place_id - 1])
 
     out_dir = os.path.join(AVERAGE_TIMES_DATA_PATH, PLACE_LIST[place_id - 1])
     os.makedirs(out_dir, exist_ok=True)
@@ -418,7 +419,7 @@ def update_total_average_time(place_id, year=date.today().year):
     if df_race_results_all.empty:
         return
 
-    df_avg_time = transform.make_average_time_datasets(df_race_results_all, COURSE_LISTS[place_id - 1])
+    df_avg_time = average_calculator.make_average_time_datasets(df_race_results_all, COURSE_LISTS[place_id - 1])
 
     out_dir = os.path.join(AVERAGE_TIMES_DATA_PATH, PLACE_LIST[place_id - 1])
     os.makedirs(out_dir, exist_ok=True)

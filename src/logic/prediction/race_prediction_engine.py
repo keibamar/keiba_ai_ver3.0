@@ -17,8 +17,8 @@ from scipy.stats import rankdata
 
 from src.config import paths
 from src.config.constants import PLACE_LIST
-from src.datasets.race_info import transform as race_info_transform
 from src.datasets.race_result import transform as race_result_transform
+from src.logic.calculators import average_calculator
 from src.managers import (
     horse_peds_dataset_manager,
     past_performance_dataset_manager,
@@ -45,7 +45,7 @@ def get_time_info(race_info):
     if course_info[0] < 0:
         return [0, 0]
 
-    race_time = race_info_transform.get_race_time_msec(race_info["タイム"])
+    race_time = average_calculator.get_race_time_msec(race_info["タイム"])
     return race_info_dataset_manager.get_time_diff(race_time, course_info)
 
 

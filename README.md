@@ -30,10 +30,10 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 | 配当結果レポート（Herald残部） | `src/RacePrediction/calc_returns.py`（`get_win_result`/`get_place_result`/`get_trio_box_result`/`post_race_rerurns`）, `src/RacePrediction/make_text.py`（`write_{win,place,trio}_hit_text`/`make_return_text`） | `src/output/return_report.py` |
 | 日次レース結果保存 | `src/RacePrediction/daily_race_results.py`（`save_each_race_result_csv`/`save_day_race_result_each`/`get_each_race_results`） | `src/logic/scraping/netkeiba_scraper.py`（`scrape_day_race_result`）, `src/managers/race_result_dataset_manager.py`（`save_race_result_for_race_id`）, `src/logic/scheduler/race_result_scheduler.py`（`update_daily_race_results`） |
 | 日次配信オーケストレーション | `src/RacePrediction/post_daily_race.py`（`post_race_pred`/`post_pred_return`/`post_daily_race_pred`） | `src/logic/scheduler/race_day_scheduler.py` |
+| average_calculator（平均タイム計算） | `src/datasets/race_info/transform.py`（`calc_avg_time`/`get_avg_time_list_from_race_results_df`/`make_avg_time_dataset`/`make_average_time_datasets`/`extract_course_race_results`/`get_race_time_msec`/`calc_time_diff`） | `src/logic/calculators/average_calculator.py` |
 
 ### 未対応（今後のフェーズ）
 
-- **average_calculator**: 集計ロジックの一部 → `src/logic/calculators/average_calculator.py`
 - **Oracle オフライン学習パイプライン**: `src/PredictionModels/LightGBM/`の`make_dataset_for_train`,
   `lightGBM_rank_train`, `prediction_rank`, `weekly_update_dataset_for_train`,
   `make_annual_dataset` 等は対象外（旧実装のまま、ver2.0データパスを参照し続ける）
@@ -99,7 +99,10 @@ src/
 │   │   ├── race_result_scheduler.py
 │   │   ├── race_returns_scheduler.py
 │   │   ├── horse_scheduler.py
-│   │   └── race_info_scheduler.py
+│   │   ├── race_info_scheduler.py
+│   │   └── race_day_scheduler.py      # 日次配信オーケストレーション
+│   ├── calculators/
+│   │   └── average_calculator.py      # 平均タイム・タイム差の計算
 │   ├── prediction/
 │   │   └── race_prediction_engine.py  # Oracle: 日次予想（LightGBM推論）
 │   └── html_generator/                # Forge: HTML生成
@@ -363,6 +366,7 @@ pytest
 | `tests/test_race_returns_scheduler.py` | race_returns の週次/月次/一括更新オーケストレーション |
 | `tests/test_race_result_scheduler.py` | race_result の日次結果取得オーケストレーション（update_daily_race_results） |
 | `tests/test_race_day_scheduler.py` | 日次配信オーケストレーション（post_race_pred/post_pred_return のテキストパス組み立て・X投稿連携） |
+| `tests/test_average_calculator.py` | average_calculator（平均タイム算出・タイム差計算）の新旧出力比較 |
 | `tests/test_race_prediction_engine.py` | Oracle（日次予想エンジン）の特徴量生成・LightGBM推論・新旧出力比較 |
 | `tests/test_race_card_dataset_manager.py` | race_card（出馬表+score/rank・per-raceレース情報・race_time_id_list）の保存・取得 |
 | `tests/test_horse_report_generator.py` | Forge: 出走馬詳細レポート（血統・近走・芝ダートサマリ）のHTML生成 |

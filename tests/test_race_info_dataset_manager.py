@@ -22,7 +22,6 @@ import pandas as pd
 import pytest
 
 from src.config import paths
-from src.config.lists import COURSE_LISTS
 from src.datasets.race_info import transform
 from src.legacy_datasets import analysis_race_info as old_analysis
 from src.legacy_datasets import analysis_race_time as old_time
@@ -156,24 +155,6 @@ def test_analyze_winners_multi_years_matches_old(old_data_root):
     new_result = new_race_info.analyze_winners_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2021)
 
     assert not old_result.empty
-    assert old_result.equals(new_result)
-
-
-# --- 平均タイム（average_time.py） --------------------------------------------------
-
-
-def test_make_average_time_datasets_matches_old():
-    path = os.path.join(paths.RACE_RESULT_DATA_PATH, SAMPLE_PLACE, "2019_race_results.csv")
-    df_race_results = pd.read_csv(path, dtype=str, index_col=0)
-
-    old_result = old_avg_time.make_average_time_datasets(df_race_results, SAMPLE_PLACE_ID).reset_index(drop=True)
-    new_result = transform.make_average_time_datasets(df_race_results, COURSE_LISTS[SAMPLE_PLACE_ID - 1])
-
-    assert not new_result.empty
-
-    # 旧実装の ground_state 列は ["全","良","稍重","重","不"] とハードコードされており
-    # "不良"であるべき箇所が"不"になっていた（新実装ではmodel.GROUNDSに合わせて"不良"に修正）
-    old_result["ground_state"] = old_result["ground_state"].replace("不", "不良")
     assert old_result.equals(new_result)
 
 
