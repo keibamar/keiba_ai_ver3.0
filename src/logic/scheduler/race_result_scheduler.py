@@ -20,6 +20,25 @@ from src.logic.scraping import netkeiba_scraper
 from src.managers import race_result_dataset_manager, race_schedule_dataset_manager
 
 
+def update_daily_race_results(race_day=date.today()):
+    """指定日の各レースについて、当日のレース結果を1レースずつ取得・保存する
+
+    race.netkeiba.comの速報ページ（netkeiba_scraper.scrape_day_race_result）を使うため、
+    レース当日に確定した結果を即時取得できる。
+    旧 src/RacePrediction/daily_race_results.py の save_day_race_result_each を移植したもの。
+
+    Args:
+        race_day (date): 日（初期値：今日）
+    """
+    race_id_list = race_schedule_dataset_manager.get_daily_id(race_day=race_day)
+    for race_id in race_id_list:
+        results_df = netkeiba_scraper.scrape_day_race_result(race_id)
+        if results_df.empty:
+            print("not_race_result:", race_id)
+            continue
+        race_result_dataset_manager.save_race_result_for_race_id(race_id, results_df)
+
+
 def update_race_results_dataset(place_id, day=date.today()):
     """開催コースと日にちを指定して、過去1週間分のrace_resultsデータセットを更新する
 

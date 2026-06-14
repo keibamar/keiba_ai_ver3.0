@@ -28,6 +28,7 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 | race_card / HTML生成（Forge） | `src/RacePrediction/race_card.py` / `make_time_id_list.py`（出力先のみ）, `web/src/generators/{race_pages,horse_info,daily_index,make_race_card_html}.py` | `src/managers/{race_card_dataset_manager,html_manager}.py`, `src/logic/html_generator/{race_page_generator,horse_report_generator,daily_index_generator}.py`, `src/utils/format_data.py`, `public_html/` |
 | 予想テキスト生成・配信（Herald） | `src/RacePrediction/make_text.py`（`extract_top5_pred`/`make_race_text`）, `libs/{mail_api,post_text}.py` | `src/output/prediction_publisher.py` |
 | 配当結果レポート（Herald残部） | `src/RacePrediction/calc_returns.py`（`get_win_result`/`get_place_result`/`get_trio_box_result`/`post_race_rerurns`）, `src/RacePrediction/make_text.py`（`write_{win,place,trio}_hit_text`/`make_return_text`） | `src/output/return_report.py` |
+| 日次レース結果保存 | `src/RacePrediction/daily_race_results.py`（`save_each_race_result_csv`/`save_day_race_result_each`/`get_each_race_results`） | `src/logic/scraping/netkeiba_scraper.py`（`scrape_day_race_result`）, `src/managers/race_result_dataset_manager.py`（`save_race_result_for_race_id`）, `src/logic/scheduler/race_result_scheduler.py`（`update_daily_race_results`） |
 
 ### 未対応（今後のフェーズ）
 
@@ -35,9 +36,8 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 - **Oracle オフライン学習パイプライン**: `src/PredictionModels/LightGBM/`の`make_dataset_for_train`,
   `lightGBM_rank_train`, `prediction_rank`, `weekly_update_dataset_for_train`,
   `make_annual_dataset` 等は対象外（旧実装のまま、ver2.0データパスを参照し続ける）
-- **日次配信オーケストレーション**: `src/RacePrediction/daily_race_results.py`（日次のレース結果
-  取得・保存）、`src/RacePrediction/post_daily_race.py`（HTML生成・配信ループ。現状ver2.0側で
-  稼働中）は対象外
+- **日次配信オーケストレーション**: `src/RacePrediction/post_daily_race.py`（HTML生成・配信ループ。
+  現状ver2.0側で稼働中）は対象外
 - **calc_returns.pyの孤立した回収率レポートCSV機能**: `get_quinella_box_result`/
   `get_quinella_wheel_result`/`get_trio_wheel_result`/`calc_day_race_return`/
   `calc_day_race_return_all`/`save_day_race_return_csv`/`save_each_race_return_csv`/
@@ -111,6 +111,10 @@ src/
   表示する「コース別平均人気/馬体重/枠番・馬番/上り・通過」情報。2019〜2026年分を
   バックフィル済み（`race_info_scheduler.weekly_update_{average_pops,winners_weight,
   average_frame_and_horse,winner_time}`で生成・更新）。
+- `data/race_result/{place}/{year}/{race_id}.csv` — 1レース分のレース結果（per-race CSV）。
+  `race_result_dataset_manager.split_race_results_by_year`（年次データの分割）と
+  `save_race_result_for_race_id`（速報ページからの即時保存、`race_result_scheduler.
+  update_daily_race_results`が使用）の両方がこの構成に出力する。
 - `data/race_card/{YYYYMMDD}/{race_id}.csv` — 出馬表+score/rank（旧 `RACE_CARDS_PATH`の
   新しい置き場所、`race_card_dataset_manager.save_race_cards`/`get_race_cards`）。
 - `texts/race_prediction/{YYYYMMDD}/{race_id}.txt` — 予想テキスト（メール本文・Xポスト用、
@@ -339,13 +343,14 @@ pytest
 |---|---|
 | `tests/test_race_schedule_dataset_manager.py` | race_schedule（Chronicle）の race_id 算出系、新旧出力比較 |
 | `tests/test_jra_calendar_scraper.py`（network） | JRA開催カレンダー取得 |
-| `tests/test_netkeiba_scraper.py`（一部 network） | race_results / race_returns スクレイピング、新旧比較・既知の確定結果との比較 |
-| `tests/test_race_result_dataset_manager.py` | race_result の保存・分割・集計、新旧出力比較 |
+| `tests/test_netkeiba_scraper.py`（一部 network） | race_results / race_returns / 当日速報結果（scrape_day_race_result）スクレイピング、新旧比較・既知の確定結果との比較 |
+| `tests/test_race_result_dataset_manager.py` | race_result の保存・分割・集計・per-race結果保存（save_race_result_for_race_id）、新旧出力比較 |
 | `tests/test_horse_peds_dataset_manager.py` | 血統データの取得・保存 |
 | `tests/test_peds_results_dataset_manager.py` | 血統別成績の集計・保存 |
 | `tests/test_past_performance_dataset_manager.py` | 出走馬の過去成績の再構築 |
 | `tests/test_race_info_dataset_manager.py` | race_info系（人気・馬体重・タイム等）の集計、race_returnsの保存・分割 |
 | `tests/test_race_returns_scheduler.py` | race_returns の週次/月次/一括更新オーケストレーション |
+| `tests/test_race_result_scheduler.py` | race_result の日次結果取得オーケストレーション（update_daily_race_results） |
 | `tests/test_race_prediction_engine.py` | Oracle（日次予想エンジン）の特徴量生成・LightGBM推論・新旧出力比較 |
 | `tests/test_race_card_dataset_manager.py` | race_card（出馬表+score/rank・per-raceレース情報・race_time_id_list）の保存・取得 |
 | `tests/test_horse_report_generator.py` | Forge: 出走馬詳細レポート（血統・近走・芝ダートサマリ）のHTML生成 |
@@ -353,6 +358,7 @@ pytest
 | `tests/test_daily_index_generator.py` | Forge: 日次レース一覧ページのHTML生成 |
 | `tests/test_prediction_publisher.py` | Herald: 予想テキスト生成（`extract_top5_pred`/`make_race_text`）・メール/X配信のmonkeypatchテスト |
 | `tests/test_return_report.py` | Herald残部: 配当結果レポート（`get_{win,place,trio_box}_result`/`make_return_text`/`post_race_returns`）のフィクスチャベーステスト |
+| `tests/test_daily_race_results.py` | `src/RacePrediction/daily_race_results.py`のリダイレクト（新実装関数への再エクスポート）確認 |
 
 ## 5. 関連資料
 

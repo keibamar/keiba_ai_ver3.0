@@ -51,6 +51,27 @@ def save_race_results_dataset(place_id, year, race_results_df):
     race_results_df.to_pickle(os.path.join(place_dir, f"{year}_race_results.pickle"))
 
 
+def save_race_result_for_race_id(race_id, df_results):
+    """1レース分のレース結果を data/race_result/{place}/{year}/{race_id}.csv に保存する
+
+    split_race_results_by_yearの出力先と同じ構成のper-race CSV。
+    旧 src/RacePrediction/daily_race_results.py の save_each_race_result_csv を移植したもの。
+
+    Args:
+        race_id (str): race_id
+        df_results (pd.DataFrame): race_idのレース結果
+    """
+    if df_results is None or df_results.empty:
+        return
+
+    place_id = int(str(race_id)[4:6])
+    year = int(str(race_id)[:4])
+
+    out_dir = os.path.join(paths.RACE_RESULT_DATA_PATH, PLACE_LIST[place_id - 1], str(year))
+    os.makedirs(out_dir, exist_ok=True)
+    df_results.to_csv(os.path.join(out_dir, f"{race_id}.csv"))
+
+
 def get_race_id_result(race_id):
     """race_idのレース結果を取得
 

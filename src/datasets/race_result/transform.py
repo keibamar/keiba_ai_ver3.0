@@ -66,6 +66,37 @@ def to_int(val):
         return val
 
 
+def clean_day_race_results(df):
+    """当日のレース結果テーブル（速報ページ）の体裁を整える
+
+    旧 libs/scraping.py の clean_race_results を移植したもの。
+
+    Args:
+        df (pd.DataFrame): scrape_day_race_resultで取得した生のテーブル
+
+    Returns:
+        pd.DataFrame: 列をリネーム・並び替えしたレース結果
+    """
+    df = df.copy()
+
+    for i in range(len(df)):
+        if df.notnull().at[i, "タイム"]:
+            df.at[i, "タイム"] = "0:" + df.at[i, "タイム"]
+
+    df = df.rename(columns={
+        "後3F": "上り",
+        "コーナー通過順": "通過",
+        "単勝オッズ": "単勝",
+        "馬体重(増減)": "馬体重",
+    })
+
+    reorder_cols = [
+        "着順", "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "タイム", "着差",
+        "人気", "単勝", "上り", "通過", "厩舎", "馬体重",
+    ]
+    return df[[c for c in reorder_cols if c in df.columns]]
+
+
 def parse_race_info_tokens(tokens):
     """レース概要のテキストから抽出したトークン列から
     race_type, course_len, class, ground_state, weather, date を求める

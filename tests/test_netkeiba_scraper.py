@@ -56,6 +56,18 @@ def test_scrape_race_results_matches_old():
 
 
 @pytest.mark.network
+def test_scrape_day_race_result_matches_old():
+    old_df = old_scraping.scrape_day_race_results(FIXED_RACE_ID)
+    new_df = netkeiba_scraper.scrape_day_race_result(FIXED_RACE_ID)
+
+    assert not old_df.empty
+    assert not new_df.empty
+    assert old_df.columns.tolist() == new_df.columns.tolist()
+    assert len(old_df) == len(new_df)
+    assert old_df.equals(new_df)
+
+
+@pytest.mark.network
 def test_scrape_race_returns_dataframe_matches_known_result():
     # data/RaceReturns/05_tokyo/2024_race_returns.csv に保存済みの確定結果から判明している期待値
     expected = pd.DataFrame(

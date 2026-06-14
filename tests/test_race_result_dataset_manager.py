@@ -215,6 +215,29 @@ def test_convert_course_len_csv_matches_old(tmp_path):
     assert pd.read_csv(old_path, dtype=str).equals(pd.read_csv(new_path, dtype=str))
 
 
+def test_save_race_result_for_race_id_writes_per_race_csv(tmp_path, monkeypatch):
+    monkeypatch.setattr(paths, "RACE_RESULT_DATA_PATH", str(tmp_path / "race_result"))
+
+    race_id = "202405010101"
+    df = pd.DataFrame({"着順": ["1", "2"], "馬番": ["7", "3"]}, index=[race_id, race_id])
+
+    new_race_result.save_race_result_for_race_id(race_id, df)
+
+    out_path = tmp_path / "race_result" / PLACE_LIST[4] / "2024" / f"{race_id}.csv"
+    assert out_path.is_file()
+    result = pd.read_csv(out_path, dtype=str, index_col=0)
+    result.index = result.index.astype(str)
+    assert result.equals(df)
+
+
+def test_save_race_result_for_race_id_noop_for_empty_dataframe(tmp_path, monkeypatch):
+    monkeypatch.setattr(paths, "RACE_RESULT_DATA_PATH", str(tmp_path / "race_result"))
+
+    new_race_result.save_race_result_for_race_id("202405010101", pd.DataFrame())
+
+    assert not (tmp_path / "race_result").exists()
+
+
 def test_export_race_info_per_race_matches_old(old_and_new_roots):
     old_root, new_root = old_and_new_roots
 

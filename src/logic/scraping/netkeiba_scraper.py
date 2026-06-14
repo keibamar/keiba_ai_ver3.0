@@ -114,6 +114,38 @@ def scrape_race_results(race_id):
         return pd.DataFrame()
 
 
+def scrape_day_race_result(race_id):
+    """race_idから、当日のレース結果を返す（race.netkeiba.comの速報ページを使用）
+
+    旧 libs/scraping.py の scrape_day_race_results を移植したもの。
+    db.netkeiba.com（scrape_race_results）と異なり、レース当日に結果が反映される
+    速報ページを使うため、日次配信での即時結果取得に使う。
+
+    Args:
+        race_id (str): スクレイピングするrace_id
+
+    Returns:
+        pd.DataFrame: race_idのレース結果（インデックス = race_id、取得失敗時は空のDataFrame）
+    """
+    url = "https://race.netkeiba.com/race/result.html?race_id=" + str(race_id)
+    if not common.url_exists(url):
+        print("scrape_day_race_result: URL not found, skip", url)
+        return pd.DataFrame()
+    try:
+        soup = common.fetch_soup(url)
+        if not common.validate_soup(soup, url, "scrape_day_race_result", require_table=True):
+            return pd.DataFrame()
+
+        df_results = [pd.read_html(str(t))[0] for t in soup.select("table:has(tr td)")][0]
+        df_results = df_results.rename(columns=lambda x: x.replace(" ", ""))
+        df_results = transform.clean_day_race_results(df_results)
+        df_results.index = [race_id] * len(df_results)
+        return df_results
+    except Exception as e:
+        common.scraping_error(e)
+        return pd.DataFrame()
+
+
 def scrape_horse_peds(horse_id):
     """horse_idから血統データを取得する
 
