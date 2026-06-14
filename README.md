@@ -85,10 +85,10 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
       make_empty_record・analyze_*系（analysis_race_info.py由来）・
       analyze_winners系（analysis_race_time.py由来）の新旧比較を
       新実装単体のアサーションに置き換え済み
-    - フェーズ4b（未着手）: 同ファイルのhorse_id_map/update_average_pops/
+    - フェーズ4b（完了）: 同ファイルのhorse_id_map/update_average_pops/
       update_winners_weight/update_average_frame_and_horse・
       update_winner_time/update_annual_average_time/update_total_average_timeの
-      新旧比較を新実装単体のアサーションに置き換え
+      新旧比較を新実装単体のアサーションに置き換え済み
     - フェーズ4c（未着手）: 同ファイルのrace_returns系純粋関数・書き込み比較、
       `tests/test_average_calculator.py`/`tests/test_netkeiba_scraper.py`の
       race_returns部分/`tests/test_race_returns_scheduler.py`の新旧比較を
@@ -422,7 +422,7 @@ pytest
 | `tests/test_horse_peds_dataset_manager.py` | 血統データの取得・保存・名前正規化の新実装単体検証 |
 | `tests/test_peds_results_dataset_manager.py` | 血統別成績の集計・取得・保存・更新の新実装単体検証 |
 | `tests/test_past_performance_dataset_manager.py` | 出走馬の過去成績の再構築・正規化・取得・保存の新実装単体検証 |
-| `tests/test_race_info_dataset_manager.py` | race_info系（人気・馬体重・タイム等）の集計（analyze_\*系・analyze_winners系は新実装単体検証済み、horse_id_map/update_\*/race_returns系は新旧比較が残存）、race_returnsの保存・分割・per-race配当結果保存（save_race_return_for_race_id） |
+| `tests/test_race_info_dataset_manager.py` | race_info系（人気・馬体重・タイム等）の集計（analyze_\*系・analyze_winners系・horse_id_map/update_\*系は新実装単体検証済み、race_returns系は新旧比較が残存）、race_returnsの保存・分割・per-race配当結果保存（save_race_return_for_race_id） |
 | `tests/test_race_returns_scheduler.py` | race_returns の週次/月次/一括更新オーケストレーション |
 | `tests/test_race_result_scheduler.py` | race_result の日次結果取得オーケストレーション（update_daily_race_results） |
 | `tests/test_race_day_scheduler.py` | 日次配信オーケストレーション（post_race_pred/post_pred_return のテキストパス組み立て・X投稿連携） |

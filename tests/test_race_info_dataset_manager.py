@@ -1,24 +1,20 @@
 """src/datasets/race_info, src/managers/race_info_dataset_manager.py の出力が
 旧 src/legacy_datasets/analysis_race_info.py と一致することを確認するテスト（オフライン）。
 
-make_empty_record・analyze_*系・analyze_winners系（フェーズ4a）は新実装単体の
-アサーションに置き換え済み。新実装は src.managers.race_result_dataset_manager経由で
-src.config.paths.RACE_RESULT_DATA_PATH（実データ、読み取り専用）を参照するため、
-フィクスチャなしで実データ（data/race_result/02_hakodate/{2019,2020,2021}_race_results.csv）
-に対して直接実行できる。
+make_empty_record・analyze_*系・analyze_winners系（フェーズ4a）、horse_id_map/update_*系
+（フェーズ4b）は新実装単体のアサーションに置き換え済み。新実装は
+src.managers.race_result_dataset_manager経由で src.config.paths.RACE_RESULT_DATA_PATH
+（実データ、読み取り専用）を参照するため、フィクスチャなしで実データ
+（data/race_result/02_hakodate/{2019,2020,2021}_race_results.csv）に対して直接実行できる。
+horse_id_map.csv / AveragePops / AverageWeights / AverageFrames / AverageTimes に相当する
+新しい出力先（data/race_info/horse_id_map.csv, data/race_info/average_pops 等）は、
+`new_race_info_root`フィクスチャでtmp_path配下に向けて出力内容を検証する。
 
-旧実装はパスとして name_header.DATA_PATH（ver2.0のdata/）を参照するため、
-旧実装の比較対象テストでは tmp_path 配下に "RaceResults" フォルダを作って
-name_header.DATA_PATH をそこに向ける。新実装は src.managers.race_result_dataset_manager
-経由で src.config.paths.RACE_RESULT_DATA_PATH（実データ、読み取り専用）を参照する。
-
-horse_id_map.csv / AveragePops / AverageWeights / AverageFrames に相当する新しい出力先
-（data/race_info/horse_id_map.csv, data/race_info/average_pops 等）の比較テストでは、
-旧実装・新実装それぞれ別のtmp_path配下に向けて出力内容（DataFrameの内容）を比較する。
-
-旧実装の update_average_pops / update_average_frame_and_horse は、top3用・全期間用の
-保存判定に誤って result_top.empty を使っていたが、新実装ではそれぞれの結果の空判定に
-修正している（参照: src/managers/race_info_dataset_manager.py のモジュールdocstring）。
+race_returns系（フェーズ4c、未対応）は旧実装比較が残っている。旧実装はパスとして
+name_header.DATA_PATH（ver2.0のdata/）を参照するため、旧実装の比較対象テストでは
+tmp_path 配下に "RaceResults" フォルダを作って name_header.DATA_PATH をそこに向け、
+新実装・旧実装それぞれ別のtmp_path配下に出力したRaceReturns関連ファイルの内容
+（DataFrameの内容）を比較する（`old_and_new_roots`フィクスチャ）。
 """
 
 import os
@@ -30,8 +26,6 @@ import pytest
 from src.config import paths
 from src.datasets.race_info import transform
 from src.legacy_datasets import analysis_race_info as old_analysis
-from src.legacy_datasets import analysis_race_time as old_time
-from src.legacy_datasets import average_time as old_avg_time
 from src.legacy_datasets import race_returns as old_returns
 from src.managers import race_info_dataset_manager as new_race_info
 
@@ -404,199 +398,199 @@ def old_and_new_roots(tmp_path, monkeypatch):
     return old_root, new_root
 
 
-def test_update_horse_name_id_map_from_results_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
+@pytest.fixture
+def new_race_info_root(tmp_path, monkeypatch):
+    """新実装(race_info_dataset_managerの各パス定数)をtmp_path配下に向ける。
+    race_resultsは実データ(paths.RACE_RESULT_DATA_PATH)をそのまま参照する。"""
+    new_root = tmp_path / "race_info"
+    new_root.mkdir(parents=True)
+    monkeypatch.setattr(paths, "RACE_INFO_DATA_PATH", str(new_root))
+    monkeypatch.setattr(new_race_info, "HORSE_ID_MAP_PATH", str(new_root / "horse_id_map.csv"))
+    monkeypatch.setattr(new_race_info, "AVERAGE_POPS_DATA_PATH", str(new_root / "average_pops"))
+    monkeypatch.setattr(new_race_info, "AVERAGE_WEIGHTS_DATA_PATH", str(new_root / "average_weights"))
+    monkeypatch.setattr(new_race_info, "AVERAGE_FRAMES_DATA_PATH", str(new_root / "average_frames"))
+    monkeypatch.setattr(new_race_info, "AVERAGE_TIMES_DATA_PATH", str(new_root / "average_times"))
+    return new_root
 
-    old_analysis.update_horse_name_id_map_from_results(SAMPLE_PLACE_ID, 2019)
+
+def test_update_horse_name_id_map_from_results_returns_real_data(new_race_info_root):
     new_race_info.update_horse_name_id_map_from_results(SAMPLE_PLACE_ID, 2019)
 
-    old_csv = old_root / "horse_id_map.csv"
-    new_csv = new_root / "race_info" / "horse_id_map.csv"
+    csv_path = new_race_info_root / "horse_id_map.csv"
+    assert csv_path.is_file()
 
-    assert old_csv.is_file() and new_csv.is_file()
-    old_df = pd.read_csv(old_csv, dtype=str)
-    new_df = pd.read_csv(new_csv, dtype=str)
-    assert not old_df.empty
-    assert old_df.equals(new_df)
+    df = pd.read_csv(csv_path, dtype=str)
+    assert df.shape == (981, 2)
+    assert df.columns.tolist() == ["馬名", "horse_id"]
+    assert df.iloc[0].tolist() == ["ユキノアイオロス", "2008100889"]
+    assert df.iloc[1].tolist() == ["ケージーキンカメ", "2011101513"]
+    assert df.iloc[2].tolist() == ["カゼノコ", "2011102128"]
 
 
-def test_get_horse_id_list_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
+def test_get_horse_id_list_returns_expected(new_race_info_root):
     df = pd.DataFrame({"馬名": ["馬A", "馬B"], "horse_id": ["1111111111", " 2222222222 "]})
-    df.to_csv(old_root / "horse_id_map.csv", index=False, encoding="utf-8-sig")
-    df.to_csv(new_root / "race_info" / "horse_id_map.csv", index=False, encoding="utf-8-sig")
+    df.to_csv(new_race_info_root / "horse_id_map.csv", index=False, encoding="utf-8-sig")
 
-    old_result = old_analysis.get_horse_id_list()
-    new_result = new_race_info.get_horse_id_list()
+    result = new_race_info.get_horse_id_list()
 
-    assert old_result == new_result == ["1111111111", "2222222222"]
+    assert result == ["1111111111", "2222222222"]
 
 
-def test_add_horse_name_id_map_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
+def test_add_horse_name_id_map_adds_new_entry(new_race_info_root):
     df = pd.DataFrame({"馬名": ["既存馬"], "horse_id": ["0000000000"]})
-    df.to_csv(old_root / "horse_id_map.csv", index=False, encoding="utf-8-sig")
-    df.to_csv(new_root / "race_info" / "horse_id_map.csv", index=False, encoding="utf-8-sig")
+    df.to_csv(new_race_info_root / "horse_id_map.csv", index=False, encoding="utf-8-sig")
 
-    old_analysis.add_horse_name_id_map("1234567890", "新馬A")
     new_race_info.add_horse_name_id_map("1234567890", "新馬A")
 
-    old_df = pd.read_csv(old_root / "horse_id_map.csv", dtype=str)
-    new_df = pd.read_csv(new_root / "race_info" / "horse_id_map.csv", dtype=str)
-
-    assert len(old_df) == 2
-    assert old_df.equals(new_df)
+    result = pd.read_csv(new_race_info_root / "horse_id_map.csv", dtype=str)
+    assert result.columns.tolist() == ["馬名", "horse_id"]
+    assert result.values.tolist() == [["既存馬", "0000000000"], ["新馬A", "1234567890"]]
 
 
-def test_add_horse_name_id_map_skips_duplicate_id(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
+def test_add_horse_name_id_map_skips_duplicate_id(new_race_info_root):
     df = pd.DataFrame({"馬名": ["既存馬"], "horse_id": ["0000000000"]})
-    df.to_csv(old_root / "horse_id_map.csv", index=False, encoding="utf-8-sig")
-    df.to_csv(new_root / "race_info" / "horse_id_map.csv", index=False, encoding="utf-8-sig")
+    df.to_csv(new_race_info_root / "horse_id_map.csv", index=False, encoding="utf-8-sig")
 
     # horse_idが既存と重複（馬名は別）-> 追加されない
-    old_analysis.add_horse_name_id_map("0000000000", "別名の馬")
     new_race_info.add_horse_name_id_map("0000000000", "別名の馬")
 
-    old_df = pd.read_csv(old_root / "horse_id_map.csv", dtype=str)
-    new_df = pd.read_csv(new_root / "race_info" / "horse_id_map.csv", dtype=str)
-
-    assert len(old_df) == 1
-    assert old_df.equals(new_df)
+    result = pd.read_csv(new_race_info_root / "horse_id_map.csv", dtype=str)
+    assert result.values.tolist() == [["既存馬", "0000000000"]]
 
 
-def test_update_horse_name_id_map_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
+def test_update_horse_name_id_map_adds_valid_entries(new_race_info_root):
     df = pd.DataFrame({"馬名": ["既存馬"], "horse_id": ["0000000000"]})
-    df.to_csv(old_root / "horse_id_map.csv", index=False, encoding="utf-8-sig")
-    df.to_csv(new_root / "race_info" / "horse_id_map.csv", index=False, encoding="utf-8-sig")
+    df.to_csv(new_race_info_root / "horse_id_map.csv", index=False, encoding="utf-8-sig")
 
     race_card_df = pd.DataFrame({
         "馬名": ["新馬B", "新馬C", ""],
         "horse_id": ["1111111111", "2222222222", "nan"],
     })
 
-    old_analysis.update_horse_name_id_map(race_card_df.copy())
     new_race_info.update_horse_name_id_map(race_card_df.copy())
 
-    old_df = pd.read_csv(old_root / "horse_id_map.csv", dtype=str)
-    new_df = pd.read_csv(new_root / "race_info" / "horse_id_map.csv", dtype=str)
+    result = pd.read_csv(new_race_info_root / "horse_id_map.csv", dtype=str)
+    assert result.values.tolist() == [
+        ["既存馬", "0000000000"],
+        ["新馬B", "1111111111"],
+        ["新馬C", "2222222222"],
+    ]
 
-    assert len(old_df) == 3
-    assert old_df.equals(new_df)
 
-
-def test_update_winners_weight_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
-    old_analysis.update_winners_weight(SAMPLE_PLACE_ID, 2019)
+def test_update_winners_weight_writes_expected_files(new_race_info_root):
     new_race_info.update_winners_weight(SAMPLE_PLACE_ID, 2019)
 
-    for filename in ("2019_winner_weight.csv", "total_winner_weight.csv"):
-        old_csv = old_root / "AverageWeights" / SAMPLE_PLACE / filename
-        new_csv = new_root / "race_info" / "average_weights" / SAMPLE_PLACE / filename
-        assert old_csv.is_file() and new_csv.is_file()
-        assert pd.read_csv(old_csv, dtype=str).equals(pd.read_csv(new_csv, dtype=str))
+    out_dir = new_race_info_root / "average_weights" / SAMPLE_PLACE
+    columns = ["Unnamed: 0", "race_type", "course_len", "ground_state", "class", "馬体重"]
+
+    df_2019 = pd.read_csv(out_dir / "2019_winner_weight.csv", dtype=str)
+    assert df_2019.shape == (280, 6)
+    assert df_2019.columns.tolist() == columns
+    assert df_2019.iloc[0].tolist() == ["0", "芝", "1000", "全", "all", "444.0"]
+
+    df_total = pd.read_csv(out_dir / "total_winner_weight.csv", dtype=str)
+    assert df_total.shape == (490, 6)
+    assert df_total.columns.tolist() == columns
+    assert df_total.iloc[0].tolist() == ["0", "芝", "1000", "全", "all", "444.0"]
 
 
-def test_update_average_pops_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
-    old_analysis.update_average_pops(SAMPLE_PLACE_ID, 2019)
+def test_update_average_pops_writes_expected_files(new_race_info_root):
     new_race_info.update_average_pops(SAMPLE_PLACE_ID, 2019)
 
-    for filename in (
-        "2019_average_pops.csv",
-        "2019_average_pops_top3.csv",
-        "total_average_pops.csv",
-        "total_average_pops_top3.csv",
-    ):
-        old_csv = old_root / "AveragePops" / SAMPLE_PLACE / filename
-        new_csv = new_root / "race_info" / "average_pops" / SAMPLE_PLACE / filename
-        assert old_csv.is_file() and new_csv.is_file()
-        assert pd.read_csv(old_csv, dtype=str).equals(pd.read_csv(new_csv, dtype=str))
+    out_dir = new_race_info_root / "average_pops" / SAMPLE_PLACE
+    head_columns = ["Unnamed: 0", "race_type", "course_len", "ground_state", "class", "avg_pop"]
+
+    df = pd.read_csv(out_dir / "2019_average_pops.csv", dtype=str)
+    assert df.shape == (280, 24)
+    assert df.columns[:6].tolist() == head_columns
+    assert df.iloc[0, :6].tolist() == ["0", "芝", "1000", "全", "all", "9.0"]
+
+    df_top3 = pd.read_csv(out_dir / "2019_average_pops_top3.csv", dtype=str)
+    assert df_top3.shape == (280, 24)
+    assert df_top3.iloc[0, :6].tolist() == ["0", "芝", "1000", "全", "all", "5.5"]
+
+    df_total = pd.read_csv(out_dir / "total_average_pops.csv", dtype=str)
+    assert df_total.shape == (490, 24)
+    assert df_total.iloc[0, :6].tolist() == ["0", "芝", "1000", "全", "all", "9.0"]
+
+    df_total_top3 = pd.read_csv(out_dir / "total_average_pops_top3.csv", dtype=str)
+    assert df_total_top3.shape == (490, 24)
+    assert df_total_top3.iloc[0, :6].tolist() == ["0", "芝", "1000", "全", "all", "5.5"]
 
 
-def test_update_average_frame_and_horse_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
-    old_analysis.update_average_frame_and_horse(SAMPLE_PLACE_ID, 2019)
+def test_update_average_frame_and_horse_writes_expected_files(new_race_info_root):
     new_race_info.update_average_frame_and_horse(SAMPLE_PLACE_ID, 2019)
 
-    for filename in (
-        "2019_average_frames.csv",
-        "2019_average_frames_top3.csv",
-        "total_average_frames.csv",
-        "total_average_frames_top3.csv",
-    ):
-        old_csv = old_root / "AverageFrames" / SAMPLE_PLACE / filename
-        new_csv = new_root / "race_info" / "average_frames" / SAMPLE_PLACE / filename
-        assert old_csv.is_file() and new_csv.is_file()
-        assert pd.read_csv(old_csv, dtype=str).equals(pd.read_csv(new_csv, dtype=str))
+    out_dir = new_race_info_root / "average_frames" / SAMPLE_PLACE
+    head_columns = ["Unnamed: 0", "race_type", "course_len", "ground_state", "class", "avg_frame", "avg_horse"]
+
+    df = pd.read_csv(out_dir / "2019_average_frames.csv", dtype=str)
+    assert df.shape == (280, 34)
+    assert df.columns[:8].tolist() == head_columns + ["total_winners"]
+    assert df.iloc[0, :8].tolist() == ["0", "芝", "1000", "全", "all", "6.0", "8.0", "1"]
+
+    df_top3 = pd.read_csv(out_dir / "2019_average_frames_top3.csv", dtype=str)
+    assert df_top3.shape == (280, 34)
+    assert df_top3.columns[:8].tolist() == head_columns + ["total_top3"]
+    assert df_top3.iloc[0, :8].tolist() == ["0", "芝", "1000", "全", "all", "5.33", "7.33", "3"]
+
+    df_total = pd.read_csv(out_dir / "total_average_frames.csv", dtype=str)
+    assert df_total.shape == (490, 34)
+    assert df_total.iloc[0, :8].tolist() == ["0", "芝", "1000", "全", "all", "6.0", "8.0", "1"]
+
+    df_total_top3 = pd.read_csv(out_dir / "total_average_frames_top3.csv", dtype=str)
+    assert df_total_top3.shape == (490, 34)
+    assert df_total_top3.iloc[0, :8].tolist() == ["0", "芝", "1000", "全", "all", "5.33", "7.33", "3"]
 
 
-# --- update_winner_time / update_average_time（AverageTimes、書き込み比較） -----------
+# --- update_winner_time / update_average_time（AverageTimes） -----------------------
 
 
-def test_update_winner_time_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
-    out_dir = old_root / "AverageTimes" / SAMPLE_PLACE
-
-    # 旧 winners_time_update(place_id, year) はpalce_id/yearの引数を無視して
-    # 全開催場・全年度（2019〜今年）を処理しようとし、対象データが無い開催場で
-    # analyze_winners_multi_years が dict を返してクラッシュするため、ここでは
-    # 新 update_winner_time(place_id, year) と同等の処理（analyze_winners /
-    # analyze_winners_multi_years を1開催場・1年分のみ実行）を直接呼び出して比較する。
-    result = old_time.analyze_winners(SAMPLE_PLACE_ID, 2019)
-    result.to_csv(out_dir / "2019_winner_time.csv")
-    total_df = old_time.analyze_winners_multi_years(SAMPLE_PLACE_ID, start_year=2019, year=2019)
-    total_df.to_csv(out_dir / "total_winner_time.csv")
-
+def test_update_winner_time_writes_expected_files(new_race_info_root):
     new_race_info.update_winner_time(SAMPLE_PLACE_ID, 2019)
 
-    for filename in ("2019_winner_time.csv", "total_winner_time.csv"):
-        old_csv = out_dir / filename
-        new_csv = new_root / "race_info" / "average_times" / SAMPLE_PLACE / filename
-        assert old_csv.is_file() and new_csv.is_file()
-        assert pd.read_csv(old_csv, dtype=str).equals(pd.read_csv(new_csv, dtype=str))
+    out_dir = new_race_info_root / "average_times" / SAMPLE_PLACE
+    columns = [
+        "Unnamed: 0", "race_type", "course_len", "ground_state", "class",
+        "上り", "通過1", "通過2", "通過3", "通過4",
+    ]
+
+    df_2019 = pd.read_csv(out_dir / "2019_winner_time.csv", dtype=str)
+    assert df_2019.shape == (280, 10)
+    assert df_2019.columns.tolist() == columns
+    assert df_2019.iloc[0, :8].tolist() == ["0", "芝", "1000", "全", "all", "34.3", "4.0", "4.0"]
+    assert pd.isna(df_2019.iloc[0]["通過3"])
+
+    df_total = pd.read_csv(out_dir / "total_winner_time.csv", dtype=str)
+    assert df_total.shape == (490, 10)
+    assert df_total.columns.tolist() == columns
+    assert df_total.iloc[0, :8].tolist() == ["0", "芝", "1000", "全", "all", "34.3", "4.0", "4.0"]
 
 
-def test_update_annual_average_time_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
-    old_avg_time.make_annual_average_time_datasets(SAMPLE_PLACE_ID, 2019)
+def test_update_annual_average_time_writes_expected_file(new_race_info_root):
     new_race_info.update_annual_average_time(SAMPLE_PLACE_ID, 2019)
 
-    old_csv = old_root / "AverageTimes" / SAMPLE_PLACE / "2019_avg_time.csv"
-    new_csv = new_root / "race_info" / "average_times" / SAMPLE_PLACE / "2019_avg_time.csv"
-    assert old_csv.is_file() and new_csv.is_file()
+    csv_path = new_race_info_root / "average_times" / SAMPLE_PLACE / "2019_avg_time.csv"
+    assert csv_path.is_file()
 
-    old_df = pd.read_csv(old_csv, dtype=str)
-    new_df = pd.read_csv(new_csv, dtype=str)
-    # "不"->"不良" ラベル修正（test_make_average_time_datasets_matches_old と同様）
-    old_df["ground_state"] = old_df["ground_state"].replace("不", "不良")
-    assert old_df.equals(new_df)
+    df = pd.read_csv(csv_path, dtype=str)
+    assert df.shape == (280, 6)
+    assert df.columns.tolist() == ["Unnamed: 0", "race_type", "course_len", "ground_state", "class", "avg_time"]
+    assert df.iloc[0].tolist() == ["0", "芝", "1000", "全", "all", "58100"]
+    assert df.iloc[1].tolist() == ["1", "芝", "1000", "良", "all", "58100"]
 
 
-def test_update_total_average_time_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
-    old_avg_time.total_average_datas(SAMPLE_PLACE_ID, 2021)
+def test_update_total_average_time_writes_expected_file(new_race_info_root):
     new_race_info.update_total_average_time(SAMPLE_PLACE_ID, 2021)
 
-    old_csv = old_root / "AverageTimes" / SAMPLE_PLACE / "total_avg_time.csv"
-    new_csv = new_root / "race_info" / "average_times" / SAMPLE_PLACE / "total_avg_time.csv"
-    assert old_csv.is_file() and new_csv.is_file()
+    csv_path = new_race_info_root / "average_times" / SAMPLE_PLACE / "total_avg_time.csv"
+    assert csv_path.is_file()
 
-    old_df = pd.read_csv(old_csv, dtype=str)
-    new_df = pd.read_csv(new_csv, dtype=str)
-    old_df["ground_state"] = old_df["ground_state"].replace("不", "不良")
-    assert old_df.equals(new_df)
+    df = pd.read_csv(csv_path, dtype=str)
+    assert df.shape == (280, 6)
+    assert df.columns.tolist() == ["Unnamed: 0", "race_type", "course_len", "ground_state", "class", "avg_time"]
+    assert df.iloc[0].tolist() == ["0", "芝", "1000", "全", "all", "57850"]
+    assert df.iloc[1].tolist() == ["1", "芝", "1000", "良", "all", "57850"]
 
 
 # --- Forge: average_pops/average_weights/average_frames/average_times getter（スモークテスト） ---
