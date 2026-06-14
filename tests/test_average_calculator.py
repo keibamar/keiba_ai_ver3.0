@@ -1,7 +1,6 @@
-"""src/logic/calculators/average_calculator.py の出力が旧実装と一致することを
-確認するテスト（オフライン）。
+"""src/logic/calculators/average_calculator.py のテスト（オフライン）。
 
-旧 src/legacy_datasets/average_time.py の対応関数と同一結果を返すことを確認する。
+src/logic/calculators/average_calculator.py の各関数を新実装単体で検証する。
 """
 
 import os
@@ -12,59 +11,53 @@ import pytest
 
 from src.config import paths
 from src.config.lists import COURSE_LISTS
-from src.legacy_datasets import average_time as old_avg_time
 from src.logic.calculators import average_calculator
 
 SAMPLE_PLACE_ID = 2
 SAMPLE_PLACE = "02_hakodate"
 
 
-# --- 平均タイム（average_time.py） --------------------------------------------------
+# --- 平均タイム（make_average_time_datasets） ---------------------------------------
 
 
-def test_make_average_time_datasets_matches_old():
+def test_make_average_time_datasets_returns_expected():
     path = os.path.join(paths.RACE_RESULT_DATA_PATH, SAMPLE_PLACE, "2019_race_results.csv")
     df_race_results = pd.read_csv(path, dtype=str, index_col=0)
 
-    old_result = old_avg_time.make_average_time_datasets(df_race_results, SAMPLE_PLACE_ID).reset_index(drop=True)
-    new_result = average_calculator.make_average_time_datasets(df_race_results, COURSE_LISTS[SAMPLE_PLACE_ID - 1])
+    result = average_calculator.make_average_time_datasets(df_race_results, COURSE_LISTS[SAMPLE_PLACE_ID - 1])
 
-    assert not new_result.empty
+    assert result.shape == (280, 5)
+    assert result.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "avg_time"]
+    assert result["ground_state"].unique().tolist() == ["全", "良", "稍重", "重", "不良"]
 
-    # 旧実装の ground_state 列は ["全","良","稍重","重","不"] とハードコードされており
-    # "不良"であるべき箇所が"不"になっていた（新実装ではmodel.GROUNDSに合わせて"不良"に修正）
-    old_result["ground_state"] = old_result["ground_state"].replace("不", "不良")
-    assert old_result.equals(new_result)
-
-
-# --- タイム差（average_time.py） -----------------------------------------------------
+    first = result.iloc[0]
+    assert first[["race_type", "course_len", "ground_state", "class"]].tolist() == ["芝", "1000", "全", "all"]
+    assert first["avg_time"] == 58100
+    assert pd.isna(result.iloc[2]["avg_time"])
 
 
-@pytest.mark.parametrize("time_str", ["1:11.2", "1:39.8", "2:00.0"])
-def test_get_race_time_msec_matches_old(time_str):
-    old_result = old_avg_time.get_race_time_msec(time_str)
-    new_result = average_calculator.get_race_time_msec(time_str)
-
-    assert old_result == new_result
+# --- タイム差 ------------------------------------------------------------------------
 
 
-def test_get_race_time_msec_nan_matches_old():
-    old_result = old_avg_time.get_race_time_msec(np.nan)
-    new_result = average_calculator.get_race_time_msec(np.nan)
-
-    assert np.isnan(old_result) and np.isnan(new_result)
-
-
-@pytest.mark.parametrize(("base_time", "race_time"), [("70000", 71000.0), (70000.0, 69000.0)])
-def test_calc_time_diff_matches_old(base_time, race_time):
-    old_result = old_avg_time.calc_time_diff(base_time, race_time)
-    new_result = average_calculator.calc_time_diff(base_time, race_time)
-
-    assert old_result == new_result
+@pytest.mark.parametrize(
+    ("time_str", "expected"),
+    [("1:11.2", 71002.0), ("1:39.8", 99008.0), ("2:00.0", 120000.0)],
+)
+def test_get_race_time_msec_returns_expected(time_str, expected):
+    assert average_calculator.get_race_time_msec(time_str) == expected
 
 
-def test_calc_time_diff_nan_matches_old():
-    old_result = old_avg_time.calc_time_diff(np.nan, 70000.0)
-    new_result = average_calculator.calc_time_diff(np.nan, 70000.0)
+def test_get_race_time_msec_nan_returns_nan():
+    assert np.isnan(average_calculator.get_race_time_msec(np.nan))
 
-    assert np.isnan(old_result) and np.isnan(new_result)
+
+@pytest.mark.parametrize(
+    ("base_time", "race_time", "expected"),
+    [("70000", 71000.0, -0.014285714285714285), (70000.0, 69000.0, 0.014285714285714285)],
+)
+def test_calc_time_diff_returns_expected(base_time, race_time, expected):
+    assert average_calculator.calc_time_diff(base_time, race_time) == expected
+
+
+def test_calc_time_diff_nan_returns_nan():
+    assert np.isnan(average_calculator.calc_time_diff(np.nan, 70000.0))

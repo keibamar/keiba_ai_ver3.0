@@ -1,20 +1,14 @@
-"""src/datasets/race_info, src/managers/race_info_dataset_manager.py の出力が
-旧 src/legacy_datasets/analysis_race_info.py と一致することを確認するテスト（オフライン）。
+"""src/datasets/race_info, src/managers/race_info_dataset_manager.py のテスト（オフライン）。
 
-make_empty_record・analyze_*系・analyze_winners系（フェーズ4a）、horse_id_map/update_*系
-（フェーズ4b）は新実装単体のアサーションに置き換え済み。新実装は
-src.managers.race_result_dataset_manager経由で src.config.paths.RACE_RESULT_DATA_PATH
+src/datasets/race_info/transform.py の純粋関数と、
+src/managers/race_info_dataset_manager.py のCRUD・集計系関数を、新実装単体で検証する。
+新実装は src.managers.race_result_dataset_manager経由で src.config.paths.RACE_RESULT_DATA_PATH
 （実データ、読み取り専用）を参照するため、フィクスチャなしで実データ
 （data/race_result/02_hakodate/{2019,2020,2021}_race_results.csv）に対して直接実行できる。
-horse_id_map.csv / AveragePops / AverageWeights / AverageFrames / AverageTimes に相当する
-新しい出力先（data/race_info/horse_id_map.csv, data/race_info/average_pops 等）は、
-`new_race_info_root`フィクスチャでtmp_path配下に向けて出力内容を検証する。
-
-race_returns系（フェーズ4c、未対応）は旧実装比較が残っている。旧実装はパスとして
-name_header.DATA_PATH（ver2.0のdata/）を参照するため、旧実装の比較対象テストでは
-tmp_path 配下に "RaceResults" フォルダを作って name_header.DATA_PATH をそこに向け、
-新実装・旧実装それぞれ別のtmp_path配下に出力したRaceReturns関連ファイルの内容
-（DataFrameの内容）を比較する（`old_and_new_roots`フィクスチャ）。
+horse_id_map.csv / AveragePops / AverageWeights / AverageFrames / AverageTimes /
+RaceReturns に相当する新しい出力先（data/race_info/horse_id_map.csv,
+data/race_info/average_pops, data/race_info/race_returns 等）は、`new_race_info_root`
+フィクスチャでtmp_path配下に向けて出力内容を検証する。
 """
 
 import os
@@ -24,9 +18,7 @@ import pandas as pd
 import pytest
 
 from src.config import paths
-from src.datasets.race_info import transform
-from src.legacy_datasets import analysis_race_info as old_analysis
-from src.legacy_datasets import race_returns as old_returns
+from src.datasets.race_info import model, transform
 from src.managers import race_info_dataset_manager as new_race_info
 
 SAMPLE_PLACE_ID = 2
@@ -234,87 +226,80 @@ def _sample_race_return_tables():
     return [pd.DataFrame(), table1, table2]
 
 
-def test_extract_race_return_table_matches_old():
+def test_extract_race_return_table_returns_expected():
     tables = _sample_race_return_tables()
 
-    old_result = old_returns.extratc_race_return_table(tables)
-    new_result = transform.extract_race_return_table(tables)
+    result = transform.extract_race_return_table(tables)
 
-    assert not new_result.empty
-    assert old_result.equals(new_result)
+    assert result.shape == (8, 4)
+    assert result.columns.tolist() == [0, 1, 2, 3]
+    assert result.iloc[0].tolist() == ["単勝", "12", "400円", "3"]
+    assert result.iloc[7].tolist() == ["三連単", "12 → 5 → 7", "6,620円", "29"]
 
 
-def test_format_race_return_dataframe_matches_old():
+def test_format_race_return_dataframe_returns_expected():
     extracted = transform.extract_race_return_table(_sample_race_return_tables())
 
-    old_result = old_returns.format_race_return_dataframe(extracted.copy())
-    new_result = transform.format_race_return_dataframe(extracted.copy())
+    result = transform.format_race_return_dataframe(extracted.copy())
 
-    assert not new_result.empty
-    assert old_result.equals(new_result)
+    assert result.index.name == 0
+    assert result.columns.tolist() == [1, 2, 3]
+    assert result.index.tolist() == ["単勝", "複勝", "枠連", "馬連", "ワイド", "馬単", "三連複", "三連単"]
+    assert result.loc["単勝"].tolist() == ["12", "400", "3"]
+    assert result.loc["三連単"].tolist() == ["12br→br5br→br7", "6620", "29"]
 
 
 @pytest.mark.parametrize("bet_type,expected", [("単勝", True), ("三連複", True), ("枠外", False)])
-def test_type_check_matches_old(bet_type, expected):
+def test_type_check_returns_expected(bet_type, expected):
     extracted = transform.extract_race_return_table(_sample_race_return_tables())
     formatted = transform.format_race_return_dataframe(extracted)
 
-    old_result = old_returns.type_check(formatted, bet_type)
-    new_result = transform.type_check(formatted, bet_type)
-
-    assert old_result == new_result == expected
+    assert transform.type_check(formatted, bet_type) == expected
 
 
-@pytest.mark.parametrize("bet_type", ["単勝", "複勝", "枠連", "馬連", "ワイド", "馬単"])
-def test_format_type_returns_dataframe_matches_old(bet_type):
+@pytest.mark.parametrize(
+    "bet_type,expected_rows",
+    [
+        ("単勝", [["単勝", "12", "400", "3"]]),
+        ("複勝", [["複勝", "12", "130", "2"], ["複勝", "5", "140", "3"], ["複勝", "7", "110", "1"]]),
+        ("枠連", [["枠連", "3-6", "1020", "5"]]),
+        ("馬連", [["馬連", "5-12", "850", "3"]]),
+        ("ワイド", [["ワイド", "5-7", "250", "4"], ["ワイド", "5-12", "360", "9"], ["ワイド", "7-12", "450", "14"]]),
+        ("馬単", [["馬単", "12→5", "1820", "9"]]),
+        # 旧実装は"3連複"/"3連単"（アラビア数字）で式別を判定しており、BETTING_TYPE_LISTの
+        # 漢数字表記("三連複"/"三連単")とは一致せず常に空を返していた。新実装は漢数字表記で判定する。
+        ("三連複", [["三連複", "5-7-12", "1660", "12"]]),
+        ("三連単", [["三連単", "12→5→7", "6620", "29"]]),
+    ],
+)
+def test_format_type_returns_dataframe_returns_expected(bet_type, expected_rows):
     extracted = transform.extract_race_return_table(_sample_race_return_tables())
     formatted = transform.format_race_return_dataframe(extracted)
 
-    old_result = old_returns.format_type_returns_dataframe(formatted.copy(), bet_type)
-    new_result = transform.format_type_returns_dataframe(formatted.copy(), bet_type)
+    result = transform.format_type_returns_dataframe(formatted.copy(), bet_type)
 
-    assert not new_result.empty
-    assert old_result.equals(new_result)
-
-
-@pytest.mark.parametrize("bet_type,expected_combo", [("三連複", "5-7-12"), ("三連単", "12→5→7")])
-def test_format_type_returns_dataframe_fixes_sanren_kanji(bet_type, expected_combo):
-    """旧実装は"3連複"/"3連単"（アラビア数字）で式別を判定しており、
-    BETTING_TYPE_LISTの漢数字表記("三連複"/"三連単")とは一致しないため常に空を返す。
-    新実装では漢数字表記に統一し、正しく解析する。
-    """
-    extracted = transform.extract_race_return_table(_sample_race_return_tables())
-    formatted = transform.format_race_return_dataframe(extracted)
-
-    old_result = old_returns.format_type_returns_dataframe(formatted.copy(), bet_type)
-    new_result = transform.format_type_returns_dataframe(formatted.copy(), bet_type)
-
-    assert old_result.empty
-    assert not new_result.empty
-    assert new_result.iloc[0]["馬番"] == expected_combo
+    assert result.columns.tolist() == model.RACE_RETURNS_COLUMNS
+    assert result.values.tolist() == expected_rows
 
 
-# --- 配当結果（race_returns.py、書き込み比較） ----------------------------------------
+# --- 配当結果（race_returns.py、書き込み・読み込み） ------------------------------------
 
 
-def test_get_race_returns_csv_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
+def test_get_race_returns_csv_returns_real_data(new_race_info_root):
     src = os.path.join(paths.DATA_PATH, "RaceReturns", SAMPLE_PLACE, "2019_race_returns.csv")
-    (new_root / "race_info" / "race_returns" / SAMPLE_PLACE).mkdir(parents=True, exist_ok=True)
-    shutil.copy(src, old_root / "RaceReturns" / SAMPLE_PLACE / "2019_race_returns.csv")
-    shutil.copy(src, new_root / "race_info" / "race_returns" / SAMPLE_PLACE / "2019_race_returns.csv")
+    dest_dir = new_race_info_root / "race_returns" / SAMPLE_PLACE
+    dest_dir.mkdir(parents=True)
+    shutil.copy(src, dest_dir / "2019_race_returns.csv")
 
-    old_result = old_returns.get_race_returns_csv(SAMPLE_PLACE_ID, 2019)
-    new_result = new_race_info.get_race_returns_csv(SAMPLE_PLACE_ID, 2019)
+    result = new_race_info.get_race_returns_csv(SAMPLE_PLACE_ID, 2019)
 
-    assert not new_result.empty
-    assert old_result.equals(new_result)
+    assert result.shape == (1609, 4)
+    assert result.columns.tolist() == ["0", "1", "2", "3"]
+    assert result.index[0] == 201902010101
+    assert result.iloc[0].tolist() == ["単勝", "12", "400", "3"]
 
 
-def test_save_race_returns_dataset_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
+def test_save_race_returns_dataset_writes_csv_and_pickle(new_race_info_root):
     extracted = transform.extract_race_return_table(_sample_race_return_tables())
     formatted = transform.format_race_return_dataframe(extracted)
     df = pd.concat([
@@ -323,79 +308,39 @@ def test_save_race_returns_dataset_matches_old(old_and_new_roots):
     ])
     df.index = ["202999999999"] * len(df)
 
-    old_returns.save_race_returns_dataset(SAMPLE_PLACE_ID, 2099, df.copy())
     new_race_info.save_race_returns_dataset(SAMPLE_PLACE_ID, 2099, df.copy())
 
-    for ext in ("csv", "pickle"):
-        old_path = old_root / "RaceReturns" / SAMPLE_PLACE / f"2099_race_returns.{ext}"
-        new_path = new_root / "race_info" / "race_returns" / SAMPLE_PLACE / f"2099_race_returns.{ext}"
-        assert old_path.is_file() and new_path.is_file()
+    out_dir = new_race_info_root / "race_returns" / SAMPLE_PLACE
+    csv_path = out_dir / "2099_race_returns.csv"
+    pickle_path = out_dir / "2099_race_returns.pickle"
+    assert csv_path.is_file() and pickle_path.is_file()
 
-    old_csv = pd.read_csv(old_root / "RaceReturns" / SAMPLE_PLACE / "2099_race_returns.csv", dtype=str, index_col=0)
-    new_csv = pd.read_csv(new_root / "race_info" / "race_returns" / SAMPLE_PLACE / "2099_race_returns.csv", dtype=str, index_col=0)
-    assert not new_csv.empty
-    assert old_csv.equals(new_csv)
+    saved = pd.read_csv(csv_path, dtype=str, index_col=0)
+    assert saved.shape == (12, 4)
+    assert saved.columns.tolist() == model.RACE_RETURNS_COLUMNS
+    assert saved.iloc[0].tolist() == ["単勝", "12", "400", "3"]
+    assert saved.iloc[-1].tolist() == ["三連単", "12→5→7", "6620", "29"]
 
 
-def test_split_race_returns_csv_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
+def test_split_race_returns_csv_writes_per_race_files(new_race_info_root):
     src = os.path.join(paths.DATA_PATH, "RaceReturns", SAMPLE_PLACE, "2019_race_returns.csv")
-    (new_root / "race_info" / "race_returns" / SAMPLE_PLACE).mkdir(parents=True, exist_ok=True)
-    shutil.copy(src, old_root / "RaceReturns" / SAMPLE_PLACE / "2019_race_returns.csv")
-    shutil.copy(src, new_root / "race_info" / "race_returns" / SAMPLE_PLACE / "2019_race_returns.csv")
+    dest_dir = new_race_info_root / "race_returns" / SAMPLE_PLACE
+    dest_dir.mkdir(parents=True)
+    shutil.copy(src, dest_dir / "2019_race_returns.csv")
 
-    old_returns.split_race_returns_csv(SAMPLE_PLACE_ID, 2019)
     new_race_info.split_race_returns_csv(SAMPLE_PLACE_ID, 2019)
 
-    old_dir = old_root / "RaceReturns" / SAMPLE_PLACE / "2019"
-    new_dir = new_root / "race_info" / "race_returns" / SAMPLE_PLACE / "2019"
-    assert old_dir.is_dir() and new_dir.is_dir()
+    split_dir = dest_dir / "2019"
+    files = sorted(p.name for p in split_dir.iterdir())
+    assert len(files) == 144
+    assert files[0] == "201902010101.csv"
 
-    old_files = sorted(p.name for p in old_dir.iterdir())
-    new_files = sorted(p.name for p in new_dir.iterdir())
-    assert old_files == new_files
-    assert len(old_files) > 100
-
-    for filename in old_files:
-        old_df = pd.read_csv(old_dir / filename, dtype=str, index_col=0)
-        new_df = pd.read_csv(new_dir / filename, dtype=str, index_col=0)
-        assert old_df.equals(new_df)
+    df = pd.read_csv(split_dir / files[0], dtype=str, index_col=0)
+    assert df.shape == (12, 4)
+    assert df.iloc[0].tolist() == ["単勝", "12", "400", "3"]
 
 
 # --- horse_id_map / update_* 系（書き込み比較） -------------------------------------
-
-
-@pytest.fixture
-def old_and_new_roots(tmp_path, monkeypatch):
-    """旧実装(name_header.DATA_PATH)と新実装(race_info_dataset_managerの各パス定数)を
-    それぞれ別のtmp_path配下に向ける。race_resultsはRaceResults/02_hakodateに2019〜2021年分をコピーする。
-    """
-    old_root = tmp_path / "old"
-    new_root = tmp_path / "new"
-
-    old_results_dir = old_root / "RaceResults" / SAMPLE_PLACE
-    old_results_dir.mkdir(parents=True)
-    for year in (2019, 2020, 2021):
-        src = os.path.join(paths.RACE_RESULT_DATA_PATH, SAMPLE_PLACE, f"{year}_race_results.csv")
-        shutil.copy(src, old_results_dir / f"{year}_race_results.csv")
-
-    for d in ("AveragePops", "AverageWeights", "AverageFrames", "AverageTimes", "RaceReturns"):
-        (old_root / d / SAMPLE_PLACE).mkdir(parents=True)
-
-    new_race_info_dir = new_root / "race_info"
-    new_race_info_dir.mkdir(parents=True)
-
-    monkeypatch.setattr(old_analysis.name_header, "DATA_PATH", str(old_root) + "/")
-    monkeypatch.setattr(paths, "RACE_INFO_DATA_PATH", str(new_race_info_dir))
-    monkeypatch.setattr(new_race_info, "HORSE_ID_MAP_PATH", str(new_race_info_dir / "horse_id_map.csv"))
-    monkeypatch.setattr(new_race_info, "AVERAGE_POPS_DATA_PATH", str(new_race_info_dir / "average_pops"))
-    monkeypatch.setattr(new_race_info, "AVERAGE_WEIGHTS_DATA_PATH", str(new_race_info_dir / "average_weights"))
-    monkeypatch.setattr(new_race_info, "AVERAGE_FRAMES_DATA_PATH", str(new_race_info_dir / "average_frames"))
-    monkeypatch.setattr(new_race_info, "AVERAGE_TIMES_DATA_PATH", str(new_race_info_dir / "average_times"))
-    monkeypatch.setattr(new_race_info, "RACE_RETURNS_DATA_PATH", str(new_race_info_dir / "race_returns"))
-
-    return old_root, new_root
 
 
 @pytest.fixture
@@ -410,6 +355,7 @@ def new_race_info_root(tmp_path, monkeypatch):
     monkeypatch.setattr(new_race_info, "AVERAGE_WEIGHTS_DATA_PATH", str(new_root / "average_weights"))
     monkeypatch.setattr(new_race_info, "AVERAGE_FRAMES_DATA_PATH", str(new_root / "average_frames"))
     monkeypatch.setattr(new_race_info, "AVERAGE_TIMES_DATA_PATH", str(new_root / "average_times"))
+    monkeypatch.setattr(new_race_info, "RACE_RETURNS_DATA_PATH", str(new_root / "race_returns"))
     return new_root
 
 
@@ -654,25 +600,22 @@ def test_get_annual_winner_time_csv_smoke():
 # --- Forge: get_race_return_csv_for_race（スモークテスト） ---------------------------------
 
 
-def test_get_race_return_csv_for_race_smoke(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
+def test_get_race_return_csv_for_race_smoke(new_race_info_root):
     src = os.path.join(paths.DATA_PATH, "RaceReturns", SAMPLE_PLACE, "2019_race_returns.csv")
-    race_returns_dir = new_root / "race_info" / "race_returns" / SAMPLE_PLACE
-    race_returns_dir.mkdir(parents=True, exist_ok=True)
+    race_returns_dir = new_race_info_root / "race_returns" / SAMPLE_PLACE
+    race_returns_dir.mkdir(parents=True)
     shutil.copy(src, race_returns_dir / "2019_race_returns.csv")
 
     new_race_info.split_race_returns_csv(SAMPLE_PLACE_ID, 2019)
 
-    split_dir = race_returns_dir / "2019"
-    race_id = sorted(p.stem for p in split_dir.iterdir())[0]
+    result = new_race_info.get_race_return_csv_for_race("201902010101")
 
-    result = new_race_info.get_race_return_csv_for_race(race_id)
-    assert not result.empty
+    assert result.shape == (12, 4)
     assert result.index.name == "race_id"
+    assert result.iloc[0].tolist() == ["単勝", "12", "400", "3"]
 
 
-def test_get_race_return_csv_for_race_empty_when_missing(old_and_new_roots):
+def test_get_race_return_csv_for_race_empty_when_missing(new_race_info_root):
     result = new_race_info.get_race_return_csv_for_race(SAMPLE_PLACE_ID * 10**10)
     assert result.empty
 
