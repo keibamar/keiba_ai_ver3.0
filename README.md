@@ -10,9 +10,9 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 ## 1. リファクタリングの進捗状況（2026-06-14時点）
 
 **全体は未完了。** データ収集・蓄積系（Chronicle / Atlas / Reaper 相当）、
-予想エンジン（Oracle）、HTML生成系（Forge）、配信系（Herald・予想テキスト生成＋配信のみ）は
-新構造への移行が完了しているが、配当結果レポート（Herald残部）と旧ファイルの
-クリーンアップ（大部分）は未着手。
+予想エンジン（Oracle）、HTML生成系（Forge）、配信系（Herald・予想テキスト生成＋配信、
+配当結果レポート）は新構造への移行が完了しているが、日次配信オーケストレーション
+（`post_daily_race.py`等）と旧ファイルのクリーンアップ（大部分）は未着手。
 
 ### 完了済み
 
@@ -27,6 +27,7 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 | 予想エンジン（Oracle・日次予想パスのみ） | `src/PredictionModels/LightGBM/{make_dataset,prediction}.py`, `src/RacePrediction/day_race_prediction.py` | `src/logic/prediction/race_prediction_engine.py`（`day_race_prediction.py` はこれへの薄いリダイレクトとして残置） |
 | race_card / HTML生成（Forge） | `src/RacePrediction/race_card.py` / `make_time_id_list.py`（出力先のみ）, `web/src/generators/{race_pages,horse_info,daily_index,make_race_card_html}.py` | `src/managers/{race_card_dataset_manager,html_manager}.py`, `src/logic/html_generator/{race_page_generator,horse_report_generator,daily_index_generator}.py`, `src/utils/format_data.py`, `public_html/` |
 | 予想テキスト生成・配信（Herald） | `src/RacePrediction/make_text.py`（`extract_top5_pred`/`make_race_text`）, `libs/{mail_api,post_text}.py` | `src/output/prediction_publisher.py` |
+| 配当結果レポート（Herald残部） | `src/RacePrediction/calc_returns.py`（`get_win_result`/`get_place_result`/`get_trio_box_result`/`post_race_rerurns`）, `src/RacePrediction/make_text.py`（`write_{win,place,trio}_hit_text`/`make_return_text`） | `src/output/return_report.py` |
 
 ### 未対応（今後のフェーズ）
 
@@ -34,17 +35,24 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 - **Oracle オフライン学習パイプライン**: `src/PredictionModels/LightGBM/`の`make_dataset_for_train`,
   `lightGBM_rank_train`, `prediction_rank`, `weekly_update_dataset_for_train`,
   `make_annual_dataset` 等は対象外（旧実装のまま、ver2.0データパスを参照し続ける）
-- **Herald残部（配当結果レポート・日次配信オーケストレーション）**: `make_text.make_return_text`/
-  `write_{win,place,trio}_hit_text`、`src/RacePrediction/calc_returns.py`（配当結果の的中率・
-  回収率計算。ver2.0の`race_returns`モジュール・旧`DATA_PATH/RaceReturns`に依存し移植範囲が
-  大きい）、`src/RacePrediction/post_daily_race.py`（日次配信オーケストレーションループ）は対象外
+- **日次配信オーケストレーション**: `src/RacePrediction/daily_race_results.py`（日次のレース結果
+  取得・保存）、`src/RacePrediction/post_daily_race.py`（HTML生成・配信ループ。現状ver2.0側で
+  稼働中）は対象外
+- **calc_returns.pyの孤立した回収率レポートCSV機能**: `get_quinella_box_result`/
+  `get_quinella_wheel_result`/`get_trio_wheel_result`/`calc_day_race_return`/
+  `calc_day_race_return_all`/`save_day_race_return_csv`/`save_each_race_return_csv`/
+  `save_calc_day_return`/`run_all_year`/`get_race_return`/`weekly_update_race_returns`
+  （`race_returns_scheduler.weekly_update_race_returns`と重複）は、`make_return_text`から
+  呼ばれておらず`calc_returns.py`の`__main__`専用のため対象外。`name_header`/`get_race_id`/
+  `scraping`/ver2.0の`race_card`/`race_returns`への依存はそのまま残置
 - **クリーンアップ**: `libs/`, `src/legacy_datasets/`, `src/RacePrediction/`, `web/`等の削除（呼び出し元を新実装に切り替えた後）
 
 → **データ収集・蓄積（週次/月次/年次更新）、予想エンジンの日次予想パス（Oracle）、
-レースページ・日次インデックスのHTML生成（Forge）、予想テキスト生成・メール/X配信
-（Herald・`src/output/prediction_publisher.py`）は新実装で動かせる**。
-**配当結果レポート・日次配信オーケストレーション（`bat/TodayRace/post_today_race.bat`が
-呼ぶ`post_daily_race.py`等）は、現状旧実装のままで、このリファクタリングによる影響はない。**
+レースページ・日次インデックスのHTML生成（Forge）、予想テキスト生成・メール/X配信・
+配当結果レポート（Herald・`src/output/{prediction_publisher,return_report}.py`）は
+新実装で動かせる**。
+**日次配信オーケストレーション（`bat/TodayRace/post_today_race.bat`が呼ぶ
+`post_daily_race.py`等）は、現状旧実装のままで、このリファクタリングによる影響はない。**
 
 ## 2. ディレクトリ構成（新実装部分）
 
@@ -88,7 +96,8 @@ src/
 │       ├── horse_report_generator.py    # 出走馬詳細レポート
 │       └── daily_index_generator.py     # 日次レース一覧ページ
 └── output/
-    └── prediction_publisher.py    # Herald: 予想テキスト生成・メール/X配信
+    ├── prediction_publisher.py    # Herald: 予想テキスト生成・メール/X配信
+    └── return_report.py           # Herald残部: 配当結果レポート（回収率テキスト生成・X配信）
 ```
 
 データは `data/{race_schedule,race_result,horse,race_info,race_card}/` 配下に
@@ -107,6 +116,8 @@ src/
 - `texts/race_prediction/{YYYYMMDD}/{race_id}.txt` — 予想テキスト（メール本文・Xポスト用、
   旧 `TEXT_PATH + "race_prediction/"` の新しい置き場所、`prediction_publisher.make_race_text`
   が生成）。
+- `texts/race_returns/{YYYYMMDD}/{place}_pred_score.txt` — 配当結果レポート（回収率テキスト、
+  旧 `TEXT_PATH + "race_returns/"` の新しい置き場所、`return_report.make_return_text`が生成）。
 
 ### public_html/（Forgeの出力先・Git管理対象）
 
@@ -280,6 +291,32 @@ prediction_publisher.post_text_data(text_path)
 `extract_top5_pred`/`make_race_text`は、後方互換のため `src.output.prediction_publisher`
 への re-export として残置している。
 
+### 3-9. 配当結果レポート生成・配信（Herald残部）
+
+`src/output/return_report.py` が、指数1位馬の的中率・回収率テキストの生成とX(Twitter)配信を担う。
+出馬表データセット（`data/race_card/{YYYYMMDD}/{race_id}.csv`、"rank"列が必要）と
+配当結果（`data/race_info/race_returns/{place}/{year}/{race_id}.csv`）から
+レポートを生成し、`texts/race_returns/{YYYYMMDD}/{place}_pred_score.txt` に保存する。
+
+```python
+from datetime import date
+from src.output import return_report
+
+race_day = date.today()
+place_id = 4  # 新潟
+
+# 回収率レポートを生成（texts/race_returns/{YYYYMMDD}/{place}_pred_score.txt に保存）
+return_report.make_return_text(place_id, race_day)
+
+# X(Twitter)投稿（.envのX_*設定でtweepy経由投稿。実際に投稿される）
+return_report.post_race_returns(place_id, race_day)
+```
+
+`src/RacePrediction/make_text.py`の`write_{win,place,trio}_hit_text`/`make_return_text`、
+`src/RacePrediction/calc_returns.py`の`get_win_result`/`get_place_result`/
+`get_trio_box_result`/`post_race_rerurns`（typo）は、後方互換のため
+`src.output.return_report`への re-export として残置している。
+
 ## 4. テストの実行方法
 
 `pytest.ini` で `testpaths = tests`、`network` マーカー（実サイト通信を伴うテスト）を
@@ -315,6 +352,7 @@ pytest
 | `tests/test_race_page_generator.py` | Forge: レース個別ページのHTML生成（コース別データ・出走馬レポート埋め込み） |
 | `tests/test_daily_index_generator.py` | Forge: 日次レース一覧ページのHTML生成 |
 | `tests/test_prediction_publisher.py` | Herald: 予想テキスト生成（`extract_top5_pred`/`make_race_text`）・メール/X配信のmonkeypatchテスト |
+| `tests/test_return_report.py` | Herald残部: 配当結果レポート（`get_{win,place,trio_box}_result`/`make_return_text`/`post_race_returns`）のフィクスチャベーステスト |
 
 ## 5. 関連資料
 

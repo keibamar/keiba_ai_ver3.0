@@ -32,3 +32,6 @@ RACE_TIME_ID_LIST_PATH = os.path.join(TEXTS_PATH, "race_calendar", "race_time_id
 
 # 予想テキスト（メール本文・Xポスト用）。旧 TEXT_PATH + "race_prediction/" の新しい置き場所。
 RACE_PREDICTION_TEXT_PATH = os.path.join(TEXTS_PATH, "race_prediction")  # {date}/{race_id}.txt
+
+# 配当結果レポート（回収率テキスト）。旧 TEXT_PATH + "race_returns/" の新しい置き場所。
+RACE_RETURN_REPORT_TEXT_PATH = os.path.join(TEXTS_PATH, "race_returns")  # {date}/{place}_pred_score.txt
