@@ -4,9 +4,12 @@
 post_daily_race_pred）を移植したもの。specifications/新設計.md で予約されている
 race_day_scheduler.py に対応する。
 
+配当結果の取得・保存（旧 src/RacePrediction/calc_returns.py の get_race_return /
+save_each_race_return_csv）は src.logic.scraping.netkeiba_scraper.
+scrape_race_returns_dataframe / src.managers.race_info_dataset_manager.
+save_race_return_for_race_id に置き換えた。
+
 以下は新構造に同等実装が無いため、旧モジュールをそのまま呼び出す:
-- src/RacePrediction/calc_returns.py の get_race_return / save_each_race_return_csv
-  （README記載の「孤立した回収率レポートCSV機能」で対象外）
 - web/src/generators/date_index.py の add_race_day
   （Forgeのカレンダー機能。web/の整理はフェーズ5）
 """
@@ -20,14 +23,6 @@ from time import sleep
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
-
-# calc_returns.py の sibling import (day_race_prediction, make_text 等) を
-# 解決するため、旧 src/RacePrediction を sys.path に追加する
-RACE_PREDICTION_PATH = os.path.join(PROJECT_ROOT, "src", "RacePrediction")
-if RACE_PREDICTION_PATH not in sys.path:
-    sys.path.insert(0, RACE_PREDICTION_PATH)
-
-import calc_returns as old_calc_returns  # noqa: E402
 
 # add_race_day（Forgeのカレンダー機能、web/の整理はフェーズ5）
 sys.path.append(r"C:\keiba_ai\keiba_ai_ver2.0\web\src")
@@ -138,9 +133,9 @@ def post_daily_race_pred(race_day=date.today()):
                     print("Miss Make Results : ", previous_race_id)
                 # 配当結果の取得
                 try:
-                    df_return = old_calc_returns.get_race_return(previous_race_id)
+                    df_return = netkeiba_scraper.scrape_race_returns_dataframe([previous_race_id])
                     if not df_return.empty:
-                        old_calc_returns.save_each_race_return_csv(previous_race_id, df_return)
+                        race_info_dataset_manager.save_race_return_for_race_id(previous_race_id, df_return)
                 except Exception:
                     print("Miss Make Returns : ", previous_race_id)
                 print("previous race html make:" + str(previous_race_id))
@@ -162,9 +157,9 @@ def post_daily_race_pred(race_day=date.today()):
             if not results_df.empty:
                 race_result_dataset_manager.save_race_result_for_race_id(last_race_id, results_df)
             # 配当結果の取得
-            df_return = old_calc_returns.get_race_return(last_race_id)
+            df_return = netkeiba_scraper.scrape_race_returns_dataframe([last_race_id])
             if not df_return.empty:
-                old_calc_returns.save_each_race_return_csv(last_race_id, df_return)
+                race_info_dataset_manager.save_race_return_for_race_id(last_race_id, df_return)
 
             print("previous race html make:" + str(last_race_id))
             race_page_generator.make_race_card_html(date_str, place_id, last_race_id)

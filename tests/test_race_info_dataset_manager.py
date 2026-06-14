@@ -619,3 +619,34 @@ def test_get_race_return_csv_for_race_smoke(old_and_new_roots):
 def test_get_race_return_csv_for_race_empty_when_missing(old_and_new_roots):
     result = new_race_info.get_race_return_csv_for_race(SAMPLE_PLACE_ID * 10**10)
     assert result.empty
+
+
+# --- save_race_return_for_race_id ------------------------------------------------
+
+
+def test_save_race_return_for_race_id_writes_per_race_csv(tmp_path, monkeypatch):
+    monkeypatch.setattr(new_race_info, "RACE_RETURNS_DATA_PATH", str(tmp_path / "race_returns"))
+
+    race_id = "202405010101"
+    df = pd.DataFrame(
+        [["単勝", "7", "140", "1"], ["複勝", "7", "110", "1"]],
+        columns=["式別", "馬番", "配当", "人気"],
+        index=[race_id, race_id],
+    )
+
+    new_race_info.save_race_return_for_race_id(race_id, df)
+
+    out_path = tmp_path / "race_returns" / "05_tokyo" / "2024" / f"{race_id}.csv"
+    assert out_path.is_file()
+
+    result = new_race_info.get_race_return_csv_for_race(race_id)
+    result.index = result.index.astype(str)
+    assert result.equals(df.rename_axis("race_id"))
+
+
+def test_save_race_return_for_race_id_noop_for_empty_dataframe(tmp_path, monkeypatch):
+    monkeypatch.setattr(new_race_info, "RACE_RETURNS_DATA_PATH", str(tmp_path / "race_returns"))
+
+    new_race_info.save_race_return_for_race_id("202405010101", pd.DataFrame())
+
+    assert not (tmp_path / "race_returns").exists()

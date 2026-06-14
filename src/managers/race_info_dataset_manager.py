@@ -20,6 +20,11 @@ CSVの読み込み・書き込み・永続化を担う。
 旧 src/legacy_datasets/race_returns.py のうち、配当結果のフォーマット・永続化
 （get_race_returns_csv, save_race_returns_dataset, split_race_returns_csv）を移植。
 スクレイピング・更新オーケストレーション（scrape_race_returns_dataframe 以降）は別フェーズで対応する。
+
+旧 src/RacePrediction/calc_returns.py の save_each_race_return_csv を
+save_race_return_for_race_id として移植。1レース分の配当結果を
+data/race_info/race_returns/{place}/{year}/{race_id}.csv に保存する
+（get_race_return_csv_for_race と同じ構成のper-race CSV）。
 """
 
 import os
@@ -470,3 +475,23 @@ def get_race_return_csv_for_race(race_id):
     if not df.empty:
         df.index.name = "race_id"
     return df
+
+
+def save_race_return_for_race_id(race_id, race_returns_df):
+    """1レース分の配当結果を data/race_info/race_returns/{place}/{year}/{race_id}.csv に保存する
+
+    旧 src/RacePrediction/calc_returns.py の save_each_race_return_csv を移植したもの。
+
+    Args:
+        race_id (str): race_id
+        race_returns_df (pd.DataFrame): race_idの配当結果（列はmodel.RACE_RETURNS_COLUMNS）
+    """
+    if race_returns_df is None or race_returns_df.empty:
+        return
+
+    place_id = int(str(race_id)[4:6])
+    year = int(str(race_id)[:4])
+
+    out_dir = os.path.join(RACE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1], str(year))
+    os.makedirs(out_dir, exist_ok=True)
+    race_returns_df.to_csv(os.path.join(out_dir, f"{race_id}.csv"))
