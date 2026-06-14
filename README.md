@@ -11,8 +11,8 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 
 **全体は未完了。** データ収集・蓄積系（Chronicle / Atlas / Reaper 相当）、
 予想エンジン（Oracle）、HTML生成系（Forge）、配信系（Herald・予想テキスト生成＋配信、
-配当結果レポート）は新構造への移行が完了しているが、日次配信オーケストレーション
-（`post_daily_race.py`等）と旧ファイルのクリーンアップ（大部分）は未着手。
+配当結果レポート）、日次配信オーケストレーション（`post_daily_race.py`等）は
+新構造への移行が完了しているが、旧ファイルのクリーンアップ（大部分）は未着手。
 
 ### 完了済み
 
@@ -28,6 +28,7 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 | race_card / HTML生成（Forge） | `src/RacePrediction/race_card.py` / `make_time_id_list.py`（出力先のみ）, `web/src/generators/{race_pages,horse_info,daily_index,make_race_card_html}.py` | `src/managers/{race_card_dataset_manager,html_manager}.py`, `src/logic/html_generator/{race_page_generator,horse_report_generator,daily_index_generator}.py`, `src/utils/format_data.py`, `public_html/` |
 | race_card（出馬表生成） | `src/RacePrediction/race_card.py`（`make_race_card`/`extract_peds_for_display`）, ver2.0 `libs/scraping.py`（`scrape_race_card`） | `src/logic/prediction/race_card_builder.py`（`make_race_card`）, `src/datasets/race_card/transform.py`, `src/logic/scraping/netkeiba_scraper.py`（`scrape_race_card`） |
 | 配当結果CSV保存（race_day_scheduler用） | `src/RacePrediction/calc_returns.py`（`get_race_return`/`save_each_race_return_csv`） | `src/logic/scraping/netkeiba_scraper.py`（`scrape_race_returns_dataframe`）, `src/managers/race_info_dataset_manager.py`（`save_race_return_for_race_id`） |
+| カレンダー更新（race_day_scheduler用） | `web/src/generators/date_index.py`（`add_race_day`） | `src/managers/html_manager.py`（`add_race_day`、`public_html/assets/js/raceDays.js`を更新） |
 | 予想テキスト生成・配信（Herald） | `src/RacePrediction/make_text.py`（`extract_top5_pred`/`make_race_text`）, `libs/{mail_api,post_text}.py` | `src/output/prediction_publisher.py` |
 | 配当結果レポート（Herald残部） | `src/RacePrediction/calc_returns.py`（`get_win_result`/`get_place_result`/`get_trio_box_result`/`post_race_rerurns`）, `src/RacePrediction/make_text.py`（`write_{win,place,trio}_hit_text`/`make_return_text`） | `src/output/return_report.py` |
 | 日次レース結果保存 | `src/RacePrediction/daily_race_results.py`（`save_each_race_result_csv`/`save_day_race_result_each`/`get_each_race_results`） | `src/logic/scraping/netkeiba_scraper.py`（`scrape_day_race_result`）, `src/managers/race_result_dataset_manager.py`（`save_race_result_for_race_id`）, `src/logic/scheduler/race_result_scheduler.py`（`update_daily_race_results`） |
@@ -39,10 +40,6 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 - **Oracle オフライン学習パイプライン**: `src/PredictionModels/LightGBM/`の`make_dataset_for_train`,
   `lightGBM_rank_train`, `prediction_rank`, `weekly_update_dataset_for_train`,
   `make_annual_dataset` 等は対象外（旧実装のまま、ver2.0データパスを参照し続ける）
-- **race_day_scheduler内の未移植依存**: `src/logic/scheduler/race_day_scheduler.py`
-  （日次配信オーケストレーション本体）は、以下の旧実装をそのまま呼び出しており対象外:
-  - `web/src/generators/date_index.py`の`add_race_day`（Forgeのカレンダー機能。
-    web/の整理はフェーズ5）
 - **race_card.pyのバッチ/CLI専用ロジック**: `src/RacePrediction/race_card.py`の
   `daily_race_card`/`get_race_info`（`__main__`のバッチ処理）、および
   `src/RacePrediction/make_time_id_list.py`（`get_race_id.get_daily_id`に依存）は、
@@ -62,12 +59,11 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 （Forge）、予想テキスト生成・メール/X配信・配当結果レポート
 （Herald・`src/output/{prediction_publisher,return_report}.py`）、
 配当結果CSV保存（`netkeiba_scraper.scrape_race_returns_dataframe` /
-`race_info_dataset_manager.save_race_return_for_race_id`）、
-日次配信オーケストレーション本体（`src/logic/scheduler/race_day_scheduler.py`）は
-新実装で動かせる**。
-**ただし`race_day_scheduler`が呼び出すカレンダー更新（`add_race_day`）は上記「未対応」の
-旧実装依存のまま。実運用は現状`bat/TodayRace/post_today_race.bat`がver2.0側の
-`post_daily_race.py`を呼んでおり、このリファクタリングによる影響はない。**
+`race_info_dataset_manager.save_race_return_for_race_id`）、カレンダー更新
+（`html_manager.add_race_day`）、日次配信オーケストレーション本体
+（`src/logic/scheduler/race_day_scheduler.py`）は新実装で動かせる**。
+**実運用は現状`bat/TodayRace/post_today_race.bat`がver2.0側の`post_daily_race.py`を
+呼んでおり、このリファクタリングによる影響はない。**
 
 ## 2. ディレクトリ構成（新実装部分）
 
@@ -94,7 +90,7 @@ src/
 │   ├── past_performance_dataset_manager.py
 │   ├── race_info_dataset_manager.py   # race_returnsも含む
 │   ├── race_card_dataset_manager.py   # 出馬表+score/rank・per-raceレース情報・race_time_id_list
-│   └── html_manager.py                # public_html/への書き出し・存在確認
+│   └── html_manager.py                # public_html/への書き出し・存在確認・カレンダー更新（add_race_day）
 ├── logic/
 │   ├── scraping/
 │   │   ├── common.py             # HTTP/HTML共通処理
@@ -376,6 +372,7 @@ pytest
 | `tests/test_race_prediction_engine.py` | Oracle（日次予想エンジン）の特徴量生成・LightGBM推論・新旧出力比較 |
 | `tests/test_race_card_dataset_manager.py` | race_card（出馬表+score/rank・per-raceレース情報・race_time_id_list）の保存・取得 |
 | `tests/test_race_card_builder.py`（一部 network） | 出馬表生成（`race_card_builder.make_race_card`、`race_card/transform.py`の各純粋関数）の新旧出力比較 |
+| `tests/test_html_manager.py` | カレンダー更新（`html_manager.add_race_day`）の新旧出力比較 |
 | `tests/test_horse_report_generator.py` | Forge: 出走馬詳細レポート（血統・近走・芝ダートサマリ）のHTML生成 |
 | `tests/test_race_page_generator.py` | Forge: レース個別ページのHTML生成（コース別データ・出走馬レポート埋め込み） |
 | `tests/test_daily_index_generator.py` | Forge: 日次レース一覧ページのHTML生成 |

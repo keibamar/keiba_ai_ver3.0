@@ -9,9 +9,8 @@ save_each_race_return_csv）は src.logic.scraping.netkeiba_scraper.
 scrape_race_returns_dataframe / src.managers.race_info_dataset_manager.
 save_race_return_for_race_id に置き換えた。
 
-以下は新構造に同等実装が無いため、旧モジュールをそのまま呼び出す:
-- web/src/generators/date_index.py の add_race_day
-  （Forgeのカレンダー機能。web/の整理はフェーズ5）
+カレンダー更新（旧 web/src/generators/date_index.py の add_race_day）は
+src.managers.html_manager.add_race_day に置き換えた。
 """
 
 import datetime
@@ -24,15 +23,12 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# add_race_day（Forgeのカレンダー機能、web/の整理はフェーズ5）
-sys.path.append(r"C:\keiba_ai\keiba_ai_ver2.0\web\src")
-from generators.date_index import add_race_day  # noqa: E402
-
 from src.config import constants, paths  # noqa: E402
 from src.logic.html_generator import daily_index_generator, race_page_generator  # noqa: E402
 from src.logic.prediction import race_card_builder  # noqa: E402
 from src.logic.scraping import netkeiba_scraper  # noqa: E402
 from src.managers import (  # noqa: E402
+    html_manager,
     race_card_dataset_manager,
     race_info_dataset_manager,
     race_result_dataset_manager,
@@ -75,7 +71,7 @@ def post_daily_race_pred(race_day=date.today()):
     """
     date_str = race_day.strftime("%Y%m%d")
     time_id_list = race_card_dataset_manager.get_time_id_list(race_day)
-    add_race_day(race_day)
+    html_manager.add_race_day(race_day)
     daily_index_generator.make_daily_index_page(race_day)
     # 過去一週間のindexを再作成（リンクの生成）
     for delta_day in range(1, 8):

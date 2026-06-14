@@ -2,6 +2,10 @@
 
 レースページ・日次インデックスのHTML書き出し・存在確認・日付ディレクトリ一覧を提供する。
 旧 web/site/races/ の新しい置き場所。
+
+また、旧 web/src/generators/date_index.py の add_race_day を移植し、
+public_html/assets/js/raceDays.js（カレンダーが参照するwindow.racedays）への
+日付追加も提供する。
 """
 
 import os
@@ -10,6 +14,8 @@ import re
 from src.config import paths
 
 DAY_DIR_PATTERN = re.compile(r"^\d{8}$")
+
+RACE_DAYS_JS_PATH = os.path.join(paths.PUBLIC_HTML_ASSETS_PATH, "js", "raceDays.js")
 
 
 def get_race_page_dir(date_str):
@@ -44,3 +50,48 @@ def list_race_day_dirs():
         for name in os.listdir(paths.PUBLIC_HTML_RACES_PATH)
         if DAY_DIR_PATTERN.match(name) and os.path.isdir(os.path.join(paths.PUBLIC_HTML_RACES_PATH, name))
     )
+
+
+def add_race_day(race_day):
+    """public_html/assets/js/raceDays.js の window.racedays に日付を追加する
+
+    旧 web/src/generators/date_index.py の add_race_day を移植したもの。
+
+    Args:
+        race_day (date): 追加する日付
+    """
+    new_day = race_day.strftime("%Y%m%d")
+
+    if not os.path.exists(RACE_DAYS_JS_PATH):
+        os.makedirs(os.path.dirname(RACE_DAYS_JS_PATH), exist_ok=True)
+        with open(RACE_DAYS_JS_PATH, "w", encoding="utf-8") as f:
+            f.write(f'window.racedays = [\n  "{new_day}"\n];\n')
+        return
+
+    with open(RACE_DAYS_JS_PATH, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    if "window.racedays" not in content:
+        raise ValueError("raceDays.js に window.racedays 配列が見つかりません")
+
+    # すでに存在する場合は追加しない
+    if new_day in content:
+        return
+
+    # 最後の "]" の直前に追加
+    lines = content.strip().splitlines()
+    new_content = []
+    added = False
+    for line in lines:
+        if line.strip().startswith("]") and not added:
+            # 前の要素の末尾に , がなければ追加
+            if not new_content[-1].strip().endswith(","):
+                new_content[-1] = new_content[-1] + ","
+            new_content.append(f'  "{new_day}"')
+            new_content.append("];")
+            added = True
+        else:
+            new_content.append(line)
+
+    with open(RACE_DAYS_JS_PATH, "w", encoding="utf-8") as f:
+        f.write("\n".join(new_content) + "\n")
