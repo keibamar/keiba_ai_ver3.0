@@ -554,3 +554,87 @@ def test_update_total_average_time_matches_old(old_and_new_roots):
     new_df = pd.read_csv(new_csv, dtype=str)
     old_df["ground_state"] = old_df["ground_state"].replace("不", "不良")
     assert old_df.equals(new_df)
+
+
+# --- Forge: average_pops/average_weights/average_frames/average_times getter（スモークテスト） ---
+#
+# 2019〜2026年分のバックフィル済みの実データ（data/race_info/average_pops 等、
+# place_id=2 = 02_hakodate）を読み込み、Forgeが必要とする列が存在することを確認する。
+
+
+@pytest.mark.parametrize("top3", [False, True])
+def test_get_total_average_pops_csv_smoke(top3):
+    df = new_race_info.get_total_average_pops_csv(SAMPLE_PLACE_ID, top3=top3)
+    assert not df.empty
+    assert "avg_pop" in df.columns
+
+
+@pytest.mark.parametrize("top3", [False, True])
+def test_get_annual_average_pops_csv_smoke(top3):
+    df = new_race_info.get_annual_average_pops_csv(SAMPLE_PLACE_ID, 2019, top3=top3)
+    assert not df.empty
+    assert "avg_pop" in df.columns
+
+
+def test_get_total_winner_weight_csv_smoke():
+    df = new_race_info.get_total_winner_weight_csv(SAMPLE_PLACE_ID)
+    assert not df.empty
+    assert "馬体重" in df.columns
+
+
+def test_get_annual_winner_weight_csv_smoke():
+    df = new_race_info.get_annual_winner_weight_csv(SAMPLE_PLACE_ID, 2019)
+    assert not df.empty
+    assert "馬体重" in df.columns
+
+
+@pytest.mark.parametrize("top3", [False, True])
+def test_get_total_average_frames_csv_smoke(top3):
+    df = new_race_info.get_total_average_frames_csv(SAMPLE_PLACE_ID, top3=top3)
+    assert not df.empty
+    assert "race_type" in df.columns
+
+
+@pytest.mark.parametrize("top3", [False, True])
+def test_get_annual_average_frames_csv_smoke(top3):
+    df = new_race_info.get_annual_average_frames_csv(SAMPLE_PLACE_ID, 2019, top3=top3)
+    assert not df.empty
+    assert "race_type" in df.columns
+
+
+def test_get_total_winner_time_csv_smoke():
+    df = new_race_info.get_total_winner_time_csv(SAMPLE_PLACE_ID)
+    assert not df.empty
+    assert "race_type" in df.columns
+
+
+def test_get_annual_winner_time_csv_smoke():
+    df = new_race_info.get_annual_winner_time_csv(SAMPLE_PLACE_ID, 2019)
+    assert not df.empty
+    assert "race_type" in df.columns
+
+
+# --- Forge: get_race_return_csv_for_race（スモークテスト） ---------------------------------
+
+
+def test_get_race_return_csv_for_race_smoke(old_and_new_roots):
+    old_root, new_root = old_and_new_roots
+
+    src = os.path.join(paths.DATA_PATH, "RaceReturns", SAMPLE_PLACE, "2019_race_returns.csv")
+    race_returns_dir = new_root / "race_info" / "race_returns" / SAMPLE_PLACE
+    race_returns_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy(src, race_returns_dir / "2019_race_returns.csv")
+
+    new_race_info.split_race_returns_csv(SAMPLE_PLACE_ID, 2019)
+
+    split_dir = race_returns_dir / "2019"
+    race_id = sorted(p.stem for p in split_dir.iterdir())[0]
+
+    result = new_race_info.get_race_return_csv_for_race(race_id)
+    assert not result.empty
+    assert result.index.name == "race_id"
+
+
+def test_get_race_return_csv_for_race_empty_when_missing(old_and_new_roots):
+    result = new_race_info.get_race_return_csv_for_race(SAMPLE_PLACE_ID * 10**10)
+    assert result.empty

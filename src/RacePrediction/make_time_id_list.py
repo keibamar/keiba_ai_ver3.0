@@ -15,23 +15,19 @@ import name_header
 import make_text
 import race_card
 
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from src.managers import race_card_dataset_manager
+
 def save_time_id_list(race_day = date.today(), time_id_list = list()):
     """time_id_listをCSVファイルで保存
         Args:
             race_day(date) : レース開催日(初期値:今日)
             time_id_list(list) : レース開催日の[race_time, race_id]のリスト
     """
-    try:
-        str_day = race_day.strftime("%Y%m%d")
-        folder_path = name_header.TEXT_PATH + "race_calendar/race_time_id_list"
-        if not os.path.isdir(folder_path):
-            os.mkdir(folder_path)
-        if any(time_id_list):
-            # DataFrameを作成
-            time_id_list_df = pd.DataFrame(time_id_list, columns=["race_time", "race_id", "race_name"])
-            time_id_list_df.to_csv(folder_path + "//" + str(str_day) + ".csv")
-    except Exception as e:
-        make_time_id_list_error(e)
+    race_card_dataset_manager.save_time_id_list(race_day, time_id_list)
 
 def get_time_id_list(race_day = date.today()):
     """ time_id_listを取得
@@ -40,21 +36,7 @@ def get_time_id_list(race_day = date.today()):
         Returns:
             time_id_list(list) : レース開催日の[race_time, race_id]のリスト
     """
-    time_id_list = []
-    try:
-        # CSVファイルからデータを読み込む
-        str_day = race_day.strftime("%Y%m%d")
-        folder_path = name_header.TEXT_PATH + "race_calendar/race_time_id_list"
-        filename = folder_path + "//" + str(str_day) + ".csv"
-        # ファイルの存在を確認
-        if os.path.exists(filename):
-            df = pd.read_csv(filename, dtype=str)
-            # データフレームをリストに変換
-            time_id_list = df[["race_time", "race_id"]].values.tolist()
-        return time_id_list
-    except Exception as e:
-        make_time_id_list_error(e)
-        return time_id_list
+    return race_card_dataset_manager.get_time_id_list(race_day)
 
 def make_time_id_list_error(e):
     """ エラー時動作を記載する 

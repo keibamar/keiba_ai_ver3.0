@@ -222,6 +222,20 @@ def update_average_pops(place_id, year):
         total_top3.to_csv(os.path.join(out_dir, "total_average_pops_top3.csv"))
 
 
+def get_annual_average_pops_csv(place_id, year, top3=False):
+    """data/race_info/average_pops/{place}/{year}_average_pops[_top3].csv を取得する"""
+    suffix = "_top3" if top3 else ""
+    path = os.path.join(AVERAGE_POPS_DATA_PATH, PLACE_LIST[place_id - 1], f"{year}_average_pops{suffix}.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
+
+
+def get_total_average_pops_csv(place_id, top3=False):
+    """data/race_info/average_pops/{place}/total_average_pops[_top3].csv を取得する"""
+    suffix = "_top3" if top3 else ""
+    path = os.path.join(AVERAGE_POPS_DATA_PATH, PLACE_LIST[place_id - 1], f"total_average_pops{suffix}.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
+
+
 def update_winners_weight(place_id, year):
     """指定の開催場・年について、勝ち馬の平均馬体重の集計結果を更新する"""
     out_dir = os.path.join(AVERAGE_WEIGHTS_DATA_PATH, PLACE_LIST[place_id - 1])
@@ -234,6 +248,18 @@ def update_winners_weight(place_id, year):
     total_winner = analyze_winner_weights_multi_years(place_id, start_year=2019, current_year=year)
     if not total_winner.empty:
         total_winner.to_csv(os.path.join(out_dir, "total_winner_weight.csv"))
+
+
+def get_annual_winner_weight_csv(place_id, year):
+    """data/race_info/average_weights/{place}/{year}_winner_weight.csv を取得する"""
+    path = os.path.join(AVERAGE_WEIGHTS_DATA_PATH, PLACE_LIST[place_id - 1], f"{year}_winner_weight.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
+
+
+def get_total_winner_weight_csv(place_id):
+    """data/race_info/average_weights/{place}/total_winner_weight.csv を取得する"""
+    path = os.path.join(AVERAGE_WEIGHTS_DATA_PATH, PLACE_LIST[place_id - 1], "total_winner_weight.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
 
 
 def update_average_frame_and_horse(place_id, year):
@@ -256,6 +282,20 @@ def update_average_frame_and_horse(place_id, year):
     total_top3 = analyze_frame_and_horse_top3_multi_years(place_id, start_year=2019, current_year=year)
     if not total_top3.empty:
         total_top3.to_csv(os.path.join(out_dir, "total_average_frames_top3.csv"))
+
+
+def get_annual_average_frames_csv(place_id, year, top3=False):
+    """data/race_info/average_frames/{place}/{year}_average_frames[_top3].csv を取得する"""
+    suffix = "_top3" if top3 else ""
+    path = os.path.join(AVERAGE_FRAMES_DATA_PATH, PLACE_LIST[place_id - 1], f"{year}_average_frames{suffix}.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
+
+
+def get_total_average_frames_csv(place_id, top3=False):
+    """data/race_info/average_frames/{place}/total_average_frames[_top3].csv を取得する"""
+    suffix = "_top3" if top3 else ""
+    path = os.path.join(AVERAGE_FRAMES_DATA_PATH, PLACE_LIST[place_id - 1], f"total_average_frames{suffix}.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
 
 
 # --- 勝ち馬の上り/通過 --------------------------------------------------------
@@ -292,6 +332,18 @@ def update_winner_time(place_id, year):
     total_df = analyze_winners_multi_years(place_id, start_year=2019, current_year=year)
     if not total_df.empty:
         total_df.to_csv(os.path.join(out_dir, "total_winner_time.csv"))
+
+
+def get_annual_winner_time_csv(place_id, year):
+    """data/race_info/average_times/{place}/{year}_winner_time.csv を取得する"""
+    path = os.path.join(AVERAGE_TIMES_DATA_PATH, PLACE_LIST[place_id - 1], f"{year}_winner_time.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
+
+
+def get_total_winner_time_csv(place_id):
+    """data/race_info/average_times/{place}/total_winner_time.csv を取得する"""
+    path = os.path.join(AVERAGE_TIMES_DATA_PATH, PLACE_LIST[place_id - 1], "total_winner_time.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
 
 
 # --- 平均タイム ---------------------------------------------------------------
@@ -406,3 +458,14 @@ def split_race_returns_csv(place_id, year):
     os.makedirs(out_dir, exist_ok=True)
     for race_id, group in df.groupby(df.index):
         group.to_csv(os.path.join(out_dir, f"{race_id}.csv"))
+
+
+def get_race_return_csv_for_race(race_id):
+    """data/race_info/race_returns/{place}/{year}/{race_id}.csv を取得する"""
+    year = str(race_id)[:4]
+    place_id = int(str(race_id)[4:6])
+    path = os.path.join(RACE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1], year, f"{race_id}.csv")
+    df = read_csv_or_empty(path, dtype=str, index_col=0)
+    if not df.empty:
+        df.index.name = "race_id"
+    return df

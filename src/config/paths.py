@@ -18,8 +18,13 @@ PREDICTION_MODEL_PATH = os.path.join(PREDICTION_DATA_PATH, "models")
 PREDICTION_DATASET_PATH = os.path.join(PREDICTION_DATA_PATH, "datasets")
 PREDICTION_PERFORMANCE_PATH = os.path.join(PREDICTION_DATA_PATH, "performance")
 
+# race_card（出馬表+score/rank）日次出力。旧 RACE_CARDS_PATH の新しい置き場所。
+RACE_CARD_DATA_PATH = os.path.join(DATA_PATH, "race_card")
+
 # HTML公開ディレクトリ（Git管理対象）
 PUBLIC_HTML_PATH = os.path.join(PROJECT_ROOT, "public_html")
+PUBLIC_HTML_RACES_PATH = os.path.join(PUBLIC_HTML_PATH, "races")
+PUBLIC_HTML_ASSETS_PATH = os.path.join(PUBLIC_HTML_PATH, "assets")
 
 # テキストデータ（レースカレンダー等の補助データ）
 TEXTS_PATH = os.path.join(PROJECT_ROOT, "texts")

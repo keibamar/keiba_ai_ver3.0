@@ -374,3 +374,21 @@ def test_update_peds_dataset_matches_old(tmp_path, monkeypatch):
 
     assert old_csv.is_file() and new_csv.is_file()
     assert pd.read_csv(old_csv, dtype=str).equals(pd.read_csv(new_csv, dtype=str))
+
+
+# --- Forge: get_total_peds_results_csv / get_annual_peds_results_csv（スモークテスト） -------
+
+
+def test_get_total_peds_results_csv_smoke():
+    df = new_peds_results.get_total_peds_results_csv(PLACE_ID, "ダート", 1000, "良")
+    assert not df.empty
+
+
+def test_get_annual_peds_results_csv_smoke():
+    df = new_peds_results.get_annual_peds_results_csv(PLACE_ID, YEAR, "ダート", 1000, "良")
+    assert not df.empty
+
+
+def test_get_total_peds_results_csv_empty_when_missing():
+    df = new_peds_results.get_total_peds_results_csv(PLACE_ID, "存在しない", 9999, "良")
+    assert df.empty

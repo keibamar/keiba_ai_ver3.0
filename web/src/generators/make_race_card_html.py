@@ -15,6 +15,8 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 LIBS_PATH = os.path.join(PROJECT_ROOT, "libs")
 if LIBS_PATH not in sys.path:
     sys.path.insert(0, LIBS_PATH)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 # src/legacy_datasets を import パスに追加
 DATAS_PATH = os.path.join(PROJECT_ROOT, "src/legacy_datasets")
@@ -26,12 +28,13 @@ RACEPRED_PATH = os.path.join(PROJECT_ROOT, "src/RacePrediction")
 if RACEPRED_PATH not in sys.path:
     sys.path.insert(0, RACEPRED_PATH)
 
-from generators.date_index import add_race_day    
+from generators.date_index import add_race_day
 from generators.daily_index import make_daily_index_page
 from generators.race_pages import make_daily_race_card_html
 
+from src.managers import race_info_dataset_manager
+
 # libs 配下のモジュールは sys.path に追加後にインポート
-import analysis_race_info
 import make_time_id_list
 import race_card
 import daily_race_results
@@ -58,7 +61,7 @@ def make_html_prev_day(race_day = date.today() + timedelta(days=1)):
                 # csvファイルで出力
                 race_card.save_race_cards(race_card_df, race_day, race_id)
                 race_card.save_race_info_df(race_info_df, race_day, race_id)
-                analysis_race_info.update_horse_name_id_map(race_card_df)
+                race_info_dataset_manager.update_horse_name_id_map(race_card_df)
             except :
                 print("Make RaceCard Error:", race_id)
             (time_id_list).pop(0)

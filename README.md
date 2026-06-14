@@ -9,9 +9,9 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 
 ## 1. リファクタリングの進捗状況（2026-06-14時点）
 
-**全体は未完了。** データ収集・蓄積系（Chronicle / Atlas / Reaper 相当）と
-予想エンジン（Oracle）は新構造への移行が完了しているが、HTML生成・配信系
-（Forge / Herald）と旧ファイルのクリーンアップは未着手。
+**全体は未完了。** データ収集・蓄積系（Chronicle / Atlas / Reaper 相当）、
+予想エンジン（Oracle）、HTML生成系（Forge）は新構造への移行が完了しているが、
+配信系（Herald）と旧ファイルのクリーンアップは未着手。
 
 ### 完了済み
 
@@ -24,20 +24,20 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 | config / utils | `libs/name_header.py` 等 | `src/config/{paths,constants,lists}.py`, `src/utils/file_utils.py` |
 | 認証情報 | コード内ハードコード | `.env`（`libs/mail_api.py`, `libs/post_text.py` が読み込み） |
 | 予想エンジン（Oracle・日次予想パスのみ） | `src/PredictionModels/LightGBM/{make_dataset,prediction}.py`, `src/RacePrediction/day_race_prediction.py` | `src/logic/prediction/race_prediction_engine.py`（`day_race_prediction.py` はこれへの薄いリダイレクトとして残置） |
+| race_card / HTML生成（Forge） | `src/RacePrediction/race_card.py` / `make_time_id_list.py`（出力先のみ）, `web/src/generators/{race_pages,horse_info,daily_index,make_race_card_html}.py` | `src/managers/{race_card_dataset_manager,html_manager}.py`, `src/logic/html_generator/{race_page_generator,horse_report_generator,daily_index_generator}.py`, `src/utils/format_data.py`, `public_html/` |
 
 ### 未対応（今後のフェーズ）
 
-- **Forge（HTML生成）**: `web/src/generators/*` → `src/logic/html_generator/`, `src/managers/html_manager.py`, `public_html/`
 - **Herald（配信）**: `make_text.py` / `mail_api.py` / `post_text.py` → `src/output/prediction_publisher.py`
 - **average_calculator**: 集計ロジックの一部 → `src/logic/calculators/average_calculator.py`
 - **Oracle オフライン学習パイプライン**: `src/PredictionModels/LightGBM/`の`make_dataset_for_train`,
   `lightGBM_rank_train`, `prediction_rank`, `weekly_update_dataset_for_train`,
   `make_annual_dataset` 等は対象外（旧実装のまま、ver2.0データパスを参照し続ける）
-- **クリーンアップ**: `libs/`, `src/legacy_datasets/`, `src/RacePrediction/`, `web/src/config/path.py` 等の削除（呼び出し元を新実装に切り替えた後）
+- **クリーンアップ**: `libs/`, `src/legacy_datasets/`, `src/RacePrediction/`, `web/`等の削除（呼び出し元を新実装に切り替えた後）
 
-→ **データ収集・蓄積（週次/月次/年次更新）と予想エンジンの日次予想パス（Oracle）は
-新実装で動かせる**。
-**HTML出力・メール/X配信は、現状すべて旧実装（`src/RacePrediction/`, `bat/`配下）
+→ **データ収集・蓄積（週次/月次/年次更新）、予想エンジンの日次予想パス（Oracle）、
+レースページ・日次インデックスのHTML生成（Forge）は新実装で動かせる**。
+**メール/X配信（Herald）は、現状旧実装（`src/RacePrediction/`, `bat/`配下）
 のままで、このリファクタリングによる影響はない。**
 
 ## 2. ディレクトリ構成（新実装部分）
@@ -49,7 +49,8 @@ src/
 │   ├── constants.py         #   PLACE_LIST, BETTING_TYPE_LIST等
 │   └── lists.py
 ├── utils/
-│   └── file_utils.py         # CSV読み込み等の共通ヘルパー
+│   ├── file_utils.py         # CSV読み込み等の共通ヘルパー
+│   └── format_data.py        # HTML生成で使う表データ整形（format_date, merge_rank_score等）
 ├── datasets/                 # Dataset層（構造・変換・バリデーション、I/Oなし）
 │   ├── race_schedule/
 │   ├── race_result/
@@ -61,7 +62,9 @@ src/
 │   ├── horse_peds_dataset_manager.py
 │   ├── peds_results_dataset_manager.py
 │   ├── past_performance_dataset_manager.py
-│   └── race_info_dataset_manager.py   # race_returnsも含む
+│   ├── race_info_dataset_manager.py   # race_returnsも含む
+│   ├── race_card_dataset_manager.py   # 出馬表+score/rank・per-raceレース情報・race_time_id_list
+│   └── html_manager.py                # public_html/への書き出し・存在確認
 └── logic/
     ├── scraping/
     │   ├── common.py             # HTTP/HTML共通処理
@@ -72,16 +75,41 @@ src/
     │   ├── race_returns_scheduler.py
     │   ├── horse_scheduler.py
     │   └── race_info_scheduler.py
-    └── prediction/
-        └── race_prediction_engine.py  # Oracle: 日次予想（LightGBM推論）
+    ├── prediction/
+    │   └── race_prediction_engine.py  # Oracle: 日次予想（LightGBM推論）
+    └── html_generator/                # Forge: HTML生成
+        ├── race_page_generator.py       # レース個別ページ
+        ├── horse_report_generator.py    # 出走馬詳細レポート
+        └── daily_index_generator.py     # 日次レース一覧ページ
 ```
 
-データは `data/{race_schedule,race_result,horse,race_info}/` 配下に開催場別・年別の
-CSVとして保存される（`src/config/paths.py` が単一の参照元）。
+データは `data/{race_schedule,race_result,horse,race_info,race_card}/` 配下に
+開催場別・年別のCSVとして保存される（`src/config/paths.py` が単一の参照元）。
 
 - `data/race_info/average_times/{place}/total_avg_time.csv` — コース・クラス別の
   平均走破タイム。Oracleの「過去走とのタイム差」特徴量で参照する
   （`race_info_dataset_manager.update_total_average_time(place_id, year)`で生成）。
+- `data/race_info/{average_pops,average_weights,average_frames}/{place}/` と
+  `data/race_info/average_times/{place}/total_winner_time.csv` — Forgeのレースページが
+  表示する「コース別平均人気/馬体重/枠番・馬番/上り・通過」情報。2019〜2026年分を
+  バックフィル済み（`race_info_scheduler.weekly_update_{average_pops,winners_weight,
+  average_frame_and_horse,winner_time}`で生成・更新）。
+- `data/race_card/{YYYYMMDD}/{race_id}.csv` — 出馬表+score/rank（旧 `RACE_CARDS_PATH`の
+  新しい置き場所、`race_card_dataset_manager.save_race_cards`/`get_race_cards`）。
+
+### public_html/（Forgeの出力先・Git管理対象）
+
+```
+public_html/
+├── assets/
+│   ├── css/styles.css
+│   └── js/
+└── races/
+    └── {YYYYMMDD}/
+        ├── index.html        # 日次レース一覧（daily_index_generator）
+        └── {place}R{n}.html  # レース個別ページ（race_page_generator）
+```
+
 - `data/prediction/{models,datasets}/{place}/` — Oracleの学習済みLightGBMモデル・
   学習用データセット（旧 `data/PredictionModels/LightGBM/{Models,Datasets}/` を移動）。
 
@@ -185,8 +213,28 @@ rank_df = day_race_prediction.rank_prediction(race_id, horse_ids, race_info_df, 
 ```
 
 オフライン学習パイプライン（`src/PredictionModels/LightGBM/`の学習・データセット作成系）、
-HTML生成、メール/X配信は、今回のリファクタリング対象外で、従来どおり
+メール/X配信は、今回のリファクタリング対象外で、従来どおり
 `bat/TodayRace/*.bat` 等から実行する。
+
+### 3-7. HTML生成（Forge）
+
+レース個別ページ・日次レース一覧ページを `public_html/races/{YYYYMMDD}/` に生成する。
+
+```python
+from datetime import date
+from src.logic.html_generator import race_page_generator, daily_index_generator
+
+# 指定日の全レースページ（{place}R{n}.html）を生成
+race_page_generator.make_daily_race_card_html(date.today())
+
+# 指定日のレース一覧ページ（index.html）を生成
+daily_index_generator.make_daily_index_page(date.today())
+```
+
+レースページは `data/race_card/{YYYYMMDD}/{race_id}.csv`（出馬表+score/rank）と
+`data/race_info/{place}/{year}/{race_id}.csv`（レース情報）が存在するレースのみ
+生成される。これらは `src/RacePrediction/race_card.py` / `make_time_id_list.py`
+（出力先のみ新パスにリダイレクト済み）が日次予想時に生成する。
 
 ## 4. テストの実行方法
 
@@ -218,6 +266,10 @@ pytest
 | `tests/test_race_info_dataset_manager.py` | race_info系（人気・馬体重・タイム等）の集計、race_returnsの保存・分割 |
 | `tests/test_race_returns_scheduler.py` | race_returns の週次/月次/一括更新オーケストレーション |
 | `tests/test_race_prediction_engine.py` | Oracle（日次予想エンジン）の特徴量生成・LightGBM推論・新旧出力比較 |
+| `tests/test_race_card_dataset_manager.py` | race_card（出馬表+score/rank・per-raceレース情報・race_time_id_list）の保存・取得 |
+| `tests/test_horse_report_generator.py` | Forge: 出走馬詳細レポート（血統・近走・芝ダートサマリ）のHTML生成 |
+| `tests/test_race_page_generator.py` | Forge: レース個別ページのHTML生成（コース別データ・出走馬レポート埋め込み） |
+| `tests/test_daily_index_generator.py` | Forge: 日次レース一覧ページのHTML生成 |
 
 `tests/LightGBM_test.py`, `tests/dataset_test.py`, `tests/make_text_test.py`,
 `tests/race_prediction_test.py` は旧実装（Forge/Herald相当・未移行部分）向けの既存テストで、

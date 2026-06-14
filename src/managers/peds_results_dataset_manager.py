@@ -324,6 +324,22 @@ def aggregate_total_peds_results(place_id, start_year=2019, end_year=date.today(
     print("すべてのTotal集計が完了しました ->", output_dir)
 
 
+def get_total_peds_results_csv(place_id, race_type, course_len, ground_state):
+    """data/horse/peds_results/{place}/Total/{race_type}_{course_len}m_{ground_state}.csv を取得する"""
+    path = os.path.join(
+        PEDS_RESULTS_DATA_PATH, PLACE_LIST[place_id - 1], "Total", f"{race_type}_{course_len}m_{ground_state}.csv"
+    )
+    return read_csv_or_empty(path, dtype=None)
+
+
+def get_annual_peds_results_csv(place_id, year, race_type, course_len, ground_state):
+    """data/horse/peds_results/{place}/{year}/{race_type}_{course_len}m_{ground_state}.csv を取得する"""
+    path = os.path.join(
+        PEDS_RESULTS_DATA_PATH, PLACE_LIST[place_id - 1], str(year), f"{race_type}_{course_len}m_{ground_state}.csv"
+    )
+    return read_csv_or_empty(path, dtype=None)
+
+
 def update_peds_dataset(place_id, day=date.today()):
     """指定したコースの指定日から、1週間分のpeds_datasetを更新する
 

@@ -20,6 +20,12 @@ import past_performance
 
 import day_race_prediction
 
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from src.managers import race_card_dataset_manager
+
 def make_race_card_error(e):
     """ エラー時動作を記載する 
         Args:
@@ -35,14 +41,7 @@ def save_race_cards(race_card_df, race_day, race_id):
             race_day(date) : レース開催日
             race_id(int) : race_id
     """
-    try:
-        str_day = race_day.strftime("%Y%m%d")
-        folder_path = name_header.DATA_PATH + "RaceCards//" + str_day
-        if not os.path.isdir(folder_path):
-            os.mkdir(folder_path)
-        race_card_df.to_csv(folder_path + "//" + str(race_id) + ".csv")
-    except Exception as e:
-        make_race_card_error(e)
+    race_card_dataset_manager.save_race_cards(race_card_df, race_day, race_id)
 
 def save_race_info_df(race_info_df, race_day, race_id):
     """レース情報データセットの保存
@@ -51,16 +50,7 @@ def save_race_info_df(race_info_df, race_day, race_id):
             race_day(date) : レース開催日
             race_id(int) : race_id
     """
-    try:
-        str_day = race_day.strftime("%Y%m%d")
-        year = str_day[:4]
-        place_id = int(str(race_id)[4] + str(race_id)[5])
-        folder_path = name_header.DATA_PATH + "RaceInfo//" + name_header.PLACE_LIST[place_id - 1] + "//" + year  + "//"
-        if not os.path.isdir(folder_path):
-            os.mkdir(folder_path)
-        race_info_df.to_csv(folder_path + "//" + str(race_id) + ".csv")
-    except Exception as e:
-        make_race_card_error(e)
+    race_card_dataset_manager.save_race_info_df(race_info_df, race_day, race_id)
 
 def get_race_info(race_id):
     """レース情報(レース名・発走時刻)を取得
@@ -78,21 +68,9 @@ def get_race_cards(race_day, race_id):
             race_day(date) : レース開催日
             race_id(int) : race_id
         Returns:
-            race_card_df(pd.DataFrame) : 
+            race_card_df(pd.DataFrame) :
     """
-    try:
-        str_day = race_day.strftime("%Y%m%d")
-        folder_path = name_header.DATA_PATH + "RaceCards/" + str_day + "//" + str(race_id) + ".csv"
-        if not os.path.isfile(folder_path):
-            print("not pred_data")  
-            race_card_df = pd.DataFrame()
-        else:
-            race_card_df = pd.read_csv(folder_path, index_col = 0)
-        
-        return race_card_df
-    except Exception as e:
-        make_race_card_error(e)
-        return pd.DataFrame()
+    return race_card_dataset_manager.get_race_cards(race_day, race_id)
 
 def extract_peds_for_display(horse_peds):
     """出馬表用に父，母，母父のみ抽出
