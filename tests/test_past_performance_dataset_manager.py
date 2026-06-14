@@ -1,64 +1,67 @@
-"""src/datasets/horse, src/managers/past_performance_dataset_manager.py の出力が
-旧 src/legacy_datasets/past_performance.py（race_resultsベースの実装）と
-一致することを確認するテスト（オフライン）。
+"""src/datasets/horse, src/managers/past_performance_dataset_manager.py のテスト（オフライン）。
 
-旧実装はパスとして name_header.DATA_PATH（ver2.0のdata/）を参照するため、
-旧実装の比較対象テストでは tmp_path 配下に "RaceResults"/"PastPerformance" フォルダを
-作って name_header.DATA_PATH をそこに向ける。新実装は src.config.paths の
-RACE_RESULT_DATA_PATH / past_performance_dataset_manager.PAST_PERFORMANCE_DATA_PATH を
-同様に向ける。
+src/datasets/horse/transform.py の純粋関数と、
+src/managers/past_performance_dataset_manager.py のCRUD・変換系関数を、
+新実装単体で検証する。実データの参照系テストは
+data/horse/past_performance/2007100107.csv、data/race_result/02_hakodate/2019_race_results.csv
+（確定済みのhorse_id/race_id）を用いる。
 """
 
 import os
 import shutil
-from glob import glob
 
 import pandas as pd
 import pytest
 
 from src.config import paths
-from src.datasets.horse import transform
-from src.legacy_datasets import past_performance as old_past_performance
+from src.datasets.horse import model, transform
 from src.managers import past_performance_dataset_manager as new_past_performance
 
 SAMPLE_HORSE_ID = "2007100107"
 SAMPLE_RACE_ID = "201902010101"  # 02_hakodate, 2019年, 16頭立て
 
 
-# --- 純粋関数の比較（旧 past_performance.py vs 新 src/datasets/horse/transform.py） ---
+# --- 純粋関数（src/datasets/horse/transform.py） ---
 
 
 @pytest.mark.parametrize(
-    "text",
-    ["３勝クラス", "２勝クラス", "未勝利", "新馬", "ｵｰﾌﾟﾝ", "1勝　クラス", "ｵｰﾌﾟﾝｸﾗｽ"],
-)
-def test_normalize_class_text_matches_old(text):
-    assert old_past_performance.normalize_class_text(text) == transform.normalize_class_text(text)
-
-
-@pytest.mark.parametrize(
-    "text",
+    "text, expected",
     [
-        "ムーンライトH(3勝クラス)",
-        "ジューンステークス（2勝クラス）",
-        "サラブレッドチャレンジカップ",
-        "  末尾に空白あり  ",
+        ("３勝クラス", "3勝クラス"),
+        ("２勝クラス", "2勝クラス"),
+        ("未勝利", "未勝利"),
+        ("新馬", "新馬"),
+        ("ｵｰﾌﾟﾝ", "オープン"),
+        ("1勝　クラス", "1勝クラス"),
+        ("ｵｰﾌﾟﾝｸﾗｽ", "オープンクラス"),
     ],
 )
-def test_clean_race_name_matches_old(text):
-    assert old_past_performance.clean_race_name(text) == transform.clean_race_name(text)
+def test_normalize_class_text(text, expected):
+    assert transform.normalize_class_text(text) == expected
 
 
-def test_get_past_race_id_matches_old():
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("ムーンライトH(3勝クラス)", "ムーンライトH"),
+        ("ジューンステークス（2勝クラス）", "ジューンステークス"),
+        ("サラブレッドチャレンジカップ", "サラブレッドチャレンジカップ"),
+        ("  末尾に空白あり  ", "  末尾に空白あり"),
+    ],
+)
+def test_clean_race_name(text, expected):
+    assert transform.clean_race_name(text) == expected
+
+
+def test_get_past_race_id():
     df = pd.DataFrame({"race_id": ["202301010101", "202301010102"], "着順": ["1", "2"]})
 
-    old_result = old_past_performance.get_past_race_id(df.copy())
-    new_result = transform.get_past_race_id(df.copy())
+    result = transform.get_past_race_id(df.copy())
 
-    assert old_result == new_result
+    assert result == ["202301010101", "202301010102"]
 
 
-def test_reset_horse_result_matches_old():
+def test_reset_horse_result():
     df = pd.DataFrame(
         {
             "race_id": ["202301010103", "202301010102", "202301010101"],
@@ -66,31 +69,37 @@ def test_reset_horse_result_matches_old():
         }
     )
 
-    old_result = old_past_performance.reset_horse_result(df.copy(), "202301010102")
-    new_result = transform.reset_horse_result(df.copy(), "202301010102")
+    result = transform.reset_horse_result(df.copy(), "202301010102")
 
-    assert old_result.equals(new_result)
+    assert len(result) == 1
+    assert result.iloc[0]["race_id"] == "202301010101"
+    assert result.iloc[0]["着順"] == "3"
 
 
 # --- normalize_past_performance_format ----------------------------------------
 
 
-def test_normalize_past_performance_format_new_format_matches_old():
+def test_normalize_past_performance_format_new_format_returns_real_data():
     """既存のpast_performance（新フォーマット）を読み込み、軽微な整形のみが
-    行われるパスを比較する"""
+    行われることを確認する"""
     df = pd.read_csv(
         os.path.join(paths.HORSE_DATA_PATH, "past_performance", f"{SAMPLE_HORSE_ID}.csv"), dtype=str
     )
 
-    old_result = old_past_performance.normalize_past_performance_format(df.copy())
-    new_result = transform.normalize_past_performance_format(df.copy())
+    result = transform.normalize_past_performance_format(df.copy())
 
-    assert not old_result.empty
-    assert old_result.equals(new_result)
+    assert result.shape == (47, 24)
+    assert result.columns.tolist() == model.PAST_PERFORMANCE_COLUMNS
+
+    first = result.iloc[0]
+    assert first["race_id"] == "201904010304"
+    assert first["日付"] == "2019/05/04"
+    assert first["開催"] == "新潟"
+    assert first["class"] == "オープン"
 
 
-def test_normalize_past_performance_format_old_format_matches_old():
-    """旧フォーマットのpast_performanceから新フォーマットへの変換パスを比較する"""
+def test_normalize_past_performance_format_old_format_converts():
+    """旧フォーマットのpast_performanceから新フォーマットへの変換を確認する"""
     df = pd.DataFrame(
         [
             {
@@ -120,175 +129,133 @@ def test_normalize_past_performance_format_old_format_matches_old():
         ]
     )
 
-    old_result = old_past_performance.normalize_past_performance_format(df.copy())
-    new_result = transform.normalize_past_performance_format(df.copy())
+    result = transform.normalize_past_performance_format(df.copy()).reset_index(drop=True)
 
-    assert not old_result.empty
-    assert old_result.reset_index(drop=True).equals(new_result.reset_index(drop=True))
+    assert result.shape == (1, 24)
+
+    first = result.iloc[0]
+    assert first["race_id"] == "202307030108"
+    assert first["日付"] == "2023/5/7"
+    assert first["開催"] == "中京"
+    assert first["class"] == "3勝クラス"
+    assert first["race_type"] == "ダ"
+    assert first["course_len"] == "1800"
+    assert first["着差"] == -0.2
+    assert first["馬体重"] == "480"
+    assert first["レース名"] == "ムーンライトH(3勝クラス)"
 
 
 def test_normalize_past_performance_format_empty_input():
-    old_result = old_past_performance.normalize_past_performance_format(pd.DataFrame())
-    new_result = transform.normalize_past_performance_format(pd.DataFrame())
+    result = transform.normalize_past_performance_format(pd.DataFrame())
 
-    assert old_result.empty and new_result.empty
+    assert result.empty
 
 
 # --- get_horse_id_from_race_id / get_horse_id_list_from_race_id_list -----------
 
 
-@pytest.fixture
-def old_data_root(tmp_path, monkeypatch):
-    """旧実装のname_header.DATA_PATHをtmp_path配下に向ける"""
-    monkeypatch.setattr(old_past_performance.name_header, "DATA_PATH", str(tmp_path) + "/")
-    return tmp_path
+def test_get_horse_id_from_race_id_returns_expected():
+    result = new_past_performance.get_horse_id_from_race_id(SAMPLE_RACE_ID)
+
+    assert len(result) == 16
+    assert result[0] == "2016104740"
 
 
-def test_get_horse_id_from_race_id_matches_old(old_data_root):
-    place = "02_hakodate"
-    src = os.path.join(paths.RACE_RESULT_DATA_PATH, place, "2019_race_results.csv")
-    dst_dir = old_data_root / "RaceResults" / place
-    dst_dir.mkdir(parents=True)
-    shutil.copy(src, dst_dir / "2019_race_results.csv")
+def test_get_horse_id_list_from_race_id_list_returns_expected():
+    result = new_past_performance.get_horse_id_list_from_race_id_list([SAMPLE_RACE_ID, SAMPLE_RACE_ID])
 
-    old_result = old_past_performance.get_horse_id_from_race_id(SAMPLE_RACE_ID)
-    new_result = new_past_performance.get_horse_id_from_race_id(SAMPLE_RACE_ID)
-
-    assert old_result == new_result
-    assert len(old_result) == 16
-
-
-def test_get_horse_id_list_from_race_id_list_matches_old(old_data_root):
-    place = "02_hakodate"
-    src = os.path.join(paths.RACE_RESULT_DATA_PATH, place, "2019_race_results.csv")
-    dst_dir = old_data_root / "RaceResults" / place
-    dst_dir.mkdir(parents=True)
-    shutil.copy(src, dst_dir / "2019_race_results.csv")
-
-    old_result = old_past_performance.get_horse_id_list_from_race_id_list([SAMPLE_RACE_ID, SAMPLE_RACE_ID])
-    new_result = new_past_performance.get_horse_id_list_from_race_id_list([SAMPLE_RACE_ID, SAMPLE_RACE_ID])
-
-    assert old_result == new_result
-    assert len(old_result) == 32
+    assert len(result) == 32
 
 
 # --- get_past_performance_dataset / save_past_performance_dataset (CRUD) ------
 
 
 @pytest.fixture
-def old_and_new_roots(tmp_path, monkeypatch):
-    """旧実装(name_header.DATA_PATH)と新実装(past_performance_dataset_manager.PAST_PERFORMANCE_DATA_PATH)を
-    それぞれ別のtmp_path配下に向ける
-    """
-    old_root = tmp_path / "old"
-    new_root = tmp_path / "new"
-    (old_root / "PastPerformance").mkdir(parents=True)
-    (new_root / "past_performance").mkdir(parents=True)
-
-    monkeypatch.setattr(old_past_performance.name_header, "DATA_PATH", str(old_root) + "/")
-    monkeypatch.setattr(new_past_performance, "PAST_PERFORMANCE_DATA_PATH", str(new_root / "past_performance"))
-
-    return old_root, new_root
+def new_data_root(tmp_path, monkeypatch):
+    """新実装(past_performance_dataset_manager.PAST_PERFORMANCE_DATA_PATH)をtmp_path配下に向ける"""
+    new_root = tmp_path / "past_performance"
+    monkeypatch.setattr(new_past_performance, "PAST_PERFORMANCE_DATA_PATH", str(new_root))
+    return new_root
 
 
-def test_get_past_performance_dataset_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
+def test_get_past_performance_dataset_returns_real_data():
+    df = new_past_performance.get_past_performance_dataset(SAMPLE_HORSE_ID)
 
-    src = os.path.join(paths.HORSE_DATA_PATH, "past_performance", f"{SAMPLE_HORSE_ID}.csv")
-    shutil.copy(src, old_root / "PastPerformance" / f"{SAMPLE_HORSE_ID}.csv")
-    shutil.copy(src, new_root / "past_performance" / f"{SAMPLE_HORSE_ID}.csv")
+    assert df.shape == (47, 23)
 
-    old_df = old_past_performance.get_past_performance_dataset(SAMPLE_HORSE_ID)
-    new_df = new_past_performance.get_past_performance_dataset(SAMPLE_HORSE_ID)
-
-    assert not old_df.empty
-    assert old_df.equals(new_df)
+    first = df.iloc[0]
+    assert first["日付"] == "2019/05/04"
+    assert first["開催"] == "新潟"
+    assert first["レース名"] == "障害4歳以上OP"
+    assert first["class"] == "オープン"
 
 
-def test_get_past_performance_dataset_returns_empty_for_missing_file(old_and_new_roots):
-    old_df = old_past_performance.get_past_performance_dataset("9999999999")
-    new_df = new_past_performance.get_past_performance_dataset("9999999999")
+def test_get_past_performance_dataset_returns_empty_for_missing_file(new_data_root):
+    df = new_past_performance.get_past_performance_dataset("9999999999")
 
-    assert old_df.empty and new_df.empty
+    assert df.empty
 
 
-def test_save_past_performance_dataset_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
+def test_save_past_performance_dataset_writes_csv_and_pickle(new_data_root):
+    sample_df = pd.DataFrame({"race_id": ["202301010101"], "着順": ["1"], "騎手": ["サンプル騎手"]})
 
-    sample_df = pd.DataFrame(
-        {"race_id": ["202301010101"], "着順": ["1"], "騎手": ["サンプル騎手"]}
-    )
-
-    old_past_performance.save_past_performance_dataset("8888888888", sample_df.copy())
     new_past_performance.save_past_performance_dataset("8888888888", sample_df.copy())
 
-    old_csv = old_root / "PastPerformance" / "8888888888.csv"
-    new_csv = new_root / "past_performance" / "8888888888.csv"
+    csv_path = new_data_root / "8888888888.csv"
+    pickle_path = new_data_root / "8888888888.pickle"
 
-    assert old_csv.is_file() and new_csv.is_file()
-    assert pd.read_csv(old_csv, dtype=str).equals(pd.read_csv(new_csv, dtype=str))
+    assert csv_path.is_file()
+    assert pickle_path.is_file()
+
+    df = pd.read_csv(csv_path, dtype=str, index_col=0)
+    assert df.iloc[0]["race_id"] == "202301010101"
+    assert df.iloc[0]["着順"] == "1"
+    assert df.iloc[0]["騎手"] == "サンプル騎手"
 
 
 # --- make_past_performance_dataset_from_race_results / update_past_performance ---
 
 
-@pytest.fixture(scope="module")
-def race_results_root(tmp_path_factory):
-    """data/race_result の *_race_results.csv をすべて旧形式(RaceResults/{place}/{year}_race_results.csv)
-    にコピーしたtmp領域を作成する（モジュール内のテストで共有・読み取り専用）
-    """
-    root = tmp_path_factory.mktemp("race_results_root")
-    for csv_path in glob(os.path.join(paths.RACE_RESULT_DATA_PATH, "*", "*_race_results.csv")):
-        place = os.path.basename(os.path.dirname(csv_path))
-        dst_dir = root / "RaceResults" / place
-        dst_dir.mkdir(parents=True, exist_ok=True)
-        shutil.copy(csv_path, dst_dir / os.path.basename(csv_path))
-    return root
+def test_make_past_performance_dataset_from_race_results_returns_real_data():
+    result = new_past_performance.make_past_performance_dataset_from_race_results(SAMPLE_HORSE_ID)
+
+    assert result.shape == (3, 24)
+
+    first = result.iloc[0]
+    assert first["race_id"] == "201904010304"
+    assert first["日付"] == "2019/05/04"
+    assert first["開催"] == "新潟"
+    assert first["class"] == "オープン"
+    assert first["race_type"] == "障害"
+    assert first["course_len"] == "3290"
 
 
-def test_make_past_performance_dataset_from_race_results_matches_old(race_results_root, monkeypatch):
-    monkeypatch.setattr(old_past_performance.name_header, "DATA_PATH", str(race_results_root) + "/")
-
-    old_result = old_past_performance.make_past_performance_dataset_from_race_results(SAMPLE_HORSE_ID)
-    new_result = new_past_performance.make_past_performance_dataset_from_race_results(SAMPLE_HORSE_ID)
-
-    assert not old_result.empty
-    assert old_result.equals(new_result)
-
-
-def test_update_past_performance_matches_old(race_results_root, tmp_path, monkeypatch):
-    monkeypatch.setattr(old_past_performance.name_header, "DATA_PATH", str(race_results_root) + "/")
-
+def test_update_past_performance_merges_and_normalizes(new_data_root):
+    new_data_root.mkdir(parents=True, exist_ok=True)
     src = os.path.join(paths.HORSE_DATA_PATH, "past_performance", f"{SAMPLE_HORSE_ID}.csv")
+    shutil.copy(src, new_data_root / f"{SAMPLE_HORSE_ID}.csv")
 
-    old_pp_dir = race_results_root / "PastPerformance"
-    old_pp_dir.mkdir(exist_ok=True)
-    shutil.copy(src, old_pp_dir / f"{SAMPLE_HORSE_ID}.csv")
+    result = new_past_performance.update_past_performance(SAMPLE_HORSE_ID)
 
-    new_pp_dir = tmp_path / "past_performance"
-    new_pp_dir.mkdir()
-    shutil.copy(src, new_pp_dir / f"{SAMPLE_HORSE_ID}.csv")
-    monkeypatch.setattr(new_past_performance, "PAST_PERFORMANCE_DATA_PATH", str(new_pp_dir))
+    assert result.shape == (47, 24)
+    assert result.columns.tolist() == model.PAST_PERFORMANCE_COLUMNS
 
-    old_result = old_past_performance.update_past_performance(SAMPLE_HORSE_ID)
-    new_result = new_past_performance.update_past_performance(SAMPLE_HORSE_ID)
+    first = result.iloc[0]
+    assert first["race_id"] == "201904010304"
+    assert first["日付"] == "2019/05/04"
+    assert first["着順"] == "中"
 
-    assert not old_result.empty
-    assert old_result.equals(new_result)
-
-    old_csv = old_pp_dir / f"{SAMPLE_HORSE_ID}.csv"
-    new_csv = new_pp_dir / f"{SAMPLE_HORSE_ID}.csv"
-    assert pd.read_csv(old_csv, dtype=str).equals(pd.read_csv(new_csv, dtype=str))
+    saved = pd.read_csv(new_data_root / f"{SAMPLE_HORSE_ID}.csv", dtype=str)
+    assert saved.shape == (47, 24)
 
 
 # --- ensure_past_performance_dataset ---------------------------------------------
 
 
-def test_ensure_past_performance_dataset_returns_existing(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
+def test_ensure_past_performance_dataset_returns_existing(new_data_root):
+    new_data_root.mkdir(parents=True, exist_ok=True)
     src = os.path.join(paths.HORSE_DATA_PATH, "past_performance", f"{SAMPLE_HORSE_ID}.csv")
-    shutil.copy(src, new_root / "past_performance" / f"{SAMPLE_HORSE_ID}.csv")
+    shutil.copy(src, new_data_root / f"{SAMPLE_HORSE_ID}.csv")
 
     existing = new_past_performance.get_past_performance_dataset(SAMPLE_HORSE_ID)
     result = new_past_performance.ensure_past_performance_dataset(SAMPLE_HORSE_ID)
@@ -297,14 +264,12 @@ def test_ensure_past_performance_dataset_returns_existing(old_and_new_roots):
     assert result.equals(existing)
 
 
-def test_ensure_past_performance_dataset_creates_when_missing(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
+def test_ensure_past_performance_dataset_creates_when_missing(new_data_root):
     assert new_past_performance.get_past_performance_dataset(SAMPLE_HORSE_ID).empty
 
     result = new_past_performance.ensure_past_performance_dataset(SAMPLE_HORSE_ID)
 
-    assert not result.empty
+    assert result.shape == (3, 24)
     saved = new_past_performance.get_past_performance_dataset(SAMPLE_HORSE_ID)
     assert saved.equals(result)
 
@@ -312,18 +277,14 @@ def test_ensure_past_performance_dataset_creates_when_missing(old_and_new_roots)
 # --- get_past_race_info ----------------------------------------------------------
 
 
-def test_get_past_race_info_matches_old(old_and_new_roots):
-    old_root, new_root = old_and_new_roots
-
+def test_get_past_race_info_returns_expected_shape(new_data_root):
+    new_data_root.mkdir(parents=True, exist_ok=True)
     src = os.path.join(paths.HORSE_DATA_PATH, "past_performance", f"{SAMPLE_HORSE_ID}.csv")
-    shutil.copy(src, old_root / "PastPerformance" / f"{SAMPLE_HORSE_ID}.csv")
-    shutil.copy(src, new_root / "past_performance" / f"{SAMPLE_HORSE_ID}.csv")
+    shutil.copy(src, new_data_root / f"{SAMPLE_HORSE_ID}.csv")
 
     target_df = pd.read_csv(src, dtype=str)
     race_id = target_df.iloc[0]["race_id"]
 
-    old_result = old_past_performance.get_past_race_info(SAMPLE_HORSE_ID, race_id, 5)
-    new_result = new_past_performance.get_past_race_info(SAMPLE_HORSE_ID, race_id, 5)
+    result = new_past_performance.get_past_race_info(SAMPLE_HORSE_ID, race_id, 5)
 
-    assert not old_result.empty
-    assert old_result.equals(new_result)
+    assert result.shape == (5, 23)

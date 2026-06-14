@@ -69,9 +69,10 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
       新実装単体のアサーションに置き換え済み。`src/legacy_datasets/horse_peds.py`は、
       `src/legacy_datasets/peds_results.py`が内部で`import horse_peds`（sibling import）
       として参照しているため削除できず、フェーズ3c完了まで残置する
-    - フェーズ3b（未着手）: `tests/test_past_performance_dataset_manager.py`の新旧比較を
-      新実装単体のアサーションに置き換え、`src/legacy_datasets/past_performance.py`の
-      削除を検討
+    - フェーズ3b（完了）: `tests/test_past_performance_dataset_manager.py`の新旧比較を
+      新実装単体のアサーションに置き換え済み。`src/legacy_datasets/past_performance.py`が
+      他モジュールからsibling importされているか未確認のため、削除可否はフェーズ3cの
+      調査結果を待つ
     - フェーズ3c（未着手）: `tests/test_peds_results_dataset_manager.py`の新旧比較を
       新実装単体のアサーションに置き換え、`src/legacy_datasets/{horse_peds,peds_results}.py`の
       削除を検討（3a・3bとあわせて完了すると`src/legacy_datasets/peds_results.py`等の
@@ -403,7 +404,7 @@ pytest
 | `tests/test_race_result_dataset_manager.py` | race_result の保存・分割・集計・per-race結果保存（save_race_result_for_race_id）の新実装単体検証 |
 | `tests/test_horse_peds_dataset_manager.py` | 血統データの取得・保存・名前正規化の新実装単体検証 |
 | `tests/test_peds_results_dataset_manager.py` | 血統別成績の集計・保存 |
-| `tests/test_past_performance_dataset_manager.py` | 出走馬の過去成績の再構築 |
+| `tests/test_past_performance_dataset_manager.py` | 出走馬の過去成績の再構築・正規化・取得・保存の新実装単体検証 |
 | `tests/test_race_info_dataset_manager.py` | race_info系（人気・馬体重・タイム等）の集計、race_returnsの保存・分割・per-race配当結果保存（save_race_return_for_race_id） |
 | `tests/test_race_returns_scheduler.py` | race_returns の週次/月次/一括更新オーケストレーション |
 | `tests/test_race_result_scheduler.py` | race_result の日次結果取得オーケストレーション（update_daily_race_results） |
