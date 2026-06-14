@@ -19,7 +19,7 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 | ドメイン | 旧実装 | 新実装 |
 |---|---|---|
 | race_schedule（Chronicle） | `libs/get_race_id.py` | `src/datasets/race_schedule/`, `src/managers/race_schedule_dataset_manager.py`, `src/logic/scraping/jra_calendar_scraper.py` |
-| race_result（Atlas/Reaper） | `src/legacy_datasets/race_results.py` | `src/datasets/race_result/`, `src/managers/race_result_dataset_manager.py`, `src/logic/scraping/netkeiba_scraper.py`, `src/logic/scheduler/race_result_scheduler.py` |
+| race_result（Atlas/Reaper） | `src/legacy_datasets/race_results.py`（`tests/test_race_result_dataset_manager.py`からの参照は解消済みだが、`average_time.py`/`past_performance.py`/`horse_peds.py`/`peds_results.py`がsibling importで参照するため残置） | `src/datasets/race_result/`, `src/managers/race_result_dataset_manager.py`, `src/logic/scraping/netkeiba_scraper.py`, `src/logic/scheduler/race_result_scheduler.py` |
 | horse（Atlas） | `horse_peds.py` / `peds_results.py` / `past_performance.py` | `src/datasets/horse/`, `src/managers/{horse_peds,peds_results,past_performance}_dataset_manager.py`, `src/logic/scheduler/horse_scheduler.py` |
 | race_info / race_returns（Atlas） | `analysis_race_info.py` / `analysis_race_time.py` / `average_time.py` / `race_returns.py` | `src/datasets/race_info/`, `src/managers/race_info_dataset_manager.py`, `src/logic/scheduler/{race_info_scheduler,race_returns_scheduler}.py` |
 | config / utils | `libs/name_header.py` 等 | `src/config/{paths,constants,lists}.py`, `src/utils/file_utils.py` |
@@ -58,9 +58,12 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
     （いずれも新実装への薄いリダイレクトのみ）と、対応する identity-check テスト
     （`tests/test_daily_race_results.py`/`tests/test_post_daily_race.py`）、
     `tests/test_race_prediction_engine.py`の旧実装比較テストを削除
-  - フェーズ2（未着手）: race_result系 — `tests/test_race_result_dataset_manager.py`の
-    新旧比較を新実装単体のアサーションに置き換え、`src/legacy_datasets/race_results.py`の
-    削除を検討
+  - フェーズ2（完了）: race_result系 — `tests/test_race_result_dataset_manager.py`の
+    新旧比較を新実装単体のアサーションに置き換え済み。
+    `src/legacy_datasets/race_results.py`は、`average_time.py`/`past_performance.py`/
+    `horse_peds.py`/`peds_results.py`が内部で`import race_results`（sibling import）として
+    `race_results.get_race_results_csv`を参照しているため削除できず、
+    これらすべて（フェーズ3・4の対象）が削除されるまで残置する
   - フェーズ3（未着手）: horse系 — `tests/test_horse_peds_dataset_manager.py`/
     `tests/test_past_performance_dataset_manager.py`/
     `tests/test_peds_results_dataset_manager.py`の新旧比較を新実装単体のアサーションに
@@ -71,7 +74,8 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
     `tests/test_netkeiba_scraper.py`のrace_returns部分/`tests/test_race_returns_scheduler.py`の
     新旧比較を新実装単体のアサーションに置き換え、
     `src/legacy_datasets/{analysis_race_info,analysis_race_time,average_time,race_returns}.py`の
-    削除を検討
+    削除を検討（フェーズ3とあわせて完了すると`src/legacy_datasets/race_results.py`も
+    削除可能になる）
   - フェーズ5（未着手）: race_card/prediction系 — `tests/test_race_card_builder.py`、
     `tests/test_race_prediction_engine.py`の残り（get_time_diff新旧比較）、
     `tests/test_netkeiba_scraper.py`のrace_card部分の新旧比較を新実装単体のアサーションに
@@ -389,7 +393,7 @@ pytest
 | `tests/test_race_schedule_dataset_manager.py` | race_schedule（Chronicle）の race_id 算出系、新旧出力比較 |
 | `tests/test_jra_calendar_scraper.py`（network） | JRA開催カレンダー取得 |
 | `tests/test_netkeiba_scraper.py`（一部 network） | race_results / race_returns / 当日速報結果（scrape_day_race_result）/ 出馬表（scrape_race_card）スクレイピング、新旧比較・既知の確定結果との比較 |
-| `tests/test_race_result_dataset_manager.py` | race_result の保存・分割・集計・per-race結果保存（save_race_result_for_race_id）、新旧出力比較 |
+| `tests/test_race_result_dataset_manager.py` | race_result の保存・分割・集計・per-race結果保存（save_race_result_for_race_id）の新実装単体検証 |
 | `tests/test_horse_peds_dataset_manager.py` | 血統データの取得・保存 |
 | `tests/test_peds_results_dataset_manager.py` | 血統別成績の集計・保存 |
 | `tests/test_past_performance_dataset_manager.py` | 出走馬の過去成績の再構築 |
