@@ -304,6 +304,26 @@ def update_past_performance(horse_id):
     return updated_df
 
 
+def ensure_past_performance_dataset(horse_id):
+    """horse_idのpast_performanceデータセットが存在することを保証する
+
+    データセットが存在しない場合は、data/race_resultから
+    make_past_performance_dataset_from_race_resultsで作成して保存する。
+
+    Args:
+        horse_id (str): horse_id
+
+    Returns:
+        pd.DataFrame: horse_idのpast_performanceデータセット
+    """
+    horse_result = get_past_performance_dataset(horse_id)
+    if horse_result.empty:
+        horse_results_df = make_past_performance_dataset_from_race_results(str(horse_id))
+        save_past_performance_dataset(str(horse_id), horse_results_df)
+        horse_result = get_past_performance_dataset(horse_id)
+    return horse_result
+
+
 def get_past_race_info(horse_id, race_id, race_num):
     """当該レースより過去の指定レース数を取得する
 
@@ -316,12 +336,7 @@ def get_past_race_info(horse_id, race_id, race_num):
         pd.DataFrame: 指定レース数の過去レース結果
     """
     try:
-        horse_result = get_past_performance_dataset(horse_id)
-        if horse_result.empty:
-            horse_results_df = make_past_performance_dataset_from_race_results(str(horse_id))
-            save_past_performance_dataset(str(horse_id), horse_results_df)
-            horse_result = get_past_performance_dataset(horse_id)
-
+        horse_result = ensure_past_performance_dataset(horse_id)
         horse_result = transform.reset_horse_result(horse_result, race_id)
 
         if len(horse_result.index) > race_num:

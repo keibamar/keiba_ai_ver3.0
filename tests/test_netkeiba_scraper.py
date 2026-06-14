@@ -96,6 +96,18 @@ def test_scrape_race_returns_dataframe_matches_known_result():
 
 
 @pytest.mark.network
+def test_scrape_race_card_matches_old():
+    old_info, old_race_info_df, old_race_card_df = old_scraping.scrape_race_card(FIXED_RACE_ID)
+    new_info, new_race_info_df, new_race_card_df = netkeiba_scraper.scrape_race_card(FIXED_RACE_ID)
+
+    assert old_info == new_info
+    assert not old_race_card_df.empty
+    assert not new_race_card_df.empty
+    assert old_race_info_df.equals(new_race_info_df)
+    assert old_race_card_df.equals(new_race_card_df)
+
+
+@pytest.mark.network
 def test_old_scrape_race_returns_dataframe_is_broken():
     # 旧実装は format_type_returns_dataframe の戻り値（列名 "式別","馬番","配当","人気"）に
     # 対して .set_index(0) を呼び出すため、KeyErrorで処理全体が失敗する

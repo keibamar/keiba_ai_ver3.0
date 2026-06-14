@@ -65,6 +65,25 @@ def is_horse_peds_dataset(horse_id):
     return os.path.isfile(path)
 
 
+def get_horse_peds_dataset(horse_id):
+    """血統データ(peds_0..peds_61)を取得する。データが無い場合はスクレイピングして作成する。
+
+    Args:
+        horse_id (str): horse_id
+
+    Returns:
+        pd.DataFrame: 血統データ（列 = horse_id、行 = peds_0..peds_61。
+            取得に失敗した場合は空のDataFrame）
+    """
+    peds_data = get_horse_peds_csv(horse_id)
+    if peds_data.empty:
+        peds_data = netkeiba_scraper.scrape_horse_peds(horse_id)
+        peds_data = transform.delete_invalid_strings(peds_data)
+        save_horse_peds_dataset(horse_id, peds_data)
+        peds_data = get_horse_peds_csv(horse_id)
+    return peds_data
+
+
 def get_peds_info(horse_id):
     """血統情報(父・母父)を取得する。データが無い場合はスクレイピングして作成する。
 
@@ -75,12 +94,7 @@ def get_peds_info(horse_id):
         list: [父, 母父]
     """
     try:
-        peds_data = get_horse_peds_csv(horse_id)
-        if peds_data.empty:
-            peds_data = netkeiba_scraper.scrape_horse_peds(horse_id)
-            peds_data = transform.delete_invalid_strings(peds_data)
-            save_horse_peds_dataset(horse_id, peds_data)
-            peds_data = get_horse_peds_csv(horse_id)
+        peds_data = get_horse_peds_dataset(horse_id)
         peds_list = peds_data[str(horse_id)].tolist()
         return [peds_list[0], peds_list[4]]
     except Exception as e:

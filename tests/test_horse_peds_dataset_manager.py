@@ -87,6 +87,14 @@ def test_get_horse_peds_csv_returns_empty_for_missing_file(old_data_root):
     assert old_df.empty and new_df.empty
 
 
+def test_get_horse_peds_dataset_returns_existing_csv():
+    csv_result = new_horse_peds.get_horse_peds_csv(SAMPLE_HORSE_ID)
+    dataset_result = new_horse_peds.get_horse_peds_dataset(SAMPLE_HORSE_ID)
+
+    assert not csv_result.empty
+    assert csv_result.equals(dataset_result)
+
+
 def test_get_peds_info_matches_old(old_data_root):
     _copy_into_old_horse_peds(old_data_root, SAMPLE_HORSE_ID)
 

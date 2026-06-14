@@ -281,6 +281,34 @@ def test_update_past_performance_matches_old(race_results_root, tmp_path, monkey
     assert pd.read_csv(old_csv, dtype=str).equals(pd.read_csv(new_csv, dtype=str))
 
 
+# --- ensure_past_performance_dataset ---------------------------------------------
+
+
+def test_ensure_past_performance_dataset_returns_existing(old_and_new_roots):
+    old_root, new_root = old_and_new_roots
+
+    src = os.path.join(paths.HORSE_DATA_PATH, "past_performance", f"{SAMPLE_HORSE_ID}.csv")
+    shutil.copy(src, new_root / "past_performance" / f"{SAMPLE_HORSE_ID}.csv")
+
+    existing = new_past_performance.get_past_performance_dataset(SAMPLE_HORSE_ID)
+    result = new_past_performance.ensure_past_performance_dataset(SAMPLE_HORSE_ID)
+
+    assert not result.empty
+    assert result.equals(existing)
+
+
+def test_ensure_past_performance_dataset_creates_when_missing(old_and_new_roots):
+    old_root, new_root = old_and_new_roots
+
+    assert new_past_performance.get_past_performance_dataset(SAMPLE_HORSE_ID).empty
+
+    result = new_past_performance.ensure_past_performance_dataset(SAMPLE_HORSE_ID)
+
+    assert not result.empty
+    saved = new_past_performance.get_past_performance_dataset(SAMPLE_HORSE_ID)
+    assert saved.equals(result)
+
+
 # --- get_past_race_info ----------------------------------------------------------
 
 

@@ -11,6 +11,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from src.config.constants import BETTING_TYPE_LIST
+from src.datasets.race_card import transform as race_card_transform
 from src.datasets.race_info import model as race_info_model
 from src.datasets.race_info import transform as race_info_transform
 from src.datasets.race_result import model, transform
@@ -177,6 +178,113 @@ def scrape_horse_peds(horse_id):
     except Exception as e:
         common.scraping_error(e)
         return pd.DataFrame()
+
+
+def scrape_race_card(race_id):
+    """race_idから、出馬表情報をスクレイピングする
+
+    旧 libs/scraping.py の scrape_race_card を移植したもの。
+    レース情報のトークン列からのrace_type/course_len/class/ground_state/weatherの
+    抽出は src.datasets.race_card.transform.parse_race_card_info_tokens に切り出している。
+
+    Args:
+        race_id (str): race_id
+
+    Returns:
+        tuple: (info, race_info_df, race_card_df)
+            info (list[str]): レース情報のトークン列
+            race_info_df (pd.DataFrame): レース情報（race_type, course_len, class,
+                ground_state, weather。1行。取得失敗時は空のDataFrame）
+            race_card_df (pd.DataFrame): 出馬表（取得失敗時は空のDataFrame）
+    """
+    info = []
+    try:
+        url = "https://race.netkeiba.com/race/shutuba.html?race_id=" + str(race_id)
+        if not common.url_exists(url):
+            print("scrape_race_card: URL not found, skip", url)
+            return info, pd.DataFrame(), pd.DataFrame()
+
+        soup = common.fetch_soup(url)
+        if not common.validate_soup(
+            soup, url, "scrape_race_card", require_table=True,
+            selectors=["h1.RaceName", "div.RaceData01", "div.RaceData02"],
+        ):
+            return info, pd.DataFrame(), pd.DataFrame()
+
+        # メインとなるテーブルデータを取得
+        df = pd.read_html(str(soup))[0]
+        # 列名に半角スペースがあれば除去する
+        df = df.rename(columns=lambda x: x.replace(" ", ""))
+        # 後半部分を削除
+        df = df.iloc[:, :9]
+        df = df.drop(columns="印")
+        # multicolumnを解除
+        df.columns = df.columns.droplevel(0)
+
+        # レース情報を取得
+        texts = (
+            soup.find("h1", attrs={"class": "RaceName"}).text  # レース名
+            + " "
+            + soup.find("div", attrs={"class": "RaceData01"}).text  # 発走時刻
+            + " "
+            + soup.find("div", attrs={"class": "RaceData02"}).find_all("span")[3].text  # 馬齢
+            + " "
+            + soup.find("div", attrs={"class": "RaceData02"}).find_all("span")[4].text  # クラス
+            + " "
+            + soup.find("div", attrs={"class": "RaceData02"}).find_all("span")[5].text  # 種別
+            + " "
+            + soup.find("div", attrs={"class": "RaceData02"}).find_all("span")[6].text  # 斤量
+            + " "
+            + soup.find("div", attrs={"class": "RaceData02"}).find_all("span")[7].text  # 頭数
+        )
+        info = re.findall(r"\w+", texts)
+        # Aコースなどの表記を消去
+        info = [s for s in info if s not in ("A", "B", "C")]
+        horse_numbers = int(re.findall(r"\d+", info[-1])[0])
+
+        race_info_df = pd.DataFrame([race_card_transform.parse_race_card_info_tokens(info)])
+
+        # 厩舎名と所属を分離
+        local = []
+        for i in range(len(df)):
+            if "美浦" in str(df.at[i, "厩舎"]):
+                local.append("美浦")
+                df.at[i, "厩舎"] = str(df.at[i, "厩舎"]).replace("美浦", "")
+            elif "栗東" in str(df.at[i, "厩舎"]):
+                local.append("栗東")
+                df.at[i, "厩舎"] = str(df.at[i, "厩舎"]).replace("栗東", "")
+            else:
+                local.append(" ")
+        df["所属"] = local
+
+        # 馬ID、騎手IDをスクレイピング
+        horse_id_list = []
+        jockey_id_list = []
+        horse_list = soup.find_all("tr", attrs={"class": "HorseList"})
+        horse_count = 0
+        for horse_infos in horse_list:
+            horse_info = horse_infos.find("span", attrs={"class": "HorseName"}).find(
+                "a", attrs={"href": re.compile("https")}
+            )
+            horse_id_list.append(re.findall(r"\d+", horse_info["href"])[0])
+
+            jockey_info = horse_infos.find("td", attrs={"class": "Jockey"}).find(
+                "a", attrs={"href": re.compile("https")}
+            )
+            jockey_id_list.append(re.findall(r"\d+", jockey_info["href"])[0])
+            horse_count += 1
+            if horse_count >= horse_numbers:
+                break
+
+        df["horse_id"] = horse_id_list
+        df["jockey_id"] = jockey_id_list
+
+        # インデックスをrace_idにする
+        df.index = [race_id] * len(df)
+        return info, race_info_df, df
+    except Exception as e:
+        common.scraping_error(e)
+        return info, pd.DataFrame(), pd.DataFrame()
 
 
 def scrape_race_results_dataframe(race_id_list):

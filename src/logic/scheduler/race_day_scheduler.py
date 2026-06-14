@@ -5,8 +5,6 @@ post_daily_race_pred）を移植したもの。specifications/新設計.md で�
 race_day_scheduler.py に対応する。
 
 以下は新構造に同等実装が無いため、旧モジュールをそのまま呼び出す:
-- src/RacePrediction/race_card.py の make_race_card
-  （内部で未移植の scraping.scrape_race_card に依存）
 - src/RacePrediction/calc_returns.py の get_race_return / save_each_race_return_csv
   （README記載の「孤立した回収率レポートCSV機能」で対象外）
 - web/src/generators/date_index.py の add_race_day
@@ -23,14 +21,13 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# race_card.py / calc_returns.py の sibling import (day_race_prediction, make_text 等) を
+# calc_returns.py の sibling import (day_race_prediction, make_text 等) を
 # 解決するため、旧 src/RacePrediction を sys.path に追加する
 RACE_PREDICTION_PATH = os.path.join(PROJECT_ROOT, "src", "RacePrediction")
 if RACE_PREDICTION_PATH not in sys.path:
     sys.path.insert(0, RACE_PREDICTION_PATH)
 
 import calc_returns as old_calc_returns  # noqa: E402
-import race_card as old_race_card  # noqa: E402
 
 # add_race_day（Forgeのカレンダー機能、web/の整理はフェーズ5）
 sys.path.append(r"C:\keiba_ai\keiba_ai_ver2.0\web\src")
@@ -38,6 +35,7 @@ from generators.date_index import add_race_day  # noqa: E402
 
 from src.config import constants, paths  # noqa: E402
 from src.logic.html_generator import daily_index_generator, race_page_generator  # noqa: E402
+from src.logic.prediction import race_card_builder  # noqa: E402
 from src.logic.scraping import netkeiba_scraper  # noqa: E402
 from src.managers import (  # noqa: E402
     race_card_dataset_manager,
@@ -102,7 +100,7 @@ def post_daily_race_pred(race_day=date.today()):
             race_id = time_id_list[0][1]
             try:
                 # 予想の更新
-                race_card_df, race_info_df = old_race_card.make_race_card(race_id)
+                race_card_df, race_info_df = race_card_builder.make_race_card(race_id)
                 # csvファイルで出力
                 race_card_dataset_manager.save_race_cards(race_card_df, race_day, race_id)
                 race_card_dataset_manager.save_race_info_df(race_info_df, race_day, race_id)
