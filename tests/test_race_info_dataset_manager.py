@@ -1,6 +1,12 @@
 """src/datasets/race_info, src/managers/race_info_dataset_manager.py の出力が
 旧 src/legacy_datasets/analysis_race_info.py と一致することを確認するテスト（オフライン）。
 
+make_empty_record・analyze_*系・analyze_winners系（フェーズ4a）は新実装単体の
+アサーションに置き換え済み。新実装は src.managers.race_result_dataset_manager経由で
+src.config.paths.RACE_RESULT_DATA_PATH（実データ、読み取り専用）を参照するため、
+フィクスチャなしで実データ（data/race_result/02_hakodate/{2019,2020,2021}_race_results.csv）
+に対して直接実行できる。
+
 旧実装はパスとして name_header.DATA_PATH（ver2.0のdata/）を参照するため、
 旧実装の比較対象テストでは tmp_path 配下に "RaceResults" フォルダを作って
 name_header.DATA_PATH をそこに向ける。新実装は src.managers.race_result_dataset_manager
@@ -36,126 +42,182 @@ SAMPLE_PLACE = "02_hakodate"
 # --- 純粋関数の比較（旧 analysis_race_info.py vs 新 src/datasets/race_info/transform.py） ---
 
 
-def test_make_empty_record_matches_old():
-    old_result = old_analysis.make_empty_record("芝", "1800", "良", "未勝利")
-    new_result = transform.make_empty_record("芝", "1800", "良", "未勝利")
+def test_make_empty_record():
+    result = transform.make_empty_record("芝", "1800", "良", "未勝利")
 
-    assert old_result == new_result
+    assert result == {
+        "race_type": "芝",
+        "course_len": 1800,
+        "ground_state": "良",
+        "class": "未勝利",
+        "avg_frame": None,
+        "avg_horse": None,
+        "total_top3": 0,
+        "frame_1_top3": 0,
+        "frame_2_top3": 0,
+        "frame_3_top3": 0,
+        "frame_4_top3": 0,
+        "frame_5_top3": 0,
+        "frame_6_top3": 0,
+        "frame_7_top3": 0,
+        "frame_8_top3": 0,
+        "horse_1_top3": 0,
+        "horse_2_top3": 0,
+        "horse_3_top3": 0,
+        "horse_4_top3": 0,
+        "horse_5_top3": 0,
+        "horse_6_top3": 0,
+        "horse_7_top3": 0,
+        "horse_8_top3": 0,
+        "horse_9_top3": 0,
+        "horse_10_top3": 0,
+        "horse_11_top3": 0,
+        "horse_12_top3": 0,
+        "horse_13_top3": 0,
+        "horse_14_top3": 0,
+        "horse_15_top3": 0,
+        "horse_16_top3": 0,
+        "horse_17_top3": 0,
+        "horse_18_top3": 0,
+    }
 
 
 # --- analyze_* 系（実データ: 02_hakodate 2019〜2021） ----------------------------
 
 
-@pytest.fixture(scope="module")
-def hakodate_root(tmp_path_factory):
-    """data/race_result/02_hakodate の2019〜2021年分をRaceResults/配下にコピーしたtmp領域"""
-    root = tmp_path_factory.mktemp("hakodate_root")
-    dst_dir = root / "RaceResults" / SAMPLE_PLACE
-    dst_dir.mkdir(parents=True)
-    for year in (2019, 2020, 2021):
-        src = os.path.join(paths.RACE_RESULT_DATA_PATH, SAMPLE_PLACE, f"{year}_race_results.csv")
-        shutil.copy(src, dst_dir / f"{year}_race_results.csv")
-    return root
+def test_analyze_winner_weights_returns_real_data():
+    result = new_race_info.analyze_winner_weights(SAMPLE_PLACE_ID, 2019)
+
+    assert result.shape == (280, 5)
+    assert result.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "馬体重"]
+    first = result.iloc[0]
+    assert first["race_type"] == "芝"
+    assert first["course_len"] == 1000
+    assert first["ground_state"] == "全"
+    assert first["class"] == "all"
+    assert first["馬体重"] == 444.0
 
 
-@pytest.fixture
-def old_data_root(hakodate_root, monkeypatch):
-    """旧実装のname_header.DATA_PATHをhakodate_root配下に向ける"""
-    monkeypatch.setattr(old_analysis.name_header, "DATA_PATH", str(hakodate_root) + "/")
-    return hakodate_root
+def test_analyze_winner_weights_multi_years_returns_real_data():
+    result = new_race_info.analyze_winner_weights_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2021)
+
+    assert result.shape == (490, 5)
+    assert result.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "馬体重"]
+    assert result.iloc[0]["馬体重"] == 428.0
 
 
-def test_analyze_winner_weights_matches_old(old_data_root):
-    old_result = old_analysis.analyze_winner_weights(SAMPLE_PLACE_ID, 2019)
-    new_result = new_race_info.analyze_winner_weights(SAMPLE_PLACE_ID, 2019)
+@pytest.mark.parametrize("top3,expected_avg_pop", [(False, 9.0), (True, 5.5)])
+def test_analyze_average_pops_returns_real_data(top3, expected_avg_pop):
+    result = new_race_info.analyze_average_pops(SAMPLE_PLACE_ID, 2019, top3=top3)
 
-    assert not old_result.empty
-    assert old_result.equals(new_result)
-
-
-def test_analyze_winner_weights_multi_years_matches_old(old_data_root):
-    old_result = old_analysis.analyze_winner_weights_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2021)
-    new_result = new_race_info.analyze_winner_weights_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2021)
-
-    assert not old_result.empty
-    assert old_result.equals(new_result)
+    assert result.shape == (280, 23)
+    assert result.columns[:5].tolist() == ["race_type", "course_len", "ground_state", "class", "avg_pop"]
+    assert result.iloc[0]["avg_pop"] == expected_avg_pop
 
 
-@pytest.mark.parametrize("top3", [False, True])
-def test_analyze_average_pops_matches_old(old_data_root, top3):
-    old_result = old_analysis.analyze_average_pops(SAMPLE_PLACE_ID, 2019, top3=top3)
-    new_result = new_race_info.analyze_average_pops(SAMPLE_PLACE_ID, 2019, top3=top3)
-
-    assert not old_result.empty
-    assert old_result.equals(new_result)
-
-
-@pytest.mark.parametrize("top3", [False, True])
-def test_analyze_average_pop_multi_years_matches_old(old_data_root, top3):
-    old_result = old_analysis.analyze_average_pop_multi_years(
-        SAMPLE_PLACE_ID, start_year=2019, current_year=2021, top3=top3
-    )
-    new_result = new_race_info.analyze_average_pop_multi_years(
+@pytest.mark.parametrize("top3,expected_avg_pop", [(False, 5.32), (True, 6.02)])
+def test_analyze_average_pop_multi_years_returns_real_data(top3, expected_avg_pop):
+    result = new_race_info.analyze_average_pop_multi_years(
         SAMPLE_PLACE_ID, start_year=2019, current_year=2021, top3=top3
     )
 
-    assert not old_result.empty
-    assert old_result.equals(new_result)
+    assert result.shape == (490, 23)
+    assert result.iloc[0]["avg_pop"] == expected_avg_pop
 
 
-def test_analyze_average_frame_and_horse_matches_old(old_data_root):
-    old_result = old_analysis.analyze_average_frame_and_horse(SAMPLE_PLACE_ID, 2019)
-    new_result = new_race_info.analyze_average_frame_and_horse(SAMPLE_PLACE_ID, 2019)
+def test_analyze_average_frame_and_horse_returns_real_data():
+    result = new_race_info.analyze_average_frame_and_horse(SAMPLE_PLACE_ID, 2019)
 
-    assert not old_result.empty
-    assert old_result.equals(new_result)
-
-
-def test_analyze_frame_and_horse_multi_years_matches_old(old_data_root):
-    old_result = old_analysis.analyze_frame_and_horse_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2021)
-    new_result = new_race_info.analyze_frame_and_horse_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2021)
-
-    assert not old_result.empty
-    assert old_result.equals(new_result)
-
-
-def test_analyze_average_frame_and_horse_top3_matches_old(old_data_root):
-    old_result = old_analysis.analyze_average_frame_and_horse_top3(SAMPLE_PLACE_ID, 2019)
-    new_result = new_race_info.analyze_average_frame_and_horse_top3(SAMPLE_PLACE_ID, 2019)
-
-    assert not old_result.empty
-    assert old_result.equals(new_result)
+    assert result.shape == (280, 33)
+    assert result.columns[:7].tolist() == [
+        "race_type",
+        "course_len",
+        "ground_state",
+        "class",
+        "avg_frame",
+        "avg_horse",
+        "total_winners",
+    ]
+    first = result.iloc[0]
+    assert first["avg_frame"] == 6.0
+    assert first["avg_horse"] == 8.0
+    assert first["total_winners"] == 1
 
 
-def test_analyze_frame_and_horse_top3_multi_years_matches_old(old_data_root):
-    old_result = old_analysis.analyze_frame_and_horse_top3_multi_years(
+def test_analyze_frame_and_horse_multi_years_returns_real_data():
+    result = new_race_info.analyze_frame_and_horse_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2021)
+
+    assert result.shape == (490, 33)
+    first = result.iloc[0]
+    assert first["avg_frame"] == 3.5
+    assert first["avg_horse"] == 4.5
+    assert first["total_winners"] == 2
+
+
+def test_analyze_average_frame_and_horse_top3_returns_real_data():
+    result = new_race_info.analyze_average_frame_and_horse_top3(SAMPLE_PLACE_ID, 2019)
+
+    assert result.shape == (280, 33)
+    assert result.columns[:7].tolist() == [
+        "race_type",
+        "course_len",
+        "ground_state",
+        "class",
+        "avg_frame",
+        "avg_horse",
+        "total_top3",
+    ]
+    first = result.iloc[0]
+    assert first["avg_frame"] == 5.33
+    assert first["total_top3"] == 3
+
+
+def test_analyze_frame_and_horse_top3_multi_years_returns_real_data():
+    result = new_race_info.analyze_frame_and_horse_top3_multi_years(
         SAMPLE_PLACE_ID, start_year=2019, current_year=2021
     )
-    new_result = new_race_info.analyze_frame_and_horse_top3_multi_years(
-        SAMPLE_PLACE_ID, start_year=2019, current_year=2021
-    )
 
-    assert not old_result.empty
-    assert old_result.equals(new_result)
+    assert result.shape == (490, 33)
+    first = result.iloc[0]
+    assert first["avg_frame"] == 4.83
+    assert first["avg_horse"] == 6.0
+    assert first["total_top3"] == 6
 
 
 # --- 勝ち馬の上り/通過（analysis_race_time.py） -------------------------------------
 
 
-def test_analyze_winners_matches_old(old_data_root):
-    old_result = old_time.analyze_winners(SAMPLE_PLACE_ID, 2019)
-    new_result = new_race_info.analyze_winners(SAMPLE_PLACE_ID, 2019)
+def test_analyze_winners_returns_real_data():
+    result = new_race_info.analyze_winners(SAMPLE_PLACE_ID, 2019)
 
-    assert not old_result.empty
-    assert old_result.equals(new_result)
+    assert result.shape == (280, 9)
+    assert result.columns.tolist() == [
+        "race_type",
+        "course_len",
+        "ground_state",
+        "class",
+        "上り",
+        "通過1",
+        "通過2",
+        "通過3",
+        "通過4",
+    ]
+    first = result.iloc[0]
+    assert first["race_type"] == "芝"
+    assert first["上り"] == 34.3
+    assert first["通過1"] == 4.0
+    assert first["通過2"] == 4.0
+    assert pd.isna(first["通過3"])
 
 
-def test_analyze_winners_multi_years_matches_old(old_data_root):
-    old_result = old_time.analyze_winners_multi_years(SAMPLE_PLACE_ID, start_year=2019, year=2021)
-    new_result = new_race_info.analyze_winners_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2021)
+def test_analyze_winners_multi_years_returns_real_data():
+    result = new_race_info.analyze_winners_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2021)
 
-    assert not old_result.empty
-    assert old_result.equals(new_result)
+    assert result.shape == (490, 9)
+    first = result.iloc[0]
+    assert first["上り"] == 33.9
+    assert first["通過1"] == 4.4
+    assert first["通過2"] == 3.6
 
 
 # --- 配当結果（race_returns.py） ---------------------------------------------------
