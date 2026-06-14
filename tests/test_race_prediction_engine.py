@@ -6,9 +6,7 @@
   同一結果を返すことを確認する（旧実装はname_header.DATA_PATH(ver2.0側)を参照するため、
   tmp_path配下にコピーしてname_header.DATA_PATH / AVERAGE_TIMES_DATA_PATHを向ける）。
 - make_dataset_for_lightgbm / rank_prediction: 実データ（確定済みのrace_id/horse_id）を
-  用いて、想定どおりの列数・出力形式となること、および
-  src/RacePrediction/day_race_prediction.rank_prediction（新エンジンへのリダイレクト後）
-  が新エンジンと同一結果を返すことを確認する。
+  用いて、想定どおりの列数・出力形式となることを確認する。
 
 get_race_time_msec / calc_time_diff の旧実装比較テストは tests/test_average_calculator.py
 に分離している。
@@ -21,7 +19,6 @@ import pandas as pd
 import pytest
 
 from src.logic.prediction import race_prediction_engine as engine
-from src.RacePrediction import day_race_prediction
 from src.legacy_datasets import average_time as old_avg_time
 from src.managers import past_performance_dataset_manager, race_info_dataset_manager
 
@@ -126,12 +123,3 @@ def test_rank_prediction_returns_score_and_rank(sample_race_args):
     assert list(result.columns) == ["score", "rank"]
     assert len(result) == len(horse_ids)
     assert sorted(result["rank"].tolist()) == list(range(1, len(horse_ids) + 1))
-
-
-def test_day_race_prediction_delegates_to_engine(sample_race_args):
-    horse_ids, race_info_df, waku_df = sample_race_args
-
-    old_result = day_race_prediction.rank_prediction(SAMPLE_RACE_ID, horse_ids, race_info_df, waku_df)
-    new_result = engine.rank_prediction(SAMPLE_RACE_ID, horse_ids, race_info_df, waku_df)
-
-    assert old_result.equals(new_result)

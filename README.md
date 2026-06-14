@@ -7,7 +7,7 @@ netkeiba.com / JRA公式サイトからレースデータ・血統・配当な�
 output,config,utils}` の6層構造 × 7モジュール）への移行を、ドメインごとに
 段階的に進めている。
 
-## 1. リファクタリングの進捗状況（2026-06-14時点）
+## 1. リファクタリングの進捗状況（2026-06-15時点）
 
 **全体は未完了。** データ収集・蓄積系（Chronicle / Atlas / Reaper 相当）、
 予想エンジン（Oracle）、HTML生成系（Forge）、配信系（Herald・予想テキスト生成＋配信、
@@ -24,15 +24,15 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 | race_info / race_returns（Atlas） | `analysis_race_info.py` / `analysis_race_time.py` / `average_time.py` / `race_returns.py` | `src/datasets/race_info/`, `src/managers/race_info_dataset_manager.py`, `src/logic/scheduler/{race_info_scheduler,race_returns_scheduler}.py` |
 | config / utils | `libs/name_header.py` 等 | `src/config/{paths,constants,lists}.py`, `src/utils/file_utils.py` |
 | 認証情報 | コード内ハードコード | `.env`（`libs/mail_api.py`, `libs/post_text.py` が読み込み） |
-| 予想エンジン（Oracle・日次予想パスのみ） | `src/PredictionModels/LightGBM/{make_dataset,prediction}.py`, `src/RacePrediction/day_race_prediction.py` | `src/logic/prediction/race_prediction_engine.py`（`day_race_prediction.py` はこれへの薄いリダイレクトとして残置） |
+| 予想エンジン（Oracle・日次予想パスのみ） | `src/PredictionModels/LightGBM/{make_dataset,prediction}.py`, `src/RacePrediction/day_race_prediction.py`（削除済み） | `src/logic/prediction/race_prediction_engine.py` |
 | race_card / HTML生成（Forge） | `src/RacePrediction/race_card.py` / `make_time_id_list.py`（出力先のみ）, `web/src/generators/{race_pages,horse_info,daily_index,make_race_card_html}.py` | `src/managers/{race_card_dataset_manager,html_manager}.py`, `src/logic/html_generator/{race_page_generator,horse_report_generator,daily_index_generator}.py`, `src/utils/format_data.py`, `public_html/` |
 | race_card（出馬表生成） | `src/RacePrediction/race_card.py`（`make_race_card`/`extract_peds_for_display`）, ver2.0 `libs/scraping.py`（`scrape_race_card`） | `src/logic/prediction/race_card_builder.py`（`make_race_card`）, `src/datasets/race_card/transform.py`, `src/logic/scraping/netkeiba_scraper.py`（`scrape_race_card`） |
 | 配当結果CSV保存（race_day_scheduler用） | `src/RacePrediction/calc_returns.py`（`get_race_return`/`save_each_race_return_csv`） | `src/logic/scraping/netkeiba_scraper.py`（`scrape_race_returns_dataframe`）, `src/managers/race_info_dataset_manager.py`（`save_race_return_for_race_id`） |
 | カレンダー更新（race_day_scheduler用） | `web/src/generators/date_index.py`（`add_race_day`） | `src/managers/html_manager.py`（`add_race_day`、`public_html/assets/js/raceDays.js`を更新） |
 | 予想テキスト生成・配信（Herald） | `src/RacePrediction/make_text.py`（`extract_top5_pred`/`make_race_text`）, `libs/{mail_api,post_text}.py` | `src/output/prediction_publisher.py` |
 | 配当結果レポート（Herald残部） | `src/RacePrediction/calc_returns.py`（`get_win_result`/`get_place_result`/`get_trio_box_result`/`post_race_rerurns`）, `src/RacePrediction/make_text.py`（`write_{win,place,trio}_hit_text`/`make_return_text`） | `src/output/return_report.py` |
-| 日次レース結果保存 | `src/RacePrediction/daily_race_results.py`（`save_each_race_result_csv`/`save_day_race_result_each`/`get_each_race_results`） | `src/logic/scraping/netkeiba_scraper.py`（`scrape_day_race_result`）, `src/managers/race_result_dataset_manager.py`（`save_race_result_for_race_id`）, `src/logic/scheduler/race_result_scheduler.py`（`update_daily_race_results`） |
-| 日次配信オーケストレーション | `src/RacePrediction/post_daily_race.py`（`post_race_pred`/`post_pred_return`/`post_daily_race_pred`） | `src/logic/scheduler/race_day_scheduler.py` |
+| 日次レース結果保存 | `src/RacePrediction/daily_race_results.py`（削除済み、`save_each_race_result_csv`/`save_day_race_result_each`/`get_each_race_results`） | `src/logic/scraping/netkeiba_scraper.py`（`scrape_day_race_result`）, `src/managers/race_result_dataset_manager.py`（`save_race_result_for_race_id`）, `src/logic/scheduler/race_result_scheduler.py`（`update_daily_race_results`） |
+| 日次配信オーケストレーション | `src/RacePrediction/post_daily_race.py`（削除済み、`post_race_pred`/`post_pred_return`/`post_daily_race_pred`） | `src/logic/scheduler/race_day_scheduler.py` |
 | average_calculator（平均タイム計算） | `src/datasets/race_info/transform.py`（`calc_avg_time`/`get_avg_time_list_from_race_results_df`/`make_avg_time_dataset`/`make_average_time_datasets`/`extract_course_race_results`/`get_race_time_msec`/`calc_time_diff`） | `src/logic/calculators/average_calculator.py` |
 
 ### 未対応（今後のフェーズ）
@@ -52,7 +52,37 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
   `race_day_scheduler`からも呼ばれておらず`calc_returns.py`の`__main__`専用のため対象外。
   `name_header`/`get_race_id`/`scraping`/ver2.0の`race_card`/`race_returns`への依存は
   そのまま残置
-- **クリーンアップ**: `libs/`, `src/legacy_datasets/`, `src/RacePrediction/`, `web/`等の削除（呼び出し元を新実装に切り替えた後）
+- **クリーンアップ**: `libs/`, `src/legacy_datasets/`, `src/RacePrediction/`, `web/`等の削除（呼び出し元を新実装に切り替えた後）。
+  以下のフェーズに分割して段階的に進める。
+  - フェーズ1（完了）: `src/RacePrediction/{daily_race_results,post_daily_race,day_race_prediction}.py`
+    （いずれも新実装への薄いリダイレクトのみ）と、対応する identity-check テスト
+    （`tests/test_daily_race_results.py`/`tests/test_post_daily_race.py`）、
+    `tests/test_race_prediction_engine.py`の旧実装比較テストを削除
+  - フェーズ2（未着手）: race_result系 — `tests/test_race_result_dataset_manager.py`の
+    新旧比較を新実装単体のアサーションに置き換え、`src/legacy_datasets/race_results.py`の
+    削除を検討
+  - フェーズ3（未着手）: horse系 — `tests/test_horse_peds_dataset_manager.py`/
+    `tests/test_past_performance_dataset_manager.py`/
+    `tests/test_peds_results_dataset_manager.py`の新旧比較を新実装単体のアサーションに
+    置き換え、`src/legacy_datasets/{horse_peds,past_performance,peds_results}.py`の
+    削除を検討
+  - フェーズ4（未着手）: race_info/race_returns/average系 —
+    `tests/test_race_info_dataset_manager.py`/`tests/test_average_calculator.py`/
+    `tests/test_netkeiba_scraper.py`のrace_returns部分/`tests/test_race_returns_scheduler.py`の
+    新旧比較を新実装単体のアサーションに置き換え、
+    `src/legacy_datasets/{analysis_race_info,analysis_race_time,average_time,race_returns}.py`の
+    削除を検討
+  - フェーズ5（未着手）: race_card/prediction系 — `tests/test_race_card_builder.py`、
+    `tests/test_race_prediction_engine.py`の残り（get_time_diff新旧比較）、
+    `tests/test_netkeiba_scraper.py`のrace_card部分の新旧比較を新実装単体のアサーションに
+    置き換え、`src/RacePrediction/{race_card,calc_returns,make_time_id_list,make_text}.py`,
+    `src/legacy_datasets/{make_calender,monthly_update,weekly_update}.py`の削除を検討
+  - フェーズ6（未着手）: web/系 — `tests/test_horse_report_generator.py`、
+    `tests/test_html_manager.py`のold_date_index部分の新旧比較を新実装単体のアサーションに
+    置き換え、`web/`ディレクトリの削除を検討
+  - フェーズ7（未着手）: 最終クリーンアップ — `libs/`（ver3.0配下のコピー）、
+    `src/legacy_datasets/`・`src/RacePrediction/`・`web/`の残り全体を削除し、
+    `conftest.py`のLIBS_PATH/LEGACY_DATASETS_PATHのsys.path注入を削除
 
 → **データ収集・蓄積（週次/月次/年次更新）、予想エンジンの日次予想パス（Oracle）、
 出馬表生成（`race_card_builder.make_race_card`）、レースページ・日次インデックスのHTML生成
@@ -244,14 +274,13 @@ jra_calendar_scraper.save_race_calendar(2026, calendar_df)
 ### 3-6. 予想生成（Oracle）・配信
 
 日次予想（出走馬のAI予想ランキング算出）は `src/logic/prediction/race_prediction_engine.py`
-に移植済みで、`src/RacePrediction/day_race_prediction.py` の `rank_prediction(...)` から
-呼び出される（シグネチャ・戻り値は旧実装と同一）。`race_card.py` 等の既存呼び出し元は
-変更不要。
+に移植済み。`src/RacePrediction/race_card.py` 等の既存呼び出し元はこの
+`race_prediction_engine.rank_prediction(...)` を直接呼び出す。
 
 ```python
-from src.RacePrediction import day_race_prediction
+from src.logic.prediction import race_prediction_engine
 
-rank_df = day_race_prediction.rank_prediction(race_id, horse_ids, race_info_df, waku_df)
+rank_df = race_prediction_engine.rank_prediction(race_id, horse_ids, race_info_df, waku_df)
 ```
 
 オフライン学習パイプライン（`src/PredictionModels/LightGBM/`の学習・データセット作成系）は
@@ -378,8 +407,6 @@ pytest
 | `tests/test_daily_index_generator.py` | Forge: 日次レース一覧ページのHTML生成 |
 | `tests/test_prediction_publisher.py` | Herald: 予想テキスト生成（`extract_top5_pred`/`make_race_text`）・メール/X配信のmonkeypatchテスト |
 | `tests/test_return_report.py` | Herald残部: 配当結果レポート（`get_{win,place,trio_box}_result`/`make_return_text`/`post_race_returns`）のフィクスチャベーステスト |
-| `tests/test_daily_race_results.py` | `src/RacePrediction/daily_race_results.py`のリダイレクト（新実装関数への再エクスポート）確認 |
-| `tests/test_post_daily_race.py` | `src/RacePrediction/post_daily_race.py`のリダイレクト（race_day_schedulerへの再エクスポート）確認 |
 
 ## 5. 関連資料
 

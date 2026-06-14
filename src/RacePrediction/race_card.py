@@ -18,12 +18,11 @@ sys.path.append(r"C:\keiba_ai\keiba_ai_ver2.0\src\Datasets")
 import horse_peds
 import past_performance
 
-import day_race_prediction
-
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+from src.logic.prediction import race_prediction_engine
 from src.managers import race_card_dataset_manager
 
 def make_race_card_error(e):
@@ -129,7 +128,7 @@ def make_race_card(race_id):
     # 枠順、馬番を取得
     waku_df = pd.concat([race_card_df["枠"].reset_index(drop = True),race_card_df["馬番"].reset_index(drop = True)], axis = 1)
     # AI予想
-    rank_df = day_race_prediction.rank_prediction(race_id, horse_ids, race_info_df, waku_df)
+    rank_df = race_prediction_engine.rank_prediction(race_id, horse_ids, race_info_df, waku_df)
     #################################################################################   
 
     # 父，母，母父のみ抽出
