@@ -12,6 +12,12 @@ RACE_RESULT_DATA_PATH = os.path.join(DATA_PATH, "race_result")
 HORSE_DATA_PATH = os.path.join(DATA_PATH, "horse")
 RACE_INFO_DATA_PATH = os.path.join(DATA_PATH, "race_info")
 
+# 予想エンジン関連データ（LightGBMのモデル・データセット・性能評価）
+PREDICTION_DATA_PATH = os.path.join(DATA_PATH, "prediction")
+PREDICTION_MODEL_PATH = os.path.join(PREDICTION_DATA_PATH, "models")
+PREDICTION_DATASET_PATH = os.path.join(PREDICTION_DATA_PATH, "datasets")
+PREDICTION_PERFORMANCE_PATH = os.path.join(PREDICTION_DATA_PATH, "performance")
+
 # HTML公開ディレクトリ（Git管理対象）
 PUBLIC_HTML_PATH = os.path.join(PROJECT_ROOT, "public_html")
 

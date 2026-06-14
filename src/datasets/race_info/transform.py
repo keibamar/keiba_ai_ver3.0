@@ -7,6 +7,7 @@ race_resultsのDataFrame（"race_id"列を持つ、index_col=0でCSVを読み込
 """
 
 import datetime
+import math
 import re
 
 import numpy as np
@@ -765,3 +766,45 @@ def make_average_time_datasets(df_race_results, courses):
             )
 
     return df_avg_time.reset_index(drop=True)
+
+
+# --- タイム差 -----------------------------------------------------------------
+
+
+def get_race_time_msec(time_str):
+    """走破時計をmsecに変換する
+
+    Args:
+        time_str (str): race_resultの走破時計
+
+    Returns:
+        race_time(float): race_time(msec)
+    """
+    if type(time_str) is str:
+        time_format = "%M%S%f"
+        time_str = re.sub(r"\D", "", "0" + time_str)
+        race_time = datetime.datetime.strptime(time_str, time_format)
+        return race_time.minute * 60 * 1000 + race_time.second * 1000 + race_time.microsecond / 100000
+
+    elif math.isnan(time_str):
+        return np.nan
+
+
+def calc_time_diff(base_time, time):
+    """基準タイムとの差分を計算する(msec)
+
+    Args:
+        base_time (str): 基準タイム
+        time (float): 走破タイム
+
+    Returns:
+        diff_time(float): 基準との差分タイム
+    """
+    if type(base_time) is str:
+        base_time = int(base_time)
+
+    if math.isnan(base_time) or math.isnan(time):
+        return np.nan
+    else:
+        base_time = int(base_time)
+        return float((base_time - time) / base_time)

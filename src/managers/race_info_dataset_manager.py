@@ -309,6 +309,38 @@ def get_total_average_time_csv(place_id):
     return read_csv_or_empty(path, dtype=str, index_col=0)
 
 
+def get_time_diff(race_time, course_info):
+    """走破タイムと平均タイムとの差を算出する
+
+    Args:
+        race_time (float): 走破タイム(msec)
+        course_info (list): [place_id, race_type, course_len, ground_state, race_class]
+
+    Returns:
+        list: [time_diff, time_diff_class]（同コースの全体平均との差・同クラス平均との差）
+    """
+    place_id, race_type, course_len, ground_state, race_class = course_info[:5]
+
+    df_time = get_total_average_time_csv(place_id)
+    if df_time.empty:
+        return [0, 0]
+
+    df_time = df_time[df_time["race_type"] == race_type]
+    df_time = df_time[df_time["course_len"] == course_len]
+    df_time = df_time[df_time["ground_state"] == ground_state]
+
+    if df_time.empty:
+        return [0, 0]
+
+    avg_time = df_time[df_time["class"] == "all"].loc[:, ["avg_time"]].reset_index(drop=True).at[0, "avg_time"]
+    time_diff = transform.calc_time_diff(avg_time, race_time)
+
+    avg_time_class = df_time[df_time["class"] == race_class].loc[:, ["avg_time"]].reset_index(drop=True).at[0, "avg_time"]
+    time_diff_class = transform.calc_time_diff(avg_time_class, race_time)
+
+    return [time_diff, time_diff_class]
+
+
 def update_annual_average_time(place_id, year):
     """指定の開催場・年について、平均タイムの集計結果を更新する"""
     df_race_results = race_result_dataset_manager.get_race_results_csv(place_id, year)
