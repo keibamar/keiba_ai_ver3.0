@@ -12,7 +12,7 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 **全体は未完了。** データ収集・蓄積系（Chronicle / Atlas / Reaper 相当）、
 予想エンジン（Oracle）、HTML生成系（Forge）、配信系（Herald・予想テキスト生成＋配信のみ）は
 新構造への移行が完了しているが、配当結果レポート（Herald残部）と旧ファイルの
-クリーンアップは未着手。
+クリーンアップ（大部分）は未着手。
 
 ### 完了済み
 
@@ -315,10 +315,6 @@ pytest
 | `tests/test_race_page_generator.py` | Forge: レース個別ページのHTML生成（コース別データ・出走馬レポート埋め込み） |
 | `tests/test_daily_index_generator.py` | Forge: 日次レース一覧ページのHTML生成 |
 | `tests/test_prediction_publisher.py` | Herald: 予想テキスト生成（`extract_top5_pred`/`make_race_text`）・メール/X配信のmonkeypatchテスト |
-
-`tests/LightGBM_test.py`, `tests/dataset_test.py`, `tests/make_text_test.py`,
-`tests/race_prediction_test.py` は旧実装（Forge/Herald相当・未移行部分）向けの既存テストで、
-現在は実行可能なテスト関数を含まない（収集対象0件）。
 
 ## 5. 関連資料
 
