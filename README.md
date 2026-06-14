@@ -10,8 +10,9 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 ## 1. リファクタリングの進捗状況（2026-06-14時点）
 
 **全体は未完了。** データ収集・蓄積系（Chronicle / Atlas / Reaper 相当）、
-予想エンジン（Oracle）、HTML生成系（Forge）は新構造への移行が完了しているが、
-配信系（Herald）と旧ファイルのクリーンアップは未着手。
+予想エンジン（Oracle）、HTML生成系（Forge）、配信系（Herald・予想テキスト生成＋配信のみ）は
+新構造への移行が完了しているが、配当結果レポート（Herald残部）と旧ファイルの
+クリーンアップは未着手。
 
 ### 完了済み
 
@@ -25,20 +26,25 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 | 認証情報 | コード内ハードコード | `.env`（`libs/mail_api.py`, `libs/post_text.py` が読み込み） |
 | 予想エンジン（Oracle・日次予想パスのみ） | `src/PredictionModels/LightGBM/{make_dataset,prediction}.py`, `src/RacePrediction/day_race_prediction.py` | `src/logic/prediction/race_prediction_engine.py`（`day_race_prediction.py` はこれへの薄いリダイレクトとして残置） |
 | race_card / HTML生成（Forge） | `src/RacePrediction/race_card.py` / `make_time_id_list.py`（出力先のみ）, `web/src/generators/{race_pages,horse_info,daily_index,make_race_card_html}.py` | `src/managers/{race_card_dataset_manager,html_manager}.py`, `src/logic/html_generator/{race_page_generator,horse_report_generator,daily_index_generator}.py`, `src/utils/format_data.py`, `public_html/` |
+| 予想テキスト生成・配信（Herald） | `src/RacePrediction/make_text.py`（`extract_top5_pred`/`make_race_text`）, `libs/{mail_api,post_text}.py` | `src/output/prediction_publisher.py` |
 
 ### 未対応（今後のフェーズ）
 
-- **Herald（配信）**: `make_text.py` / `mail_api.py` / `post_text.py` → `src/output/prediction_publisher.py`
 - **average_calculator**: 集計ロジックの一部 → `src/logic/calculators/average_calculator.py`
 - **Oracle オフライン学習パイプライン**: `src/PredictionModels/LightGBM/`の`make_dataset_for_train`,
   `lightGBM_rank_train`, `prediction_rank`, `weekly_update_dataset_for_train`,
   `make_annual_dataset` 等は対象外（旧実装のまま、ver2.0データパスを参照し続ける）
+- **Herald残部（配当結果レポート・日次配信オーケストレーション）**: `make_text.make_return_text`/
+  `write_{win,place,trio}_hit_text`、`src/RacePrediction/calc_returns.py`（配当結果の的中率・
+  回収率計算。ver2.0の`race_returns`モジュール・旧`DATA_PATH/RaceReturns`に依存し移植範囲が
+  大きい）、`src/RacePrediction/post_daily_race.py`（日次配信オーケストレーションループ）は対象外
 - **クリーンアップ**: `libs/`, `src/legacy_datasets/`, `src/RacePrediction/`, `web/`等の削除（呼び出し元を新実装に切り替えた後）
 
 → **データ収集・蓄積（週次/月次/年次更新）、予想エンジンの日次予想パス（Oracle）、
-レースページ・日次インデックスのHTML生成（Forge）は新実装で動かせる**。
-**メール/X配信（Herald）は、現状旧実装（`src/RacePrediction/`, `bat/`配下）
-のままで、このリファクタリングによる影響はない。**
+レースページ・日次インデックスのHTML生成（Forge）、予想テキスト生成・メール/X配信
+（Herald・`src/output/prediction_publisher.py`）は新実装で動かせる**。
+**配当結果レポート・日次配信オーケストレーション（`bat/TodayRace/post_today_race.bat`が
+呼ぶ`post_daily_race.py`等）は、現状旧実装のままで、このリファクタリングによる影響はない。**
 
 ## 2. ディレクトリ構成（新実装部分）
 
@@ -65,22 +71,24 @@ src/
 │   ├── race_info_dataset_manager.py   # race_returnsも含む
 │   ├── race_card_dataset_manager.py   # 出馬表+score/rank・per-raceレース情報・race_time_id_list
 │   └── html_manager.py                # public_html/への書き出し・存在確認
-└── logic/
-    ├── scraping/
-    │   ├── common.py             # HTTP/HTML共通処理
-    │   ├── netkeiba_scraper.py   # race_results / race_returns / horse_peds
-    │   └── jra_calendar_scraper.py # race_calendar
-    ├── scheduler/
-    │   ├── race_result_scheduler.py
-    │   ├── race_returns_scheduler.py
-    │   ├── horse_scheduler.py
-    │   └── race_info_scheduler.py
-    ├── prediction/
-    │   └── race_prediction_engine.py  # Oracle: 日次予想（LightGBM推論）
-    └── html_generator/                # Forge: HTML生成
-        ├── race_page_generator.py       # レース個別ページ
-        ├── horse_report_generator.py    # 出走馬詳細レポート
-        └── daily_index_generator.py     # 日次レース一覧ページ
+├── logic/
+│   ├── scraping/
+│   │   ├── common.py             # HTTP/HTML共通処理
+│   │   ├── netkeiba_scraper.py   # race_results / race_returns / horse_peds
+│   │   └── jra_calendar_scraper.py # race_calendar
+│   ├── scheduler/
+│   │   ├── race_result_scheduler.py
+│   │   ├── race_returns_scheduler.py
+│   │   ├── horse_scheduler.py
+│   │   └── race_info_scheduler.py
+│   ├── prediction/
+│   │   └── race_prediction_engine.py  # Oracle: 日次予想（LightGBM推論）
+│   └── html_generator/                # Forge: HTML生成
+│       ├── race_page_generator.py       # レース個別ページ
+│       ├── horse_report_generator.py    # 出走馬詳細レポート
+│       └── daily_index_generator.py     # 日次レース一覧ページ
+└── output/
+    └── prediction_publisher.py    # Herald: 予想テキスト生成・メール/X配信
 ```
 
 データは `data/{race_schedule,race_result,horse,race_info,race_card}/` 配下に
@@ -96,6 +104,9 @@ src/
   average_frame_and_horse,winner_time}`で生成・更新）。
 - `data/race_card/{YYYYMMDD}/{race_id}.csv` — 出馬表+score/rank（旧 `RACE_CARDS_PATH`の
   新しい置き場所、`race_card_dataset_manager.save_race_cards`/`get_race_cards`）。
+- `texts/race_prediction/{YYYYMMDD}/{race_id}.txt` — 予想テキスト（メール本文・Xポスト用、
+  旧 `TEXT_PATH + "race_prediction/"` の新しい置き場所、`prediction_publisher.make_race_text`
+  が生成）。
 
 ### public_html/（Forgeの出力先・Git管理対象）
 
@@ -212,9 +223,10 @@ from src.RacePrediction import day_race_prediction
 rank_df = day_race_prediction.rank_prediction(race_id, horse_ids, race_info_df, waku_df)
 ```
 
-オフライン学習パイプライン（`src/PredictionModels/LightGBM/`の学習・データセット作成系）、
-メール/X配信は、今回のリファクタリング対象外で、従来どおり
-`bat/TodayRace/*.bat` 等から実行する。
+オフライン学習パイプライン（`src/PredictionModels/LightGBM/`の学習・データセット作成系）は
+今回のリファクタリング対象外。予想テキスト生成・メール/X配信は3-8を参照
+（配当結果レポート・日次配信オーケストレーションは旧実装のまま、`bat/TodayRace/*.bat`等から
+実行する）。
 
 ### 3-7. HTML生成（Forge）
 
@@ -235,6 +247,38 @@ daily_index_generator.make_daily_index_page(date.today())
 `data/race_info/{place}/{year}/{race_id}.csv`（レース情報）が存在するレースのみ
 生成される。これらは `src/RacePrediction/race_card.py` / `make_time_id_list.py`
 （出力先のみ新パスにリダイレクト済み）が日次予想時に生成する。
+
+### 3-8. 予想テキスト生成・配信（Herald）
+
+`src/output/prediction_publisher.py` が予想テキストの生成とメール/X(Twitter)配信を担う。
+出馬表データセット（`data/race_card/{YYYYMMDD}/{race_id}.csv`、"rank"列が必要）から
+予想テキストを生成し、`texts/race_prediction/{YYYYMMDD}/{race_id}.txt` に保存する。
+
+```python
+from datetime import date
+from src.output import prediction_publisher
+
+race_day = date.today()
+race_id = "202404040601"
+
+# 予想テキストを生成（texts/race_prediction/{YYYYMMDD}/{race_id}.txt に保存）
+prediction_publisher.make_race_text(race_day, race_id)
+
+# メール配信（.envのGMAIL_*設定でSMTP経由送信。実際にメールが送信される）
+prediction_publisher.send_race_pred(race_day, race_id)
+
+# X(Twitter)投稿（.envのX_*設定でtweepy経由投稿。実際に投稿される）
+text_path = f"texts/race_prediction/{race_day.strftime('%Y%m%d')}/{race_id}.txt"
+prediction_publisher.post_text_data(text_path)
+```
+
+`send_race_pred`/`post_text_data` はそれぞれ実際にメール送信・X投稿のAPI呼び出しを行うため、
+動作確認時は注意する（`tests/test_prediction_publisher.py` では `smtplib.SMTP_SSL`/
+`tweepy.Client` をmonkeypatchして単体テストしている）。
+
+`libs/mail_api.py`・`libs/post_text.py`・`src/RacePrediction/make_text.py`の
+`extract_top5_pred`/`make_race_text`は、後方互換のため `src.output.prediction_publisher`
+への re-export として残置している。
 
 ## 4. テストの実行方法
 
@@ -270,6 +314,7 @@ pytest
 | `tests/test_horse_report_generator.py` | Forge: 出走馬詳細レポート（血統・近走・芝ダートサマリ）のHTML生成 |
 | `tests/test_race_page_generator.py` | Forge: レース個別ページのHTML生成（コース別データ・出走馬レポート埋め込み） |
 | `tests/test_daily_index_generator.py` | Forge: 日次レース一覧ページのHTML生成 |
+| `tests/test_prediction_publisher.py` | Herald: 予想テキスト生成（`extract_top5_pred`/`make_race_text`）・メール/X配信のmonkeypatchテスト |
 
 `tests/LightGBM_test.py`, `tests/dataset_test.py`, `tests/make_text_test.py`,
 `tests/race_prediction_test.py` は旧実装（Forge/Herald相当・未移行部分）向けの既存テストで、

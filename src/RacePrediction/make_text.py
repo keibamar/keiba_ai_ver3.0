@@ -11,31 +11,20 @@ import name_header
 import get_race_id
 
 import calc_returns
-import race_card
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from src.output.prediction_publisher import extract_top5_pred, make_race_text  # noqa: E402,F401
 
 def make_test_error(e):
-    """ エラー時動作を記載する 
+    """ エラー時動作を記載する
         Args:
-            e (Exception) : エラー内容 
+            e (Exception) : エラー内容
     """
     print(__name__ + ":" + __file__)
     print(f"{e.__class__.__name__}: {e}")
-
-def extract_top5_pred(race_data_df):
-    """予想結果の上位5頭のリストを返す
-        Args:
-            race_data_df(pd.DataFrame) : 出馬表データセット
-        Returns:
-            result_list(pd.DataFrame) : 上位5頭のデータセット(昇順)
-    """
-    result_list = []
-    for i in range(1, 6):
-        temp = race_data_df[race_data_df["rank"] == i].reset_index(drop = True)
-        if not temp.empty:
-            num = temp.at[0,"馬番"]
-            name = temp.at[0,"馬名"]
-            result_list.append([num, name])
-    return result_list
 
 def write_win_hit_text(race_day, race_id_list, text_file):
     """単勝の予想結果をテキストに記述
@@ -69,60 +58,6 @@ def write_trio_hit_text(race_day, race_id_list, text_file):
     # 上位5頭三連複BOX回収率・的中率・敵流レースを抽出
     trio5_hit_rate, trio5_return_rate, trio5_hit_race = calc_returns.get_trio_box_result(race_day, race_id_list, box_num = 5)
     text_file.write("三連複(5頭BOX)回収率:" + str(round(trio5_return_rate, 1)) + "%  " + "(的中レース:" + trio5_hit_race + "R)\n")
-
-def make_race_text(race_day, race_id):
-    """レースの予想のテキスト作成
-        Args:
-            race_day(date) : レース開催日
-            race_id(int) : race_id
-    """
-    # 予想結果を抽出
-    race_data_df = race_card.get_race_cards(race_day, race_id)
-    if not "rank" in race_data_df.columns:
-        print("not rank:" + str(race_id))
-        return
-    try:
-        # 予想結果から上位5頭を抽出
-        pred_list = extract_top5_pred(race_data_df)
-
-        # テキストファイルの準備
-        folder_path = name_header.TEXT_PATH + "race_prediction/" + race_day.strftime("%Y%m%d")
-        if not os.path.isdir(folder_path):
-            os.mkdir(folder_path)
-        text_data_path = folder_path + "//" + str(race_id) + ".txt"
-        
-        f = open(text_data_path, "w", encoding = "UTF-8")
-
-        # 開催情報の抽出
-        place_id = int(str(race_id)[4] + str(race_id)[5])
-        race_num = int(str(race_id)[10] + str(race_id)[11])
-        race_info = race_card.get_race_info(race_id)
-        race_name = race_info[0]
-        start_time = str(race_info[1]) + ":" + str(race_info[2])
-
-        # 日付の出力
-        f.write(str(race_day.year) + "/" + str(race_day.month) + "/" + str(race_day.day) + "\n")
-        # 開催情報の出力
-        f.write(name_header.NAME_LIST[place_id - 1] + str(race_num) + "R" + " " + race_name + " " + start_time + "\n\n")
-        # 予想の出力
-        for rank in range(5):
-            if rank < len(pred_list):
-                f.write(" " + name_header.SYMBOL_LIST[rank] + " " + str(pred_list[rank][0]) + " " + pred_list[rank][1] + "\n")
-        f.write("\n\n")
-
-        # タグの出力
-        f.write("#MAR競馬予想\n")
-        f.write("#競馬予想AI\n")
-        f.write("#競馬 #競馬予想\n")
-        f.write("#" + name_header.NAME_LIST[place_id - 1] + "競馬場\n")
-
-        # # 9~12レースのみ名前を取得
-        # if str(race_num) == "9" or str(race_num) == "10" or str(race_num) == "11" or str(race_num) == "12" :
-        #     f.write("#" + race_name + "\n")
-    
-        f.close()
-    except Exception as e:
-        make_test_error(e)      
 
 def make_return_text(place_id, race_day = date.today()):
     """当日の予想結果のテキスト作成

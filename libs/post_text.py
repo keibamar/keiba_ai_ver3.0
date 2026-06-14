@@ -1,47 +1,14 @@
+"""X(Twitter)投稿機能（旧実装）
+
+新実装への移行に伴い、本体は src/output/prediction_publisher.py に移植済み。
+このモジュールは後方互換のための re-export。
+"""
+
 import os
 import sys
 
-import tweepy
-from dotenv import find_dotenv, load_dotenv
-import warnings
-warnings.simplefilter('ignore')
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
-sys.dont_write_bytecode = True
-
-load_dotenv(find_dotenv())
-
-# X(Twitter) APIキー（.envのX_API_KEY等で設定）
-API_KEY = os.environ["X_API_KEY"]
-API_SECRET = os.environ["X_API_SECRET"]
-ACCESS_KEY = os.environ["X_ACCESS_TOKEN"]
-ACCESS_SECRET = os.environ["X_ACCESS_TOKEN_SECRET"]
-
-def post_text_error(e):
-    """ エラー時動作を記載する 
-        Args:
-            e (Exception) : エラー内容 
-    """
-    print(__name__ + ":" + __file__)
-    print(f"{e.__class__.__name__}: {e}")
-
-def post_text_data(text_path):
-    """ テキストを投稿する 
-        Args:
-            text_path(str) : テキストのパス 
-    """
-    #Twitterの認証
-    client = tweepy.Client(consumer_key=API_KEY, consumer_secret=API_SECRET, access_token=ACCESS_KEY, access_token_secret=ACCESS_SECRET)
-    if os.path.isfile(text_path):
-        fp = open(text_path, "r", encoding="utf-8")
-        tweet_str = fp.read()
-        try:
-            # ツイートの実行
-            client.create_tweet(text = tweet_str)
-        except Exception as e:
-            post_text_error(e)
-            # print("post failed")
-            fp.close()
-            raise Exception("post failed")
-        fp.close()
-    else :
-        print("no text file")
+from src.output.prediction_publisher import post_text_data, post_text_error  # noqa: E402,F401

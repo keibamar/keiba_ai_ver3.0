@@ -29,3 +29,6 @@ PUBLIC_HTML_ASSETS_PATH = os.path.join(PUBLIC_HTML_PATH, "assets")
 # テキストデータ（レースカレンダー等の補助データ）
 TEXTS_PATH = os.path.join(PROJECT_ROOT, "texts")
 RACE_TIME_ID_LIST_PATH = os.path.join(TEXTS_PATH, "race_calendar", "race_time_id_list")
+
+# 予想テキスト（メール本文・Xポスト用）。旧 TEXT_PATH + "race_prediction/" の新しい置き場所。
+RACE_PREDICTION_TEXT_PATH = os.path.join(TEXTS_PATH, "race_prediction")  # {date}/{race_id}.txt
