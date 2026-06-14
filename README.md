@@ -60,35 +60,38 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
     `tests/test_race_prediction_engine.py`の旧実装比較テストを削除
   - フェーズ2（完了）: race_result系 — `tests/test_race_result_dataset_manager.py`の
     新旧比較を新実装単体のアサーションに置き換え済み。
-    `src/legacy_datasets/race_results.py`は、`average_time.py`/`past_performance.py`/
-    `horse_peds.py`/`peds_results.py`が内部で`import race_results`（sibling import）として
-    `race_results.get_race_results_csv`を参照しているため削除できず、
-    これらすべて（フェーズ3・4の対象）が削除されるまで残置する
-  - フェーズ3: horse系 — 3ファイル合計899行と大きいため、ファイル単位でサブフェーズに分割
+    `src/legacy_datasets/race_results.py`は、`average_time.py`（フェーズ4）/
+    `past_performance.py`/`horse_peds.py`/`peds_results.py`（フェーズ3、完了済みだが
+    ファイル自体は残置）/`monthly_update.py`/`weekly_update.py`（フェーズ5）が
+    内部で`import race_results`（sibling import）として`race_results.get_race_results_csv`を
+    参照しているため削除できず、これらすべて（フェーズ4・5の対象）が削除されるまで残置する
+  - フェーズ3（完了）: horse系 — 3ファイル合計899行と大きいため、ファイル単位でサブフェーズに分割
     - フェーズ3a（完了）: `tests/test_horse_peds_dataset_manager.py`の新旧比較を
-      新実装単体のアサーションに置き換え済み。`src/legacy_datasets/horse_peds.py`は、
-      `src/legacy_datasets/peds_results.py`が内部で`import horse_peds`（sibling import）
-      として参照しているため削除できず、フェーズ3c完了まで残置する
+      新実装単体のアサーションに置き換え済み
     - フェーズ3b（完了）: `tests/test_past_performance_dataset_manager.py`の新旧比較を
-      新実装単体のアサーションに置き換え済み。`src/legacy_datasets/past_performance.py`が
-      他モジュールからsibling importされているか未確認のため、削除可否はフェーズ3cの
-      調査結果を待つ
-    - フェーズ3c（未着手）: `tests/test_peds_results_dataset_manager.py`の新旧比較を
-      新実装単体のアサーションに置き換え、`src/legacy_datasets/{horse_peds,peds_results}.py`の
-      削除を検討（3a・3bとあわせて完了すると`src/legacy_datasets/peds_results.py`等の
-      sibling import依存が解消される）
+      新実装単体のアサーションに置き換え済み
+    - フェーズ3c（完了）: `tests/test_peds_results_dataset_manager.py`の新旧比較を
+      新実装単体のアサーションに置き換え済み
+
+    `src/legacy_datasets/{horse_peds,past_performance,peds_results}.py`は、
+    `monthly_update.py`/`weekly_update.py`/`src/RacePrediction/race_card.py`
+    （いずれもフェーズ5対象）が直接`import horse_peds`/`import past_performance`/
+    `import peds_results`として参照しているため削除できず、フェーズ5完了まで残置する
   - フェーズ4（未着手）: race_info/race_returns/average系 —
     `tests/test_race_info_dataset_manager.py`/`tests/test_average_calculator.py`/
     `tests/test_netkeiba_scraper.py`のrace_returns部分/`tests/test_race_returns_scheduler.py`の
     新旧比較を新実装単体のアサーションに置き換え、
     `src/legacy_datasets/{analysis_race_info,analysis_race_time,average_time,race_returns}.py`の
-    削除を検討（フェーズ3とあわせて完了すると`src/legacy_datasets/race_results.py`も
-    削除可能になる）
+    削除を検討（`analysis_race_info.py`は`past_performance.py`/`weekly_update.py`
+    （フェーズ5）からも参照されるため、削除にはフェーズ5の完了も必要）
   - フェーズ5（未着手）: race_card/prediction系 — `tests/test_race_card_builder.py`、
     `tests/test_race_prediction_engine.py`の残り（get_time_diff新旧比較）、
     `tests/test_netkeiba_scraper.py`のrace_card部分の新旧比較を新実装単体のアサーションに
     置き換え、`src/RacePrediction/{race_card,calc_returns,make_time_id_list,make_text}.py`,
-    `src/legacy_datasets/{make_calender,monthly_update,weekly_update}.py`の削除を検討
+    `src/legacy_datasets/{make_calender,monthly_update,weekly_update}.py`の削除を検討。
+    完了すると`src/legacy_datasets/{horse_peds,past_performance,peds_results,
+    analysis_race_info}.py`、および（フェーズ4とあわせて）`race_results.py`の
+    削除も可能になる
   - フェーズ6（未着手）: web/系 — `tests/test_horse_report_generator.py`、
     `tests/test_html_manager.py`のold_date_index部分の新旧比較を新実装単体のアサーションに
     置き換え、`web/`ディレクトリの削除を検討
@@ -403,7 +406,7 @@ pytest
 | `tests/test_netkeiba_scraper.py`（一部 network） | race_results / race_returns / 当日速報結果（scrape_day_race_result）/ 出馬表（scrape_race_card）スクレイピング、新旧比較・既知の確定結果との比較 |
 | `tests/test_race_result_dataset_manager.py` | race_result の保存・分割・集計・per-race結果保存（save_race_result_for_race_id）の新実装単体検証 |
 | `tests/test_horse_peds_dataset_manager.py` | 血統データの取得・保存・名前正規化の新実装単体検証 |
-| `tests/test_peds_results_dataset_manager.py` | 血統別成績の集計・保存 |
+| `tests/test_peds_results_dataset_manager.py` | 血統別成績の集計・取得・保存・更新の新実装単体検証 |
 | `tests/test_past_performance_dataset_manager.py` | 出走馬の過去成績の再構築・正規化・取得・保存の新実装単体検証 |
 | `tests/test_race_info_dataset_manager.py` | race_info系（人気・馬体重・タイム等）の集計、race_returnsの保存・分割・per-race配当結果保存（save_race_return_for_race_id） |
 | `tests/test_race_returns_scheduler.py` | race_returns の週次/月次/一括更新オーケストレーション |
