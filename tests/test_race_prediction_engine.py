@@ -1,14 +1,12 @@
-"""src/logic/prediction/race_prediction_engine.py の出力が旧実装と一致することを
-確認するテスト（オフライン）。
+"""src/logic/prediction/race_prediction_engine.py のテスト（オフライン）。
 
-- get_time_diff: 新 src/managers/race_info_dataset_manager.py と旧
-  src/legacy_datasets/average_time.py が、同一のtotal_avg_time.csvを参照した場合に
-  同一結果を返すことを確認する（旧実装はname_header.DATA_PATH(ver2.0側)を参照するため、
-  tmp_path配下にコピーしてname_header.DATA_PATH / AVERAGE_TIMES_DATA_PATHを向ける）。
+- get_time_diff: src/managers/race_info_dataset_manager.py の新実装単体を、
+  生成済みのtotal_avg_time.csvをtmp_path配下にコピーして
+  AVERAGE_TIMES_DATA_PATHを向けた状態で検証する。
 - make_dataset_for_lightgbm / rank_prediction: 実データ（確定済みのrace_id/horse_id）を
   用いて、想定どおりの列数・出力形式となることを確認する。
 
-get_race_time_msec / calc_time_diff の旧実装比較テストは tests/test_average_calculator.py
+get_race_time_msec / calc_time_diff の新実装単体検証は tests/test_average_calculator.py
 に分離している。
 """
 
@@ -19,7 +17,6 @@ import pandas as pd
 import pytest
 
 from src.logic.prediction import race_prediction_engine as engine
-from src.legacy_datasets import average_time as old_avg_time
 from src.managers import past_performance_dataset_manager, race_info_dataset_manager
 
 SAMPLE_PLACE_ID = 2
@@ -29,7 +26,7 @@ SAMPLE_HORSE_ID = "2020102879"
 SAMPLE_COURSE_INFO = [SAMPLE_PLACE_ID, "芝", "1200", "稍重", "未勝利"]
 
 
-# --- get_time_diff（旧 average_time.get_time_diff vs 新 race_info_dataset_manager.get_time_diff） ---
+# --- get_time_diff（race_info_dataset_manager.get_time_diff） ---
 
 
 @pytest.fixture
@@ -43,17 +40,14 @@ def avg_time_root(tmp_path):
     return tmp_path
 
 
-def test_get_time_diff_matches_old(avg_time_root, monkeypatch):
-    monkeypatch.setattr(old_avg_time.name_header, "DATA_PATH", str(avg_time_root) + "/")
+def test_get_time_diff_returns_expected(avg_time_root, monkeypatch):
     monkeypatch.setattr(race_info_dataset_manager, "AVERAGE_TIMES_DATA_PATH", str(avg_time_root / "AverageTimes"))
 
     race_time = 70000.0
 
-    old_result = old_avg_time.get_time_diff(race_time, SAMPLE_COURSE_INFO)
-    new_result = race_info_dataset_manager.get_time_diff(race_time, SAMPLE_COURSE_INFO)
+    result = race_info_dataset_manager.get_time_diff(race_time, SAMPLE_COURSE_INFO)
 
-    assert old_result == new_result
-    assert old_result != [0, 0]
+    assert result == [0.002792181890706023, 0.005342730476298738]
 
 
 def test_get_time_diff_returns_zero_when_no_data(tmp_path, monkeypatch):

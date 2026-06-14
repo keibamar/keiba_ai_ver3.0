@@ -96,25 +96,43 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
       既知の期待値比較になっており、変更不要だった
 
     フェーズ4完了に伴い`src/legacy_datasets/{analysis_race_info,analysis_race_time,
-    average_time,race_returns}.py`の削除を検討したが、いずれもフェーズ5完了まで
-    残置が必要:
+    average_time,race_returns}.py`の削除を検討したが、いずれも残置が必要:
     - `analysis_race_info.py`/`analysis_race_time.py`: `src/legacy_datasets/weekly_update.py`
-      （フェーズ5対象）が`import analysis_race_info`/`import analysis_race_time`として
+      （フェーズ7対象）が`import analysis_race_info`/`import analysis_race_time`として
       直接参照しているため削除不可
-    - `average_time.py`: `tests/test_race_prediction_engine.py`の`get_time_diff`新旧比較
-      （フェーズ5対象）が残るため削除不可
+    - `average_time.py`: `tests/test_race_prediction_engine.py`の`get_time_diff`新旧比較は
+      フェーズ5で解消済みだが、`src/legacy_datasets/{monthly_update,weekly_update}.py`
+      （フェーズ7対象）と`src/PredictionModels/LightGBM/make_dataset.py`が
+      `import average_time`として直接参照しているため削除不可
     - `race_returns.py`: `tests/test_netkeiba_scraper.py`の
       `test_old_scrape_race_returns_dataframe_is_broken`
       （旧実装が単体で例外になることを示すドキュメント的テストで新旧比較ではないが、
       旧実装への参照が残る）が残るため削除不可
-  - フェーズ5（未着手）: race_card/prediction系 — `tests/test_race_card_builder.py`、
+  - フェーズ5（完了）: race_card/prediction系 — `tests/test_race_card_builder.py`、
     `tests/test_race_prediction_engine.py`の残り（get_time_diff新旧比較）、
     `tests/test_netkeiba_scraper.py`のrace_card部分の新旧比較を新実装単体のアサーションに
-    置き換え、`src/RacePrediction/{race_card,calc_returns,make_time_id_list,make_text}.py`,
-    `src/legacy_datasets/{make_calender,monthly_update,weekly_update}.py`の削除を検討。
-    完了すると`src/legacy_datasets/{horse_peds,past_performance,peds_results,
-    analysis_race_info}.py`、および（フェーズ4とあわせて）`race_results.py`の
-    削除も可能になる
+    置き換え済み
+
+    削除候補（`src/RacePrediction/{race_card,calc_returns,make_time_id_list,make_text}.py`、
+    `src/legacy_datasets/{make_calender,monthly_update,weekly_update}.py`）を調査した結果:
+    - `src/RacePrediction/{race_card,calc_returns,make_time_id_list,make_text}.py`:
+      フェーズ5のテスト置き換えにより`tests/`からの参照は無くなったが、
+      `web/src/generators/make_race_card_html.py`（フェーズ6対象）が
+      `import race_card`/`import calc_returns`/`import make_time_id_list`として
+      直接参照し、`make_text.py`はそれらから`import make_text`として参照されているため、
+      フェーズ6完了まで削除不可
+    - `src/legacy_datasets/make_calender.py`: ver3.0内のどこからも`import`されていない
+      （`src/logic/scraping/jra_calendar_scraper.py`のdocstringにも未使用と明記済み）
+    - `src/legacy_datasets/monthly_update.py`/`weekly_update.py`: ver3.0内のどの`.py`からも
+      `import`されていない（`bat/Datasets/update_monthly.bat`/`update_weekly.bat`は
+      `keiba_ai_ver2.0\src\Datasets\`側の同名スクリプトを呼んでおり、ver3.0の
+      `src/legacy_datasets/`配下のコピーは参照されていない）
+    - 上記3ファイルはフェーズ5の対象外で、フェーズ7「最終クリーンアップ」で
+      `src/legacy_datasets/`残り全体の削除と合わせて整理する。ただし`weekly_update.py`が
+      `analysis_race_info`/`analysis_race_time`/`race_results`/`horse_peds`/`peds_results`/
+      `past_performance`を`import`していること自体が、これらモジュールの削除を妨げる
+      唯一の参照元であるため、フェーズ7で`weekly_update.py`/`monthly_update.py`を削除すれば
+      それらも削除可能になる
   - フェーズ6（未着手）: web/系 — `tests/test_horse_report_generator.py`、
     `tests/test_html_manager.py`のold_date_index部分の新旧比較を新実装単体のアサーションに
     置き換え、`web/`ディレクトリの削除を検討
@@ -426,7 +444,7 @@ pytest
 |---|---|
 | `tests/test_race_schedule_dataset_manager.py` | race_schedule（Chronicle）の race_id 算出系、新旧出力比較 |
 | `tests/test_jra_calendar_scraper.py`（network） | JRA開催カレンダー取得 |
-| `tests/test_netkeiba_scraper.py`（一部 network） | race_results / race_returns / 当日速報結果（scrape_day_race_result）/ 出馬表（scrape_race_card）スクレイピング、新旧比較・既知の確定結果との比較 |
+| `tests/test_netkeiba_scraper.py`（一部 network） | race_results / 当日速報結果（scrape_day_race_result）スクレイピングの新旧比較、race_returns / 出馬表（scrape_race_card）スクレイピングの既知の確定結果との比較 |
 | `tests/test_race_result_dataset_manager.py` | race_result の保存・分割・集計・per-race結果保存（save_race_result_for_race_id）の新実装単体検証 |
 | `tests/test_horse_peds_dataset_manager.py` | 血統データの取得・保存・名前正規化の新実装単体検証 |
 | `tests/test_peds_results_dataset_manager.py` | 血統別成績の集計・取得・保存・更新の新実装単体検証 |
@@ -436,9 +454,9 @@ pytest
 | `tests/test_race_result_scheduler.py` | race_result の日次結果取得オーケストレーション（update_daily_race_results） |
 | `tests/test_race_day_scheduler.py` | 日次配信オーケストレーション（post_race_pred/post_pred_return のテキストパス組み立て・X投稿連携） |
 | `tests/test_average_calculator.py` | average_calculator（平均タイム算出・タイム差計算）の新実装単体検証 |
-| `tests/test_race_prediction_engine.py` | Oracle（日次予想エンジン）の特徴量生成・LightGBM推論・新旧出力比較 |
+| `tests/test_race_prediction_engine.py` | Oracle（日次予想エンジン）の特徴量生成・LightGBM推論・get_time_diffの新実装単体検証 |
 | `tests/test_race_card_dataset_manager.py` | race_card（出馬表+score/rank・per-raceレース情報・race_time_id_list）の保存・取得 |
-| `tests/test_race_card_builder.py`（一部 network） | 出馬表生成（`race_card_builder.make_race_card`、`race_card/transform.py`の各純粋関数）の新旧出力比較 |
+| `tests/test_race_card_builder.py`（一部 network） | 出馬表生成（`race_card_builder.make_race_card`、`race_card/transform.py`の各純粋関数）の新実装単体検証（make_race_cardは既知の期待値との比較） |
 | `tests/test_html_manager.py` | カレンダー更新（`html_manager.add_race_day`）の新旧出力比較 |
 | `tests/test_horse_report_generator.py` | Forge: 出走馬詳細レポート（血統・近走・芝ダートサマリ）のHTML生成 |
 | `tests/test_race_page_generator.py` | Forge: レース個別ページのHTML生成（コース別データ・出走馬レポート埋め込み） |

@@ -96,15 +96,25 @@ def test_scrape_race_returns_dataframe_matches_known_result():
 
 
 @pytest.mark.network
-def test_scrape_race_card_matches_old():
-    old_info, old_race_info_df, old_race_card_df = old_scraping.scrape_race_card(FIXED_RACE_ID)
-    new_info, new_race_info_df, new_race_card_df = netkeiba_scraper.scrape_race_card(FIXED_RACE_ID)
+def test_scrape_race_card_returns_expected():
+    info, race_info_df, race_card_df = netkeiba_scraper.scrape_race_card(FIXED_RACE_ID)
 
-    assert old_info == new_info
-    assert not old_race_card_df.empty
-    assert not new_race_card_df.empty
-    assert old_race_info_df.equals(new_race_info_df)
-    assert old_race_card_df.equals(new_race_card_df)
+    assert info == [
+        "3歳未勝利", "10", "05発走", "ダ1400m", "左", "天候", "晴", "馬場", "良",
+        "サラ系３歳", "未勝利", "混", "指", "馬齢", "16頭",
+    ]
+    assert race_info_df.to_dict("records") == [
+        {"race_type": "ダート", "course_len": 1400, "weather": "晴", "ground_state": "良", "class": "未勝利"}
+    ]
+
+    assert race_card_df.shape == (16, 11)
+    assert race_card_df.columns.tolist() == [
+        "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "厩舎", "馬体重(増減)", "所属", "horse_id", "jockey_id",
+    ]
+    assert race_card_df.index.unique().tolist() == [FIXED_RACE_ID]
+    assert race_card_df.iloc[0].tolist() == [
+        1, 1, "アフロマン", "牡3", 57.0, "木幡育", "萱野", "410(+16)", "美浦", "2021107090", "01167",
+    ]
 
 
 @pytest.mark.network

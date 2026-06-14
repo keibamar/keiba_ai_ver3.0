@@ -1,30 +1,17 @@
 """src/datasets/race_card/transform.py, src/logic/prediction/race_card_builder.py のテスト
 
 parse_race_card_info_tokens / fill_race_info_defaults / extract_peds_for_display は
-純粋関数なのでオフラインで検証する。extract_peds_for_display は旧
-src/RacePrediction/race_card.py の同名関数と出力が一致することを確認する。
+純粋関数なのでオフラインで検証する。
 
 make_race_card は netkeiba.com への実通信が必要なため @pytest.mark.network を付与し、
-確定済みの固定race_idを使って旧 src/RacePrediction/race_card.make_race_card と
-新 race_card_builder.make_race_card の出力が一致することを確認する。
+確定済みの固定race_idについて、既知の期待値との比較で検証する。
 """
-
-import os
-import sys
 
 import pandas as pd
 import pytest
 
 from src.datasets.race_card import transform
 from src.logic.prediction import race_card_builder
-
-# old_race_card (src/RacePrediction/race_card.py) は内部で `import day_race_prediction` という
-# sibling importを行うため、src/RacePrediction自体をsys.pathに追加する必要がある
-RACE_PREDICTION_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src", "RacePrediction")
-if RACE_PREDICTION_PATH not in sys.path:
-    sys.path.insert(0, RACE_PREDICTION_PATH)
-
-from src.RacePrediction import race_card as old_race_card  # noqa: E402
 
 # 2024年1月27日 東京1回1日目1R（確定済みのレース。出走馬の過去成績・血統データはキャッシュ済み）
 FIXED_RACE_ID = "202405010101"
@@ -83,33 +70,37 @@ def _sample_horse_peds_df():
     return pd.DataFrame(data, index=index)
 
 
-def test_extract_peds_for_display_matches_old():
+def test_extract_peds_for_display_returns_expected():
     horse_peds_df = _sample_horse_peds_df()
 
-    old_result = old_race_card.extract_peds_for_display(horse_peds_df.copy())
-    new_result = transform.extract_peds_for_display(horse_peds_df.copy())
+    result = transform.extract_peds_for_display(horse_peds_df.copy())
 
-    assert old_result.equals(new_result)
+    assert result.shape == (3, 2)
     # 文字列インデックス("peds_0"等)に対するrenameはno-opのため、行ラベルは変化しない
-    assert new_result.index.tolist() == ["peds_0", "peds_1", "peds_4"]
+    assert result.index.tolist() == ["peds_0", "peds_1", "peds_4"]
+    assert result.columns.tolist() == ["2021107090", "2021106245"]
 
 
 # --- make_race_card（エンドツーエンド、実データ） -----------------------------------
 
 
 @pytest.mark.network
-def test_make_race_card_matches_old():
-    old_result = old_race_card.make_race_card(FIXED_RACE_ID)
-    new_result = race_card_builder.make_race_card(FIXED_RACE_ID)
+def test_make_race_card_returns_expected():
+    race_card_df, race_info_df = race_card_builder.make_race_card(FIXED_RACE_ID)
 
-    assert isinstance(old_result, tuple)
-    assert isinstance(new_result, tuple)
+    assert race_info_df.to_dict("records") == [
+        {"race_type": "ダート", "course_len": 1400, "weather": "晴", "ground_state": "良", "class": "未勝利"}
+    ]
 
-    old_card_df, old_info_df = old_result
-    new_card_df, new_info_df = new_result
+    assert race_card_df.shape == (16, 16)
+    assert race_card_df.columns.tolist() == [
+        "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "厩舎", "馬体重(増減)", "所属",
+        "horse_id", "jockey_id", "peds_0", "peds_1", "peds_4", "score", "rank",
+    ]
 
-    assert not old_card_df.empty
-    assert not new_card_df.empty
-    assert old_info_df.equals(new_info_df)
-    assert old_card_df.columns.tolist() == new_card_df.columns.tolist()
-    assert old_card_df.equals(new_card_df)
+    first = race_card_df.iloc[0]
+    assert first[["馬名", "horse_id", "peds_0", "peds_1", "peds_4"]].tolist() == [
+        "アフロマン", "2021107090", "アルアイン", "リュイールスター", "キングカメハメハ",
+    ]
+    assert first["rank"] == 16
+    assert sorted(race_card_df["rank"].tolist()) == list(range(1, 17))
