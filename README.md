@@ -160,9 +160,42 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
     - `web/`・`src/RacePrediction/{race_card,calc_returns,make_time_id_list,
       make_text}.py`の実際の削除は、フェーズ7（最終クリーンアップ）で
       `src/legacy_datasets/`の残りと合わせてまとめて行う
-  - フェーズ7（未着手）: 最終クリーンアップ — `libs/`（ver3.0配下のコピー）、
+  - フェーズ7: 最終クリーンアップ — `libs/`（ver3.0配下のコピー）、
     `src/legacy_datasets/`・`src/RacePrediction/`・`web/`の残り全体を削除し、
-    `conftest.py`のLIBS_PATH/LEGACY_DATASETS_PATHのsys.path注入を削除
+    `conftest.py`のLIBS_PATH/LEGACY_DATASETS_PATHのsys.path注入を削除。
+    調査の結果、フェーズ1〜6で対応されていなかった新旧比較テストが3件残っており、
+    一度に削除できないことが判明したため、以下のサブフェーズに分割する:
+    - フェーズ7a（完了）: `tests/test_race_schedule_dataset_manager.py`が
+      `import get_race_id as old_race_id`（`libs/get_race_id.py`）を使った
+      新旧比較になっており、`libs/get_race_id.py`の削除をブロックしていた。
+      9テスト関数すべてを新実装単体のアサーションに置き換えた:
+      - 完全一致を期待していた7関数（`get_daily_id`/`get_past_weekly_id`/
+        `get_past_year_id`/`get_year_id_all`/`get_past_weekly_place_id`/
+        `get_daily_place_id`/`get_place_id_list_from_race_id_list`）は、
+        既知のカレンダー事実や`src.datasets.race_schedule.transform`の
+        `build_race_ids_for_day`等を使って独立に期待値を組み立てるか、
+        具体的なリテラル値（件数・先頭・末尾等）でアサートする形に変更
+      - 旧実装のバグ修正により意図的に新旧で結果が異なっていた2関数
+        （`get_year_id_calendar`/`get_next_weekly_id`）は、`old_race_id`への
+        参照を削除し、新実装の組み立て（カレンダー各行のtimes/daysからの
+        生成／get_daily_idの7日分連結）が正しいことの検証のみ残した
+      - `python -m pytest tests/test_race_schedule_dataset_manager.py -q` →
+        30 passed（変更前と同数）。`python -m pytest -m "not network" -q` →
+        250 passed, 8 deselected（変更なし）
+    - フェーズ7b（未着手）: `tests/test_netkeiba_scraper.py`の
+      `test_scrape_race_results_matches_old`・`test_scrape_day_race_result_matches_old`
+      （`import scraping as old_scraping` = `libs/scraping.py`）と、
+      `test_old_scrape_race_returns_dataframe_is_broken`
+      （`from src.legacy_datasets import race_returns as old_returns`）を
+      新実装単体のアサーションに置き換える。これにより`libs/scraping.py`・
+      `src/legacy_datasets/race_returns.py`の削除条件を解消する
+    - フェーズ7c（未着手）: 7a・7bで新旧比較テストを解消した後、
+      `libs/`・`src/legacy_datasets/`・`src/RacePrediction/`・`web/`の残り全体を
+      実際に削除し、`conftest.py`のLIBS_PATH/LEGACY_DATASETS_PATHのsys.path注入を
+      削除する。`src/PredictionModels/LightGBM/{make_dataset,prediction}.py`
+      （Oracleオフライン学習パイプライン、対象外）は`tests/`から参照されておらず、
+      既存の`sys.path.append(ver2.0パス)`によりver2.0側へフォールバックするため
+      ブロッカーにはならない
 
 → **データ収集・蓄積（週次/月次/年次更新）、予想エンジンの日次予想パス（Oracle）、
 出馬表生成（`race_card_builder.make_race_card`）、レースページ・日次インデックスのHTML生成
@@ -466,7 +499,7 @@ pytest
 
 | テストファイル | 内容 |
 |---|---|
-| `tests/test_race_schedule_dataset_manager.py` | race_schedule（Chronicle）の race_id 算出系、新旧出力比較 |
+| `tests/test_race_schedule_dataset_manager.py` | race_schedule（Chronicle）の race_id 算出系の新実装単体検証 |
 | `tests/test_jra_calendar_scraper.py`（network） | JRA開催カレンダー取得 |
 | `tests/test_netkeiba_scraper.py`（一部 network） | race_results / 当日速報結果（scrape_day_race_result）スクレイピングの新旧比較、race_returns / 出馬表（scrape_race_card）スクレイピングの既知の確定結果との比較 |
 | `tests/test_race_result_dataset_manager.py` | race_result の保存・分割・集計・per-race結果保存（save_race_result_for_race_id）の新実装単体検証 |
