@@ -9,10 +9,14 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 
 ## 1. リファクタリングの進捗状況（2026-06-15時点）
 
-**全体は未完了。** データ収集・蓄積系（Chronicle / Atlas / Reaper 相当）、
+**完了。** データ収集・蓄積系（Chronicle / Atlas / Reaper 相当）、
 予想エンジン（Oracle）、HTML生成系（Forge）、配信系（Herald・予想テキスト生成＋配信、
-配当結果レポート）、日次配信オーケストレーション（`post_daily_race.py`等）は
-新構造への移行が完了しているが、旧ファイルのクリーンアップ（大部分）は未着手。
+配当結果レポート）、日次配信オーケストレーション（`post_daily_race.py`等）の
+新構造への移行と、旧ファイルのクリーンアップ（フェーズ1〜7c）がすべて完了した。
+`libs/`・`src/legacy_datasets/`・`src/RacePrediction/`・`web/`は削除済みで、
+ver3.0の`src/`は新構造（`src/{datasets,managers,logic,output,config,utils}`）のみで
+構成される。なお`src/PredictionModels/LightGBM/`（Oracleオフライン学習パイプライン）は
+対象外として残置している（詳細は「未対応（今後のフェーズ）」参照）。
 
 ### 完了済み
 
@@ -35,6 +39,9 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
 | 日次配信オーケストレーション | `src/RacePrediction/post_daily_race.py`（削除済み、`post_race_pred`/`post_pred_return`/`post_daily_race_pred`） | `src/logic/scheduler/race_day_scheduler.py` |
 | average_calculator（平均タイム計算） | `src/datasets/race_info/transform.py`（`calc_avg_time`/`get_avg_time_list_from_race_results_df`/`make_avg_time_dataset`/`make_average_time_datasets`/`extract_course_race_results`/`get_race_time_msec`/`calc_time_diff`） | `src/logic/calculators/average_calculator.py` |
 
+> 上記「旧実装」列に記載の`libs/`・`src/legacy_datasets/`・`src/RacePrediction/`・`web/`配下の
+> ファイルは、フェーズ7cの完了によりすべて削除済み。新旧の対応関係を示す移行履歴として記載を残している。
+
 ### 未対応（今後のフェーズ）
 
 - **Oracle オフライン学習パイプライン**: `src/PredictionModels/LightGBM/`の`make_dataset_for_train`,
@@ -52,8 +59,8 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
   `race_day_scheduler`からも呼ばれておらず`calc_returns.py`の`__main__`専用のため対象外。
   `name_header`/`get_race_id`/`scraping`/ver2.0の`race_card`/`race_returns`への依存は
   そのまま残置
-- **クリーンアップ**: `libs/`, `src/legacy_datasets/`, `src/RacePrediction/`, `web/`等の削除（呼び出し元を新実装に切り替えた後）。
-  以下のフェーズに分割して段階的に進める。
+- **クリーンアップ（完了）**: `libs/`, `src/legacy_datasets/`, `src/RacePrediction/`, `web/`等を削除した
+  （呼び出し元を新実装に切り替えた後）。以下のフェーズに分割して段階的に進めた。
   - フェーズ1（完了）: `src/RacePrediction/{daily_race_results,post_daily_race,day_race_prediction}.py`
     （いずれも新実装への薄いリダイレクトのみ）と、対応する identity-check テスト
     （`tests/test_daily_race_results.py`/`tests/test_post_daily_race.py`）、
@@ -160,7 +167,7 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
     - `web/`・`src/RacePrediction/{race_card,calc_returns,make_time_id_list,
       make_text}.py`の実際の削除は、フェーズ7（最終クリーンアップ）で
       `src/legacy_datasets/`の残りと合わせてまとめて行う
-  - フェーズ7: 最終クリーンアップ — `libs/`（ver3.0配下のコピー）、
+  - フェーズ7（完了）: 最終クリーンアップ — `libs/`（ver3.0配下のコピー）、
     `src/legacy_datasets/`・`src/RacePrediction/`・`web/`の残り全体を削除し、
     `conftest.py`のLIBS_PATH/LEGACY_DATASETS_PATHのsys.path注入を削除。
     調査の結果、フェーズ1〜6で対応されていなかった新旧比較テストが3件残っており、
@@ -198,13 +205,20 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
       4 passed, 2 deselected。`python -m pytest -m "not network" -q` →
       250 passed, 7 deselected（旧実装専用テストの削除により8→7に変化、
       pass数は変わらず）
-    - フェーズ7c（未着手）: 7a・7bで新旧比較テストを解消した後、
-      `libs/`・`src/legacy_datasets/`・`src/RacePrediction/`・`web/`の残り全体を
-      実際に削除し、`conftest.py`のLIBS_PATH/LEGACY_DATASETS_PATHのsys.path注入を
-      削除する。`src/PredictionModels/LightGBM/{make_dataset,prediction}.py`
+    - フェーズ7c（完了）: 7a・7bで新旧比較テストを解消した後、
+      `libs/`（`get_race_id.py`/`mail_api.py`/`name_header.py`/`post_text.py`/
+      `scraping.py`/`string_format.py`の6ファイル）・`src/legacy_datasets/`（11ファイル）・
+      `src/RacePrediction/`（4ファイル）・`web/`（`web/src`・`web/site`、合計5346ファイル中の
+      大部分）を実際に削除し、`conftest.py`のLIBS_PATH/LEGACY_DATASETS_PATHのsys.path注入を
+      削除して、`PROJECT_ROOT`のみを`sys.path`に追加する形に簡略化した。
+      `src/PredictionModels/LightGBM/{make_dataset,prediction}.py`
       （Oracleオフライン学習パイプライン、対象外）は`tests/`から参照されておらず、
-      既存の`sys.path.append(ver2.0パス)`によりver2.0側へフォールバックするため
-      ブロッカーにはならない
+      自身の`sys.path.append(ver2.0パス)`によりver2.0側の`libs/`へフォールバックするため、
+      ver3.0の`libs/`削除後も影響を受けない。
+      `python -m pytest -m "not network" -q` → 250 passed, 7 deselected（削除前と変化なし）。
+      `python -m pytest tests/test_netkeiba_scraper.py -q -m network` →
+      4 passed, 2 deselected（削除前と変化なし）。`git status`で、上記4ディレクトリ
+      （5346ファイル）の削除と`conftest.py`の変更のみが行われたことを確認した
 
 → **データ収集・蓄積（週次/月次/年次更新）、予想エンジンの日次予想パス（Oracle）、
 出馬表生成（`race_card_builder.make_race_card`）、レースページ・日次インデックスのHTML生成
@@ -312,8 +326,8 @@ public_html/
 ### 3-1. 前提
 
 - プロジェクトルート（`keiba_ai_ver3.0/`）から実行する（`conftest.py` が `sys.path` に
-  ルート・`libs/`・`src/legacy_datasets/` を追加する設定だが、新実装側
-  `src/logic/scheduler/*` は `src.*` の絶対importのみで完結している）。
+  プロジェクトルートを追加する設定で、`src/logic/scheduler/*`等の新実装側は
+  `src.*` の絶対importのみで完結している）。
 - race_result / race_returns / horse_peds の更新には netkeiba.com への通信が発生する。
 - race_calendar の更新には JRA公式サイトへの通信が発生する。
 
