@@ -133,9 +133,33 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
       `past_performance`を`import`していること自体が、これらモジュールの削除を妨げる
       唯一の参照元であるため、フェーズ7で`weekly_update.py`/`monthly_update.py`を削除すれば
       それらも削除可能になる
-  - フェーズ6（未着手）: web/系 — `tests/test_horse_report_generator.py`、
-    `tests/test_html_manager.py`のold_date_index部分の新旧比較を新実装単体のアサーションに
-    置き換え、`web/`ディレクトリの削除を検討
+  - フェーズ6（完了）: web/系 — `tests/test_html_manager.py`のold_date_index部分
+    （`test_add_race_day_*_matches_old`、`test_add_race_day_raises_if_array_missing`の
+    旧実装側assert）の新旧比較を新実装単体のアサーションに置き換え済み。
+    `tests/test_horse_report_generator.py`は調査の結果、`old_`を含むのは
+    `test_load_horse_peds_dict_keys_match_old_format`というテスト名のみ
+    （新実装の辞書アダプタが旧フォーマットの慣習に従っているかの確認で、
+    旧モジュールへの参照や新旧比較ではない）で、既に新実装単体のアサーションのみ
+    のため変更不要だった
+
+    `web/`ディレクトリ（`web/src`・`web/site`）の削除を検討した結果:
+    - 上記のテスト置き換えにより、`web/`配下はver3.0の`src/`・`tests/`から
+      一切参照されなくなった（`src/`内の"web/src/..."への参照はすべて
+      移植元を示すdocstringコメントのみ）
+    - `bat/MakeHTML/{make_html_prev_day,update_daily_html}.bat`、
+      `bat/TodayRace/today_race_rerturns.bat`は`web/`を参照するが、すべて
+      `C:\keiba_ai\keiba_ai_ver2.0\web\...`（ver2.0側）を指しており、ver3.0の
+      `web/`は無関係
+    - `web/src/generators/make_race_card_html.py`が`src.RacePrediction`の
+      `race_card`/`calc_returns`/`make_time_id_list`を直接importしていた
+      （フェーズ5で削除をブロックしていた唯一の参照元）が、`web/`全体が
+      不要になったことでこの参照も解消された。これにより
+      `src/RacePrediction/{race_card,calc_returns,make_time_id_list,make_text}.py`
+      も参照元が無くなり削除候補となる
+    - `web/site/`は旧静的サイトの生成済みHTML（`public_html/`がその新しい置き場所）
+    - `web/`・`src/RacePrediction/{race_card,calc_returns,make_time_id_list,
+      make_text}.py`の実際の削除は、フェーズ7（最終クリーンアップ）で
+      `src/legacy_datasets/`の残りと合わせてまとめて行う
   - フェーズ7（未着手）: 最終クリーンアップ — `libs/`（ver3.0配下のコピー）、
     `src/legacy_datasets/`・`src/RacePrediction/`・`web/`の残り全体を削除し、
     `conftest.py`のLIBS_PATH/LEGACY_DATASETS_PATHのsys.path注入を削除
@@ -457,7 +481,7 @@ pytest
 | `tests/test_race_prediction_engine.py` | Oracle（日次予想エンジン）の特徴量生成・LightGBM推論・get_time_diffの新実装単体検証 |
 | `tests/test_race_card_dataset_manager.py` | race_card（出馬表+score/rank・per-raceレース情報・race_time_id_list）の保存・取得 |
 | `tests/test_race_card_builder.py`（一部 network） | 出馬表生成（`race_card_builder.make_race_card`、`race_card/transform.py`の各純粋関数）の新実装単体検証（make_race_cardは既知の期待値との比較） |
-| `tests/test_html_manager.py` | カレンダー更新（`html_manager.add_race_day`）の新旧出力比較 |
+| `tests/test_html_manager.py` | カレンダー更新（`html_manager.add_race_day`）の新実装単体検証（新規作成・追記・重複時のno-op・不正フォーマット時のエラー） |
 | `tests/test_horse_report_generator.py` | Forge: 出走馬詳細レポート（血統・近走・芝ダートサマリ）のHTML生成 |
 | `tests/test_race_page_generator.py` | Forge: レース個別ページのHTML生成（コース別データ・出走馬レポート埋め込み） |
 | `tests/test_daily_index_generator.py` | Forge: 日次レース一覧ページのHTML生成 |
