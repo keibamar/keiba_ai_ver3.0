@@ -1,24 +1,22 @@
 """src/logic/scraping/netkeiba_scraper.py のテスト
 
 parse_race_info_tokens は純粋関数なのでオフラインで検証する。
-scrape_race_results はnetkeiba.comへの実通信が必要なため @pytest.mark.network を付与し、
-確定済みの固定race_idを使って旧 libs/scraping.scrape_race_results と
-新 netkeiba_scraper.scrape_race_results の出力が一致することを確認する。
+scrape_race_results / scrape_day_race_result / scrape_race_returns_dataframe /
+scrape_race_card はnetkeiba.comへの実通信が必要なため @pytest.mark.network を付与し、
+確定済みの固定race_id（FIXED_RACE_ID）について、既知の期待値との比較で検証する。
 
-scrape_race_returns_dataframeについても、旧 src/legacy_datasets/race_returns.py の
+scrape_race_returns_dataframeについては、旧 src/legacy_datasets/race_returns.py の
 同名関数はformat_type_returns_dataframeの戻り値に対する.set_index(0)がKeyErrorとなり
-処理が失敗するため、新旧比較ではなく、確定済みのレース（FIXED_RACE_ID）について
-data/RaceReturns/05_tokyo/2024_race_returns.csv に保存済みの結果から判明している
-期待値との比較で検証する。
+処理が失敗するため（詳細はnetkeiba_scraper.scrape_race_returns_dataframeのdocstring参照）、
+新旧比較ではなく、data/RaceReturns/05_tokyo/2024_race_returns.csv に保存済みの結果から
+判明している期待値との比較で検証する。
 """
 
 import pandas as pd
 import pytest
 
-import scraping as old_scraping
 from src.datasets.race_info import model as race_info_model
 from src.datasets.race_result import transform
-from src.legacy_datasets import race_returns as old_returns
 from src.logic.scraping import netkeiba_scraper
 
 # 2024年1月27日 東京1回1日目1R（確定済みのレース結果ページ）
@@ -44,27 +42,37 @@ def test_parse_race_info_tokens_handles_turf_and_obstacle():
 
 
 @pytest.mark.network
-def test_scrape_race_results_matches_old():
-    old_df = old_scraping.scrape_race_results(FIXED_RACE_ID)
-    new_df = netkeiba_scraper.scrape_race_results(FIXED_RACE_ID)
+def test_scrape_race_results_returns_expected():
+    df = netkeiba_scraper.scrape_race_results(FIXED_RACE_ID)
 
-    assert not old_df.empty
-    assert not new_df.empty
-    assert old_df.columns.tolist() == new_df.columns.tolist()
-    assert len(old_df) == len(new_df)
-    assert old_df.equals(new_df)
+    assert df.shape == (16, 23)
+    assert df.columns.tolist() == [
+        "着順", "枠番", "馬番", "馬名", "性齢", "斤量", "騎手", "タイム", "着差", "通過", "上り",
+        "単勝", "人気", "馬体重", "調教師", "course_len", "weather", "race_type", "ground_state",
+        "date", "class", "horse_id", "jockey_id",
+    ]
+    assert df.index.unique().tolist() == [FIXED_RACE_ID]
+
+    first = df.iloc[0]
+    assert first[["着順", "馬番", "馬名", "タイム", "単勝", "course_len", "race_type", "horse_id", "jockey_id"]].tolist() == [
+        "1", "7", "エースアビリティ", "0:1:26.9", "1.4", 1400, "ダート", "2021102098", "05339",
+    ]
 
 
 @pytest.mark.network
-def test_scrape_day_race_result_matches_old():
-    old_df = old_scraping.scrape_day_race_results(FIXED_RACE_ID)
-    new_df = netkeiba_scraper.scrape_day_race_result(FIXED_RACE_ID)
+def test_scrape_day_race_result_returns_expected():
+    df = netkeiba_scraper.scrape_day_race_result(FIXED_RACE_ID)
 
-    assert not old_df.empty
-    assert not new_df.empty
-    assert old_df.columns.tolist() == new_df.columns.tolist()
-    assert len(old_df) == len(new_df)
-    assert old_df.equals(new_df)
+    assert df.shape == (16, 15)
+    assert df.columns.tolist() == [
+        "着順", "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "タイム", "着差", "人気", "単勝", "上り", "通過", "厩舎", "馬体重",
+    ]
+    assert df.index.unique().tolist() == [FIXED_RACE_ID]
+
+    first = df.iloc[0]
+    assert first[["着順", "馬番", "馬名", "タイム", "単勝", "厩舎", "馬体重"]].tolist() == [
+        1, 7, "エースアビリティ", "0:1:26.9", 1.4, "美浦 堀内", "480(+2)",
+    ]
 
 
 @pytest.mark.network
@@ -115,11 +123,3 @@ def test_scrape_race_card_returns_expected():
     assert race_card_df.iloc[0].tolist() == [
         1, 1, "アフロマン", "牡3", 57.0, "木幡育", "萱野", "410(+16)", "美浦", "2021107090", "01167",
     ]
-
-
-@pytest.mark.network
-def test_old_scrape_race_returns_dataframe_is_broken():
-    # 旧実装は format_type_returns_dataframe の戻り値（列名 "式別","馬番","配当","人気"）に
-    # 対して .set_index(0) を呼び出すため、KeyErrorで処理全体が失敗する
-    with pytest.raises(KeyError):
-        old_returns.scrape_race_returns_dataframe([FIXED_RACE_ID])

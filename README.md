@@ -182,13 +182,22 @@ output,config,utils}` の6層構造 × 7モジュール）への移行を、ド�
       - `python -m pytest tests/test_race_schedule_dataset_manager.py -q` →
         30 passed（変更前と同数）。`python -m pytest -m "not network" -q` →
         250 passed, 8 deselected（変更なし）
-    - フェーズ7b（未着手）: `tests/test_netkeiba_scraper.py`の
+    - フェーズ7b（完了）: `tests/test_netkeiba_scraper.py`の
       `test_scrape_race_results_matches_old`・`test_scrape_day_race_result_matches_old`
-      （`import scraping as old_scraping` = `libs/scraping.py`）と、
+      （`import scraping as old_scraping` = `libs/scraping.py`）を、
+      確定済みのFIXED_RACE_ID（202405010101）について実際にnetkeiba.comから
+      取得した結果に基づく既知の期待値（列構成・shape・1行目の値）との比較に
+      置き換えた（`test_scrape_race_results_returns_expected`・
+      `test_scrape_day_race_result_returns_expected`）。
       `test_old_scrape_race_returns_dataframe_is_broken`
-      （`from src.legacy_datasets import race_returns as old_returns`）を
-      新実装単体のアサーションに置き換える。これにより`libs/scraping.py`・
-      `src/legacy_datasets/race_returns.py`の削除条件を解消する
+      （`from src.legacy_datasets import race_returns as old_returns`、旧実装が
+      KeyErrorで失敗することのみを確認するテストで新実装には無関係）は削除した。
+      これにより`libs/scraping.py`・`src/legacy_datasets/race_returns.py`の
+      削除条件を解消した。
+      `python -m pytest tests/test_netkeiba_scraper.py -q -m network` →
+      4 passed, 2 deselected。`python -m pytest -m "not network" -q` →
+      250 passed, 7 deselected（旧実装専用テストの削除により8→7に変化、
+      pass数は変わらず）
     - フェーズ7c（未着手）: 7a・7bで新旧比較テストを解消した後、
       `libs/`・`src/legacy_datasets/`・`src/RacePrediction/`・`web/`の残り全体を
       実際に削除し、`conftest.py`のLIBS_PATH/LEGACY_DATASETS_PATHのsys.path注入を
@@ -501,7 +510,7 @@ pytest
 |---|---|
 | `tests/test_race_schedule_dataset_manager.py` | race_schedule（Chronicle）の race_id 算出系の新実装単体検証 |
 | `tests/test_jra_calendar_scraper.py`（network） | JRA開催カレンダー取得 |
-| `tests/test_netkeiba_scraper.py`（一部 network） | race_results / 当日速報結果（scrape_day_race_result）スクレイピングの新旧比較、race_returns / 出馬表（scrape_race_card）スクレイピングの既知の確定結果との比較 |
+| `tests/test_netkeiba_scraper.py`（一部 network） | race_results / 当日速報結果（scrape_day_race_result）/ race_returns / 出馬表（scrape_race_card）スクレイピングの、確定済みrace_idに対する既知の期待値との比較（新実装単体） |
 | `tests/test_race_result_dataset_manager.py` | race_result の保存・分割・集計・per-race結果保存（save_race_result_for_race_id）の新実装単体検証 |
 | `tests/test_horse_peds_dataset_manager.py` | 血統データの取得・保存・名前正規化の新実装単体検証 |
 | `tests/test_peds_results_dataset_manager.py` | 血統別成績の集計・取得・保存・更新の新実装単体検証 |
