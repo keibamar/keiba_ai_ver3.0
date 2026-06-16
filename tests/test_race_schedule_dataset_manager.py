@@ -32,11 +32,17 @@ from src.managers import race_schedule_dataset_manager as new_race_id
     ],
 )
 def test_get_daily_id_returns_expected(place_id, race_day, expected_courses):
-    result = new_race_id.get_daily_id(place_id, race_day)
-
     expected = []
     for course, times, days in expected_courses:
         expected.extend(transform.build_race_ids_for_day(race_day.year, course, times, days))
+
+    result = new_race_id.get_daily_id(place_id, race_day)
+
+    label = "開催あり" if expected_courses else "非開催（空が正）"
+    print(f"\n--- get_daily_id(place_id={place_id}, race_day={race_day}) [{label}] ---")
+    print(f"  期待: {len(expected)}件,  実際: {len(result)}件,  一致: {result == expected}")
+    if result:
+        print(f"  結果: {result}")
 
     assert result == expected
 
@@ -45,6 +51,10 @@ def test_get_daily_id_returns_expected(place_id, race_day, expected_courses):
 @pytest.mark.parametrize("race_day", [date(2025, 1, 13), date(2025, 4, 1)])
 def test_get_past_weekly_id_returns_expected(place_id, race_day):
     result = new_race_id.get_past_weekly_id(place_id, race_day)
+
+    print(f"\n--- get_past_weekly_id(place_id={place_id}, race_day={race_day}) ---")
+    print(f"  件数: {len(result)},  先頭: {result[0] if result else None},  末尾: {result[-1] if result else None}")
+    print(f"  ※ get_daily_id × 7日分の連結と一致するか検証")
 
     # 7日前から当日までの7日分のget_daily_idを連結した結果になる
     expected = []
@@ -66,6 +76,12 @@ def test_get_past_weekly_id_returns_expected(place_id, race_day):
 def test_get_past_year_id_returns_expected(place_id, race_day, expected_len, expected_first, expected_last):
     result = new_race_id.get_past_year_id(place_id, race_day)
 
+    label = f"{expected_len}件" if expected_len else "0件（年初で開催なし、空が正）"
+    print(f"\n--- get_past_year_id(place_id={place_id}, race_day={race_day}) ---")
+    print(f"  期待: {label},  実際: {len(result)}件,  一致: {len(result) == expected_len}")
+    if result:
+        print(f"  先頭: {result[0]},  末尾: {result[-1]}")
+
     assert len(result) == expected_len
     if expected_len:
         assert result[0] == expected_first
@@ -77,6 +93,9 @@ def test_get_past_year_id_returns_expected(place_id, race_day, expected_len, exp
 @pytest.mark.parametrize("year", [2024, 2025])
 def test_get_year_id_all_returns_expected(place_id, year):
     result = new_race_id.get_year_id_all(place_id, year)
+
+    print(f"\n--- get_year_id_all(place_id={place_id}, year={year}) ---")
+    print(f"  件数: {len(result)},  先頭: {result[0] if result else None},  末尾: {result[-1] if result else None}")
 
     # カレンダーに依存せず、開催回・開催日目の全組み合わせから生成される
     expected = []
@@ -95,7 +114,10 @@ def test_get_year_id_all_returns_expected(place_id, year):
     ],
 )
 def test_get_past_weekly_place_id_returns_expected(race_day, expected):
-    assert new_race_id.get_past_weekly_place_id(race_day) == expected
+    result = new_race_id.get_past_weekly_place_id(race_day)
+    print(f"\n--- get_past_weekly_place_id(race_day={race_day}) ---")
+    print(f"  結果: {result}")
+    assert result == expected
 
 
 @pytest.mark.parametrize(
@@ -106,13 +128,21 @@ def test_get_past_weekly_place_id_returns_expected(race_day, expected):
     ],
 )
 def test_get_daily_place_id_returns_expected(race_day, expected):
-    assert new_race_id.get_daily_place_id(race_day) == expected
+    result = new_race_id.get_daily_place_id(race_day)
+    label = f"開催場: {expected}" if expected else "非開催（空が正）"
+    print(f"\n--- get_daily_place_id(race_day={race_day}) [{label}] ---")
+    print(f"  期待: {expected},  実際: {result},  一致: {result == expected}")
+    assert result == expected
 
 
 def test_get_place_id_list_from_race_id_list_returns_expected():
     race_id_list = new_race_id.get_year_id_all(6, 2025)
+    result = new_race_id.get_place_id_list_from_race_id_list(race_id_list)
 
-    assert new_race_id.get_place_id_list_from_race_id_list(race_id_list) == [6]
+    print(f"\n--- get_place_id_list_from_race_id_list(中山2025年全race_id: {len(race_id_list)}件) ---")
+    print(f"  結果: {result}")
+
+    assert result == [6]
 
 
 # --- カレンダー行ごとの組み立て -----------------------------------------------
@@ -126,6 +156,9 @@ def test_get_year_id_calendar_returns_expected():
     place_id = 6  # 中山（年間で複数回・複数日開催される）
 
     result = new_race_id.get_year_id_calendar(place_id, year)
+
+    print(f"\n--- get_year_id_calendar(place_id={place_id}, year={year}) ---")
+    print(f"  件数: {len(result)},  先頭: {result[0] if result else None},  末尾: {result[-1] if result else None}")
 
     # 重複は発生しない
     assert len(set(result)) == len(result)
@@ -152,6 +185,9 @@ def test_get_next_weekly_id_returns_expected():
     race_day = date(2025, 1, 1)
 
     result = new_race_id.get_next_weekly_id(place_id, race_day)
+
+    print(f"\n--- get_next_weekly_id(place_id={place_id}, race_day={race_day}) ---")
+    print(f"  件数: {len(result)},  先頭: {result[0] if result else None},  末尾: {result[-1] if result else None}")
 
     expected = []
     for offset in range(7):
