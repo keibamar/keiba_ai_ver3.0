@@ -45,6 +45,11 @@ def test_parse_race_info_tokens_handles_turf_and_obstacle():
 def test_scrape_race_results_returns_expected():
     df = netkeiba_scraper.scrape_race_results(FIXED_RACE_ID)
 
+    print(f"\n--- scrape_race_results({FIXED_RACE_ID}) ---")
+    print(f"shape: {df.shape}")
+    print(f"columns: {df.columns.tolist()}")
+    print(df.to_string())
+
     assert df.shape == (16, 23)
     assert df.columns.tolist() == [
         "着順", "枠番", "馬番", "馬名", "性齢", "斤量", "騎手", "タイム", "着差", "通過", "上り",
@@ -62,6 +67,11 @@ def test_scrape_race_results_returns_expected():
 @pytest.mark.network
 def test_scrape_day_race_result_returns_expected():
     df = netkeiba_scraper.scrape_day_race_result(FIXED_RACE_ID)
+
+    print(f"\n--- scrape_day_race_result({FIXED_RACE_ID}) ---")
+    print(f"shape: {df.shape}")
+    print(f"columns: {df.columns.tolist()}")
+    print(df.to_string())
 
     assert df.shape == (16, 15)
     assert df.columns.tolist() == [
@@ -99,6 +109,10 @@ def test_scrape_race_returns_dataframe_matches_known_result():
 
     new_result = netkeiba_scraper.scrape_race_returns_dataframe([FIXED_RACE_ID])
 
+    print(f"\n--- scrape_race_returns_dataframe([{FIXED_RACE_ID}]) ---")
+    print(f"shape: {new_result.shape}")
+    print(new_result.to_string())
+
     assert new_result.reset_index(drop=True).equals(expected.reset_index(drop=True))
     assert new_result.index.tolist() == expected.index.tolist()
 
@@ -106,6 +120,11 @@ def test_scrape_race_returns_dataframe_matches_known_result():
 @pytest.mark.network
 def test_scrape_race_card_returns_expected():
     info, race_info_df, race_card_df = netkeiba_scraper.scrape_race_card(FIXED_RACE_ID)
+
+    print(f"\n--- scrape_race_card({FIXED_RACE_ID}) ---")
+    print(f"info: {info}")
+    print(f"race_info_df:\n{race_info_df.to_string()}")
+    print(f"race_card_df (shape={race_card_df.shape}):\n{race_card_df.to_string()}")
 
     assert info == [
         "3歳未勝利", "10", "05発走", "ダ1400m", "左", "天候", "晴", "馬場", "良",

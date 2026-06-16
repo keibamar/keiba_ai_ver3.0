@@ -88,6 +88,10 @@ def test_extract_peds_for_display_returns_expected():
 def test_make_race_card_returns_expected():
     race_card_df, race_info_df = race_card_builder.make_race_card(FIXED_RACE_ID)
 
+    print(f"\n--- make_race_card({FIXED_RACE_ID}) ---")
+    print(f"race_info_df:\n{race_info_df.to_string()}")
+    print(f"race_card_df (shape={race_card_df.shape}):\n{race_card_df.to_string()}")
+
     assert race_info_df.to_dict("records") == [
         {"race_type": "ダート", "course_len": 1400, "weather": "晴", "ground_state": "良", "class": "未勝利"}
     ]
