@@ -28,6 +28,12 @@ def test_post_race_pred_posts_prediction_text(tmp_path, monkeypatch):
     race_day_scheduler.post_race_pred(race_id, race_day)
 
     expected = os.path.join(str(tmp_path / "race_prediction"), "20240127", f"{race_id}.txt")
+
+    print(f"\n--- post_race_pred(race_id={race_id}, race_day={race_day}) ---")
+    print(f"  期待パス: {expected}")
+    print(f"  実際に渡されたパス: {posted}")
+    print(f"  一致: {posted == [expected]}")
+
     assert posted == [expected]
 
 
@@ -43,4 +49,10 @@ def test_post_pred_return_posts_return_text(tmp_path, monkeypatch):
     race_day_scheduler.post_pred_return(place_id, race_day)
 
     expected = os.path.join(str(tmp_path / "race_returns"), "20240127", "05_tokyo_pred_score.txt")
+
+    print(f"\n--- post_pred_return(place_id={place_id}, race_day={race_day}) ---")
+    print(f"  期待パス: {expected}")
+    print(f"  実際に渡されたパス: {posted}")
+    print(f"  一致: {posted == [expected]}")
+
     assert posted == [expected]
