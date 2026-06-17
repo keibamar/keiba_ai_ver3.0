@@ -47,6 +47,9 @@ def test_get_time_diff_returns_expected(avg_time_root, monkeypatch):
 
     result = race_info_dataset_manager.get_time_diff(race_time, SAMPLE_COURSE_INFO)
 
+    print(f"\n--- get_time_diff(race_time={race_time}, course_info={SAMPLE_COURSE_INFO}) ---")
+    print(f"  結果（[平均タイムとの差, 標準偏差換算]）: {result}")
+
     assert result == [0.002792181890706023, 0.005342730476298738]
 
 
@@ -72,6 +75,10 @@ def test_get_past_race_info_data_returns_12_values():
 def test_make_dataset_for_lightgbm_shape():
     df = engine.make_dataset_for_lightgbm(SAMPLE_RACE_ID, SAMPLE_COURSE_INFO, SAMPLE_HORSE_ID)
 
+    print(f"\n--- make_dataset_for_lightgbm(race_id={SAMPLE_RACE_ID}, horse_id={SAMPLE_HORSE_ID}) ---")
+    print(f"  shape: {df.shape}")
+    print(df.to_string())
+
     # 血統着度数(36列) + 過去3走分のタイム差・人気・着順(12列) = 48列、1行
     assert df.shape == (1, 48)
     assert not df.isna().all(axis=None)
@@ -85,6 +92,10 @@ def test_get_lightgbm_model_loads_from_prediction_data_path():
     assert os.path.isfile(model_path)
 
     model = engine.get_lightgbm_model(SAMPLE_PLACE_ID, "芝", "1200")
+
+    print(f"\n--- get_lightgbm_model(place_id={SAMPLE_PLACE_ID}, race_type=芝, course_len=1200) ---")
+    print(f"  モデルパス: {model_path}")
+    print(f"  特徴量数: {model.num_feature()}")
 
     assert model.num_feature() == 50
 
@@ -113,6 +124,9 @@ def test_rank_prediction_returns_score_and_rank(sample_race_args):
     horse_ids, race_info_df, waku_df = sample_race_args
 
     result = engine.rank_prediction(SAMPLE_RACE_ID, horse_ids, race_info_df, waku_df)
+
+    print(f"\n--- rank_prediction(race_id={SAMPLE_RACE_ID}, 出走{len(horse_ids)}頭) ---")
+    print(result.assign(horse_id=horse_ids).to_string())
 
     assert list(result.columns) == ["score", "rank"]
     assert len(result) == len(horse_ids)
