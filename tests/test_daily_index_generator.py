@@ -57,6 +57,11 @@ def test_make_daily_index_page_generates_index_html(new_roots):
     assert out_file.exists()
     html_content = out_file.read_text(encoding="utf-8")
 
+    print(f"\n--- make_daily_index_page({SAMPLE_RACE_DAY}) ---")
+    print(f"  出力先: {out_file}")
+    print(f"  HTML文字数: {len(html_content)}")
+    print(f"  先頭500文字:\n{html_content[:500]}")
+
     assert "<h1>2024/10/20 レース一覧</h1>" in html_content
     assert "<th>新潟競馬場</th>" in html_content
     assert "<th>東京競馬場</th>" in html_content

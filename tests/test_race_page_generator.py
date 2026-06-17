@@ -109,6 +109,10 @@ def test_make_race_card_html_generates_full_page(new_roots):
     assert out_file.exists()
     html_content = out_file.read_text(encoding="utf-8")
 
+    print(f"\n--- make_race_card_html({SAMPLE_DATE_STR}, place_id={SAMPLE_PLACE_ID}, race_id={SAMPLE_RACE_ID}) ---")
+    print(f"  出力先: {out_file}")
+    print(f"  HTML文字数: {len(html_content)}")
+
     # --- ナビゲーション・見出し ---
     assert '<div class="nav">' in html_content
     assert "<h2>2024/10/20 </h2>" in html_content

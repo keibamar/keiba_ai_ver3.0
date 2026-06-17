@@ -28,7 +28,7 @@ def read_race_csv(date_str, target_id):
     race_day = datetime.strptime(date_str, "%Y%m%d").date()
     df = race_card_dataset_manager.get_race_cards(race_day, target_id)
     if df.empty:
-        print(f"CSV読み込み失敗: race_day={date_str}, target_id={target_id}")
+        print(f"ℹ️ [スキップ/エラーではありません] レースカード未生成: race_day={date_str}, target_id={target_id}")
         return None
     cols = ["枠", "馬番", "馬名", "性齢", "斤量", "騎手", "馬体重(増減)", "score", "rank"]
     existing = [c for c in cols if c in df.columns]
@@ -38,7 +38,7 @@ def read_race_csv(date_str, target_id):
 def get_result_table(date_str, place_id, target_id):
     df_race = race_result_dataset_manager.get_race_id_result(target_id)
     if df_race.empty:
-        print(f"警告: レース結果データが存在しません: {target_id}")
+        print(f"ℹ️ [スキップ/エラーではありません] レース結果データなし（未確定）: {target_id}")
         return pd.DataFrame()
     return df_race
 
@@ -46,7 +46,7 @@ def get_result_table(date_str, place_id, target_id):
 def get_returns_table(date_str, place_id, target_id):
     df_race = race_info_dataset_manager.get_race_return_csv_for_race(target_id)
     if df_race.empty:
-        print(f"警告: 配当結果データが存在しません: {target_id}")
+        print(f"ℹ️ [スキップ/エラーではありません] 配当結果データなし（未確定）: {target_id}")
     return df_race
 
 
@@ -71,7 +71,7 @@ def get_race_info(year, place_id, target_id):
         race_class = race_class.translate(trans_table)
         return race_type, course_len, ground_state, race_class
     else:
-        print("No Race Info:", target_id)
+        print(f"ℹ️ [スキップ/エラーではありません] レース情報未蓄積: {target_id}")
         return None, None, None, None
 
 
@@ -1325,7 +1325,7 @@ def generate_recent_same_condition_html(date_str, place_id, target_id):
     for race_id, race_date_str, race_class, ground_state in matched_race_ids:
         df_all = race_result_dataset_manager.get_race_id_result(race_id)
         if df_all.empty:
-            print(f"警告: レース結果データが存在しません: {race_id}")
+            print(f"ℹ️ [スキップ/エラーではありません] レース結果データなし（未確定）: {race_id}")
             continue
 
         # 上位3頭抽出
@@ -1538,7 +1538,7 @@ def make_race_card_html(date_str, place_id, target_id):
             </div>
             """
         except Exception as e:
-            print(f"❌ {horse_name} のレポート作成に失敗: {e}")
+            print(f"❌ [要確認/エラー] {horse_name} のレポート作成に失敗: {e}")
             continue
 
     # --- HTML生成・書き込み ---
@@ -1581,7 +1581,7 @@ def make_daily_race_card_html(race_day=date.today()):
     for place_id in range(1, len(PLACE_LIST) + 1):
         race_id_list = race_schedule_dataset_manager.get_daily_id(place_id, race_day)
         if not race_id_list:
-            print("指定日のレースIDが見つかりません: ", date_str, PLACE_LIST[place_id - 1])
+            print(f"ℹ️ [スキップ/エラーではありません] 指定日に開催なし: {date_str} {PLACE_LIST[place_id - 1]}")
             continue
         for race_id in race_id_list:
             make_race_card_html(date_str, place_id, race_id)

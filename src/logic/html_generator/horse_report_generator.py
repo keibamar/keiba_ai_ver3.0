@@ -117,7 +117,7 @@ def get_avg_time(course_name, race_type, class_name, course_len, ground_state):
     try:
         place_id = NAME_LIST.index(course_name) + 1
     except ValueError:
-        print(f"❌ 不明な開催場名: {course_name}")
+        print(f"❌ [要確認/エラー] 不明な開催場名: {course_name}")
         return np.nan
 
     df = race_info_dataset_manager.get_total_average_time_csv(place_id)
@@ -144,7 +144,7 @@ def get_avg_time(course_name, race_type, class_name, course_len, ground_state):
     sub = df[cond]
 
     if sub.empty or sub["avg_time"].isna().all():
-        print(f"⚠️ 該当データなし: {course_name} {race_type} {class_name} {course_len} {ground_state}")
+        print(f"ℹ️ [スキップ/エラーではありません] 平均タイムの該当データなし（サンプル不足）: {course_name} {race_type} {class_name} {course_len} {ground_state}")
         return np.nan
 
     return float(sub["avg_time"].values[0])

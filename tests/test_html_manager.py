@@ -47,6 +47,10 @@ def test_add_race_day_appends_to_existing_file(new_js_path):
 
     new_content = new_js_path.read_text(encoding="utf-8")
 
+    print(f"\n--- add_race_day({SAMPLE_RACE_DAY}) ---")
+    print(f"  追記前:\n{EXISTING_CONTENT}")
+    print(f"  追記後:\n{new_content}")
+
     assert '"20260614"' in new_content
     assert new_content.endswith('];\n')
 

@@ -90,6 +90,11 @@ def test_horse_report_to_html_structure(tmp_horse_id_map):
     report = h.build_horse_report(SAMPLE_HORSE_NAME, PLACE_ID, SAMPLE_RACE_ID, "20240101")
     html_str = h.horse_report_to_html(report)
 
+    print(f"\n--- build_horse_report({SAMPLE_HORSE_NAME}, race_id={SAMPLE_RACE_ID}) ---")
+    print(f"  recent5: {report['recent5']}")
+    print(f"  surface_summary: {report['surface_summary']}")
+    print(f"  HTML文字数: {len(html_str)}")
+
     assert "<div class='horse-report'" in html_str
     assert "血統 (父)" in html_str
     assert "近5走成績" in html_str
