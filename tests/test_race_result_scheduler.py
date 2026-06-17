@@ -34,9 +34,17 @@ def test_update_daily_race_results_saves_per_race_csv(tmp_path, monkeypatch):
     race_result_scheduler.update_daily_race_results(date(2024, 1, 28))
 
     out_path = tmp_path / "race_result" / PLACE_LIST[4] / "2024" / f"{race_id}.csv"
+
+    print(f"\n--- update_daily_race_results(2024-01-28) ---")
+    print(f"  保存先: {out_path}")
+    print(f"  ファイル作成: {out_path.is_file()}")
+
     assert out_path.is_file()
     result = pd.read_csv(out_path, dtype=str, index_col=0)
     result.index = result.index.astype(str)
+
+    print(result.to_string())
+
     assert result.equals(_sample_race_result_df(race_id))
 
 

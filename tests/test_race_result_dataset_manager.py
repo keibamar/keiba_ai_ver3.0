@@ -91,12 +91,20 @@ FIXED_RACE_ID = "202405010101"
 def test_get_race_results_csv_returns_real_data():
     df = new_race_result.get_race_results_csv(SAMPLE_PLACE_ID, SAMPLE_YEAR)
 
+    print(f"\n--- get_race_results_csv(place_id={SAMPLE_PLACE_ID}, year={SAMPLE_YEAR}) ---")
+    print(f"  shape: {df.shape}")
+    print(f"  columns: {df.columns.tolist()}")
+
     assert not df.empty
     for col in ["着順", "枠番", "馬番", "馬名", "course_len", "race_type", "ground_state", "class"]:
         assert col in df.columns
 
     df.index = df.index.astype(str)
     race_rows = df.loc[FIXED_RACE_ID:FIXED_RACE_ID]
+
+    print(f"  race_id={FIXED_RACE_ID} の行数: {len(race_rows)}")
+    print(race_rows[["着順", "馬番", "馬名"]].to_string())
+
     assert len(race_rows) == 16
 
 

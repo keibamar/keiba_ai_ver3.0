@@ -26,6 +26,10 @@ def test_make_average_time_datasets_returns_expected():
 
     result = average_calculator.make_average_time_datasets(df_race_results, COURSE_LISTS[SAMPLE_PLACE_ID - 1])
 
+    print(f"\n--- make_average_time_datasets(place={SAMPLE_PLACE}, year=2019) ---")
+    print(f"  shape: {result.shape}")
+    print(result.head().to_string())
+
     assert result.shape == (280, 5)
     assert result.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "avg_time"]
     assert result["ground_state"].unique().tolist() == ["全", "良", "稍重", "重", "不良"]

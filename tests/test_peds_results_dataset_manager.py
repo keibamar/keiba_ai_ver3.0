@@ -101,6 +101,10 @@ def test_output_results_empty_returns_empty_dataframe():
 def test_get_peds_dataset_csv_returns_real_data():
     df = new_peds_results.get_peds_dataset_csv(PLACE_ID, YEAR)
 
+    print(f"\n--- get_peds_dataset_csv(place_id={PLACE_ID}, year={YEAR}) ---")
+    print(f"  shape: {df.shape}")
+    print(f"  先頭3頭のhorse_id: {df.index[:3].tolist()}")
+
     assert df.shape == (973, 62)
     assert df.columns[:5].tolist() == ["peds_0", "peds_1", "peds_2", "peds_3", "peds_4"]
     assert df.index[:3].tolist() == [2016104740, 2016104405, 2016104680]

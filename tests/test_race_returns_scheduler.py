@@ -151,9 +151,13 @@ def test_weekly_update_race_returns_updates_and_splits(race_returns_root, monkey
     race_returns_scheduler.weekly_update_race_returns(day)
 
     result = race_info_dataset_manager.get_race_returns_csv(SAMPLE_PLACE_ID, day.year)
-    assert result.index.astype(str).tolist() == [race_id, race_id]
-
     split_path = os.path.join(str(race_returns_root), SAMPLE_PLACE, str(day.year), f"{race_id}.csv")
+
+    print(f"\n--- weekly_update_race_returns({day}) ---")
+    print(f"  集計CSVの行: {result.index.astype(str).tolist()}")
+    print(f"  race_id別分割ファイル: {split_path} (存在: {os.path.isfile(split_path)})")
+
+    assert result.index.astype(str).tolist() == [race_id, race_id]
     assert os.path.isfile(split_path)
 
 

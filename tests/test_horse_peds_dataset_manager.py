@@ -48,6 +48,10 @@ def test_delete_invalid_strings():
 def test_get_horse_peds_csv_returns_real_data():
     df = new_horse_peds.get_horse_peds_csv(SAMPLE_HORSE_ID)
 
+    print(f"\n--- get_horse_peds_csv(horse_id={SAMPLE_HORSE_ID}) ---")
+    print(f"  shape: {df.shape}")
+    print(f"  先頭6行（直近3代の血統）: {df[SAMPLE_HORSE_ID].iloc[:6].tolist()}")
+
     assert df.shape == (62, 1)
     assert df.columns.tolist() == [SAMPLE_HORSE_ID]
     assert df[SAMPLE_HORSE_ID].iloc[:6].tolist() == [

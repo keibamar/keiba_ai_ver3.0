@@ -74,6 +74,10 @@ def test_make_empty_record():
 def test_analyze_winner_weights_returns_real_data():
     result = new_race_info.analyze_winner_weights(SAMPLE_PLACE_ID, 2019)
 
+    print(f"\n--- analyze_winner_weights(place_id={SAMPLE_PLACE_ID}, year=2019) ---")
+    print(f"  shape: {result.shape}")
+    print(result.head().to_string())
+
     assert result.shape == (280, 5)
     assert result.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "馬体重"]
     first = result.iloc[0]
@@ -292,6 +296,10 @@ def test_get_race_returns_csv_returns_real_data(new_race_info_root):
     shutil.copy(src, dest_dir / "2019_race_returns.csv")
 
     result = new_race_info.get_race_returns_csv(SAMPLE_PLACE_ID, 2019)
+
+    print(f"\n--- get_race_returns_csv(place_id={SAMPLE_PLACE_ID}, year=2019) ---")
+    print(f"  shape: {result.shape}")
+    print(result.head().to_string())
 
     assert result.shape == (1609, 4)
     assert result.columns.tolist() == ["0", "1", "2", "3"]

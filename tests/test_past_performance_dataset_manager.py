@@ -181,6 +181,10 @@ def new_data_root(tmp_path, monkeypatch):
 def test_get_past_performance_dataset_returns_real_data():
     df = new_past_performance.get_past_performance_dataset(SAMPLE_HORSE_ID)
 
+    print(f"\n--- get_past_performance_dataset(horse_id={SAMPLE_HORSE_ID}) ---")
+    print(f"  shape: {df.shape}")
+    print(df[["日付", "開催", "レース名", "class"]].head().to_string())
+
     assert df.shape == (47, 23)
 
     first = df.iloc[0]
