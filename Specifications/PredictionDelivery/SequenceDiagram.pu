@@ -1,0 +1,60 @@
+@startuml
+title PredictionDelivery (Herald) - 代表テストのシーケンス図
+
+participant "Test" as T
+participant "prediction_publisher" as PP
+participant "return_report" as RR
+participant "race_card_dataset_manager" as RCM
+participant "race_info_dataset_manager" as RIM
+participant "SMTP (モック)" as SMTP #FFE599
+participant "X / tweepy.Client (モック)" as X #FFE599
+
+== test_make_race_text_writes_expected_content ==
+T -> PP : make_race_text(race_day, race_id)
+PP -> RCM : get_race_cards(race_day, race_id)\n(score/rank付き出馬表)
+RCM --> PP : race_card_df
+PP -> PP : extract_top5_pred(race_card_df)\n(rankでソートし上位5頭抽出)
+PP -> PP : texts/race_prediction/{date}/{race_id}.txt に書き出し
+PP --> T : なし（ファイル内容を検証）
+
+== test_send_email_sends_via_smtp ==
+T -> PP : send_email(txt_path)
+PP -> PP : ファイル1行目=件名用日付, 2行目=件名用見出し,\n4行目以降=本文として分割
+PP -> SMTP : SMTP_SSL().login(account, password)
+PP -> SMTP : send_message(msg)
+PP -> SMTP : quit()
+PP --> T : なし（呼び出し順・件名・本文を検証）
+
+== test_post_text_data_creates_tweet ==
+T -> PP : post_text_data(txt_path)
+PP -> PP : ファイル内容を読み込み
+PP -> X : tweepy.Client().create_tweet(text)
+PP --> T : なし（投稿内容を検証）
+
+== test_make_return_text_writes_expected_content ==
+T -> RR : make_return_text(place_id, race_day)
+RR -> RR : race_schedule_dataset_manager.get_daily_id(place_id, race_day)\nでrace_id_listを取得
+RR -> RR : get_win_result(race_day, race_id_list)
+RR -> RCM : get_race_cards(race_day, race_id)（各race_idについて）
+RCM --> RR : pred_df\n("rank"列が無ければℹ️スキップ)
+RR -> RIM : get_race_return_csv_for_race(race_id)
+RIM --> RR : returns_df
+RR -> RR : get_place_result(...) / get_trio_box_result(...)\n（同様の集計）
+RR -> RR : write_win_hit_text / write_place_hit_text /\nwrite_trio_hit_text でテキスト整形
+RR -> RR : texts/race_returns/{date}/{place}_pred_score.txt に書き出し
+RR --> T : なし（ファイル内容を検証)
+
+== test_post_race_returns_posts_tweet ==
+T -> RR : make_return_text(place_id, race_day)
+T -> RR : post_race_returns(place_id, race_day)
+RR -> PP : post_text_data(text_path)
+PP -> X : tweepy.Client().create_tweet(text)
+RR --> T : なし（投稿内容を検証）
+
+note over RR
+  ℹ️ [スキップ/エラーではありません] 予想スコア未生成（rank列なし）
+  は、その日の他レースにscore/rankが付与されていない場合の正常スキップ。
+  ❌ [要確認/エラー] は return_report_error(e) 経由の例外発生時のみ
+end note
+
+@enduml

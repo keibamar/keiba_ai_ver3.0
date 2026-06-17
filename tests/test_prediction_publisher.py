@@ -88,6 +88,10 @@ def test_make_race_text_writes_expected_content(new_roots):
     content = out_file.read_text(encoding="utf-8")
     lines = content.splitlines()
 
+    print(f"\n--- make_race_text({SAMPLE_RACE_DAY}, race_id={SAMPLE_RACE_ID}) ---")
+    print(f"  出力先: {out_file}")
+    print(content)
+
     # 日付行
     assert lines[0] == "2024/10/20"
 
@@ -135,9 +139,15 @@ def test_send_email_sends_via_smtp(tmp_path, monkeypatch):
     assert len(FakeSMTP.instances) == 1
     smtp = FakeSMTP.instances[0]
     call_names = [call[0] for call in smtp.calls]
-    assert call_names == ["set_debuglevel", "login", "send_message", "quit"]
 
     sent_msg = smtp.calls[2][1]
+
+    print(f"\n--- send_email({txt_path}) ---")
+    print(f"  SMTP呼び出し順: {call_names}")
+    print(f"  件名: {sent_msg['Subject']}")
+    print(f"  本文: {sent_msg.get_payload(decode=True).decode('utf-8')!r}")
+
+    assert call_names == ["set_debuglevel", "login", "send_message", "quit"]
     assert sent_msg["Subject"] == "2024/10/20 新潟1R レース 09:50"
     assert sent_msg.get_payload(decode=True).decode("utf-8") == "本文1行目\n本文2行目"
 
@@ -160,8 +170,12 @@ def test_post_text_data_creates_tweet(tmp_path, monkeypatch):
 
     pub.post_text_data(str(txt_path))
 
+    client = FakeTweepyClient.instances[0] if FakeTweepyClient.instances else None
+
+    print(f"\n--- post_text_data({txt_path}) ---")
+    print(f"  投稿内容: {client.tweets if client else None}")
+
     assert len(FakeTweepyClient.instances) == 1
-    client = FakeTweepyClient.instances[0]
     assert client.tweets == ["テスト投稿\n#MAR競馬予想\n"]
 
 

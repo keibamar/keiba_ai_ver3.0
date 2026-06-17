@@ -1,0 +1,205 @@
+' 本番運用バッチ（bat/）の週次タイムラインを、ver3.0新実装の呼び出しに
+' マッピングした統合シーケンス図。
+'
+' 前提（2026-06-18時点の事実）:
+' - bat/配下の7ファイルは現在も全てver2.0側（C:\keiba_ai\keiba_ai_ver2.0\...）
+'   のスクリプトを呼んでおり、ver3.0の新実装はまだ実運用に組み込まれていない
+'   （README「実運用は現状...post_daily_race.pyを呼んでおり、このリファクタリング
+'   による影響はない」と同じ事実）。
+' - 本図は「ver3.0へ切り替えた場合に各batが何を呼ぶことになるか」を示す、
+'   移行先のシーケンス図である。
+' - update_weekly/update_monthly の詳細（Reaper/Netkeibaとのやり取り含む）は
+'   WeeklyUpdateSequence.pu / BatchCreationSequence.pu を参照。本図ではその
+'   呼び出し列のみを示す（詳細図への入口として機能する）。
+' - make_time_id_list.bat に対応するver3.0実装は、生成ロジック自体が未移行
+'   （Phase7cで旧src/RacePrediction/make_time_id_list.pyを削除した際、
+'   移行先を作らなかったため）。本図ではこのギャップを明示する。
+
+@startuml
+title 本番運用バッチの週次タイムライン（ver3.0移行後の想定フロー）
+skinparam defaultTextAlignment center
+
+participant "Windowsタスクスケジューラ\n(bat起動元)" as Cron
+
+box "RaceContextCenter\n[Chronicle]" #E6F2FF
+  participant "race_schedule_dataset_manager" as Chronicle
+end box
+
+box "RaceScheduleCenter\n[Chronos]" #FFE6F2
+  participant "race_day_scheduler" as Chronos
+end box
+
+box "DatasetHub\n[Atlas]" #E6FFE6
+  participant "race_result_scheduler" as RRS
+  participant "race_returns_scheduler" as RTS
+  participant "horse_scheduler" as HS
+  participant "race_info_scheduler" as RIS
+end box
+
+box "HTMLFactory\n[Forge]" #FFF2E0
+  participant "daily_index_generator" as DIG
+  participant "race_page_generator" as RPG
+  participant "html_manager" as HM
+end box
+
+box "RacePredictionEngine\n[Oracle]" #F0E6FF
+  participant "race_card_builder" as RCB
+end box
+
+box "PredictionDelivery\n[Herald]" #FFE6E6
+  participant "prediction_publisher" as PP
+  participant "return_report" as RR
+end box
+
+== 火（第1週のみ）: update_monthly.bat ==
+note over Cron
+  ver2.0: monthly_update.py
+  （race_results/horse_peds/peds_results/race_returns/past_performanceの
+  montly_update_* + LightGBMのmake_annual_dataset）
+end note
+Cron -> RRS : monthly_update_race_results(day)
+Cron -> RTS : monthly_update_race_returns(day)
+Cron -> HS : monthly_update_horse_peds(day)
+Cron -> HS : monthly_update_pedsdata(day)
+Cron -> HS : monthly_update_past_performance(day)
+Cron -> RIS : weekly_update_average_time(day.year)\n（ver2.0のaverage_time.timedata_updateと同一処理、\nver3.0では月次専用関数はなく週次関数を共用）
+note right of Cron
+  ⚪ 対象外: LightGBM_dataset.make_annual_dataset()
+  （Oracleオフライン学習パイプライン、ver2.0のまま）
+  詳細呼び出し列（Reaper/Netkeiba往復含む）は
+  BatchCreationSequence.pu参照
+end note
+
+== 水: update_weekly.bat ==
+note over Cron
+  ver2.0: weekly_update.py
+  （race_results/horse_peds/peds_results/past_performanceのweekly_update_*、
+  analysis_race_info/analysis_race_timeの週次集計、LightGBMの
+  weekly_update_dataset_for_train）
+end note
+Cron -> RRS : weekly_update_race_results(day)
+Cron -> RTS : weekly_update_race_returns(day)
+Cron -> HS : weekly_update_horse_peds(day)
+Cron -> HS : weekly_update_pedsdata(day)
+Cron -> HS : weekly_update_past_performance(day)
+Cron -> RIS : weekly_update_horse_name_id_map(day.year)
+Cron -> RIS : weekly_update_average_pops(day.year)
+Cron -> RIS : weekly_update_winners_weight(day.year)
+Cron -> RIS : weekly_update_average_frame_and_horse(day.year)
+Cron -> RIS : weekly_update_winner_time(day.year)
+Cron -> RIS : weekly_update_average_time(day.year)
+note right of Cron
+  ⚪ 対象外: LightGBM_dataset.weekly_update_dataset_for_train()
+  詳細呼び出し列は WeeklyUpdateSequence.pu ①〜④ 参照
+end note
+
+== 木: make_time_id_list.bat ==
+note over Cron #FFCCCC
+  ⚠️ 未移行: ver3.0には生成ロジックの移植先が無い。
+  ver2.0のmake_time_id_list.py（get_race_id.get_daily_id +
+  race_card.pyのスクレイピングでrace_time/race_name/race_idを集め、
+  texts/race_calendar/race_time_id_list/{date}.csv に保存）に相当する
+  処理は、Phase7cで旧 src/RacePrediction/make_time_id_list.py を
+  削除した際に移行先を作らなかったため存在しない。
+  Manager層の入出力関数のみ存在する:
+end note
+Cron -> Chronicle : get_daily_id(place_id, race_day)\nまたはget_year_id_calendar(...)で\n対象race_idを特定（既存）
+note right of Chronicle
+  ここから「race_name・発走時刻を取得して
+  [race_time, race_id, race_name]のリストを組み立てる」
+  処理が必要だが、ver3.0側に未実装
+end note
+Cron -> RPG : (未実装) save_time_id_list用のrace_time_id_list組み立て
+RPG -> HM : (未実装)
+note right of HM
+  src/managers/race_card_dataset_manager.save_time_id_list(race_day, time_id_list)
+  は保存先として既に存在するが、呼び出し元（上記の組み立て処理）が無い
+end note
+
+== 金・土: make_html_prev_day.bat ==
+note over Cron
+  ver2.0: make_race_card_html.make_html_prev_day(race_day=明日)
+  （翌日の開催ページの土台を事前生成）
+  ver3.0の対応は未検証だが、以下が妥当な移行先と考えられる：
+end note
+Cron -> DIG : make_daily_index_page(race_day + 1日)
+DIG -> Chronicle : get_daily_id(0, race_day+1) 等で\n翌日のrace_id一覧を取得
+DIG --> Cron : public_html/races/{翌日}/index.html
+note right of DIG
+  race_page_generator.make_daily_race_card_html(race_day+1)も
+  呼べるが、出馬表CSV（score/rank）がまだ存在しないため
+  ℹ️ [スキップ/エラーではありません] でページ生成自体はスキップされる
+  （HTMLFactory/動作確認.md参照）。実際に運用するには、この時点で
+  出馬表だけ先行生成する処理（race_card_builder等）が別途必要。
+end note
+
+== 土・日: update_daily_html.bat ==
+note over Cron
+  ver2.0: update_daily_html(race_day=今日)
+  （当日のページを結果反映のため再生成）
+end note
+Cron -> RPG : make_daily_race_card_html(race_day=今日)
+RPG -> Chronicle : get_daily_id(place_id, race_day)（開催場ごと）
+loop 当日のrace_id一覧
+  RPG -> RPG : make_race_card_html(date_str, place_id, race_id)
+end
+Cron -> DIG : make_daily_index_page(race_day=今日)
+note right of RPG
+  post_today_race.bat（post_daily_race_pred）の中でも
+  レースごとに同等のmake_race_card_html呼び出しが行われるため、
+  ver3.0移行後はこの独立ジョブは冗長になる可能性がある
+  （バックアップ的な再実行として残す選択肢もある）
+end note
+
+== 土・日: post_today_race.bat（メインの当日進行） ==
+note over Cron
+  ver2.0: post_daily_race.py の post_daily_race_pred
+  詳細はRaceScheduleCenter/SequenceDiagram.pu参照
+end note
+Cron -> Chronos : post_daily_race_pred(race_day=今日)
+Chronos -> RPG : get_time_id_list(race_day)\n（⚠️ 木曜のmake_time_id_listが未移行のため、\n実際には空または旧ver2.0生成データに依存）
+Chronos -> HM : add_race_day(race_day)
+Chronos -> DIG : make_daily_index_page(race_day)\n（前日分も含め直近7日分を再生成）
+loop 1分ごと、全レース終了まで
+  alt レース20分前
+    Chronos -> RCB : make_race_card(race_id)\n（Oracle: 出馬表+score/rank生成）
+    Chronos -> PP : make_race_text(race_day, race_id)
+    Chronos -> PP : post_race_pred(race_id, race_day)\n（Herald: X投稿）
+    Chronos -> RPG : make_race_card_html(date_str, place_id, race_id)
+    alt 直前レースの結果が確定
+      Chronos -> RRS : (内部でnetkeiba_scraper.scrape_day_race_result)\nsave_race_result_for_race_id(...)
+      Chronos -> RTS : (内部でnetkeiba_scraper.scrape_race_returns_dataframe)\nsave_race_return_for_race_id(...)
+      Chronos -> RPG : make_race_card_html(...)（結果反映で再生成）
+    end
+  end
+end
+Chronos -> Chronos : 最終レースから30分待機後、\n全開催場の最終レース結果・配当を確定保存
+
+== 土・日: today_race_rerturns.bat（当日の回収率レポート・最終HTML） ==
+note over Cron
+  ver2.0: calc_returns.py（回収率計算・投稿）+ make_race_card_html.py
+  （結果反映HTML再生成）
+  詳細はPredictionDelivery/SequenceDiagram.pu参照。
+  post_today_race.bat完了後（全レース確定後）に実行する想定
+end note
+loop 当日開催のあった place_id
+  Cron -> RR : make_return_text(place_id, race_day)
+  RR -> Chronicle : get_daily_id(place_id, race_day)
+  RR -> RR : get_win_result / get_place_result /\nget_trio_box_result で回収率集計
+  Cron -> RR : post_race_returns(place_id, race_day)
+  RR -> PP : post_text_data(text_path)（Herald: X投稿）
+  Cron -> RPG : make_race_card_html(date_str, place_id, race_id)\n（最終結果でページ再生成、念のための再実行）
+end
+
+note over Cron, RR
+  全体まとめ:
+  - 火(第1週)・水・木は「データ収集・蓄積」フェーズ（Chronicle/Atlas中心）
+  - 木のmake_time_id_listのみ未移行のギャップが残る（⚠️参照）
+  - 金・土は「翌日の準備」フェーズ（Forge中心、要実機確認）
+  - 土・日は「当日進行」フェーズで、post_today_race（Chronos主導の
+    ライブループ）が中心。update_daily_html・today_race_rerturnsは
+    その前後を補完する独立ジョブだが、post_today_race内の処理と
+    一部重複する
+end note
+
+@enduml

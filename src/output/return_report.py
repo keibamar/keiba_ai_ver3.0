@@ -30,8 +30,8 @@ def return_report_error(e):
     Args:
         e (Exception) : エラー内容
     """
-    print(__name__ + ":" + __file__)
-    print(f"{e.__class__.__name__}: {e}")
+    print(f"❌ [要確認/エラー] {__name__}:{__file__}")
+    print(f"❌ [要確認/エラー] {e.__class__.__name__}: {e}")
 
 
 def get_win_result(race_day, race_id_list):
@@ -53,7 +53,7 @@ def get_win_result(race_day, race_id_list):
         # 予想結果の取得
         pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
         if "rank" not in pred_df.columns:
-            print("not rank:" + str(race_id))
+            print(f"ℹ️ [スキップ/エラーではありません] 予想スコア未生成（rank列なし）: {race_id}")
             race_num_diff += 1
             continue
 
@@ -97,7 +97,7 @@ def get_place_result(race_day, race_id_list):
         # 予想結果の取得
         pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
         if "rank" not in pred_df.columns:
-            print("not rank:" + str(race_id))
+            print(f"ℹ️ [スキップ/エラーではありません] 予想スコア未生成（rank列なし）: {race_id}")
             race_num_diff += 1
             continue
 
@@ -144,7 +144,7 @@ def get_trio_box_result(race_day, race_id_list, box_num):
         # 予想結果の取得
         pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
         if "rank" not in pred_df.columns:
-            print("not rank:" + str(race_id))
+            print(f"ℹ️ [スキップ/エラーではありません] 予想スコア未生成（rank列なし）: {race_id}")
             race_num_diff += 1
             continue
 

@@ -1,0 +1,50 @@
+@startuml
+title RacePredictionEngine (Oracle) - 代表テストのシーケンス図
+
+participant "Test" as T
+participant "race_prediction_engine" as ENG
+participant "race_info_dataset_manager" as RIM
+participant "past_performance_dataset_manager" as PPM
+participant "peds_results_dataset_manager\n(血統着度数)" as PRM
+participant "LightGBMモデル\n(data/prediction/models/)" as MODEL #FFE599
+
+== test_get_time_diff_returns_expected ==
+T -> RIM : get_time_diff(race_time, course_info)
+RIM -> RIM : data/race_info/average_times/.../total_avg_time.csv を参照
+RIM --> T : [タイム差, 標準偏差換算]
+
+== test_make_dataset_for_lightgbm_shape ==
+T -> ENG : make_dataset_for_lightgbm(race_id, course_info, horse_id)
+ENG -> PRM : 血統着度数を取得（36列）
+ENG -> PPM : get_past_race_info(horse_id, race_id, race_num=3)
+PPM --> ENG : race_info_df（過去3走分）
+ENG -> ENG : get_past_race_info_data(race_info_df)\n(タイム差・人気・着順を12列に整形)
+ENG -> ENG : get_time_diff(race_time, course_info) を内部で利用
+ENG --> T : DataFrame(shape=1,48)
+
+== test_get_lightgbm_model_loads_from_prediction_data_path ==
+T -> ENG : get_lightgbm_model(place_id, race_type, course_len)
+ENG -> MODEL : {place}/{race_type}{course_len}_lambdarank_model.txt を読み込み
+MODEL --> ENG : lgb.Booster
+ENG --> T : model（num_feature()=50を確認）
+
+== test_rank_prediction_returns_score_and_rank（エンドツーエンド） ==
+T -> ENG : rank_prediction(race_id, horse_ids, race_info_df, waku_df)
+loop 各horse_id（16頭）
+  ENG -> ENG : make_dataset_for_lightgbm(race_id, course_info, horse_id)
+end
+ENG -> ENG : get_lightgbm_model(place_id, race_type, course_len)
+ENG -> MODEL : model.predict(features)
+MODEL --> ENG : score一覧
+ENG -> ENG : scoreから rank を付与（降順）
+ENG --> T : DataFrame(columns=[score, rank])
+
+note over T
+  race_card_builder.make_race_card は
+  rank_predictionをここで呼び出して
+  出馬表DataFrameにscore/rankを統合する
+  （詳細はDataHarvester/SequenceDiagram.puの
+  test_make_race_card_returns_expected参照）
+end note
+
+@enduml

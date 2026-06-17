@@ -1,0 +1,61 @@
+@startuml
+title HTMLFactory (Forge) - 代表テストのシーケンス図
+
+participant "Test" as T
+participant "html_manager" as HM
+participant "daily_index_generator" as DIG
+participant "race_page_generator" as RPG
+participant "horse_report_generator" as HRG
+participant "race_schedule_dataset_manager" as RSM
+participant "出力先\n(public_html/, tmp_path)" as OUT #FFE599
+
+== test_add_race_day_appends_to_existing_file ==
+T -> HM : add_race_day(race_day)
+HM -> OUT : raceDays.js（window.racedays）を読み込み
+HM -> HM : 既存配列に日付文字列を追記
+HM -> OUT : raceDays.js を書き戻し
+HM --> T : なし（読み戻して内容を検証）
+
+== test_make_daily_index_page_generates_index_html ==
+T -> DIG : make_daily_index_page(race_day)
+DIG -> DIG : load_race_info(date_str)\n(texts/race_calendar/race_time_id_list/を参照)
+DIG -> RSM : get_daily_id(0, race_day)で当日のrace_id一覧を取得
+DIG -> DIG : group_place_races(files_info_list, race_info_dict)
+DIG -> DIG : build_table_rows(place_races, date_str)
+DIG -> OUT : public_html/races/{date}/index.html を書き出し
+DIG --> T : なし（ファイル内容を検証）
+
+== test_make_race_card_html_generates_full_page（最も統合的） ==
+T -> RPG : make_race_card_html(date_str, place_id, race_id)
+RPG -> RPG : read_race_csv(date_str, race_id)\n(出馬表+score/rank、無ければℹ️スキップ)
+RPG -> RPG : get_result_table(...) / get_returns_table(...)\n(未確定ならℹ️スキップしてDataFrame空)
+RPG -> RPG : generate_run_time_info / generate_weight_info /\ngenerate_pops_info / generate_frame_horse_info\n(コース別平均値セクション、Atlas参照)
+RPG -> RPG : generate_peds_result_html(...)（血統別成績）
+loop 出走馬ごと
+  RPG -> HRG : build_horse_report(horse_name, place_id, race_id, date_str)
+  HRG -> HRG : 過去5走（recent5）・芝/ダート別サマリを集計
+  HRG --> RPG : report dict
+  RPG -> HRG : horse_report_to_html(report)
+  HRG --> RPG : HTML文字列
+end
+RPG -> HM : save_race_page_html(date_str, filename, html_content)
+HM -> OUT : public_html/races/{date}/{place}R{n}.html を書き出し
+RPG --> T : なし（HTML内容を検証）
+
+== test_horse_report_to_html_structure ==
+T -> HRG : build_horse_report(horse_name, place_id, race_id, date_str)
+HRG -> HRG : load_horse_id_map / get_horse_id_by_name
+HRG -> HRG : 過去成績から recent5（直近5走）を抽出
+HRG -> HRG : surface_summary（芝/ダート別の最速上り・平均上り・平均通過位置）を集計\n(該当データが無い場合はℹ️スキップしてNone)
+HRG --> T : report dict
+T -> HRG : horse_report_to_html(report)
+HRG --> T : HTML文字列
+
+note over RPG, HRG
+  ℹ️ [スキップ/エラーではありません] のログは
+  データ未確定・未蓄積・対象外コースのため正常スキップ。
+  ❌ [要確認/エラー] のみが本来の異常を示す
+  （詳細はHTMLFactory/動作確認.md参照）
+end note
+
+@enduml

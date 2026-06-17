@@ -1,0 +1,69 @@
+@startuml
+title DatasetHub (Atlas) - 代表テストのシーケンス図
+
+participant "Test" as T
+participant "race_result_dataset_manager" as RRM
+participant "race_result_scheduler" as RRS
+participant "horse_peds_dataset_manager" as HPM
+participant "past_performance_dataset_manager" as PPM
+participant "peds_results_dataset_manager" as PRM
+participant "race_info_dataset_manager" as RIM
+participant "race_returns_scheduler" as RTS
+participant "average_calculator" as AC
+participant "既存CSV (data/)" as CSV #FFE599
+
+== test_get_race_results_csv_returns_real_data ==
+T -> RRM : get_race_results_csv(place_id=5, year=2024)
+RRM -> CSV : data/race_result/05_tokyo/2024_race_results.csv を読み込み
+RRM --> T : DataFrame(着順/枠番/馬番/馬名/...)
+
+== test_update_daily_race_results_saves_per_race_csv ==
+T -> RRS : update_daily_race_results(race_day)
+RRS -> RRS : race_schedule_dataset_manager.get_daily_id(race_day)\n(monkeypatch)
+RRS -> RRS : netkeiba_scraper.scrape_day_race_result(race_id)\n(monkeypatch)
+RRS -> RRM : save_race_result_for_race_id(race_id, df)
+RRM -> CSV : per-race CSV書き出し
+RRM --> T : 保存先パス確認
+
+== test_get_horse_peds_csv_returns_real_data ==
+T -> HPM : get_horse_peds_csv(horse_id)
+HPM -> CSV : data/horse/horse_peds/{horse_id}.csv を読み込み
+HPM --> T : DataFrame(shape=62,1、3代分の血統)
+
+== test_get_past_performance_dataset_returns_real_data ==
+T -> PPM : get_past_performance_dataset(horse_id)
+PPM -> CSV : data/horse/past_performance/{horse_id}.csv を読み込み
+PPM --> T : DataFrame(shape=47,23、日付/開催/レース名/class等)
+
+== test_get_peds_dataset_csv_returns_real_data ==
+T -> PRM : get_peds_dataset_csv(place_id, year)
+PRM -> CSV : data/horse/peds_results/... を読み込み
+PRM --> T : DataFrame(shape=973,62)
+
+== test_analyze_winner_weights_returns_real_data ==
+T -> RIM : analyze_winner_weights(place_id, 2019)
+RIM -> RRM : get_race_results_csv経由でレース結果を取得
+RIM -> RIM : コース・クラス別に勝ち馬の馬体重を集計
+RIM --> T : DataFrame(shape=280,5)
+
+== test_get_race_returns_csv_returns_real_data ==
+T -> RIM : get_race_returns_csv(place_id, 2019)
+RIM -> CSV : data/race_info/race_returns/... を読み込み
+RIM --> T : DataFrame(shape=1609,4、式別/馬番/配当/人気)
+
+== test_weekly_update_race_returns_updates_and_splits ==
+T -> RTS : weekly_update_race_returns(day)
+RTS -> RTS : race_schedule_dataset_manager.get_past_weekly_id(...)\n(monkeypatch)
+RTS -> RTS : netkeiba_scraper.scrape_race_returns_dataframe(...)\n(monkeypatch)
+RTS -> RIM : 既存データとマージしてsave_race_returns_dataset(...)
+RTS -> RIM : split_race_returns_csv(...)（race_id単位に分割保存）
+RTS --> T : 集計CSV + race_id別分割ファイルの存在確認
+
+== test_make_average_time_datasets_returns_expected ==
+T -> CSV : data/race_result/02_hakodate/2019_race_results.csv を直接読み込み
+T -> AC : make_average_time_datasets(df_race_results, course_lists)
+AC -> AC : get_race_time_msec(time_str) でタイムをミリ秒変換
+AC -> AC : コース・クラス別にgroupbyして平均タイムを算出
+AC --> T : DataFrame(shape=280,5、avg_time列)
+
+@enduml

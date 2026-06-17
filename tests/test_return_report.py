@@ -115,6 +115,10 @@ def test_make_return_text_writes_expected_content(new_roots):
     assert out_file.exists()
     content = out_file.read_text(encoding="utf-8")
 
+    print(f"\n--- make_return_text(place_id={SAMPLE_PLACE_ID}, race_day={SAMPLE_RACE_DAY}) ---")
+    print(f"  出力先: {out_file}")
+    print(content)
+
     assert content.startswith("2024/10/20 新潟競馬場\n\nMAR競馬予想 回収率\n")
     assert "◎単勝回収率:160.0%  (的中レース:1 R)\n" in content
     assert "◎複勝回収率:110.0%  (的中レース:1 R)\n" in content
@@ -132,7 +136,11 @@ def test_post_race_returns_posts_tweet(new_roots, monkeypatch):
     rr.make_return_text(SAMPLE_PLACE_ID, SAMPLE_RACE_DAY)
     rr.post_race_returns(SAMPLE_PLACE_ID, SAMPLE_RACE_DAY)
 
+    client = FakeTweepyClient.instances[0] if FakeTweepyClient.instances else None
+
+    print(f"\n--- post_race_returns(place_id={SAMPLE_PLACE_ID}, race_day={SAMPLE_RACE_DAY}) ---")
+    print(f"  投稿内容: {client.tweets if client else None}")
+
     assert len(FakeTweepyClient.instances) == 1
-    client = FakeTweepyClient.instances[0]
     assert len(client.tweets) == 1
     assert "◎単勝回収率:160.0%" in client.tweets[0]

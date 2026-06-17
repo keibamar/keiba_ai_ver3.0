@@ -1,0 +1,52 @@
+@startuml
+title RaceScheduleCenter (Chronos) - 代表テストのシーケンス図
+
+participant "Test" as T
+participant "race_day_scheduler" as RDS
+participant "prediction_publisher\n(Herald, monkeypatch対象)" as PP
+participant "src.config.paths" as P
+
+== test_post_race_pred_posts_prediction_text ==
+T -> P : monkeypatch RACE_PREDICTION_TEXT_PATH = tmp_path
+T -> RDS : post_race_pred(race_id, race_day)
+RDS -> RDS : text_path = os.path.join(\n  paths.RACE_PREDICTION_TEXT_PATH,\n  race_day.strftime("%Y%m%d"), f"{race_id}.txt")
+RDS -> PP : post_text_data(text_path)
+PP --> RDS : (テスト内ではlist.appendに差し替え)
+RDS --> T : なし
+T -> T : posted == [expected_path] を検証
+
+== test_post_pred_return_posts_return_text ==
+T -> P : monkeypatch RACE_RETURN_REPORT_TEXT_PATH = tmp_path
+T -> RDS : post_pred_return(place_id, race_day)
+RDS -> RDS : text_path = os.path.join(\n  paths.RACE_RETURN_REPORT_TEXT_PATH,\n  race_day.strftime("%Y%m%d"),\n  f"{PLACE_LIST[place_id-1]}_pred_score.txt")
+RDS -> PP : post_text_data(text_path)
+RDS --> T : なし
+T -> T : posted == [expected_path] を検証
+
+note over RDS
+  post_daily_race_pred(race_day) はテスト対象外（live loop）
+  実際の呼び出し順は下記（参考、ユニットテストなし）:
+end note
+
+== post_daily_race_pred（参考、テスト対象外） ==
+RDS -> RDS : race_card_dataset_manager.get_time_id_list(race_day)
+RDS -> RDS : html_manager.add_race_day(race_day)
+RDS -> RDS : daily_index_generator.make_daily_index_page(race_day)
+loop 1分ごと、全レース終了まで
+  alt レース20分前
+    RDS -> RDS : race_card_builder.make_race_card(race_id)
+    RDS -> RDS : race_card_dataset_manager.save_race_cards(...)
+    RDS -> RDS : prediction_publisher.make_race_text(...)
+    RDS -> RDS : post_race_pred(race_id, race_day)
+    RDS -> RDS : race_page_generator.make_race_card_html(...)
+    alt 直前レースあり
+      RDS -> RDS : netkeiba_scraper.scrape_day_race_result(previous_race_id)
+      RDS -> RDS : race_result_dataset_manager.save_race_result_for_race_id(...)
+      RDS -> RDS : netkeiba_scraper.scrape_race_returns_dataframe([previous_race_id])
+      RDS -> RDS : race_info_dataset_manager.save_race_return_for_race_id(...)
+    end
+  end
+end
+RDS -> RDS : sleep(1800)後、全開催場の最終レース結果・配当を取得・保存
+
+@enduml

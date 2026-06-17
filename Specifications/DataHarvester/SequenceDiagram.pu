@@ -1,0 +1,62 @@
+@startuml
+title DataHarvester (Reaper) - 代表テストのシーケンス図
+
+participant "Test" as T
+participant "jra_calendar_scraper" as JCS
+participant "netkeiba_scraper" as NS
+participant "race_card_builder\n(Oracle側統合窓口)" as RCB
+participant "JRA公式サイト" as JRA #FFE599
+participant "netkeiba.com" as NK #FFE599
+
+== test_get_jra_calendar_has_calendar_columns ==
+T -> JCS : get_jra_calendar(2025)
+JCS -> JRA : HTTPリクエスト
+JRA --> JCS : 開催カレンダーJSON
+JCS --> T : calendar_df\n(validate.has_calendar_columnsで検証)
+
+== test_get_jra_calendar_matches_existing_2025_calendar ==
+T -> JCS : get_jra_calendar(2025)
+JCS -> JRA : HTTPリクエスト
+JRA --> JCS : 開催カレンダーJSON
+JCS -> JCS : parse_meeting_name(meeting_name)
+JCS -> JCS : assign_days(entries)
+JCS --> T : calendar_df
+T -> T : race_schedule_dataset_manager.\nget_race_calendar(2025)で既存CSVと比較
+
+== test_scrape_race_results_returns_expected ==
+T -> NS : scrape_race_results(FIXED_RACE_ID)
+NS -> NK : GET db.netkeiba.com/race/{race_id}\n(User-Agentヘッダ付き)
+NK --> NS : HTML
+NS -> NS : parse_race_info_tokens(tokens)
+NS --> T : DataFrame(shape=16,23)
+
+== test_scrape_day_race_result_returns_expected ==
+T -> NS : scrape_day_race_result(FIXED_RACE_ID)
+NS -> NK : GET race.sp.netkeiba.com/race/result.html?race_id=...
+NK --> NS : HTML
+NS --> T : DataFrame(shape=16,15)
+
+== test_scrape_race_returns_dataframe_matches_known_result ==
+T -> NS : scrape_race_returns_dataframe([FIXED_RACE_ID])
+NS -> NK : GET db.netkeiba.com/race/{race_id}
+NK --> NS : HTML
+NS -> NS : format_type_returns_dataframe(bet_type)\n(単勝〜三連単の8種別)
+NS --> T : DataFrame(shape=12,4)
+
+== test_scrape_race_card_returns_expected ==
+T -> NS : scrape_race_card(FIXED_RACE_ID)
+NS -> NK : GET race.sp.netkeiba.com/race/shutuba.html?race_id=...
+NK --> NS : HTML
+NS --> T : (info, race_info_df, race_card_df)
+
+== test_make_race_card_returns_expected (エンドツーエンド) ==
+T -> RCB : make_race_card(FIXED_RACE_ID)
+RCB -> NS : scrape_race_card(race_id)
+NS -> NK : GET shutuba.html
+NK --> NS : HTML
+NS --> RCB : (info, race_info_df, race_card_df)
+RCB -> RCB : horse_peds_dataset_manager経由で\n血統データ(peds_0/peds_1/peds_4)を取得
+RCB -> RCB : race_prediction_engine.rank_prediction(...)\n(Oracle: score/rank付与)
+RCB --> T : (race_card_df, race_info_df)
+
+@enduml

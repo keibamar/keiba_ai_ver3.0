@@ -1,0 +1,65 @@
+@startuml
+title RaceContextCenter (Chronicle) - 代表テストのシーケンス図
+
+participant "Test" as T
+participant "race_schedule_dataset_manager" as RSM
+participant "transform\n(src.datasets.race_schedule)" as TR
+participant "既存カレンダーCSV\n(data/race_schedule/)" as CSV #FFE599
+
+== test_get_daily_id_returns_expected ==
+T -> RSM : get_daily_id(place_id, race_day)
+RSM -> CSV : get_race_calendar(year)を参照し\n当日のtimes/daysを特定
+RSM -> TR : build_race_ids_for_day(year, course, times, days)
+TR --> RSM : race_id一覧(その日・その場の12レース分)
+RSM --> T : race_idリスト（非開催日/場は空）
+
+== test_get_past_weekly_id_returns_expected ==
+T -> RSM : get_past_weekly_id(place_id, race_day)
+loop 7日前 .. 当日
+  RSM -> RSM : get_daily_id(place_id, day)
+end
+RSM --> T : 7日分を連結したrace_idリスト
+
+== test_get_past_year_id_returns_expected ==
+T -> RSM : get_past_year_id(place_id, race_day)
+RSM -> CSV : get_race_calendar()で過去1年分の開催情報を取得
+RSM -> TR : build_race_ids_for_day(...)を各開催日に適用
+RSM --> T : race_idリスト(件数・先頭・末尾を検証)
+
+== test_get_year_id_all_returns_expected ==
+T -> RSM : get_year_id_all(place_id, year)
+RSM -> TR : build_race_ids_for_day(year, place_id, times, days)\n(times=1..MAX_TIMES_PER_YEAR, days=1..MAX_DAYS_PER_TIMES)
+note right of RSM
+  カレンダーに依存しない全組み合わせ
+  (常に864件 = 6回 x 12日目 x 12R)
+end note
+RSM --> T : race_idリスト
+
+== test_get_past_weekly_place_id_returns_expected / test_get_daily_place_id_returns_expected ==
+T -> RSM : get_past_weekly_place_id(race_day)\nget_daily_place_id(race_day)
+RSM -> CSV : get_race_calendar()を参照
+RSM --> T : 開催場place_idのリスト（非開催日は空）
+
+== test_get_place_id_list_from_race_id_list_returns_expected ==
+T -> RSM : get_year_id_all(6, 2025)
+RSM --> T : race_idリスト(864件)
+T -> RSM : get_place_id_list_from_race_id_list(race_id_list)
+RSM --> T : [6]（一意なplace_id）
+
+== test_get_year_id_calendar_returns_expected ==
+T -> RSM : get_year_id_calendar(place_id, year)
+RSM -> CSV : get_race_calendar(year)
+RSM -> TR : filter_calendar_by_course(calendar, place_id)
+loop カレンダーの各行(開催回・開催日目)
+  RSM -> TR : build_race_ids_for_day(year, course, times, days)
+end
+RSM --> T : race_idリスト（重複なし）
+
+== test_get_next_weekly_id_returns_expected ==
+T -> RSM : get_next_weekly_id(place_id, race_day)
+loop 当日 .. 6日後
+  RSM -> RSM : get_daily_id(place_id, day)
+end
+RSM --> T : 7日分を連結したrace_idリスト
+
+@enduml
