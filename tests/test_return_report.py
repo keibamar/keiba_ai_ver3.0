@@ -144,3 +144,25 @@ def test_post_race_returns_posts_tweet(new_roots, monkeypatch):
     assert len(FakeTweepyClient.instances) == 1
     assert len(client.tweets) == 1
     assert "◎単勝回収率:160.0%" in client.tweets[0]
+
+
+def test_post_daily_race_returns_posts_for_each_racing_place(new_roots, monkeypatch):
+    """開催のあった全place_idについてmake_return_text/post_race_returnsが呼ばれ、
+    開催のなかったplace_idはスキップされることを確認する。
+    """
+    FakeTweepyClient.instances = []
+    monkeypatch.setattr(prediction_publisher.tweepy, "Client", FakeTweepyClient)
+
+    calls = []
+    monkeypatch.setattr(rr, "make_return_text", lambda place_id, race_day: calls.append(("make_return_text", place_id)))
+    monkeypatch.setattr(rr, "post_race_returns", lambda place_id, race_day: calls.append(("post_race_returns", place_id)))
+
+    rr.post_daily_race_returns(SAMPLE_RACE_DAY)
+
+    print(f"\n--- post_daily_race_returns({SAMPLE_RACE_DAY}) ---")
+    print(f"  呼び出し: {calls}")
+
+    # 2024/10/20 に開催があったのは 04_nigata(4) / 05_tokyo(5) / 08_kyoto(8) のみ
+    racing_place_ids = {4, 5, 8}
+    assert {place_id for _, place_id in calls} == racing_place_ids
+    assert all(name in ("make_return_text", "post_race_returns") for name, _ in calls)

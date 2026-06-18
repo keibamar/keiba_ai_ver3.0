@@ -11,10 +11,19 @@ save_race_return_for_race_id に置き換えた。
 
 カレンダー更新（旧 web/src/generators/date_index.py の add_race_day）は
 src.managers.html_manager.add_race_day に置き換えた。
+
+make_time_id_list / update_weekly_time_id_list は、旧 src/RacePrediction/
+make_time_id_list.py（make_time_id_list/__main__）の移植。指定日の出馬表ページを
+スクレイピングしてレース名・発走時刻を集め、race_time_id_listとして保存する
+（post_daily_race_pred 等が参照するデータの作成元）。
+
+make_html_prev_day / update_daily_html は、旧 web/src/generators/
+make_race_card_html.py の同名関数の移植。
 """
 
 import datetime
 import os
+import re
 import sys
 from datetime import date, timedelta
 from time import sleep
@@ -32,8 +41,116 @@ from src.managers import (  # noqa: E402
     race_card_dataset_manager,
     race_info_dataset_manager,
     race_result_dataset_manager,
+    race_schedule_dataset_manager,
 )
 from src.output import prediction_publisher  # noqa: E402
+
+
+def _extract_race_time(info):
+    """scrape_race_cardのinfoから発走時刻(HHMM形式の文字列)を取り出す"""
+    race_time_str = str(info[1]) + str(info[2][0]) + str(info[2][1])
+    return "".join(re.findall(r"\d+", race_time_str))
+
+
+def _extract_race_name(info):
+    """scrape_race_cardのinfoからレース名(クラス表記)を取り出す"""
+    return str(info[0])
+
+
+def make_time_id_list(race_day):
+    """指定日の[race_time, race_id, race_name]リストを作成する
+
+    全開催場の出馬表ページをスクレイピングし、発走時刻順にソートして返す。
+
+    Args:
+        race_day(date) : レース開催日
+    Returns:
+        time_id_list(list) : [race_time, race_id, race_name]のリスト(発走時刻順)
+    """
+    time_id_list = []
+    race_id_list = race_schedule_dataset_manager.get_daily_id(0, race_day)
+    for race_id in race_id_list:
+        try:
+            info, _, _ = netkeiba_scraper.scrape_race_card(race_id)
+        except Exception:
+            print(f"ℹ️ [スキップ/エラーではありません] 出馬表未公開のため取得不可: {race_id}")
+            continue
+        if not info:
+            continue
+        time_id_list.append([_extract_race_time(info), race_id, _extract_race_name(info)])
+
+    time_id_list.sort(key=lambda row: int(row[0]))
+    return time_id_list
+
+
+def update_weekly_time_id_list(base_day=date.today()):
+    """次の7日分のrace_time_id_listを作成・保存する（毎週木曜実行想定）
+
+    Args:
+        base_day(date) : 基準日(初期値:今日)
+    """
+    for i in range(7):
+        race_day = base_day + timedelta(days=(7 - i))
+        time_id_list = make_time_id_list(race_day)
+        if time_id_list:
+            race_card_dataset_manager.save_time_id_list(race_day, time_id_list)
+
+
+def make_html_prev_day(race_day):
+    """翌日分の出馬表・予想・HTMLを事前生成する（毎週金・土実行想定）
+
+    race_dayにはあらかじめ update_weekly_time_id_list で保存された
+    race_time_id_listが存在している必要がある。
+
+    Args:
+        race_day(date) : レース開催日(通常は実行日の翌日)
+    """
+    time_id_list = race_card_dataset_manager.get_time_id_list(race_day)
+    if not time_id_list:
+        return
+
+    html_manager.add_race_day(race_day)
+    daily_index_generator.make_daily_index_page(race_day)
+    # 過去一週間のindexを再作成（リンクの生成）
+    for delta_day in range(1, 8):
+        past_day = race_day - timedelta(days=delta_day)
+        daily_index_generator.make_daily_index_page(past_day)
+
+    for _, race_id in time_id_list:
+        try:
+            race_card_df, race_info_df = race_card_builder.make_race_card(race_id)
+            race_card_dataset_manager.save_race_cards(race_card_df, race_day, race_id)
+            race_card_dataset_manager.save_race_info_df(race_info_df, race_day, race_id)
+            race_info_dataset_manager.update_horse_name_id_map(race_card_df)
+        except Exception:
+            print(f"Make RaceCard Error: {race_id}")
+
+    race_page_generator.make_daily_race_card_html(race_day)
+    daily_index_generator.make_daily_index_page(race_day)
+
+
+def update_daily_html(race_day=date.today()):
+    """当日分のレース結果・配当結果を取得し、HTMLを再生成する（毎週土・日実行想定）
+
+    Args:
+        race_day(date) : レース開催日(初期値:今日)
+    """
+    time_id_list = race_card_dataset_manager.get_time_id_list(race_day)
+    for _, race_id in time_id_list:
+        try:
+            results_df = netkeiba_scraper.scrape_day_race_result(race_id)
+            if not results_df.empty:
+                race_result_dataset_manager.save_race_result_for_race_id(race_id, results_df)
+        except Exception:
+            print("Miss Make Results : ", race_id)
+        try:
+            df_return = netkeiba_scraper.scrape_race_returns_dataframe([race_id])
+            if not df_return.empty:
+                race_info_dataset_manager.save_race_return_for_race_id(race_id, df_return)
+        except Exception:
+            print("Miss Make Returns : ", race_id)
+
+    race_page_generator.make_daily_race_card_html(race_day)
 
 
 def post_race_pred(race_id, race_day):

@@ -1,22 +1,27 @@
 ' 本番運用バッチ（bat/）の週次タイムラインを、ver3.0新実装の呼び出しに
 ' マッピングした統合シーケンス図。
 '
-' 前提（2026-06-18時点の事実）:
-' - bat/配下の7ファイルは現在も全てver2.0側（C:\keiba_ai\keiba_ai_ver2.0\...）
-'   のスクリプトを呼んでおり、ver3.0の新実装はまだ実運用に組み込まれていない
-'   （README「実運用は現状...post_daily_race.pyを呼んでおり、このリファクタリング
-'   による影響はない」と同じ事実）。
-' - 本図は「ver3.0へ切り替えた場合に各batが何を呼ぶことになるか」を示す、
-'   移行先のシーケンス図である。
+' 状態（2026-06-18時点の事実）:
+' - bat/配下の7ファイルは、ver2.0側の旧スクリプトからver3.0の
+'   scripts/run_*.py（薄いエントリポイント、src/logic/scheduler/* 等を呼ぶ）
+'   への切り替えが完了済み。本図は「実際に動く」フローを示す。
+' - make_time_id_list.bat に対応するver3.0実装
+'   （race_day_scheduler.update_weekly_time_id_list / make_time_id_list）は、
+'   Phase7cで旧src/RacePrediction/make_time_id_list.pyを削除した際の
+'   移行漏れを解消するために新規実装した。
+' - make_html_prev_day.bat / update_daily_html.bat の対応関数
+'   （race_day_scheduler.make_html_prev_day / update_daily_html）も、
+'   旧 web/src/generators/make_race_card_html.py の同名関数の内容を
+'   確認した上で新規実装した。
+' - 実装の過程で、src/logic/scraping/common.py の fetch_soup が全ページを
+'   EUC-JP固定でデコードしていたバグ（race.netkeiba.comはUTF-8で配信されており
+'   文字化けする）を発見・修正した（apparent_encodingによる自動検出に変更）。
 ' - update_weekly/update_monthly の詳細（Reaper/Netkeibaとのやり取り含む）は
 '   WeeklyUpdateSequence.pu / BatchCreationSequence.pu を参照。本図ではその
 '   呼び出し列のみを示す（詳細図への入口として機能する）。
-' - make_time_id_list.bat に対応するver3.0実装は、生成ロジック自体が未移行
-'   （Phase7cで旧src/RacePrediction/make_time_id_list.pyを削除した際、
-'   移行先を作らなかったため）。本図ではこのギャップを明示する。
 
 @startuml
-title 本番運用バッチの週次タイムライン（ver3.0移行後の想定フロー）
+title 本番運用バッチの週次タイムライン（ver3.0新実装、bat切替後）
 skinparam defaultTextAlignment center
 
 participant "Windowsタスクスケジューラ\n(bat起動元)" as Cron
@@ -46,23 +51,22 @@ box "RacePredictionEngine\n[Oracle]" #F0E6FF
   participant "race_card_builder" as RCB
 end box
 
+box "DataHarvester\n[Reaper]" #FFF2CC
+  participant "netkeiba_scraper" as Reaper
+end box
+
 box "PredictionDelivery\n[Herald]" #FFE6E6
   participant "prediction_publisher" as PP
   participant "return_report" as RR
 end box
 
-== 火（第1週のみ）: update_monthly.bat ==
-note over Cron
-  ver2.0: monthly_update.py
-  （race_results/horse_peds/peds_results/race_returns/past_performanceの
-  montly_update_* + LightGBMのmake_annual_dataset）
-end note
+== 火（第1週のみ）: update_monthly.bat → scripts/run_monthly_update.py ==
 Cron -> RRS : monthly_update_race_results(day)
 Cron -> RTS : monthly_update_race_returns(day)
 Cron -> HS : monthly_update_horse_peds(day)
 Cron -> HS : monthly_update_pedsdata(day)
 Cron -> HS : monthly_update_past_performance(day)
-Cron -> RIS : weekly_update_average_time(day.year)\n（ver2.0のaverage_time.timedata_updateと同一処理、\nver3.0では月次専用関数はなく週次関数を共用）
+Cron -> RIS : weekly_update_average_time(day.year)\n（月次専用関数はなく週次関数を共用、ver2.0のaverage_time.timedata_updateと同一処理）
 note right of Cron
   ⚪ 対象外: LightGBM_dataset.make_annual_dataset()
   （Oracleオフライン学習パイプライン、ver2.0のまま）
@@ -70,13 +74,7 @@ note right of Cron
   BatchCreationSequence.pu参照
 end note
 
-== 水: update_weekly.bat ==
-note over Cron
-  ver2.0: weekly_update.py
-  （race_results/horse_peds/peds_results/past_performanceのweekly_update_*、
-  analysis_race_info/analysis_race_timeの週次集計、LightGBMの
-  weekly_update_dataset_for_train）
-end note
+== 水: update_weekly.bat → scripts/run_weekly_update.py ==
 Cron -> RRS : weekly_update_race_results(day)
 Cron -> RTS : weekly_update_race_returns(day)
 Cron -> HS : weekly_update_horse_peds(day)
@@ -93,71 +91,74 @@ note right of Cron
   詳細呼び出し列は WeeklyUpdateSequence.pu ①〜④ 参照
 end note
 
-== 木: make_time_id_list.bat ==
-note over Cron #FFCCCC
-  ⚠️ 未移行: ver3.0には生成ロジックの移植先が無い。
-  ver2.0のmake_time_id_list.py（get_race_id.get_daily_id +
-  race_card.pyのスクレイピングでrace_time/race_name/race_idを集め、
-  texts/race_calendar/race_time_id_list/{date}.csv に保存）に相当する
-  処理は、Phase7cで旧 src/RacePrediction/make_time_id_list.py を
-  削除した際に移行先を作らなかったため存在しない。
-  Manager層の入出力関数のみ存在する:
-end note
-Cron -> Chronicle : get_daily_id(place_id, race_day)\nまたはget_year_id_calendar(...)で\n対象race_idを特定（既存）
-note right of Chronicle
-  ここから「race_name・発走時刻を取得して
-  [race_time, race_id, race_name]のリストを組み立てる」
-  処理が必要だが、ver3.0側に未実装
-end note
-Cron -> RPG : (未実装) save_time_id_list用のrace_time_id_list組み立て
-RPG -> HM : (未実装)
-note right of HM
-  src/managers/race_card_dataset_manager.save_time_id_list(race_day, time_id_list)
-  は保存先として既に存在するが、呼び出し元（上記の組み立て処理）が無い
-end note
-
-== 金・土: make_html_prev_day.bat ==
-note over Cron
-  ver2.0: make_race_card_html.make_html_prev_day(race_day=明日)
-  （翌日の開催ページの土台を事前生成）
-  ver3.0の対応は未検証だが、以下が妥当な移行先と考えられる：
-end note
-Cron -> DIG : make_daily_index_page(race_day + 1日)
-DIG -> Chronicle : get_daily_id(0, race_day+1) 等で\n翌日のrace_id一覧を取得
-DIG --> Cron : public_html/races/{翌日}/index.html
-note right of DIG
-  race_page_generator.make_daily_race_card_html(race_day+1)も
-  呼べるが、出馬表CSV（score/rank）がまだ存在しないため
-  ℹ️ [スキップ/エラーではありません] でページ生成自体はスキップされる
-  （HTMLFactory/動作確認.md参照）。実際に運用するには、この時点で
-  出馬表だけ先行生成する処理（race_card_builder等）が別途必要。
-end note
-
-== 土・日: update_daily_html.bat ==
-note over Cron
-  ver2.0: update_daily_html(race_day=今日)
-  （当日のページを結果反映のため再生成）
-end note
-Cron -> RPG : make_daily_race_card_html(race_day=今日)
-RPG -> Chronicle : get_daily_id(place_id, race_day)（開催場ごと）
-loop 当日のrace_id一覧
-  RPG -> RPG : make_race_card_html(date_str, place_id, race_id)
+== 木: make_time_id_list.bat → scripts/run_make_time_id_list.py ==
+Cron -> Chronos : update_weekly_time_id_list(base_day=今日)
+loop 次の7日分（i=0..6、base_day+(7-i)日後）
+  Chronos -> Chronos : make_time_id_list(race_day)
+  Chronos -> Chronicle : get_daily_id(0, race_day)\n（全場のrace_id一覧を取得）
+  loop race_id一覧
+    Chronos -> Reaper : scrape_race_card(race_id)
+    Reaper -> Reaper : GET race.netkeiba.com/race/shutuba.html\n（fetch_soupでUTF-8として自動デコード）
+    Reaper --> Chronos : info（レース名・発走時刻トークン）
+    Chronos -> Chronos : _extract_race_time(info) / _extract_race_name(info)
+  end
+  Chronos -> Chronos : 発走時刻順にソート
+  Chronos -> RPG : save_time_id_list(race_day, time_id_list)\n（race_card_dataset_manager経由）
+  RPG -> RPG : texts/race_calendar/race_time_id_list/{race_day}.csv に保存
 end
-Cron -> DIG : make_daily_index_page(race_day=今日)
-note right of RPG
-  post_today_race.bat（post_daily_race_pred）の中でも
-  レースごとに同等のmake_race_card_html呼び出しが行われるため、
-  ver3.0移行後はこの独立ジョブは冗長になる可能性がある
-  （バックアップ的な再実行として残す選択肢もある）
+note right of Chronos
+  新規実装: race_day_scheduler.make_time_id_list /
+  update_weekly_time_id_list。旧 src/RacePrediction/make_time_id_list.py
+  （get_race_id.get_daily_id + race_card.get_race_info）の移植
 end note
 
-== 土・日: post_today_race.bat（メインの当日進行） ==
+== 金・土: make_html_prev_day.bat → scripts/run_make_html_prev_day.py（race_day=明日） ==
+Cron -> Chronos : make_html_prev_day(race_day=明日)
+Chronos -> RPG : get_time_id_list(race_day)\n（木曜に保存されたCSVを読み込み）
+alt time_id_listが空
+  Chronos -> Chronos : 何もしない（return）
+else time_id_listあり
+  Chronos -> HM : add_race_day(race_day)
+  Chronos -> DIG : make_daily_index_page(race_day)
+  loop 過去7日分
+    Chronos -> DIG : make_daily_index_page(past_day)
+  end
+  loop time_id_listの各race_id
+    Chronos -> RCB : make_race_card(race_id)\n（Oracle: 出馬表+score/rank生成、Reaper経由でスクレイピング）
+    Chronos -> RPG : save_race_cards(...) / save_race_info_df(...)
+    Chronos -> RIS : update_horse_name_id_map(race_card_df)
+  end
+  Chronos -> RPG : make_daily_race_card_html(race_day)\n（今回生成した出馬表をもとにページ生成）
+  Chronos -> DIG : make_daily_index_page(race_day)\n（生成済みページへのリンクを反映するため再生成）
+end
+note right of Chronos
+  新規実装: race_day_scheduler.make_html_prev_day。
+  旧 web/src/generators/make_race_card_html.make_html_prev_day の移植
+end note
+
+== 土・日: update_daily_html.bat → scripts/run_update_daily_html.py（race_day=今日） ==
+Cron -> Chronos : update_daily_html(race_day=今日)
+Chronos -> RPG : get_time_id_list(race_day)
+loop time_id_listの各race_id
+  Chronos -> Reaper : scrape_day_race_result(race_id)
+  Chronos -> RRS : save_race_result_for_race_id(race_id, results_df)
+  Chronos -> Reaper : scrape_race_returns_dataframe([race_id])
+  Chronos -> RIS : save_race_return_for_race_id(race_id, df_return)
+end
+Chronos -> RPG : make_daily_race_card_html(race_day)
+note right of Chronos
+  新規実装: race_day_scheduler.update_daily_html。
+  post_today_race.bat（ライブループ）内でもレースごとに同等の処理が
+  行われるため、本ジョブは結果反映漏れがあった場合の
+  バックアップ的な再実行という位置づけになる
+end note
+
+== 土・日: post_today_race.bat → scripts/run_post_today_race.py（メインの当日進行） ==
 note over Cron
-  ver2.0: post_daily_race.py の post_daily_race_pred
   詳細はRaceScheduleCenter/SequenceDiagram.pu参照
 end note
 Cron -> Chronos : post_daily_race_pred(race_day=今日)
-Chronos -> RPG : get_time_id_list(race_day)\n（⚠️ 木曜のmake_time_id_listが未移行のため、\n実際には空または旧ver2.0生成データに依存）
+Chronos -> RPG : get_time_id_list(race_day)\n（木曜のmake_time_id_listで保存済みのCSVを参照）
 Chronos -> HM : add_race_day(race_day)
 Chronos -> DIG : make_daily_index_page(race_day)\n（前日分も含め直近7日分を再生成）
 loop 1分ごと、全レース終了まで
@@ -167,39 +168,44 @@ loop 1分ごと、全レース終了まで
     Chronos -> PP : post_race_pred(race_id, race_day)\n（Herald: X投稿）
     Chronos -> RPG : make_race_card_html(date_str, place_id, race_id)
     alt 直前レースの結果が確定
-      Chronos -> RRS : (内部でnetkeiba_scraper.scrape_day_race_result)\nsave_race_result_for_race_id(...)
-      Chronos -> RTS : (内部でnetkeiba_scraper.scrape_race_returns_dataframe)\nsave_race_return_for_race_id(...)
+      Chronos -> Reaper : scrape_day_race_result(previous_race_id)
+      Chronos -> RRS : save_race_result_for_race_id(...)
+      Chronos -> Reaper : scrape_race_returns_dataframe([previous_race_id])
+      Chronos -> RTS : save_race_return_for_race_id(...)
       Chronos -> RPG : make_race_card_html(...)（結果反映で再生成）
     end
   end
 end
 Chronos -> Chronos : 最終レースから30分待機後、\n全開催場の最終レース結果・配当を確定保存
 
-== 土・日: today_race_rerturns.bat（当日の回収率レポート・最終HTML） ==
+== 土・日: today_race_rerturns.bat → scripts/run_today_race_returns.py（当日の回収率レポート・最終HTML） ==
 note over Cron
-  ver2.0: calc_returns.py（回収率計算・投稿）+ make_race_card_html.py
-  （結果反映HTML再生成）
   詳細はPredictionDelivery/SequenceDiagram.pu参照。
   post_today_race.bat完了後（全レース確定後）に実行する想定
 end note
-loop 当日開催のあった place_id
-  Cron -> RR : make_return_text(place_id, race_day)
+Cron -> RR : post_daily_race_returns(race_day=今日)
+loop 全place_id
   RR -> Chronicle : get_daily_id(place_id, race_day)
-  RR -> RR : get_win_result / get_place_result /\nget_trio_box_result で回収率集計
-  Cron -> RR : post_race_returns(place_id, race_day)
-  RR -> PP : post_text_data(text_path)（Herald: X投稿）
-  Cron -> RPG : make_race_card_html(date_str, place_id, race_id)\n（最終結果でページ再生成、念のための再実行）
+  alt 開催あり
+    RR -> RR : make_return_text(place_id, race_day)
+    RR -> RR : get_win_result / get_place_result /\nget_trio_box_result で回収率集計
+    RR -> PP : post_text_data(text_path)（Herald: X投稿）
+  end
 end
+Cron -> RPG : make_daily_race_card_html(race_day)\n（最終結果でページ再生成、念のための再実行）
+note right of RR
+  新規実装: return_report.post_daily_race_returns。
+  旧 calc_returns.py の post_race_rerurns（当日全場分の呼び出し）の移植
+end note
 
 note over Cron, RR
   全体まとめ:
   - 火(第1週)・水・木は「データ収集・蓄積」フェーズ（Chronicle/Atlas中心）
-  - 木のmake_time_id_listのみ未移行のギャップが残る（⚠️参照）
-  - 金・土は「翌日の準備」フェーズ（Forge中心、要実機確認）
+  - 金・土は「翌日の準備」フェーズ（Forge/Oracle中心）
   - 土・日は「当日進行」フェーズで、post_today_race（Chronos主導の
     ライブループ）が中心。update_daily_html・today_race_rerturnsは
-    その前後を補完する独立ジョブだが、post_today_race内の処理と
-    一部重複する
+    その前後を補完する独立ジョブで、post_today_race内の処理と
+    一部重複する（バックアップ的な再実行として機能する）
 end note
 
 @enduml

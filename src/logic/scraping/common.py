@@ -30,10 +30,15 @@ def url_exists(url: str) -> bool:
 
 
 def fetch_soup(url: str) -> BeautifulSoup:
-    """urlを取得し、EUC-JPとしてデコードしたBeautifulSoupを返す"""
+    """urlを取得し、エンコーディングを自動検出してデコードしたBeautifulSoupを返す
+
+    db.netkeiba.com（EUC-JP）と race.netkeiba.com（UTF-8）でページごとに
+    エンコーディングが異なるため、固定値ではなく requests の apparent_encoding
+    （chardetによる自動検出）を使う。検出に失敗した場合はEUC-JPにフォールバックする。
+    """
     html = requests.get(url, headers=scraping_header)
-    html.encoding = "EUC-JP"
-    return BeautifulSoup(html.content.decode("euc-jp", "ignore"), "html.parser")
+    encoding = html.apparent_encoding or "EUC-JP"
+    return BeautifulSoup(html.content.decode(encoding, "ignore"), "html.parser")
 
 
 def validate_soup(soup, url: str, func_name: str, require_table: bool = False, selectors: list | None = None) -> bool:

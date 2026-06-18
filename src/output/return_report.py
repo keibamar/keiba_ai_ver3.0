@@ -271,3 +271,20 @@ def post_race_returns(place_id, race_day):
         paths.RACE_RETURN_REPORT_TEXT_PATH, race_day.strftime("%Y%m%d"), f"{PLACE_LIST[place_id - 1]}_pred_score.txt"
     )
     prediction_publisher.post_text_data(text_data_path)
+
+
+def post_daily_race_returns(race_day=date.today()):
+    """指定日に開催のあった全place_idについて、回収率レポートを生成・投稿する
+
+    旧 src/RacePrediction/calc_returns.py の post_race_rerurns（当日全場分の
+    呼び出し）の移植。開催のなかったplace_idはスキップする。
+
+    Args:
+        race_day(date) : レース開催日(初期値:今日)
+    """
+    for place_id in range(1, len(PLACE_LIST) + 1):
+        race_id_list = race_schedule_dataset_manager.get_daily_id(place_id, race_day)
+        if not race_id_list:
+            continue
+        make_return_text(place_id, race_day)
+        post_race_returns(place_id, race_day)

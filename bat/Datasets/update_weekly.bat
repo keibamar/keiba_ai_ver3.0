@@ -1,2 +1,2 @@
-cd C:\keiba_ai\keiba_ai_ver2.0\src\Datasets
-python weekly_update.py
+cd C:\keiba_ai\keiba_ai_ver3.0
+python scripts\run_weekly_update.py

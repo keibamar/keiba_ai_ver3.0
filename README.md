@@ -228,8 +228,25 @@ ver3.0の`src/`は新構造（`src/{datasets,managers,logic,output,config,utils}
 `race_info_dataset_manager.save_race_return_for_race_id`）、カレンダー更新
 （`html_manager.add_race_day`）、日次配信オーケストレーション本体
 （`src/logic/scheduler/race_day_scheduler.py`）は新実装で動かせる**。
-**実運用は現状`bat/TodayRace/post_today_race.bat`がver2.0側の`post_daily_race.py`を
-呼んでおり、このリファクタリングによる影響はない。**
+**`bat/`配下の7ファイル（`Datasets/{update_weekly,update_monthly}.bat`、
+`MakeHTML/{make_html_prev_day,update_daily_html}.bat`、
+`TodayRace/{make_time_id_list,post_today_race,today_race_rerturns}.bat`）は、
+全てver2.0側の旧スクリプトからver3.0の`scripts/run_*.py`（`src/logic/scheduler/*`・
+`src/output/*`・`src/logic/html_generator/*`を呼ぶ薄いエントリポイント）に切り替え済み。
+これにより実運用がver3.0の新実装で動作するようになった。**
+各batと対応するver3.0実装・週次タイムラインの詳細は
+[specifications/ProductionScheduleSequence.pu](specifications/ProductionScheduleSequence.pu)
+を参照。
+
+`make_time_id_list.bat`が呼ぶ`race_day_scheduler.update_weekly_time_id_list`
+（次の7日分の出馬表ページをスクレイピングしてrace_time_id_listを作成・保存する処理）は、
+旧`src/RacePrediction/make_time_id_list.py`がフェーズ7cで削除された際に移行先が
+無かったギャップを解消するため、新規に実装した。
+
+なお、この移行作業の過程で`src/logic/scraping/common.py`の`fetch_soup`が
+全ページをEUC-JP固定でデコードしていた既存バグ（`race.netkeiba.com`の
+出馬表ページが実際にはUTF-8で配信されているため文字化けする）を発見し、
+`apparent_encoding`による自動検出に修正した。
 
 ## 2. ディレクトリ構成（新実装部分）
 
