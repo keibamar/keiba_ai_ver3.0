@@ -10,7 +10,10 @@ post_today_race.bat（race_day_scheduler.post_daily_race_pred）のライブル�
 
 import os
 import sys
+import warnings
 from datetime import date
+
+warnings.simplefilter("ignore")
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
