@@ -71,3 +71,21 @@ def test_make_daily_index_page_generates_index_html(new_roots):
     # 前後日のレースページディレクトリが存在しないため、両方disabled
     assert '<span class="disabled">← 前の日</span>' in html_content
     assert '<span class="disabled">→ 次の日</span>' in html_content
+
+
+def test_make_races_calendar_page_generates_index_html(new_roots):
+    d.make_races_calendar_page()
+
+    out_file = new_roots / "public_html" / "races" / "index.html"
+    assert out_file.exists()
+    html_content = out_file.read_text(encoding="utf-8")
+
+    print(f"\n--- make_races_calendar_page() ---")
+    print(f"  出力先: {out_file}")
+    print(f"  HTML文字数: {len(html_content)}")
+
+    assert "<h1>開催日カレンダー</h1>" in html_content
+    assert '<table id="calendar"></table>' in html_content
+    assert '<script src="../assets/js/raceDays.js"></script>' in html_content
+    assert '<script src="../assets/js/calendar.js"></script>' in html_content
+    assert '<a href="../index.html">← HOMEへ戻る</a>' in html_content

@@ -29,7 +29,7 @@ def new_roots(tmp_path, monkeypatch):
     race_card_dir = tmp_path / "race_card" / SAMPLE_DATE_STR
     race_card_dir.mkdir(parents=True)
     shutil.copy(
-        f"data/RaceCards/{SAMPLE_DATE_STR}/{SAMPLE_RACE_ID}.csv",
+        f"data/race_card/{SAMPLE_DATE_STR}/{SAMPLE_RACE_ID}.csv",
         race_card_dir / f"{SAMPLE_RACE_ID}.csv",
     )
     return tmp_path

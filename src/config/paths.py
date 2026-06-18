@@ -25,6 +25,8 @@ RACE_CARD_DATA_PATH = os.path.join(DATA_PATH, "race_card")
 PUBLIC_HTML_PATH = os.path.join(PROJECT_ROOT, "public_html")
 PUBLIC_HTML_RACES_PATH = os.path.join(PUBLIC_HTML_PATH, "races")
 PUBLIC_HTML_ASSETS_PATH = os.path.join(PUBLIC_HTML_PATH, "assets")
+PUBLIC_HTML_COURSES_PATH = os.path.join(PUBLIC_HTML_PATH, "courses")
+PUBLIC_HTML_PERFORMANCE_PATH = os.path.join(PUBLIC_HTML_PATH, "performance")
 
 # テキストデータ（レースカレンダー等の補助データ）
 TEXTS_PATH = os.path.join(PROJECT_ROOT, "texts")

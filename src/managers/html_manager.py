@@ -12,6 +12,7 @@ import os
 import re
 
 from src.config import paths
+from src.config.constants import PLACE_LIST
 
 DAY_DIR_PATTERN = re.compile(r"^\d{8}$")
 
@@ -39,6 +40,77 @@ def save_race_page_html(date_str, filename, html_content):
 def save_daily_index_html(date_str, html_content):
     """public_html/races/{date_str}/index.html にHTMLを保存する"""
     save_race_page_html(date_str, "index.html", html_content)
+
+
+def save_home_html(html_content):
+    """public_html/index.html にHTMLを保存する"""
+    os.makedirs(paths.PUBLIC_HTML_PATH, exist_ok=True)
+    with open(os.path.join(paths.PUBLIC_HTML_PATH, "index.html"), "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+
+def save_races_calendar_html(html_content):
+    """public_html/races/index.html にHTMLを保存する（開催日カレンダーページ）"""
+    os.makedirs(paths.PUBLIC_HTML_RACES_PATH, exist_ok=True)
+    with open(os.path.join(paths.PUBLIC_HTML_RACES_PATH, "index.html"), "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+
+def save_course_index_html(html_content):
+    """public_html/courses/index.html にHTMLを保存する（開催場一覧ページ）"""
+    os.makedirs(paths.PUBLIC_HTML_COURSES_PATH, exist_ok=True)
+    with open(os.path.join(paths.PUBLIC_HTML_COURSES_PATH, "index.html"), "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+
+def save_track_index_html(place_id, html_content):
+    """public_html/courses/{place}/index.html にHTMLを保存する（場別コース一覧ページ）"""
+    out_dir = os.path.join(paths.PUBLIC_HTML_COURSES_PATH, PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+
+def save_course_detail_html(place_id, race_type, course_len, html_content):
+    """public_html/courses/{place}/{race_type}-{course_len}.html にHTMLを保存する"""
+    out_dir = os.path.join(paths.PUBLIC_HTML_COURSES_PATH, PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+    filename = f"{race_type}-{course_len}.html"
+    with open(os.path.join(out_dir, filename), "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+
+def save_ai_performance_index_html(html_content):
+    """public_html/performance/index.html にHTMLを保存する"""
+    os.makedirs(paths.PUBLIC_HTML_PERFORMANCE_PATH, exist_ok=True)
+    with open(os.path.join(paths.PUBLIC_HTML_PERFORMANCE_PATH, "index.html"), "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+
+def save_ai_annual_performance_html(year, html_content):
+    """public_html/performance/annual/{year}.html にHTMLを保存する"""
+    out_dir = os.path.join(paths.PUBLIC_HTML_PERFORMANCE_PATH, "annual")
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(out_dir, f"{year}.html"), "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+
+def save_ai_meeting_performance_html(year, place_id, times, html_content):
+    """public_html/performance/meeting/{year}/{place}-{times}th.html にHTMLを保存する"""
+    out_dir = os.path.join(paths.PUBLIC_HTML_PERFORMANCE_PATH, "meeting", str(year))
+    os.makedirs(out_dir, exist_ok=True)
+    filename = f"{PLACE_LIST[place_id - 1]}-{times}th.html"
+    with open(os.path.join(out_dir, filename), "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+
+def save_ai_course_performance_html(place_id, race_type, course_len, html_content):
+    """public_html/performance/course/{place}/{race_type}-{course_len}.html にHTMLを保存する"""
+    out_dir = os.path.join(paths.PUBLIC_HTML_PERFORMANCE_PATH, "course", PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+    filename = f"{race_type}-{course_len}.html"
+    with open(os.path.join(out_dir, filename), "w", encoding="utf-8") as f:
+        f.write(html_content)
 
 
 def list_race_day_dirs():

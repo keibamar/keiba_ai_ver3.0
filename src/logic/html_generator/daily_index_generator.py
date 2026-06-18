@@ -241,3 +241,90 @@ def make_daily_index_page(race_day):
     ]
 
     make_index_page(day_str, files_info_list)
+
+
+def races_calendar_template():
+    """開催日カレンダーページ（public_html/races/index.html）のHTMLを返す
+
+    旧 web/site/races/index.html の構成を移植。raceDays.js（html_manager.add_race_day
+    が更新する window.racedays）と calendar.js（既存の public_html/assets/js/calendar.js、
+    変更なし）を読み込み、JS側でカレンダーを描画する。
+    """
+    return """
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>開催日カレンダー</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+    }
+    #calendar {
+      border-collapse: collapse;
+      margin: 20px auto;
+      width: 80%;
+    }
+    #calendar td, #calendar th {
+      border: 1px solid #ccc;
+      padding: 10px;
+      width: 14%;
+      height: 80px;
+      vertical-align: top;
+    }
+    #calendar a {
+      text-decoration: none;
+      color: blue;
+      font-weight: bold;
+    }
+    #monthYear {
+      font-size: 1.5em;
+      margin: 0 10px;
+    }
+    #todayRace {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+    #todayRace a {
+      text-decoration: none;
+      color: white;
+      background-color: #007bff;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    #todayRace a:hover {
+      background-color: #0056b3;
+    }
+    #todayRace p {
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>開催日カレンダー</h1>
+
+  <div>
+    <button id="prevMonth">←</button>
+    <span id="monthYear"></span>
+    <button id="nextMonth">→</button>
+  </div>
+
+  <table id="calendar"></table>
+
+  <div id="todayRace"></div>
+
+  <script src="../assets/js/raceDays.js"></script>
+  <script src="../assets/js/calendar.js"></script>
+
+  <p><a href="../index.html">← HOMEへ戻る</a></p>
+</body>
+</html>
+"""
+
+
+def make_races_calendar_page():
+    """開催日カレンダーページ（public_html/races/index.html）を生成する"""
+    html_manager.save_races_calendar_html(races_calendar_template())
