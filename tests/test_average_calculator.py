@@ -55,6 +55,12 @@ def test_get_race_time_msec_nan_returns_nan():
     assert np.isnan(average_calculator.get_race_time_msec(np.nan))
 
 
+@pytest.mark.parametrize("time_str", ["0", "-", ""])
+def test_get_race_time_msec_invalid_string_returns_nan(time_str):
+    # 除外・取消・中止等で走破時計が記録されていない場合、"0"等の不正な値になることがある
+    assert np.isnan(average_calculator.get_race_time_msec(time_str))
+
+
 @pytest.mark.parametrize(
     ("base_time", "race_time", "expected"),
     [("70000", 71000.0, -0.014285714285714285), (70000.0, 69000.0, 0.014285714285714285)],

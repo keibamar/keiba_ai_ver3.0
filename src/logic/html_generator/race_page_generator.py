@@ -1576,14 +1576,27 @@ def make_race_card_html(date_str, place_id, target_id):
 
 
 def make_daily_race_card_html(race_day=date.today()):
-    """指定された日付の全レースカード HTML を生成する"""
+    """指定された日付の全レースカード HTML を生成する
+
+    build_nav_html は前後レースへのリンクを、生成時点で対象ページが既に
+    存在するか（html_manager.race_page_exists）で判定する。1回のループだけだと
+    まだ生成されていない後続レース（次のレース）へのリンクが付かないため、
+    全レースを1回生成した後、同じ範囲をもう一度生成し直して前後リンクを
+    確定させる（2パス生成）。
+    """
     date_str = race_day.strftime("%Y%m%d")
+
+    targets = []
     for place_id in range(1, len(PLACE_LIST) + 1):
         race_id_list = race_schedule_dataset_manager.get_daily_id(place_id, race_day)
         if not race_id_list:
             print(f"ℹ️ [スキップ/エラーではありません] 指定日に開催なし: {date_str} {PLACE_LIST[place_id - 1]}")
             continue
         for race_id in race_id_list:
+            targets.append((place_id, race_id))
+
+    for _ in range(2):
+        for place_id, race_id in targets:
             make_race_card_html(date_str, place_id, race_id)
 
 

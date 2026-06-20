@@ -145,3 +145,42 @@ def test_make_daily_race_card_html_generates_only_available_races(new_roots):
 
     # race_card CSVを用意したレース（04_nigataR1）のみ生成される
     assert generated == ["04_nigataR1.html"]
+
+
+def test_make_daily_race_card_html_links_to_later_generated_race(new_roots, monkeypatch):
+    """1Rの生成時点では2Rのページがまだ存在しないため、1回だけの生成では
+    1R→2Rの「次のレース」リンクが付かない（build_nav_htmlがrace_page_existsで
+    判定するため）。2パス生成により、2回目には2Rも既に存在するので
+    1R→2Rのリンクが解決されることを確認する。
+    """
+    second_race_id = "202404040602"
+    race_card_dir = new_roots / "race_card" / SAMPLE_DATE_STR
+    shutil.copy(
+        f"data/race_card/{SAMPLE_DATE_STR}/{second_race_id}.csv",
+        race_card_dir / f"{second_race_id}.csv",
+    )
+    race_card_dataset_manager.save_race_info_df(
+        pd.DataFrame({"race_type": ["芝"], "course_len": ["2000"], "weather": ["晴"],
+                      "ground_state": ["稍重"], "class": ["未勝利"]}),
+        SAMPLE_RACE_DAY, second_race_id,
+    )
+
+    monkeypatch.setattr(
+        r.race_schedule_dataset_manager, "get_daily_id",
+        lambda place_id, race_day: [SAMPLE_RACE_ID, second_race_id] if place_id == SAMPLE_PLACE_ID else [],
+    )
+
+    r.make_daily_race_card_html(SAMPLE_RACE_DAY)
+
+    out_dir = new_roots / "public_html" / "races" / SAMPLE_DATE_STR
+    race1_html = (out_dir / "04_nigataR1.html").read_text(encoding="utf-8")
+    race2_html = (out_dir / "04_nigataR2.html").read_text(encoding="utf-8")
+
+    print(f"\n--- make_daily_race_card_html({SAMPLE_RACE_DAY}) 2レースの前後リンク ---")
+    print(f"  04_nigataR1.html に次レースへのリンク: {'04_nigataR2.html' in race1_html}")
+    print(f"  04_nigataR2.html に前レースへのリンク: {'04_nigataR1.html' in race2_html}")
+
+    # 1R→2R（次のレース、2パス目で解決される）
+    assert '<a href="04_nigataR2.html">' in race1_html
+    # 2R→1R（前のレース、1パス目から解決されている）
+    assert '<a href="04_nigataR1.html">' in race2_html

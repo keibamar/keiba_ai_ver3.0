@@ -97,6 +97,10 @@ def make_average_time_datasets(df_race_results, courses):
 def get_race_time_msec(time_str):
     """走破時計をmsecに変換する
 
+    除外・取消・中止等で走破時計が記録されていないレースでは、タイムが
+    "0"等の不正な値（正しい"M:SS.f"形式に変換できない値）になっていることがある。
+    その場合は欠損データとしてNaNを返す。
+
     Args:
         time_str (str): race_resultの走破時計
 
@@ -106,7 +110,10 @@ def get_race_time_msec(time_str):
     if type(time_str) is str:
         time_format = "%M%S%f"
         time_str = re.sub(r"\D", "", "0" + time_str)
-        race_time = datetime.datetime.strptime(time_str, time_format)
+        try:
+            race_time = datetime.datetime.strptime(time_str, time_format)
+        except ValueError:
+            return np.nan
         return race_time.minute * 60 * 1000 + race_time.second * 1000 + race_time.microsecond / 100000
 
     elif math.isnan(time_str):
