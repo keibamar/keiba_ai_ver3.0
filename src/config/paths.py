@@ -13,6 +13,8 @@ RACE_TIME_ID_LIST_PATH = os.path.join(RACE_SCHEDULE_DATA_PATH, "race_time_id_lis
 RACE_RESULT_DATA_PATH = os.path.join(DATA_PATH, "race_result")
 HORSE_DATA_PATH = os.path.join(DATA_PATH, "horse")
 RACE_INFO_DATA_PATH = os.path.join(DATA_PATH, "race_info")
+# AI予想成績（的中率・回収率）の永続化データセット
+AI_PERFORMANCE_DATA_PATH = os.path.join(DATA_PATH, "ai_performance")
 
 # 予想エンジン関連データ（LightGBMのモデル・データセット・性能評価）
 PREDICTION_DATA_PATH = os.path.join(DATA_PATH, "prediction")
