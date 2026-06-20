@@ -96,6 +96,68 @@ def test_analyze_winner_weights_multi_years_returns_real_data():
     assert result.iloc[0]["馬体重"] == 428.0
 
 
+def test_analyze_pop_chakudo_returns_real_data():
+    result = new_race_info.analyze_pop_chakudo(SAMPLE_PLACE_ID, 2019)
+
+    print(f"\n--- analyze_pop_chakudo(place_id={SAMPLE_PLACE_ID}, year=2019) ---")
+    print(f"  shape: {result.shape}")
+    print(result.head().to_string())
+
+    assert result.columns.tolist() == ["race_type", "course_len", "人気", "1着", "2着", "3着", "着外"]
+    first = result.iloc[0]
+    assert first["race_type"] == "芝"
+    assert first["course_len"] == 1000
+    assert first["人気"] == 1
+    # 1人気の出走数 = 1着+2着+3着+着外 のはず
+    assert first[["1着", "2着", "3着", "着外"]].sum() > 0
+
+
+def test_analyze_frame_chakudo_limits_to_eight_frames():
+    result = new_race_info.analyze_frame_chakudo(SAMPLE_PLACE_ID, 2019)
+    assert result["枠番"].max() <= 8
+    assert result["枠番"].min() >= 1
+
+
+def test_analyze_horse_chakudo_limits_to_eighteen_horses():
+    result = new_race_info.analyze_horse_chakudo(SAMPLE_PLACE_ID, 2019)
+    assert result["馬番"].max() <= 18
+    assert result["馬番"].min() >= 1
+
+
+def test_analyze_pop_chakudo_multi_years_sums_across_years():
+    single = new_race_info.analyze_pop_chakudo(SAMPLE_PLACE_ID, 2019)
+    multi = new_race_info.analyze_pop_chakudo_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2019)
+
+    single_first = single[(single["race_type"] == "芝") & (single["course_len"] == 1000) & (single["人気"] == 1)]
+    multi_first = multi[(multi["race_type"] == "芝") & (multi["course_len"] == 1000) & (multi["人気"] == 1)]
+
+    assert multi_first.iloc[0]["1着"] == single_first.iloc[0]["1着"]
+
+
+def test_analyze_average_returns_returns_real_data():
+    result = new_race_info.analyze_average_returns(SAMPLE_PLACE_ID, 2019)
+
+    print(f"\n--- analyze_average_returns(place_id={SAMPLE_PLACE_ID}, year=2019) ---")
+    print(f"  shape: {result.shape}")
+    print(result.head().to_string())
+
+    assert result.shape == (280, 5)
+    assert result.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "win_return"]
+    first = result.iloc[0]
+    assert first["race_type"] == "芝"
+    assert first["course_len"] == 1000
+    assert first["ground_state"] == "全"
+    assert first["class"] == "all"
+    assert first["win_return"] == 1460.0
+
+
+def test_analyze_average_returns_multi_years_returns_real_data():
+    result = new_race_info.analyze_average_returns_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2021)
+
+    assert result.shape == (490, 5)
+    assert result.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "win_return"]
+
+
 @pytest.mark.parametrize("top3,expected_avg_pop", [(False, 9.0), (True, 5.5)])
 def test_analyze_average_pops_returns_real_data(top3, expected_avg_pop):
     result = new_race_info.analyze_average_pops(SAMPLE_PLACE_ID, 2019, top3=top3)
@@ -361,6 +423,8 @@ def new_race_info_root(tmp_path, monkeypatch):
     monkeypatch.setattr(new_race_info, "HORSE_ID_MAP_PATH", str(new_root / "horse_id_map.csv"))
     monkeypatch.setattr(new_race_info, "AVERAGE_POPS_DATA_PATH", str(new_root / "average_pops"))
     monkeypatch.setattr(new_race_info, "AVERAGE_WEIGHTS_DATA_PATH", str(new_root / "average_weights"))
+    monkeypatch.setattr(new_race_info, "AVERAGE_RETURNS_DATA_PATH", str(new_root / "average_returns"))
+    monkeypatch.setattr(new_race_info, "CHAKUDO_DATA_PATH", str(new_root / "chakudo"))
     monkeypatch.setattr(new_race_info, "AVERAGE_FRAMES_DATA_PATH", str(new_root / "average_frames"))
     monkeypatch.setattr(new_race_info, "AVERAGE_TIMES_DATA_PATH", str(new_root / "average_times"))
     monkeypatch.setattr(new_race_info, "RACE_RETURNS_DATA_PATH", str(new_root / "race_returns"))
@@ -446,6 +510,41 @@ def test_update_winners_weight_writes_expected_files(new_race_info_root):
     assert df_total.shape == (490, 6)
     assert df_total.columns.tolist() == columns
     assert df_total.iloc[0].tolist() == ["0", "芝", "1000", "全", "all", "444.0"]
+
+
+def test_update_average_returns_writes_expected_files(new_race_info_root):
+    new_race_info.update_average_returns(SAMPLE_PLACE_ID, 2019)
+
+    out_dir = new_race_info_root / "average_returns" / SAMPLE_PLACE
+    columns = ["Unnamed: 0", "race_type", "course_len", "ground_state", "class", "win_return"]
+
+    df_2019 = pd.read_csv(out_dir / "2019_average_returns.csv", dtype=str)
+    assert df_2019.shape == (280, 6)
+    assert df_2019.columns.tolist() == columns
+    assert df_2019.iloc[0].tolist() == ["0", "芝", "1000", "全", "all", "1460.0"]
+
+    df_total = pd.read_csv(out_dir / "total_average_returns.csv", dtype=str)
+    assert df_total.shape == (490, 6)
+    assert df_total.columns.tolist() == columns
+    assert df_total.iloc[0].tolist() == ["0", "芝", "1000", "全", "all", "1460.0"]
+
+
+def test_update_chakudo_writes_expected_files(new_race_info_root):
+    new_race_info.update_chakudo(SAMPLE_PLACE_ID, 2019)
+
+    out_dir = new_race_info_root / "chakudo" / SAMPLE_PLACE
+
+    pop_df = pd.read_csv(out_dir / "total_pop_chakudo.csv", dtype=str)
+    assert pop_df.columns.tolist() == ["race_type", "course_len", "人気", "1着", "2着", "3着", "着外"]
+    assert not pop_df.empty
+
+    frame_df = pd.read_csv(out_dir / "total_frame_chakudo.csv", dtype=str)
+    assert frame_df.columns.tolist() == ["race_type", "course_len", "枠番", "1着", "2着", "3着", "着外"]
+    assert not frame_df.empty
+
+    horse_df = pd.read_csv(out_dir / "total_horse_chakudo.csv", dtype=str)
+    assert horse_df.columns.tolist() == ["race_type", "course_len", "馬番", "1着", "2着", "3着", "着外"]
+    assert not horse_df.empty
 
 
 def test_update_average_pops_writes_expected_files(new_race_info_root):
@@ -577,6 +676,36 @@ def test_get_annual_winner_weight_csv_smoke():
     df = new_race_info.get_annual_winner_weight_csv(SAMPLE_PLACE_ID, 2019)
     assert not df.empty
     assert "馬体重" in df.columns
+
+
+def test_get_total_pop_chakudo_csv_smoke():
+    df = new_race_info.get_total_pop_chakudo_csv(SAMPLE_PLACE_ID)
+    assert not df.empty
+    assert "人気" in df.columns
+
+
+def test_get_total_frame_chakudo_csv_smoke():
+    df = new_race_info.get_total_frame_chakudo_csv(SAMPLE_PLACE_ID)
+    assert not df.empty
+    assert "枠番" in df.columns
+
+
+def test_get_total_horse_chakudo_csv_smoke():
+    df = new_race_info.get_total_horse_chakudo_csv(SAMPLE_PLACE_ID)
+    assert not df.empty
+    assert "馬番" in df.columns
+
+
+def test_get_total_average_returns_csv_smoke():
+    df = new_race_info.get_total_average_returns_csv(SAMPLE_PLACE_ID)
+    assert not df.empty
+    assert "win_return" in df.columns
+
+
+def test_get_annual_average_returns_csv_smoke():
+    df = new_race_info.get_annual_average_returns_csv(SAMPLE_PLACE_ID, 2019)
+    assert not df.empty
+    assert "win_return" in df.columns
 
 
 @pytest.mark.parametrize("top3", [False, True])

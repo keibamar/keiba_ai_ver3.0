@@ -82,6 +82,143 @@ def aggregate_winner_weights(results_by_year):
     return _sort_and_reindex(total_df, model.WINNER_WEIGHT_COLUMNS)
 
 
+# --- 着度数（人気別・枠番別・馬番別） -------------------------------------------------
+
+
+def _analyze_rank_chakudo(df_raw, courses, rank_column, rank_range):
+    """指定した列（人気/枠番/馬番）の値ごとに、1着・2着・3着・着外の回数を
+    race_type, course_len ごとに算出する（全馬が対象、勝ち馬限定ではない）
+    """
+    df = df_raw.copy()
+    df["着順"] = pd.to_numeric(df["着順"], errors="coerce")
+    df[rank_column] = pd.to_numeric(df[rank_column], errors="coerce")
+    df["course_len"] = pd.to_numeric(df["course_len"], errors="coerce")
+    df = df.dropna(subset=["着順", rank_column])
+
+    all_results = []
+    for race_type, course_len in courses:
+        base = df[(df["race_type"] == race_type) & (df["course_len"] == float(course_len))]
+        if base.empty:
+            continue
+        for rank in rank_range:
+            tmp = base[base[rank_column] == rank]
+            if tmp.empty:
+                continue
+            all_results.append({
+                "race_type": race_type,
+                "course_len": int(course_len),
+                rank_column: rank,
+                "1着": int((tmp["着順"] == 1).sum()),
+                "2着": int((tmp["着順"] == 2).sum()),
+                "3着": int((tmp["着順"] == 3).sum()),
+                "着外": int((~tmp["着順"].isin([1, 2, 3])).sum()),
+            })
+    return pd.DataFrame(all_results, columns=["race_type", "course_len", rank_column, "1着", "2着", "3着", "着外"])
+
+
+def analyze_pop_chakudo(df_raw, courses):
+    """人気（1〜18）別の着度数を race_type, course_len ごとに算出する"""
+    return _analyze_rank_chakudo(df_raw, courses, "人気", range(1, 19))
+
+
+def analyze_frame_chakudo(df_raw, courses):
+    """枠番（1〜8）別の着度数を race_type, course_len ごとに算出する"""
+    return _analyze_rank_chakudo(df_raw, courses, "枠番", range(1, 9))
+
+
+def analyze_horse_chakudo(df_raw, courses):
+    """馬番（1〜18）別の着度数を race_type, course_len ごとに算出する"""
+    return _analyze_rank_chakudo(df_raw, courses, "馬番", range(1, 19))
+
+
+def _aggregate_rank_chakudo(results_by_year, rank_column):
+    if not results_by_year:
+        return pd.DataFrame()
+
+    combined_df = pd.concat(results_by_year.values(), ignore_index=True)
+    group_cols = ["race_type", "course_len", rank_column]
+    total_df = combined_df.groupby(group_cols, as_index=False)[["1着", "2着", "3着", "着外"]].sum()
+    return total_df.sort_values(group_cols).reset_index(drop=True)
+
+
+def aggregate_pop_chakudo(results_by_year):
+    """年度別の analyze_pop_chakudo 結果を結合し、全期間の合計を算出する"""
+    return _aggregate_rank_chakudo(results_by_year, "人気")
+
+
+def aggregate_frame_chakudo(results_by_year):
+    """年度別の analyze_frame_chakudo 結果を結合し、全期間の合計を算出する"""
+    return _aggregate_rank_chakudo(results_by_year, "枠番")
+
+
+def aggregate_horse_chakudo(results_by_year):
+    """年度別の analyze_horse_chakudo 結果を結合し、全期間の合計を算出する"""
+    return _aggregate_rank_chakudo(results_by_year, "馬番")
+
+
+# --- 平均配当（勝ち馬の単勝オッズ） -------------------------------------------------
+
+
+def analyze_average_returns(df_raw, courses):
+    """勝ち馬の単勝配当（オッズ×100円）の平均を race_type, course_len, ground_state, class ごとに算出する
+
+    race_results の"単勝"列は各馬の単勝オッズ（例: 1.4）であり、勝ち馬についてはこれが
+    そのまま単勝配当の基準（オッズ×100円）になる。
+    """
+    df = df_raw.copy()
+    df["着順"] = pd.to_numeric(df["着順"], errors="coerce")
+    df["course_len"] = pd.to_numeric(df["course_len"], errors="coerce")
+    df["単勝"] = pd.to_numeric(df["単勝"], errors="coerce")
+
+    winners = df[df["着順"] == 1].copy()
+    if winners.empty:
+        return pd.DataFrame()
+
+    all_results = []
+    for race_type, course_len in courses:
+        base_data = winners[
+            (winners["race_type"] == race_type) & (winners["course_len"] == float(course_len))
+        ]
+
+        for cls in model.CLASSES:
+            for grd in model.GROUNDS:
+                tmp = base_data.copy()
+                if cls != "all":
+                    tmp = tmp[tmp["class"] == cls]
+                if grd != "全":
+                    tmp = tmp[tmp["ground_state"] == grd]
+
+                avg_return = tmp["単勝"].mean() * 100 if not tmp.empty else None
+
+                all_results.append({
+                    "race_type": race_type,
+                    "course_len": int(course_len),
+                    "ground_state": grd,
+                    "class": cls,
+                    "win_return": round(avg_return, 1) if avg_return is not None else None,
+                })
+
+    df_result = pd.DataFrame(all_results).round(1)
+    return _sort_and_reindex(df_result, model.AVERAGE_RETURNS_COLUMNS)
+
+
+def aggregate_average_returns(results_by_year):
+    """年度別の analyze_average_returns 結果を結合し、全期間の平均を算出する"""
+    if not results_by_year:
+        return pd.DataFrame()
+
+    combined_df = pd.concat(results_by_year.values(), ignore_index=True)
+
+    group_cols = ["race_type", "course_len", "ground_state", "class"]
+    total_df = (
+        combined_df.groupby(group_cols, dropna=False)["win_return"]
+        .mean()
+        .round(1)
+        .reset_index()
+    )
+    return _sort_and_reindex(total_df, model.AVERAGE_RETURNS_COLUMNS)
+
+
 # --- 人気 -------------------------------------------------------------------
 
 

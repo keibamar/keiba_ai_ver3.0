@@ -9,6 +9,10 @@ GROUNDS = ["全", "良", "稍重", "重", "不良"]
 # analyze_winner_weights / analyze_winner_weights_multi_years の出力列
 WINNER_WEIGHT_COLUMNS = ["race_type", "course_len", "ground_state", "class", "馬体重"]
 
+# analyze_average_returns / analyze_average_returns_multi_years の出力列
+# （race_resultsの"単勝"列=勝ち馬のオッズを100円あたりの配当額に換算したもの）
+AVERAGE_RETURNS_COLUMNS = ["race_type", "course_len", "ground_state", "class", "win_return"]
+
 # analyze_average_pops / analyze_average_pop_multi_years の出力列
 AVERAGE_POPS_COLUMNS = (
     ["race_type", "course_len", "ground_state", "class", "avg_pop"]

@@ -43,6 +43,8 @@ from src.utils.file_utils import read_csv_or_empty
 HORSE_ID_MAP_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "horse_id_map.csv")
 AVERAGE_POPS_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_pops")
 AVERAGE_WEIGHTS_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_weights")
+AVERAGE_RETURNS_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_returns")
+CHAKUDO_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "chakudo")
 AVERAGE_FRAMES_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_frames")
 AVERAGE_TIMES_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_times")
 RACE_RETURNS_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "race_returns")
@@ -76,6 +78,138 @@ def analyze_winner_weights_multi_years(place_id, start_year=2019, current_year=d
             df_year["year"] = year
             results_by_year[year] = df_year
     return transform.aggregate_winner_weights(results_by_year)
+
+
+# --- 着度数（人気別・枠番別・馬番別） -------------------------------------------------
+
+
+def analyze_pop_chakudo(place_id, year):
+    """人気別の着度数を算出する（全馬が対象、勝ち馬限定ではない）"""
+    df_raw = _get_race_results_with_race_id(place_id, year)
+    if df_raw.empty:
+        return pd.DataFrame()
+    return transform.analyze_pop_chakudo(df_raw, COURSE_LISTS[place_id - 1])
+
+
+def analyze_frame_chakudo(place_id, year):
+    """枠番別の着度数を算出する（全馬が対象、勝ち馬限定ではない）"""
+    df_raw = _get_race_results_with_race_id(place_id, year)
+    if df_raw.empty:
+        return pd.DataFrame()
+    return transform.analyze_frame_chakudo(df_raw, COURSE_LISTS[place_id - 1])
+
+
+def analyze_horse_chakudo(place_id, year):
+    """馬番別の着度数を算出する（全馬が対象、勝ち馬限定ではない）"""
+    df_raw = _get_race_results_with_race_id(place_id, year)
+    if df_raw.empty:
+        return pd.DataFrame()
+    return transform.analyze_horse_chakudo(df_raw, COURSE_LISTS[place_id - 1])
+
+
+def _analyze_chakudo_multi_years(analyze_fn, aggregate_fn, place_id, start_year, current_year):
+    results_by_year = {}
+    for year in range(start_year, current_year + 1):
+        df_year = analyze_fn(place_id, year)
+        if not df_year.empty:
+            results_by_year[year] = df_year
+    return aggregate_fn(results_by_year)
+
+
+def analyze_pop_chakudo_multi_years(place_id, start_year=2019, current_year=date.today().year):
+    """各年度（start_year〜current_year）について人気別着度数を算出し、全期間の合計を返す"""
+    return _analyze_chakudo_multi_years(analyze_pop_chakudo, transform.aggregate_pop_chakudo, place_id, start_year, current_year)
+
+
+def analyze_frame_chakudo_multi_years(place_id, start_year=2019, current_year=date.today().year):
+    """各年度（start_year〜current_year）について枠番別着度数を算出し、全期間の合計を返す"""
+    return _analyze_chakudo_multi_years(analyze_frame_chakudo, transform.aggregate_frame_chakudo, place_id, start_year, current_year)
+
+
+def analyze_horse_chakudo_multi_years(place_id, start_year=2019, current_year=date.today().year):
+    """各年度（start_year〜current_year）について馬番別着度数を算出し、全期間の合計を返す"""
+    return _analyze_chakudo_multi_years(analyze_horse_chakudo, transform.aggregate_horse_chakudo, place_id, start_year, current_year)
+
+
+def update_chakudo(place_id, year):
+    """指定の開催場・年について、人気別・枠番別・馬番別の着度数（全期間合計）を更新する"""
+    out_dir = os.path.join(CHAKUDO_DATA_PATH, PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+
+    for kind, multi_fn in [
+        ("pop", analyze_pop_chakudo_multi_years),
+        ("frame", analyze_frame_chakudo_multi_years),
+        ("horse", analyze_horse_chakudo_multi_years),
+    ]:
+        total = multi_fn(place_id, start_year=2019, current_year=year)
+        if not total.empty:
+            total.to_csv(os.path.join(out_dir, f"total_{kind}_chakudo.csv"), index=False)
+
+
+def get_total_pop_chakudo_csv(place_id):
+    """data/race_info/chakudo/{place}/total_pop_chakudo.csv を取得する"""
+    path = os.path.join(CHAKUDO_DATA_PATH, PLACE_LIST[place_id - 1], "total_pop_chakudo.csv")
+    return read_csv_or_empty(path, dtype=str)
+
+
+def get_total_frame_chakudo_csv(place_id):
+    """data/race_info/chakudo/{place}/total_frame_chakudo.csv を取得する"""
+    path = os.path.join(CHAKUDO_DATA_PATH, PLACE_LIST[place_id - 1], "total_frame_chakudo.csv")
+    return read_csv_or_empty(path, dtype=str)
+
+
+def get_total_horse_chakudo_csv(place_id):
+    """data/race_info/chakudo/{place}/total_horse_chakudo.csv を取得する"""
+    path = os.path.join(CHAKUDO_DATA_PATH, PLACE_LIST[place_id - 1], "total_horse_chakudo.csv")
+    return read_csv_or_empty(path, dtype=str)
+
+
+# --- 平均配当（勝ち馬の単勝オッズ） -------------------------------------------------
+
+
+def analyze_average_returns(place_id, year):
+    """勝ち馬の単勝配当（オッズ×100円）の平均を race_type, course_len, ground_state, class ごとに算出する"""
+    df_raw = _get_race_results_with_race_id(place_id, year)
+    if df_raw.empty:
+        return pd.DataFrame()
+    return transform.analyze_average_returns(df_raw, COURSE_LISTS[place_id - 1])
+
+
+def analyze_average_returns_multi_years(place_id, start_year=2019, current_year=date.today().year):
+    """各年度（start_year〜current_year）について平均配当を算出し、全期間の平均を返す"""
+    results_by_year = {}
+    for year in range(start_year, current_year + 1):
+        df_year = analyze_average_returns(place_id, year)
+        if not df_year.empty:
+            df_year["year"] = year
+            results_by_year[year] = df_year
+    return transform.aggregate_average_returns(results_by_year)
+
+
+def update_average_returns(place_id, year):
+    """指定の開催場・年について、平均配当の集計結果を更新する"""
+    out_dir = os.path.join(AVERAGE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+
+    result = analyze_average_returns(place_id, year)
+    if not result.empty:
+        result.to_csv(os.path.join(out_dir, f"{year}_average_returns.csv"))
+
+    total = analyze_average_returns_multi_years(place_id, start_year=2019, current_year=year)
+    if not total.empty:
+        total.to_csv(os.path.join(out_dir, "total_average_returns.csv"))
+
+
+def get_annual_average_returns_csv(place_id, year):
+    """data/race_info/average_returns/{place}/{year}_average_returns.csv を取得する"""
+    path = os.path.join(AVERAGE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1], f"{year}_average_returns.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
+
+
+def get_total_average_returns_csv(place_id):
+    """data/race_info/average_returns/{place}/total_average_returns.csv を取得する"""
+    path = os.path.join(AVERAGE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1], "total_average_returns.csv")
+    return read_csv_or_empty(path, dtype=str, index_col=0)
 
 
 # --- 人気 -------------------------------------------------------------------
