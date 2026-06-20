@@ -110,26 +110,46 @@ td a:hover {
   color: #555;
 }
 
-.bar-row .bar-track {
+/* --- 的中率・回収率の色付きゲージバー --- */
+
+.rate-gauge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.rate-gauge .gauge-track {
+  position: relative;
   flex: 1;
+  min-width: 60px;
   background: #eee;
   border-radius: 4px;
   height: 14px;
   overflow: hidden;
 }
 
-.bar-row .bar {
+.rate-gauge .gauge-fill {
   display: block;
   height: 100%;
-  background: #0044cc;
   border-radius: 4px;
 }
 
-.bar-row .bar-value {
-  width: 60px;
+.rate-gauge .gauge-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: #333;
+}
+
+.rate-gauge .gauge-value {
+  width: 56px;
   flex-shrink: 0;
   text-align: right;
   color: #333;
+  font-size: 0.9em;
 }
 
 /* --- 的中/不的中バッジ --- */

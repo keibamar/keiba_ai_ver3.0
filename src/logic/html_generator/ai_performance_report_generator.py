@@ -14,6 +14,7 @@ from datetime import date
 
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import COURSE_LISTS
+from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
 from src.managers import ai_performance_dataset_manager as m
 from src.managers import html_manager
 
@@ -23,8 +24,8 @@ BET_TYPE_LABELS = {"win": "単勝", "place": "複勝", "trio_box": "三連複(5�
 def _performance_table_html(performance, title=None):
     rows = "".join(
         f"<tr><td>{BET_TYPE_LABELS[bet_type]}</td>"
-        f"<td>{performance[bet_type]['hit_rate']:.1f}%</td>"
-        f"<td>{performance[bet_type]['return_rate']:.1f}%</td>"
+        f"<td>{hit_rate_gauge_html(performance[bet_type]['hit_rate'])}</td>"
+        f"<td>{return_rate_gauge_html(performance[bet_type]['return_rate'])}</td>"
         f"<td>{performance[bet_type]['n']}</td></tr>\n"
         for bet_type in BET_TYPE_LABELS
     )
@@ -47,8 +48,8 @@ def _breakdown_table_html(breakdown, value_label, title=None):
         rows = "".join(
             f"<tr><td>{item['value']}</td>"
             + "".join(
-                f"<td>{item['performance'][bt]['hit_rate']:.1f}%</td>"
-                f"<td>{item['performance'][bt]['return_rate']:.1f}%</td>"
+                f"<td>{hit_rate_gauge_html(item['performance'][bt]['hit_rate'])}</td>"
+                f"<td>{return_rate_gauge_html(item['performance'][bt]['return_rate'])}</td>"
                 for bt in BET_TYPE_LABELS
             )
             + f"<td>{item['performance']['win']['n']}</td></tr>\n"

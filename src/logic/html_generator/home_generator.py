@@ -15,6 +15,7 @@ from datetime import date, timedelta
 from src.config.constants import NAME_LIST
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator import daily_index_generator
+from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
 from src.managers import ai_performance_dataset_manager as dataset_manager
 from src.managers import html_manager
 
@@ -46,13 +47,9 @@ def _weekly_trend_html(trend):
     rows = ""
     for week in trend:
         return_rate = week["performance"]["win"]["return_rate"]
-        # 回収率は100%超になることがあるため、バーの幅は100%でクランプし
-        # 実際の値は数値として別途表示する（100%=損益分岐点）
-        bar_width = max(min(return_rate, 100.0), 0.0)
         rows += f"""<div class="bar-row">
       <span class="bar-label">{week['week_start'].strftime('%m/%d')}〜</span>
-      <span class="bar-track"><span class="bar" style="width: {bar_width:.1f}%"></span></span>
-      <span class="bar-value">{return_rate:.1f}%</span>
+      {return_rate_gauge_html(return_rate)}
     </div>\n"""
     return f'<div class="bar-chart">\n{rows}</div>'
 
@@ -71,7 +68,8 @@ def _current_meetings_html(meetings, df):
         win = performance["win"]
         rows += (
             f"<tr><td>{place_name}{meeting['times']}回</td>"
-            f"<td>{win['hit_rate']:.1f}%</td><td>{win['return_rate']:.1f}%</td><td>{win['n']}</td></tr>\n"
+            f"<td>{hit_rate_gauge_html(win['hit_rate'])}</td>"
+            f"<td>{return_rate_gauge_html(win['return_rate'])}</td><td>{win['n']}</td></tr>\n"
         )
 
     return f"""<table>

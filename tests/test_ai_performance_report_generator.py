@@ -16,6 +16,7 @@ import pytest
 
 from src.config import paths
 from src.logic.html_generator import ai_performance_report_generator as r
+from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
 
 SAMPLE_DF = pd.DataFrame(
     {
@@ -68,7 +69,10 @@ def test_make_ai_performance_index_page_generates_html(new_roots, fake_dataset):
     assert "<h3>トータル成績</h3>" in html_content
     assert "<h3>2026年の成績</h3>" in html_content
     # トータル成績（4レース全体）: win hit=2/4=50.0%, return=(200+0+100+0)/4=75.0%
-    assert "<td>単勝</td><td>50.0%</td><td>75.0%</td><td>4</td>" in html_content
+    assert (
+        f"<td>単勝</td><td>{hit_rate_gauge_html(50.0)}</td><td>{return_rate_gauge_html(75.0)}</td><td>4</td>"
+        in html_content
+    )
     # 新しい年から順にリンクされる
     assert html_content.index("annual/2026.html") < html_content.index("annual/2025.html") < html_content.index("annual/2024.html")
     assert '<a href="annual/2026.html">2026年</a>' in html_content
@@ -95,7 +99,10 @@ def test_make_annual_performance_page_generates_html(new_roots, fake_dataset):
 
     assert "<h1>2026年 AI予想成績</h1>" in html_content
     # 2026年はB・Cの2レース: win hit=1/2=50.0%, return=(0+100)/2=50.0
-    assert "<td>単勝</td><td>50.0%</td><td>50.0%</td><td>2</td>" in html_content
+    assert (
+        f"<td>単勝</td><td>{hit_rate_gauge_html(50.0)}</td><td>{return_rate_gauge_html(50.0)}</td><td>2</td>"
+        in html_content
+    )
 
 
 def test_make_meeting_performance_page_generates_html(new_roots, fake_dataset):
@@ -106,7 +113,10 @@ def test_make_meeting_performance_page_generates_html(new_roots, fake_dataset):
     html_content = out_file.read_text(encoding="utf-8")
     assert "<h1>2025年 東京1回 AI予想成績</h1>" in html_content
     # 2025年東京1回はAのみ: win hit=1/1=100.0%, return=200.0
-    assert "<td>単勝</td><td>100.0%</td><td>200.0%</td><td>1</td>" in html_content
+    assert (
+        f"<td>単勝</td><td>{hit_rate_gauge_html(100.0)}</td><td>{return_rate_gauge_html(200.0)}</td><td>1</td>"
+        in html_content
+    )
 
 
 def test_make_course_performance_page_generates_html(new_roots, fake_dataset):
@@ -121,7 +131,10 @@ def test_make_course_performance_page_generates_html(new_roots, fake_dataset):
 
     assert "<h1>東京 芝1400m AI予想成績</h1>" in html_content
     # 東京 芝1400mはA・Bの2レース: win hit=1/2=50.0%, return=(200+0)/2=100.0
-    assert "<td>単勝</td><td>50.0%</td><td>100.0%</td><td>2</td>" in html_content
+    assert (
+        f"<td>単勝</td><td>{hit_rate_gauge_html(50.0)}</td><td>{return_rate_gauge_html(100.0)}</td><td>2</td>"
+        in html_content
+    )
     assert "<h3>クラス別成績</h3>" in html_content
     assert "<h3>馬場別成績</h3>" in html_content
     assert "<h3>年度別成績</h3>" in html_content
@@ -144,7 +157,10 @@ def test_make_course_performance_index_page_generates_html(new_roots, fake_datas
     assert '<a href="../../index.html">&larr; AI成績トップへ</a>' in html_content
 
     # 東京全体（A・B・C）: win hit=2/3=66.7%, return=(200+0+100)/3=100.0
-    assert "<td>単勝</td><td>66.7%</td><td>100.0%</td><td>3</td>" in html_content
+    assert (
+        f"<td>単勝</td><td>{hit_rate_gauge_html(2 / 3 * 100)}</td><td>{return_rate_gauge_html(100.0)}</td><td>3</td>"
+        in html_content
+    )
     assert "<h3>年度別成績</h3>" in html_content
     assert "<h3>クラス別成績</h3>" in html_content
     assert "<h3>芝/ダート別成績</h3>" in html_content

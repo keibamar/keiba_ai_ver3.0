@@ -52,8 +52,10 @@ def test_make_home_page_generates_index_html(new_roots):
     assert "<h3>先週の結果（メインレース）</h3>" in html_content
 
 
-def test_weekly_trend_html_clamps_bar_width_but_shows_real_return_rate():
+def test_weekly_trend_html_uses_return_rate_gauge():
     from datetime import date
+
+    from src.logic.html_generator.rate_gauge_html import return_rate_gauge_html
 
     trend = [
         {
@@ -73,8 +75,6 @@ def test_weekly_trend_html_clamps_bar_width_but_shows_real_return_rate():
     print(f"\n--- _weekly_trend_html(回収率523.9%/0.0%) ---")
     print(html_content)
 
-    # 回収率が100%を超えても、バーの幅は100%でクランプされる
-    assert 'style="width: 100.0%"' in html_content
-    # 表示テキストは実際の値（523.9%）のまま
-    assert "523.9%" in html_content
-    assert 'style="width: 0.0%"' in html_content
+    # 各週の回収率ゲージ（ai_performance_report_generatorと共通の色付きゲージ）が使われる
+    assert return_rate_gauge_html(523.9) in html_content
+    assert return_rate_gauge_html(0.0) in html_content
