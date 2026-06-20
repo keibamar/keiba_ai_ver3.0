@@ -104,7 +104,7 @@ loop 次の7日分（i=0..6、base_day+(7-i)日後）
   end
   Chronos -> Chronos : 発走時刻順にソート
   Chronos -> RPG : save_time_id_list(race_day, time_id_list)\n（race_card_dataset_manager経由）
-  RPG -> RPG : texts/race_calendar/race_time_id_list/{race_day}.csv に保存
+  RPG -> RPG : data/race_schedule/race_time_id_list/{race_day}.csv に保存
 end
 note right of Chronos
   新規実装: race_day_scheduler.make_time_id_list /

@@ -20,7 +20,7 @@ SAMPLE_RACE_ID = "202404040601"
 def new_roots(tmp_path, monkeypatch):
     """race_card/予想テキストの出力先をtmp_path配下に切り替える。
 
-    race_time_id_list（texts/race_calendar/race_time_id_list/20241020.csv）は
+    race_time_id_list（data/race_schedule/race_time_id_list/20241020.csv）は
     実データをそのまま参照する。
     """
     monkeypatch.setattr(paths, "RACE_CARD_DATA_PATH", str(tmp_path / "race_card"))

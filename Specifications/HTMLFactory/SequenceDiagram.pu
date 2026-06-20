@@ -18,7 +18,7 @@ HM --> T : なし（読み戻して内容を検証）
 
 == test_make_daily_index_page_generates_index_html ==
 T -> DIG : make_daily_index_page(race_day)
-DIG -> DIG : load_race_info(date_str)\n(texts/race_calendar/race_time_id_list/を参照)
+DIG -> DIG : load_race_info(date_str)\n(data/race_schedule/race_time_id_list/を参照)
 DIG -> RSM : get_daily_id(0, race_day)で当日のrace_id一覧を取得
 DIG -> DIG : group_place_races(files_info_list, race_info_dict)
 DIG -> DIG : build_table_rows(place_races, date_str)

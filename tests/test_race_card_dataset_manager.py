@@ -77,7 +77,7 @@ def test_save_time_id_list_skips_empty_list(new_roots):
 
 
 def test_get_race_time_id_list_df_matches_existing_sample_file():
-    """既存の実データ(texts/race_calendar/race_time_id_list/20241020.csv)を
+    """既存の実データ(data/race_schedule/race_time_id_list/20241020.csv)を
     新 race_card_dataset_manager が正しく読み込めることを確認する。"""
     df = race_card_dataset_manager.get_race_time_id_list_df(SAMPLE_RACE_DAY)
 

@@ -14,7 +14,7 @@ SAMPLE_RACE_DAY = date(2024, 10, 20)
 def new_roots(tmp_path, monkeypatch):
     """public_htmlの出力先をtmp_path配下に切り替える。
 
-    race_time_id_list（texts/race_calendar/race_time_id_list/20241020.csv）と
+    race_time_id_list（data/race_schedule/race_time_id_list/20241020.csv）と
     race_schedule（data/race_schedule）は実データをそのまま参照する。
     """
     monkeypatch.setattr(paths, "PUBLIC_HTML_RACES_PATH", str(tmp_path / "public_html" / "races"))
