@@ -8,11 +8,16 @@ import pytest
 
 from src.config import paths
 from src.logic.html_generator import home_generator as h
+from src.managers import ai_performance_dataset_manager as dataset_manager
 
 
 @pytest.fixture
 def new_roots(tmp_path, monkeypatch):
     monkeypatch.setattr(paths, "PUBLIC_HTML_PATH", str(tmp_path / "public_html"))
+    monkeypatch.setattr(paths, "AI_PERFORMANCE_DATA_PATH", str(tmp_path / "ai_performance"))
+    monkeypatch.setattr(
+        dataset_manager, "AI_PERFORMANCE_DATASET_PATH", str(tmp_path / "ai_performance" / "ai_performance.csv")
+    )
     return tmp_path
 
 

@@ -2,11 +2,14 @@
 
 Oracleの予想（race_card_dataset_manager.get_race_cards のrank列、rank=1を本命とする）と
 確定配当（race_info_dataset_manager.get_race_return_csv_for_race）を照合し、
-単勝・複勝・三連複BOXの的中・回収を1レース単位、または複数レースまとめて集計する。
+1レース単位で的中・回収を計算する（calc_race_hit_returns）。
 
-判定ロジック自体は src.output.return_report.py の get_win_result / get_place_result /
-get_trio_box_result（1レース・1日単位の集計）と同じ考え方を、任意のレース集合
-（年別・開催別・コース別等）に対して再利用できる形に切り出したもの。
+複数レースまとめた集計（年別・開催別・コース別等）は、本モジュールの計算結果を
+永続化した src.managers.ai_performance_dataset_manager 側のaggregate/filter_by_*/
+group_breakdownで行う（data/race_card/の全件スキャンを避けて高速化するため）。
+本モジュールが残しているのは、その永続化データセットの構築
+（update_ai_performance_dataset）と、Homeページの「先週の結果」「開催中の競馬場」用の
+1レース単位の処理のみ。
 
 過去の予想データ（出馬表+score/rank）は date/RaceCards/ から data/race_card/ に
 移行済み（2024-10-20〜、161日分）。一方、配当の的中判定に使う
@@ -19,8 +22,6 @@ import math
 import os
 import re
 from datetime import date, datetime, timedelta
-
-import pandas as pd
 
 from src.config import paths
 from src.managers import race_card_dataset_manager, race_info_dataset_manager, race_schedule_dataset_manager
@@ -38,82 +39,6 @@ def parse_race_id(race_id):
         "days": int(race_id[8:10]),
         "race_num": int(race_id[10:12]),
     }
-
-
-def filter_by_year(race_day_race_id_pairs, year):
-    """指定した年のレースのみに絞り込む"""
-    return [(day, rid) for day, rid in race_day_race_id_pairs if parse_race_id(rid)["year"] == year]
-
-
-def filter_by_meeting(race_day_race_id_pairs, year, place_id, times):
-    """指定した年・開催場・開催回のレースのみに絞り込む"""
-    result = []
-    for day, rid in race_day_race_id_pairs:
-        parsed = parse_race_id(rid)
-        if parsed["year"] == year and parsed["place_id"] == place_id and parsed["times"] == times:
-            result.append((day, rid))
-    return result
-
-
-def get_race_conditions(race_day_race_id_pairs):
-    """各race_idのrace_type・距離を1回だけ調べてdictにまとめる
-
-    filter_by_courseを多数の条件（コース×距離の全組み合わせ等）に対して
-    繰り返し呼ぶ場合、race_card_dataset_manager.get_race_info_csv の呼び出しが
-    組み合わせ数倍に膨れて遅くなるため、事前にこの関数で1回だけ調べておき
-    filter_by_courseのrace_conditions引数に渡す。
-
-    Returns:
-        dict[str, tuple[str, str] | None]: race_id -> (race_type, course_len)。
-            レース情報が無いrace_idはNone。
-    """
-    conditions = {}
-    for _, rid in race_day_race_id_pairs:
-        if rid in conditions:
-            continue
-        info_df = race_card_dataset_manager.get_race_info_csv(rid)
-        if info_df.empty:
-            conditions[rid] = None
-            continue
-        row = info_df.iloc[0]
-        conditions[rid] = (row.get("race_type"), str(row.get("course_len")))
-    return conditions
-
-
-def filter_by_course(race_day_race_id_pairs, place_id, race_type, course_len, race_conditions=None):
-    """指定した開催場・race_type・距離のレースのみに絞り込む
-
-    race_idからは開催場のみ判定できるため、race_type・距離は
-    race_card_dataset_manager.get_race_info_csv（保存済みのレース情報）を参照する。
-    レース情報が無いレースは対象外とする。
-
-    Args:
-        race_conditions (dict | None): get_race_conditionsの戻り値を事前に渡すと、
-            get_race_info_csvの再呼び出しを省略できる（多数の条件で絞り込む場合に高速化）。
-            省略時はこの関数内で都度調べる。
-    """
-    result = []
-    for day, rid in race_day_race_id_pairs:
-        if parse_race_id(rid)["place_id"] != place_id:
-            continue
-        if race_conditions is not None:
-            condition = race_conditions.get(rid)
-        else:
-            info_df = race_card_dataset_manager.get_race_info_csv(rid)
-            if info_df.empty:
-                continue
-            row = info_df.iloc[0]
-            condition = (row.get("race_type"), str(row.get("course_len")))
-        if condition is None:
-            continue
-        if condition[0] == race_type and condition[1] == str(course_len):
-            result.append((day, rid))
-    return result
-
-
-def get_predicted_years():
-    """予想データが存在する年の一覧を昇順で返す"""
-    return sorted({race_day.year for race_day, _ in list_predicted_races()})
 
 
 def list_predicted_races():
@@ -192,43 +117,6 @@ def calc_race_hit_returns(race_day, race_id, box_num=5):
     return result
 
 
-def aggregate_ai_performance(race_day_race_id_pairs, box_num=5):
-    """複数レースについて的中率・回収率を集計する
-
-    Args:
-        race_day_race_id_pairs (list[tuple[date, str]]): (race_day, race_id) のリスト
-        box_num (int): 三連複BOXの頭数
-    Returns:
-        dict: {"win": {"hit_rate": float, "return_rate": float, "n": int}, "place": {...}, "trio_box": {...}}
-            的中率・回収率は%表記（回収率100.0が損益分岐点）。
-            n は予想・確定配当の両方が存在し集計対象になったレース数。
-    """
-    totals = {bet_type: [0, 0.0] for bet_type in BET_TYPES}
-    valid_count = 0
-
-    for race_day, race_id in race_day_race_id_pairs:
-        result = calc_race_hit_returns(race_day, race_id, box_num=box_num)
-        if result is None:
-            continue
-        valid_count += 1
-        for bet_type in BET_TYPES:
-            hit, payout = result[bet_type]
-            totals[bet_type][0] += hit
-            totals[bet_type][1] += payout
-
-    if valid_count == 0:
-        return {bet_type: {"hit_rate": 0.0, "return_rate": 0.0, "n": 0} for bet_type in BET_TYPES}
-
-    return {
-        bet_type: {
-            "hit_rate": totals[bet_type][0] / valid_count * 100,
-            "return_rate": totals[bet_type][1] / valid_count,
-            "n": valid_count,
-        }
-        for bet_type in BET_TYPES
-    }
-
-
 def get_current_meetings(today=None):
     """今日時点で開催期間中の開催回（開催場×times）を列挙する
 
@@ -266,35 +154,6 @@ def get_current_meetings(today=None):
 
     current_meetings.sort(key=lambda m: m["place_id"])
     return current_meetings
-
-
-def weekly_trend(num_weeks=8, end_day=None):
-    """直近num_weeks週について、週ごとの的中率・回収率の推移を返す
-
-    Args:
-        num_weeks (int): 集計する週数（初期値8）
-        end_day (date): 最後の週の終端日（初期値: 今日）
-    Returns:
-        list[dict]: [{"week_start", "week_end", "performance"}, ...]（古い週→新しい週の順）
-    """
-    end_day = end_day or date.today()
-    all_pairs = list_predicted_races()
-
-    trend = []
-    for i in range(num_weeks):
-        week_end = end_day - timedelta(days=7 * i)
-        week_start = week_end - timedelta(days=6)
-        week_pairs = [(day, rid) for day, rid in all_pairs if week_start <= day <= week_end]
-        trend.append(
-            {
-                "week_start": week_start,
-                "week_end": week_end,
-                "performance": aggregate_ai_performance(week_pairs),
-            }
-        )
-
-    trend.reverse()
-    return trend
 
 
 def get_last_week_main_races(end_day=None):

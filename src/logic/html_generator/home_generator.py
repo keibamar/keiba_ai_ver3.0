@@ -4,16 +4,18 @@
 と同様にPythonのf-stringで直接HTMLを組み立てる。
 
 レースカレンダー・AI成績サマリー・先週の結果・コース詳細データへの導線をカード形式で
-1ページに集約する。的中率・回収率は src.logic.calculators.ai_performance_calculator の
-集計結果をそのまま表示するため、配当の分割保存データが揃うまでは0%表示になる
-（ロジック自体は正しく、データが揃えば自動的に反映される）。
+1ページに集約する。的中率・回収率は永続化済みの src.managers.ai_performance_dataset_manager
+（data/ai_performance/ai_performance.csv）をpandasで集計して表示するため、
+data/race_card/ の全件スキャンを避けて高速に生成できる
+（先週の結果カードのみ1レース単位の処理のため ai_performance_calculator を直接使う）。
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 from src.config.constants import NAME_LIST
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator import daily_index_generator
+from src.managers import ai_performance_dataset_manager as dataset_manager
 from src.managers import html_manager
 
 SITE_TITLE = "MAR(まーる）|競馬AIデータサイト"
@@ -55,17 +57,17 @@ def _weekly_trend_html(trend):
     return f'<div class="bar-chart">\n{rows}</div>'
 
 
-def _current_meetings_html(meetings):
+def _current_meetings_html(meetings, df):
     if not meetings:
         return "<p>現在開催中の競馬場はありません。</p>"
 
     rows = ""
     for meeting in meetings:
         place_name = NAME_LIST[meeting["place_id"] - 1]
-        pairs = calc.filter_by_meeting(
-            calc.list_predicted_races(), meeting["first_day"].year, meeting["place_id"], meeting["times"]
+        meeting_df = dataset_manager.filter_by_meeting(
+            df, meeting["first_day"].year, meeting["place_id"], meeting["times"]
         )
-        performance = calc.aggregate_ai_performance(pairs)
+        performance = dataset_manager.aggregate(meeting_df)
         win = performance["win"]
         rows += (
             f"<tr><td>{place_name}{meeting['times']}回</td>"
@@ -110,10 +112,29 @@ def _last_week_results_html(main_races):
   </table>"""
 
 
+def _weekly_trend(df, num_weeks, end_day):
+    """直近num_weeks週について、週ごとの的中率・回収率の推移を返す
+
+    Returns:
+        list[dict]: [{"week_start", "week_end", "performance"}, ...]（古い週→新しい週の順）
+    """
+    trend = []
+    for i in range(num_weeks):
+        week_end = end_day - timedelta(days=7 * i)
+        week_start = week_end - timedelta(days=6)
+        week_df = dataset_manager.filter_by_date_range(df, week_start, week_end)
+        trend.append(
+            {"week_start": week_start, "week_end": week_end, "performance": dataset_manager.aggregate(week_df)}
+        )
+    trend.reverse()
+    return trend
+
+
 def home_template():
     today = date.today()
-    overall_performance = calc.aggregate_ai_performance(calc.list_predicted_races())
-    trend = calc.weekly_trend(num_weeks=8, end_day=today)
+    df = dataset_manager.get_ai_performance_dataset()
+    overall_performance = dataset_manager.aggregate(df)
+    trend = _weekly_trend(df, num_weeks=8, end_day=today)
     current_meetings = calc.get_current_meetings(today)
     last_week_main_races = calc.get_last_week_main_races(today)
 
@@ -140,7 +161,7 @@ def home_template():
         <h4>週別推移（単勝回収率、直近8週）</h4>
         {_weekly_trend_html(trend)}
         <h4>開催中の競馬場の成績</h4>
-        {_current_meetings_html(current_meetings)}
+        {_current_meetings_html(current_meetings, df)}
         <a class="card-link" href="performance/index.html">AI成績の詳細を見る &rarr;</a>
       </div>
 

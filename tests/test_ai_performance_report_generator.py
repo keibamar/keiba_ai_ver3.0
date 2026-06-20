@@ -1,18 +1,41 @@
 """src/logic/html_generator/ai_performance_report_generator.py のテスト（オフライン）。
 
-ai_performance_calculator の集計結果をmonkeypatchし、ページ生成（出力先・内容）を検証する。
+ai_performance_dataset_manager.get_ai_performance_dataset をmonkeypatchして
+既知のデータセットを与え、ページ生成（出力先・内容・内訳テーブル）を検証する。
+
+既知データセット（SAMPLE_DF、東京=place_id 5、新潟=place_id 9）:
+  A: 2025年 東京1回 芝1400m 良    未勝利   win=1/200 place=1/150 trio=0/0
+  B: 2026年 東京2回 芝1400m 稍重  1勝クラス win=0/0   place=0/0   trio=1/300
+  C: 2026年 東京3回 ダート1600m 良 未勝利   win=1/100 place=1/120 trio=0/0
+  D: 2024年 新潟1回 芝1400m 良    未勝利   win=0/0   place=0/0   trio=0/0
+今日の日付は2026年（currentDateの環境前提）のため、「今年の成績」は2026年で計算される。
 """
 
+import pandas as pd
 import pytest
 
 from src.config import paths
 from src.logic.html_generator import ai_performance_report_generator as r
 
-SAMPLE_PERFORMANCE = {
-    "win": {"hit_rate": 33.3, "return_rate": 120.5, "n": 3},
-    "place": {"hit_rate": 50.0, "return_rate": 105.0, "n": 3},
-    "trio_box": {"hit_rate": 10.0, "return_rate": 80.0, "n": 3},
-}
+SAMPLE_DF = pd.DataFrame(
+    {
+        "race_day": ["2025-05-01", "2026-04-01", "2026-04-08", "2024-03-01"],
+        "year": ["2025", "2026", "2026", "2024"],
+        "place_id": ["5", "5", "5", "9"],
+        "times": ["1", "2", "3", "1"],
+        "race_type": ["芝", "芝", "ダート", "芝"],
+        "course_len": ["1400", "1400", "1600", "1400"],
+        "ground_state": ["良", "稍重", "良", "良"],
+        "class": ["未勝利", "1勝クラス", "未勝利", "未勝利"],
+        "win_hit": ["1", "0", "1", "0"],
+        "win_return": ["200.0", "0.0", "100.0", "0.0"],
+        "place_hit": ["1", "0", "1", "0"],
+        "place_return": ["150.0", "0.0", "120.0", "0.0"],
+        "trio_box_hit": ["0", "1", "0", "0"],
+        "trio_box_return": ["0.0", "300.0", "0.0", "0.0"],
+    },
+    index=["A", "B", "C", "D"],
+)
 
 
 @pytest.fixture
@@ -22,20 +45,16 @@ def new_roots(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def fake_aggregate(monkeypatch):
-    monkeypatch.setattr(r.calc, "list_predicted_races", lambda: [])
-    monkeypatch.setattr(r.calc, "filter_by_year", lambda pairs, year: pairs)
-    monkeypatch.setattr(r.calc, "filter_by_meeting", lambda pairs, year, place_id, times: pairs)
-    monkeypatch.setattr(
-        r.calc, "filter_by_course", lambda pairs, place_id, race_type, course_len, race_conditions=None: pairs
-    )
-    monkeypatch.setattr(r.calc, "get_race_conditions", lambda pairs: {})
-    monkeypatch.setattr(r.calc, "aggregate_ai_performance", lambda pairs: SAMPLE_PERFORMANCE)
+def fake_dataset(monkeypatch):
+    monkeypatch.setattr(r.m, "get_ai_performance_dataset", lambda: SAMPLE_DF)
 
 
-def test_make_ai_performance_index_page_generates_html(new_roots, monkeypatch):
-    monkeypatch.setattr(r.calc, "get_predicted_years", lambda: [2024, 2025, 2026])
+@pytest.fixture
+def empty_dataset(monkeypatch):
+    monkeypatch.setattr(r.m, "get_ai_performance_dataset", lambda: pd.DataFrame())
 
+
+def test_make_ai_performance_index_page_generates_html(new_roots, fake_dataset):
     r.make_ai_performance_index_page()
 
     out_file = new_roots / "public_html" / "performance" / "index.html"
@@ -46,15 +65,17 @@ def test_make_ai_performance_index_page_generates_html(new_roots, monkeypatch):
     print(html_content)
 
     assert "<h1>AI予想成績</h1>" in html_content
+    assert "<h3>トータル成績</h3>" in html_content
+    assert "<h3>2026年の成績</h3>" in html_content
+    # トータル成績（4レース全体）: win hit=2/4=50.0%, return=(200+0+100+0)/4=75.0%
+    assert "<td>単勝</td><td>50.0%</td><td>75.0%</td><td>4</td>" in html_content
     # 新しい年から順にリンクされる
     assert html_content.index("annual/2026.html") < html_content.index("annual/2025.html") < html_content.index("annual/2024.html")
     assert '<a href="annual/2026.html">2026年</a>' in html_content
     assert '<a href="course/05_tokyo/index.html">東京</a>' in html_content
 
 
-def test_make_ai_performance_index_page_handles_no_predicted_years(new_roots, monkeypatch):
-    monkeypatch.setattr(r.calc, "get_predicted_years", lambda: [])
-
+def test_make_ai_performance_index_page_handles_empty_dataset(new_roots, empty_dataset):
     r.make_ai_performance_index_page()
 
     out_file = new_roots / "public_html" / "performance" / "index.html"
@@ -62,7 +83,7 @@ def test_make_ai_performance_index_page_handles_no_predicted_years(new_roots, mo
     assert "予想データがまだありません。" in html_content
 
 
-def test_make_annual_performance_page_generates_html(new_roots, fake_aggregate):
+def test_make_annual_performance_page_generates_html(new_roots, fake_dataset):
     r.make_annual_performance_page(2026)
 
     out_file = new_roots / "public_html" / "performance" / "annual" / "2026.html"
@@ -73,32 +94,42 @@ def test_make_annual_performance_page_generates_html(new_roots, fake_aggregate):
     print(html_content)
 
     assert "<h1>2026年 AI予想成績</h1>" in html_content
-    assert "<td>単勝</td><td>33.3%</td><td>120.5%</td><td>3</td>" in html_content
-    assert "<td>複勝</td><td>50.0%</td><td>105.0%</td><td>3</td>" in html_content
-    assert "<td>三連複(5頭BOX)</td><td>10.0%</td><td>80.0%</td><td>3</td>" in html_content
+    # 2026年はB・Cの2レース: win hit=1/2=50.0%, return=(0+100)/2=50.0
+    assert "<td>単勝</td><td>50.0%</td><td>50.0%</td><td>2</td>" in html_content
 
 
-def test_make_meeting_performance_page_generates_html(new_roots, fake_aggregate):
-    r.make_meeting_performance_page(2026, place_id=5, times=1)
+def test_make_meeting_performance_page_generates_html(new_roots, fake_dataset):
+    r.make_meeting_performance_page(2025, place_id=5, times=1)
 
-    out_file = new_roots / "public_html" / "performance" / "meeting" / "2026" / "05_tokyo-1th.html"
+    out_file = new_roots / "public_html" / "performance" / "meeting" / "2025" / "05_tokyo-1th.html"
     assert out_file.exists()
     html_content = out_file.read_text(encoding="utf-8")
-    assert "<h1>2026年 東京1回 AI予想成績</h1>" in html_content
+    assert "<h1>2025年 東京1回 AI予想成績</h1>" in html_content
+    # 2025年東京1回はAのみ: win hit=1/1=100.0%, return=200.0
+    assert "<td>単勝</td><td>100.0%</td><td>200.0%</td><td>1</td>" in html_content
 
 
-def test_make_course_performance_page_generates_html(new_roots, fake_aggregate):
+def test_make_course_performance_page_generates_html(new_roots, fake_dataset):
     r.make_course_performance_page(place_id=5, race_type="芝", course_len="1400")
 
     out_file = new_roots / "public_html" / "performance" / "course" / "05_tokyo" / "芝-1400.html"
     assert out_file.exists()
     html_content = out_file.read_text(encoding="utf-8")
+
+    print(f"\n--- make_course_performance_page(東京, 芝1400m) ---")
+    print(html_content)
+
     assert "<h1>東京 芝1400m AI予想成績</h1>" in html_content
+    # 東京 芝1400mはA・Bの2レース: win hit=1/2=50.0%, return=(200+0)/2=100.0
+    assert "<td>単勝</td><td>50.0%</td><td>100.0%</td><td>2</td>" in html_content
+    assert "<h3>クラス別成績</h3>" in html_content
+    assert "<h3>馬場別成績</h3>" in html_content
+    assert "<h3>年度別成績</h3>" in html_content
+    assert "<td>未勝利</td>" in html_content
+    assert "<td>1勝クラス</td>" in html_content
 
 
-def test_make_course_performance_index_page_generates_html(new_roots):
-    # make_ai_performance_index_pageが各place_idについてリンクするcourse/{place}/index.html
-    # を生成する関数（以前は存在せず404になっていた）
+def test_make_course_performance_index_page_generates_html(new_roots, fake_dataset):
     r.make_course_performance_index_page(place_id=5)
 
     out_file = new_roots / "public_html" / "performance" / "course" / "05_tokyo" / "index.html"
@@ -112,17 +143,23 @@ def test_make_course_performance_index_page_generates_html(new_roots):
     assert '<a href="芝-1400.html">芝1400m</a>' in html_content
     assert '<a href="../../index.html">&larr; AI成績トップへ</a>' in html_content
 
+    # 東京全体（A・B・C）: win hit=2/3=66.7%, return=(200+0+100)/3=100.0
+    assert "<td>単勝</td><td>66.7%</td><td>100.0%</td><td>3</td>" in html_content
+    assert "<h3>年度別成績</h3>" in html_content
+    assert "<h3>クラス別成績</h3>" in html_content
+    assert "<h3>芝/ダート別成績</h3>" in html_content
+    assert "<h3>馬場別成績</h3>" in html_content
 
-def test_make_all_annual_performance_pages_generates_for_each_year(new_roots, fake_aggregate, monkeypatch):
-    monkeypatch.setattr(r.calc, "get_predicted_years", lambda: [2024, 2025])
 
+def test_make_all_annual_performance_pages_generates_for_each_year(new_roots, fake_dataset):
     r.make_all_annual_performance_pages()
 
     assert (new_roots / "public_html" / "performance" / "annual" / "2024.html").exists()
     assert (new_roots / "public_html" / "performance" / "annual" / "2025.html").exists()
+    assert (new_roots / "public_html" / "performance" / "annual" / "2026.html").exists()
 
 
-def test_make_all_course_performance_pages_generates_for_every_place(new_roots, fake_aggregate):
+def test_make_all_course_performance_pages_generates_for_every_place(new_roots, fake_dataset):
     r.make_all_course_performance_pages()
 
     out_dir = new_roots / "public_html" / "performance" / "course"
