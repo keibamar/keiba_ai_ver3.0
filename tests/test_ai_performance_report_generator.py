@@ -26,23 +26,40 @@ def fake_aggregate(monkeypatch):
     monkeypatch.setattr(r.calc, "list_predicted_races", lambda: [])
     monkeypatch.setattr(r.calc, "filter_by_year", lambda pairs, year: pairs)
     monkeypatch.setattr(r.calc, "filter_by_meeting", lambda pairs, year, place_id, times: pairs)
-    monkeypatch.setattr(r.calc, "filter_by_course", lambda pairs, place_id, race_type, course_len: pairs)
+    monkeypatch.setattr(
+        r.calc, "filter_by_course", lambda pairs, place_id, race_type, course_len, race_conditions=None: pairs
+    )
+    monkeypatch.setattr(r.calc, "get_race_conditions", lambda pairs: {})
     monkeypatch.setattr(r.calc, "aggregate_ai_performance", lambda pairs: SAMPLE_PERFORMANCE)
 
 
-def test_make_ai_performance_index_page_generates_html(new_roots):
-    r.make_ai_performance_index_page(year=2026)
+def test_make_ai_performance_index_page_generates_html(new_roots, monkeypatch):
+    monkeypatch.setattr(r.calc, "get_predicted_years", lambda: [2024, 2025, 2026])
+
+    r.make_ai_performance_index_page()
 
     out_file = new_roots / "public_html" / "performance" / "index.html"
     assert out_file.exists()
     html_content = out_file.read_text(encoding="utf-8")
 
-    print(f"\n--- make_ai_performance_index_page(2026) ---")
+    print(f"\n--- make_ai_performance_index_page() ---")
     print(html_content)
 
     assert "<h1>AI予想成績</h1>" in html_content
-    assert '<a href="annual/2026.html">2026年の成績を見る</a>' in html_content
+    # 新しい年から順にリンクされる
+    assert html_content.index("annual/2026.html") < html_content.index("annual/2025.html") < html_content.index("annual/2024.html")
+    assert '<a href="annual/2026.html">2026年</a>' in html_content
     assert '<a href="course/05_tokyo/index.html">東京</a>' in html_content
+
+
+def test_make_ai_performance_index_page_handles_no_predicted_years(new_roots, monkeypatch):
+    monkeypatch.setattr(r.calc, "get_predicted_years", lambda: [])
+
+    r.make_ai_performance_index_page()
+
+    out_file = new_roots / "public_html" / "performance" / "index.html"
+    html_content = out_file.read_text(encoding="utf-8")
+    assert "予想データがまだありません。" in html_content
 
 
 def test_make_annual_performance_page_generates_html(new_roots, fake_aggregate):
@@ -94,3 +111,28 @@ def test_make_course_performance_index_page_generates_html(new_roots):
     assert "<h1>東京 AI予想成績</h1>" in html_content
     assert '<a href="芝-1400.html">芝1400m</a>' in html_content
     assert '<a href="../../index.html">&larr; AI成績トップへ</a>' in html_content
+
+
+def test_make_all_annual_performance_pages_generates_for_each_year(new_roots, fake_aggregate, monkeypatch):
+    monkeypatch.setattr(r.calc, "get_predicted_years", lambda: [2024, 2025])
+
+    r.make_all_annual_performance_pages()
+
+    assert (new_roots / "public_html" / "performance" / "annual" / "2024.html").exists()
+    assert (new_roots / "public_html" / "performance" / "annual" / "2025.html").exists()
+
+
+def test_make_all_course_performance_pages_generates_for_every_place(new_roots, fake_aggregate):
+    r.make_all_course_performance_pages()
+
+    out_dir = new_roots / "public_html" / "performance" / "course"
+    place_dirs = sorted(p.name for p in out_dir.iterdir())
+
+    print(f"\n--- make_all_course_performance_pages() ---")
+    print(f"  生成された開催場ディレクトリ: {place_dirs}")
+
+    assert len(place_dirs) == 10
+    # 05_tokyoには index.html とコース別ページが両方生成される
+    tokyo_files = sorted(p.name for p in (out_dir / "05_tokyo").iterdir())
+    assert "index.html" in tokyo_files
+    assert "芝-1400.html" in tokyo_files

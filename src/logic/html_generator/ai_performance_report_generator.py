@@ -7,8 +7,6 @@ src.logic.calculators.ai_performance_calculator で計算した的中率・回�
 ver2.0でも未実装だったため、ページ構成のみを参考にした新規実装。
 """
 
-from datetime import date
-
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import COURSE_LISTS
 from src.logic.calculators import ai_performance_calculator as calc
@@ -33,9 +31,21 @@ def _performance_table_html(performance):
   </table>"""
 
 
-def make_ai_performance_index_page(year=None):
-    """AI成績トップページ（public_html/performance/index.html）を生成する"""
-    year = year or date.today().year
+def make_ai_performance_index_page():
+    """AI成績トップページ（public_html/performance/index.html）を生成する
+
+    過去の年間成績全てにアクセスできるよう、予想データが存在する年を
+    （ai_performance_calculator.get_predicted_years）新しい順に列挙する。
+    """
+    years = calc.get_predicted_years()
+    if years:
+        year_rows = "".join(
+            f'<li><a href="annual/{year}.html">{year}年</a></li>\n' for year in reversed(years)
+        )
+        annual_section = f"<ul>\n    {year_rows}\n  </ul>"
+    else:
+        annual_section = "<p>予想データがまだありません。</p>"
+
     place_rows = "".join(
         f'<li><a href="course/{PLACE_LIST[i]}/index.html">{NAME_LIST[i]}</a></li>\n'
         for i in range(len(PLACE_LIST))
@@ -52,7 +62,7 @@ def make_ai_performance_index_page(year=None):
   <h1>AI予想成績</h1>
 
   <h2>年間成績</h2>
-  <p><a href="annual/{year}.html">{year}年の成績を見る</a></p>
+  {annual_section}
 
   <h2>コース別成績</h2>
   <ul>
@@ -64,6 +74,12 @@ def make_ai_performance_index_page(year=None):
 </html>
 """
     html_manager.save_ai_performance_index_html(html)
+
+
+def make_all_annual_performance_pages():
+    """予想データが存在する年について、年間成績ページを一括生成する"""
+    for year in calc.get_predicted_years():
+        make_annual_performance_page(year)
 
 
 def make_annual_performance_page(year):
@@ -145,10 +161,18 @@ def make_course_performance_index_page(place_id):
     html_manager.save_ai_course_performance_index_html(place_id, html)
 
 
-def make_course_performance_page(place_id, race_type, course_len):
-    """コース別成績ページ（public_html/performance/course/{place}/{race_type}-{course_len}.html）を生成する"""
+def make_course_performance_page(place_id, race_type, course_len, all_pairs=None, race_conditions=None):
+    """コース別成績ページ（public_html/performance/course/{place}/{race_type}-{course_len}.html）を生成する
+
+    Args:
+        all_pairs (list | None): calc.list_predicted_races()の戻り値を事前に渡すと、
+            毎回のdata/race_card/走査を省略できる（多数のコースを一括生成する場合に高速化）。
+        race_conditions (dict | None): calc.get_race_conditions(all_pairs)の戻り値を
+            事前に渡すと、get_race_info_csvの再呼び出しを省略できる。
+    """
     place_name = NAME_LIST[place_id - 1]
-    pairs = calc.filter_by_course(calc.list_predicted_races(), place_id, race_type, course_len)
+    all_pairs = all_pairs if all_pairs is not None else calc.list_predicted_races()
+    pairs = calc.filter_by_course(all_pairs, place_id, race_type, course_len, race_conditions=race_conditions)
     performance = calc.aggregate_ai_performance(pairs)
 
     html = f"""
@@ -168,3 +192,20 @@ def make_course_performance_page(place_id, race_type, course_len):
 </html>
 """
     html_manager.save_ai_course_performance_html(place_id, race_type, course_len, html)
+
+
+def make_all_course_performance_pages():
+    """全開催場・全コースのAI成績ページを一括生成する
+
+    filter_by_courseが多数回呼ばれるため、list_predicted_races/get_race_conditionsを
+    1回だけ計算して全コースで再利用する（個別に呼ぶより大幅に高速）。
+    """
+    all_pairs = calc.list_predicted_races()
+    race_conditions = calc.get_race_conditions(all_pairs)
+
+    for place_id in range(1, len(PLACE_LIST) + 1):
+        make_course_performance_index_page(place_id)
+        for race_type, course_len in COURSE_LISTS[place_id - 1]:
+            make_course_performance_page(
+                place_id, race_type, course_len, all_pairs=all_pairs, race_conditions=race_conditions
+            )

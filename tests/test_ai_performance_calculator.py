@@ -155,6 +155,46 @@ def test_filter_by_course_uses_saved_race_info(new_roots, monkeypatch):
     assert ai.filter_by_course(pairs, 5, "ダート", "1200") == []
 
 
+def test_get_race_conditions_returns_dict_per_race_id(new_roots, monkeypatch):
+    monkeypatch.setattr(
+        ai.race_card_dataset_manager, "get_race_info_csv",
+        lambda race_id: pd.DataFrame([{"race_type": "ダート", "course_len": "1200"}]),
+    )
+    pairs = [(SAMPLE_RACE_DAY, SAMPLE_RACE_ID)]
+
+    conditions = ai.get_race_conditions(pairs)
+
+    assert conditions == {SAMPLE_RACE_ID: ("ダート", "1200")}
+
+
+def test_get_race_conditions_returns_none_when_missing(new_roots, monkeypatch):
+    monkeypatch.setattr(ai.race_card_dataset_manager, "get_race_info_csv", lambda race_id: pd.DataFrame())
+    pairs = [(SAMPLE_RACE_DAY, SAMPLE_RACE_ID)]
+
+    assert ai.get_race_conditions(pairs) == {SAMPLE_RACE_ID: None}
+
+
+def test_filter_by_course_uses_precomputed_race_conditions():
+    pairs = [(SAMPLE_RACE_DAY, SAMPLE_RACE_ID), (SAMPLE_RACE_DAY, "202405010101")]
+    race_conditions = {SAMPLE_RACE_ID: ("ダート", "1200"), "202405010101": ("芝", "1400")}
+
+    # race_card_dataset_manager.get_race_info_csvをmonkeypatchしていないので、
+    # race_conditionsを渡さないとエラー（実ファイル参照）になるはずの状況で、
+    # 渡した場合はそれだけで判定できることを確認する
+    result = ai.filter_by_course(pairs, 4, "ダート", "1200", race_conditions=race_conditions)
+
+    assert result == [(SAMPLE_RACE_DAY, SAMPLE_RACE_ID)]
+
+
+def test_get_predicted_years_returns_sorted_years(monkeypatch):
+    monkeypatch.setattr(
+        ai, "list_predicted_races",
+        lambda: [(date(2025, 1, 1), "A"), (date(2024, 6, 1), "B"), (date(2025, 6, 1), "C")],
+    )
+
+    assert ai.get_predicted_years() == [2024, 2025]
+
+
 def test_get_current_meetings_returns_real_meetings_for_date():
     meetings = ai.get_current_meetings(date(2026, 6, 19))
 

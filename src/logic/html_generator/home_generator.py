@@ -41,14 +41,17 @@ def _summary_stats_html(performance):
 
 
 def _weekly_trend_html(trend):
-    rows = "".join(
-        f"""<div class="bar-row">
+    rows = ""
+    for week in trend:
+        return_rate = week["performance"]["win"]["return_rate"]
+        # 回収率は100%超になることがあるため、バーの幅は100%でクランプし
+        # 実際の値は数値として別途表示する（100%=損益分岐点）
+        bar_width = max(min(return_rate, 100.0), 0.0)
+        rows += f"""<div class="bar-row">
       <span class="bar-label">{week['week_start'].strftime('%m/%d')}〜</span>
-      <span class="bar-track"><span class="bar" style="width: {week['performance']['win']['hit_rate']:.1f}%"></span></span>
-      <span class="bar-value">{week['performance']['win']['hit_rate']:.1f}%</span>
+      <span class="bar-track"><span class="bar" style="width: {bar_width:.1f}%"></span></span>
+      <span class="bar-value">{return_rate:.1f}%</span>
     </div>\n"""
-        for week in trend
-    )
     return f'<div class="bar-chart">\n{rows}</div>'
 
 
@@ -134,7 +137,7 @@ def home_template():
       <div class="card">
         <h3>AI予想成績</h3>
         {_summary_stats_html(overall_performance)}
-        <h4>週別推移（単勝的中率、直近8週）</h4>
+        <h4>週別推移（単勝回収率、直近8週）</h4>
         {_weekly_trend_html(trend)}
         <h4>開催中の競馬場の成績</h4>
         {_current_meetings_html(current_meetings)}

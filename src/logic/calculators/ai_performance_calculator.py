@@ -55,24 +55,65 @@ def filter_by_meeting(race_day_race_id_pairs, year, place_id, times):
     return result
 
 
-def filter_by_course(race_day_race_id_pairs, place_id, race_type, course_len):
+def get_race_conditions(race_day_race_id_pairs):
+    """各race_idのrace_type・距離を1回だけ調べてdictにまとめる
+
+    filter_by_courseを多数の条件（コース×距離の全組み合わせ等）に対して
+    繰り返し呼ぶ場合、race_card_dataset_manager.get_race_info_csv の呼び出しが
+    組み合わせ数倍に膨れて遅くなるため、事前にこの関数で1回だけ調べておき
+    filter_by_courseのrace_conditions引数に渡す。
+
+    Returns:
+        dict[str, tuple[str, str] | None]: race_id -> (race_type, course_len)。
+            レース情報が無いrace_idはNone。
+    """
+    conditions = {}
+    for _, rid in race_day_race_id_pairs:
+        if rid in conditions:
+            continue
+        info_df = race_card_dataset_manager.get_race_info_csv(rid)
+        if info_df.empty:
+            conditions[rid] = None
+            continue
+        row = info_df.iloc[0]
+        conditions[rid] = (row.get("race_type"), str(row.get("course_len")))
+    return conditions
+
+
+def filter_by_course(race_day_race_id_pairs, place_id, race_type, course_len, race_conditions=None):
     """指定した開催場・race_type・距離のレースのみに絞り込む
 
     race_idからは開催場のみ判定できるため、race_type・距離は
     race_card_dataset_manager.get_race_info_csv（保存済みのレース情報）を参照する。
     レース情報が無いレースは対象外とする。
+
+    Args:
+        race_conditions (dict | None): get_race_conditionsの戻り値を事前に渡すと、
+            get_race_info_csvの再呼び出しを省略できる（多数の条件で絞り込む場合に高速化）。
+            省略時はこの関数内で都度調べる。
     """
     result = []
     for day, rid in race_day_race_id_pairs:
         if parse_race_id(rid)["place_id"] != place_id:
             continue
-        info_df = race_card_dataset_manager.get_race_info_csv(rid)
-        if info_df.empty:
+        if race_conditions is not None:
+            condition = race_conditions.get(rid)
+        else:
+            info_df = race_card_dataset_manager.get_race_info_csv(rid)
+            if info_df.empty:
+                continue
+            row = info_df.iloc[0]
+            condition = (row.get("race_type"), str(row.get("course_len")))
+        if condition is None:
             continue
-        row = info_df.iloc[0]
-        if row.get("race_type") == race_type and str(row.get("course_len")) == str(course_len):
+        if condition[0] == race_type and condition[1] == str(course_len):
             result.append((day, rid))
     return result
+
+
+def get_predicted_years():
+    """予想データが存在する年の一覧を昇順で返す"""
+    return sorted({race_day.year for race_day, _ in list_predicted_races()})
 
 
 def list_predicted_races():
