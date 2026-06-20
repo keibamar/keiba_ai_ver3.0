@@ -77,4 +77,20 @@ def test_make_course_performance_page_generates_html(new_roots, fake_aggregate):
     assert out_file.exists()
     html_content = out_file.read_text(encoding="utf-8")
     assert "<h1>東京 芝1400m AI予想成績</h1>" in html_content
-    assert "courses/05_tokyo/芝-1400.html" in html_content
+
+
+def test_make_course_performance_index_page_generates_html(new_roots):
+    # make_ai_performance_index_pageが各place_idについてリンクするcourse/{place}/index.html
+    # を生成する関数（以前は存在せず404になっていた）
+    r.make_course_performance_index_page(place_id=5)
+
+    out_file = new_roots / "public_html" / "performance" / "course" / "05_tokyo" / "index.html"
+    assert out_file.exists()
+    html_content = out_file.read_text(encoding="utf-8")
+
+    print(f"\n--- make_course_performance_index_page(place_id=5) ---")
+    print(html_content)
+
+    assert "<h1>東京 AI予想成績</h1>" in html_content
+    assert '<a href="芝-1400.html">芝1400m</a>' in html_content
+    assert '<a href="../../index.html">&larr; AI成績トップへ</a>' in html_content

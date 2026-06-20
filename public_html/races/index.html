@@ -5,68 +5,25 @@
   <meta charset="UTF-8">
   <title>開催日カレンダー</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-    }
-    #calendar {
-      border-collapse: collapse;
-      margin: 20px auto;
-      width: 80%;
-    }
-    #calendar td, #calendar th {
-      border: 1px solid #ccc;
-      padding: 10px;
-      width: 14%;
-      height: 80px;
-      vertical-align: top;
-    }
-    #calendar a {
-      text-decoration: none;
-      color: blue;
-      font-weight: bold;
-    }
-    #monthYear {
-      font-size: 1.5em;
-      margin: 0 10px;
-    }
-    #todayRace {
-      margin-top: 20px;
-      font-size: 1.2em;
-    }
-    #todayRace a {
-      text-decoration: none;
-      color: white;
-      background-color: #007bff;
-      padding: 10px 20px;
-      border-radius: 5px;
-      font-weight: bold;
-    }
-    #todayRace a:hover {
-      background-color: #0056b3;
-    }
-    #todayRace p {
-      color: #555;
-    }
-  </style>
 </head>
 <body>
   <h1>開催日カレンダー</h1>
 
-  <div>
-    <button id="prevMonth">←</button>
+  
+<div class="calendar-widget">
+  <div class="calendar-nav">
+    <button id="prevMonth">&larr;</button>
     <span id="monthYear"></span>
-    <button id="nextMonth">→</button>
+    <button id="nextMonth">&rarr;</button>
   </div>
-
   <table id="calendar"></table>
-
   <div id="todayRace"></div>
+</div>
+<script>window.CALENDAR_BASE_PATH = "../";</script>
+<script src="../assets/js/raceDays.js"></script>
+<script src="../assets/js/calendar.js"></script>
 
-  <script src="../assets/js/raceDays.js"></script>
-  <script src="../assets/js/calendar.js"></script>
 
-  <p><a href="../index.html">← HOMEへ戻る</a></p>
+  <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
 </body>
 </html>

@@ -155,7 +155,7 @@ def daily_index_template(date_display, nav_links, place_races, place_keys, table
 <head>
   <meta charset="UTF-8">
   <title>{date_display} レース一覧</title>
-  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../../assets/css/styles.css">
   <style>
     body {{
       font-family: sans-serif;

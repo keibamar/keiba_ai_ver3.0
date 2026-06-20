@@ -10,6 +10,7 @@ ver2.0でも未実装だったため、ページ構成のみを参考にした�
 from datetime import date
 
 from src.config.constants import NAME_LIST, PLACE_LIST
+from src.config.lists import COURSE_LISTS
 from src.logic.calculators import ai_performance_calculator as calc
 from src.managers import html_manager
 
@@ -110,6 +111,38 @@ def make_meeting_performance_page(year, place_id, times):
 </html>
 """
     html_manager.save_ai_meeting_performance_html(year, place_id, times, html)
+
+
+def make_course_performance_index_page(place_id):
+    """場別のコース成績一覧ページ（public_html/performance/course/{place}/index.html）を生成する
+
+    performance/index.html の「コース別成績」リンク先として必要なページ
+    （make_ai_performance_index_pageからリンクされるが、これまで生成関数が無く404になっていた）。
+    """
+    place_name = NAME_LIST[place_id - 1]
+    course_list = COURSE_LISTS[place_id - 1]
+    rows = "".join(
+        f'<li><a href="{race_type}-{course_len}.html">{race_type}{course_len}m</a></li>\n'
+        for race_type, course_len in course_list
+    )
+    html = f"""
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>{place_name} AI予想成績</title>
+  <link rel="stylesheet" href="../../../assets/css/styles.css">
+</head>
+<body>
+  <h1>{place_name} AI予想成績</h1>
+  <ul>
+    {rows}
+  </ul>
+  <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
+</body>
+</html>
+"""
+    html_manager.save_ai_course_performance_index_html(place_id, html)
 
 
 def make_course_performance_page(place_id, race_type, course_len):

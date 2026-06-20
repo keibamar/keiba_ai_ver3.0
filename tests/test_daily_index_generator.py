@@ -63,6 +63,8 @@ def test_make_daily_index_page_generates_index_html(new_roots):
     print(f"  先頭500文字:\n{html_content[:500]}")
 
     assert "<h1>2024/10/20 レース一覧</h1>" in html_content
+    # public_html/races/{date}/index.html から public_html/assets/css/styles.css への正しい相対パス
+    assert '<link rel="stylesheet" href="../../assets/css/styles.css">' in html_content
     assert "<th>新潟競馬場</th>" in html_content
     assert "<th>東京競馬場</th>" in html_content
     assert "<th>京都競馬場</th>" in html_content

@@ -113,6 +113,14 @@ def save_ai_course_performance_html(place_id, race_type, course_len, html_conten
         f.write(html_content)
 
 
+def save_ai_course_performance_index_html(place_id, html_content):
+    """public_html/performance/course/{place}/index.html にHTMLを保存する"""
+    out_dir = os.path.join(paths.PUBLIC_HTML_PERFORMANCE_PATH, "course", PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+
 def list_race_day_dirs():
     """public_html/races/ 配下の8桁日付ディレクトリ名一覧を昇順で返す"""
     if not os.path.isdir(paths.PUBLIC_HTML_RACES_PATH):
