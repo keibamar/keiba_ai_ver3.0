@@ -11,6 +11,7 @@ peds_results_dataset_manager の週次更新で既に集計済みのコース別
 
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import COURSE_LISTS
+from src.logic.calculators import ai_performance_calculator as calc
 from src.managers import html_manager, peds_results_dataset_manager, race_info_dataset_manager
 
 
@@ -123,10 +124,30 @@ def course_report_to_html(report):
 
 
 def make_course_index_page():
-    """全開催場一覧ページ（public_html/courses/index.html）を生成する"""
-    rows = "".join(
-        f'<li><a href="{PLACE_LIST[i]}/index.html">{NAME_LIST[i]}</a></li>\n' for i in range(len(PLACE_LIST))
-    )
+    """全開催場一覧ページ（public_html/courses/index.html）を生成する
+
+    開催中の競馬場（ai_performance_calculator.get_current_meetings）は
+    大きいタイル（.course-tile.active）、それ以外は小さいリンク
+    （.course-tile.inactive、アクセスは可能）で表示する。
+    """
+    current_place_ids = {m["place_id"] for m in calc.get_current_meetings()}
+    current_meetings_by_place = {m["place_id"]: m for m in calc.get_current_meetings()}
+
+    active_tiles = ""
+    inactive_tiles = ""
+    for i in range(len(PLACE_LIST)):
+        place_id = i + 1
+        place_name = NAME_LIST[i]
+        place_key = PLACE_LIST[i]
+        if place_id in current_place_ids:
+            meeting = current_meetings_by_place[place_id]
+            active_tiles += f"""<div class="course-tile active">
+        <a href="{place_key}/index.html"><span class="place-name">{place_name}</span></a>
+        <div class="meeting-info">{meeting['times']}回 開催中（{meeting['first_day'].strftime('%m/%d')}〜{meeting['last_day'].strftime('%m/%d')}）</div>
+      </div>\n"""
+        else:
+            inactive_tiles += f'<div class="course-tile inactive"><a href="{place_key}/index.html">{place_name}</a></div>\n'
+
     html = f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -137,9 +158,17 @@ def make_course_index_page():
 </head>
 <body>
   <h1>コース詳細データ</h1>
-  <ul>
-    {rows}
-  </ul>
+
+  <h2>開催中の競馬場</h2>
+  <div class="course-tile-grid">
+    {active_tiles if active_tiles else "<p>現在開催中の競馬場はありません。</p>"}
+  </div>
+
+  <h2>その他の競馬場</h2>
+  <div class="course-tile-grid">
+    {inactive_tiles}
+  </div>
+
   <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
 </body>
 </html>

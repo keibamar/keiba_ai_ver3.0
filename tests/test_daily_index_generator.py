@@ -86,6 +86,16 @@ def test_make_races_calendar_page_generates_index_html(new_roots):
 
     assert "<h1>開催日カレンダー</h1>" in html_content
     assert '<table id="calendar"></table>' in html_content
+    assert 'window.CALENDAR_BASE_PATH = "../";' in html_content
     assert '<script src="../assets/js/raceDays.js"></script>' in html_content
     assert '<script src="../assets/js/calendar.js"></script>' in html_content
-    assert '<a href="../index.html">← HOMEへ戻る</a>' in html_content
+    assert '<a href="../index.html">&larr; HOMEへ戻る</a>' in html_content
+
+
+def test_calendar_widget_html_uses_given_base_path():
+    widget = d.calendar_widget_html(base_path="")
+
+    assert 'window.CALENDAR_BASE_PATH = "";' in widget
+    assert '<script src="assets/js/raceDays.js"></script>' in widget
+    assert '<script src="assets/js/calendar.js"></script>' in widget
+    assert '<table id="calendar"></table>' in widget

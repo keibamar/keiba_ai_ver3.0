@@ -1,20 +1,119 @@
 """Homeページ（Forge: HTMLFactory）のHTML生成
 
-旧 web/src/generators/global_index.py の移植。旧実装はJinja2テンプレートを
-使っていたが、新実装は他のhtml_generator（daily_index_generator等）と同様に
-Pythonのf-stringで直接HTMLを組み立てる。
+旧 web/src/generators/global_index.py の移植だが、他のhtml_generator（daily_index_generator等）
+と同様にPythonのf-stringで直接HTMLを組み立てる。
 
-レースカレンダーは public_html/races/index.html（daily_index_generator.
-make_races_calendar_page）に独立したページとして置き、Homeはそこへの
-リンクのみを持つ（旧 web/site/index.html と同じ構成）。
+レースカレンダー・AI成績サマリー・先週の結果・コース詳細データへの導線をカード形式で
+1ページに集約する。的中率・回収率は src.logic.calculators.ai_performance_calculator の
+集計結果をそのまま表示するため、配当の分割保存データが揃うまでは0%表示になる
+（ロジック自体は正しく、データが揃えば自動的に反映される）。
 """
 
+from datetime import date
+
+from src.config.constants import NAME_LIST
+from src.logic.calculators import ai_performance_calculator as calc
+from src.logic.html_generator import daily_index_generator
 from src.managers import html_manager
 
 SITE_TITLE = "MAR(まーる）|競馬AIデータサイト"
+BET_TYPE_LABELS = {"win": "単勝", "place": "複勝", "trio_box": "三連複(5頭BOX)"}
+
+
+def _summary_stats_html(performance):
+    win = performance["win"]
+    return f"""
+<div class="summary-stats">
+  <div class="summary-stat">
+    <span class="value">{win['hit_rate']:.1f}%</span>
+    <span class="label">単勝的中率（全期間）</span>
+  </div>
+  <div class="summary-stat">
+    <span class="value">{win['return_rate']:.1f}%</span>
+    <span class="label">単勝回収率（全期間）</span>
+  </div>
+  <div class="summary-stat">
+    <span class="value">{win['n']}</span>
+    <span class="label">対象レース数</span>
+  </div>
+</div>
+"""
+
+
+def _weekly_trend_html(trend):
+    rows = "".join(
+        f"""<div class="bar-row">
+      <span class="bar-label">{week['week_start'].strftime('%m/%d')}〜</span>
+      <span class="bar-track"><span class="bar" style="width: {week['performance']['win']['hit_rate']:.1f}%"></span></span>
+      <span class="bar-value">{week['performance']['win']['hit_rate']:.1f}%</span>
+    </div>\n"""
+        for week in trend
+    )
+    return f'<div class="bar-chart">\n{rows}</div>'
+
+
+def _current_meetings_html(meetings):
+    if not meetings:
+        return "<p>現在開催中の競馬場はありません。</p>"
+
+    rows = ""
+    for meeting in meetings:
+        place_name = NAME_LIST[meeting["place_id"] - 1]
+        pairs = calc.filter_by_meeting(
+            calc.list_predicted_races(), meeting["first_day"].year, meeting["place_id"], meeting["times"]
+        )
+        performance = calc.aggregate_ai_performance(pairs)
+        win = performance["win"]
+        rows += (
+            f"<tr><td>{place_name}{meeting['times']}回</td>"
+            f"<td>{win['hit_rate']:.1f}%</td><td>{win['return_rate']:.1f}%</td><td>{win['n']}</td></tr>\n"
+        )
+
+    return f"""<table>
+    <thead><tr><th>開催</th><th>単勝的中率</th><th>単勝回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      {rows}
+    </tbody>
+  </table>"""
+
+
+def _last_week_results_html(main_races):
+    if not main_races:
+        return "<p>先週のメインレース（11R）データがありません。</p>"
+
+    rows = ""
+    for race in main_races:
+        place_name = NAME_LIST[race["place_id"] - 1]
+        date_str = race["race_day"].strftime("%m/%d")
+        result = race["result"]
+        if result is None:
+            badge = '<span class="hit-badge miss">データなし</span>'
+            return_text = "-"
+        else:
+            hit, payout = result["win"]
+            badge = (
+                '<span class="hit-badge win">的中</span>' if hit else '<span class="hit-badge miss">不的中</span>'
+            )
+            return_text = f"{payout:.1f}%"
+        rows += (
+            f"<tr><td>{date_str}</td><td>{place_name}11R</td><td>{badge}</td><td>{return_text}</td></tr>\n"
+        )
+
+    return f"""<table>
+    <thead><tr><th>日付</th><th>レース</th><th>単勝</th><th>回収率</th></tr></thead>
+    <tbody>
+      {rows}
+    </tbody>
+  </table>"""
 
 
 def home_template():
+    today = date.today()
+    overall_performance = calc.aggregate_ai_performance(calc.list_predicted_races())
+    trend = calc.weekly_trend(num_weeks=8, end_day=today)
+    current_meetings = calc.get_current_meetings(today)
+    last_week_main_races = calc.get_last_week_main_races(today)
+
     return f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -22,32 +121,32 @@ def home_template():
   <meta charset="UTF-8">
   <title>{SITE_TITLE}</title>
   <link rel="stylesheet" href="assets/css/styles.css">
-  <style>
-    body {{
-      font-family: sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f8f8f8;
-    }}
-    main {{
-      max-width: 1100px;
-      margin: 20px auto;
-      padding: 20px;
-      background: white;
-      border-radius: 8px;
-    }}
-    footer {{
-      text-align: center;
-      padding: 20px;
-      color: #666;
-      font-size: 14px;
-    }}
-  </style>
 </head>
 <body>
   <main>
     <h1>{SITE_TITLE}</h1>
     <p>このサイトでは、競馬AIの成績、レースカレンダー、コース別データを閲覧できます。</p>
+
+    <h2>レースカレンダー</h2>
+    {daily_index_generator.calendar_widget_html(base_path="")}
+
+    <div class="card-grid">
+      <div class="card">
+        <h3>AI予想成績</h3>
+        {_summary_stats_html(overall_performance)}
+        <h4>週別推移（単勝的中率、直近8週）</h4>
+        {_weekly_trend_html(trend)}
+        <h4>開催中の競馬場の成績</h4>
+        {_current_meetings_html(current_meetings)}
+        <a class="card-link" href="performance/index.html">AI成績の詳細を見る &rarr;</a>
+      </div>
+
+      <div class="card">
+        <h3>先週の結果（メインレース）</h3>
+        {_last_week_results_html(last_week_main_races)}
+        <a class="card-link" href="races/index.html">レースカレンダーを見る &rarr;</a>
+      </div>
+    </div>
 
     <h2>メニュー</h2>
     <ul>

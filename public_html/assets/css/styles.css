@@ -36,3 +36,203 @@ td a:hover {
   text-decoration: underline;
   color: blue;
 }
+
+/* --- カード型レイアウト --- */
+
+.card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.card {
+  flex: 1 1 280px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px 20px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.card h2, .card h3 {
+  margin-top: 0;
+}
+
+.card .card-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-weight: bold;
+}
+
+/* --- 的中率・回収率の大きい数字表示 --- */
+
+.summary-stats {
+  display: flex;
+  gap: 24px;
+  margin: 12px 0;
+}
+
+.summary-stat {
+  text-align: center;
+}
+
+.summary-stat .value {
+  display: block;
+  font-size: 2em;
+  font-weight: bold;
+  color: #0044cc;
+}
+
+.summary-stat .label {
+  display: block;
+  font-size: 0.85em;
+  color: #666;
+}
+
+/* --- 週別推移の簡易バーチャート（CSSのみ、JSライブラリ不使用） --- */
+
+.bar-chart {
+  margin: 12px 0;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 0.9em;
+}
+
+.bar-row .bar-label {
+  width: 90px;
+  flex-shrink: 0;
+  color: #555;
+}
+
+.bar-row .bar-track {
+  flex: 1;
+  background: #eee;
+  border-radius: 4px;
+  height: 14px;
+  overflow: hidden;
+}
+
+.bar-row .bar {
+  height: 100%;
+  background: #0044cc;
+  border-radius: 4px;
+}
+
+.bar-row .bar-value {
+  width: 60px;
+  flex-shrink: 0;
+  text-align: right;
+  color: #333;
+}
+
+/* --- 的中/不的中バッジ --- */
+
+.hit-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  font-weight: bold;
+  color: white;
+}
+
+.hit-badge.win {
+  background: #2e8b57;
+}
+
+.hit-badge.miss {
+  background: #aaa;
+}
+
+/* --- コース一覧（開催中/非開催で大小表示） --- */
+
+.course-tile-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.course-tile.active {
+  flex: 1 1 220px;
+  border: 2px solid #0044cc;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f4f8ff;
+}
+
+.course-tile.active .place-name {
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+.course-tile.active .meeting-info {
+  color: #555;
+  font-size: 0.85em;
+}
+
+.course-tile.inactive {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  font-size: 0.85em;
+  color: #777;
+}
+
+/* --- カレンダーwidget --- */
+
+.calendar-widget {
+  text-align: center;
+}
+
+.calendar-widget #calendar {
+  border-collapse: collapse;
+  margin: 20px auto;
+  width: 80%;
+}
+
+.calendar-widget #calendar td, .calendar-widget #calendar th {
+  border: 1px solid #ccc;
+  padding: 10px;
+  width: 14%;
+  height: 80px;
+  vertical-align: top;
+}
+
+.calendar-widget #calendar a {
+  text-decoration: none;
+  color: blue;
+  font-weight: bold;
+}
+
+.calendar-widget #monthYear {
+  font-size: 1.5em;
+  margin: 0 10px;
+}
+
+.calendar-widget #todayRace {
+  margin-top: 20px;
+  font-size: 1.2em;
+}
+
+.calendar-widget #todayRace a {
+  text-decoration: none;
+  color: white;
+  background-color: #007bff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.calendar-widget #todayRace a:hover {
+  background-color: #0056b3;
+}
+
+.calendar-widget #todayRace p {
+  color: #555;
+}

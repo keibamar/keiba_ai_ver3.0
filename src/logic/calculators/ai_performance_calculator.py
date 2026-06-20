@@ -18,12 +18,12 @@ race_info_dataset_manager.get_race_return_csv_for_race（1レース単位の分�
 import math
 import os
 import re
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 import pandas as pd
 
 from src.config import paths
-from src.managers import race_card_dataset_manager, race_info_dataset_manager
+from src.managers import race_card_dataset_manager, race_info_dataset_manager, race_schedule_dataset_manager
 
 BET_TYPES = ("win", "place", "trio_box")
 
@@ -186,3 +186,101 @@ def aggregate_ai_performance(race_day_race_id_pairs, box_num=5):
         }
         for bet_type in BET_TYPES
     }
+
+
+def get_current_meetings(today=None):
+    """今日時点で開催期間中の開催回（開催場×times）を列挙する
+
+    race_schedule_dataset_manager.get_race_calendar(year) のmonth/day/course/times行を
+    (course, times) ごとにグルーピングし、その開催の初日〜最終日の範囲に今日が
+    含まれるものを返す（旧ver2.0 web/src/generators/performance/make_ai_index.py の
+    get_current_tracksと同じ考え方）。
+
+    Args:
+        today (date): 基準日（初期値: 今日）
+    Returns:
+        list[dict]: [{"place_id", "times", "first_day", "last_day"}, ...]（place_id昇順）
+    """
+    today = today or date.today()
+    calendar = race_schedule_dataset_manager.get_race_calendar(today.year)
+    if calendar.empty:
+        return []
+
+    meeting_days = {}
+    for _, row in calendar.iterrows():
+        key = (int(row["course"]), int(row["times"]))
+        try:
+            day_date = date(today.year, int(row["month"]), int(row["day"]))
+        except ValueError:
+            continue
+        meeting_days.setdefault(key, []).append(day_date)
+
+    current_meetings = []
+    for (place_id, times), days in meeting_days.items():
+        first_day, last_day = min(days), max(days)
+        if first_day <= today <= last_day:
+            current_meetings.append(
+                {"place_id": place_id, "times": times, "first_day": first_day, "last_day": last_day}
+            )
+
+    current_meetings.sort(key=lambda m: m["place_id"])
+    return current_meetings
+
+
+def weekly_trend(num_weeks=8, end_day=None):
+    """直近num_weeks週について、週ごとの的中率・回収率の推移を返す
+
+    Args:
+        num_weeks (int): 集計する週数（初期値8）
+        end_day (date): 最後の週の終端日（初期値: 今日）
+    Returns:
+        list[dict]: [{"week_start", "week_end", "performance"}, ...]（古い週→新しい週の順）
+    """
+    end_day = end_day or date.today()
+    all_pairs = list_predicted_races()
+
+    trend = []
+    for i in range(num_weeks):
+        week_end = end_day - timedelta(days=7 * i)
+        week_start = week_end - timedelta(days=6)
+        week_pairs = [(day, rid) for day, rid in all_pairs if week_start <= day <= week_end]
+        trend.append(
+            {
+                "week_start": week_start,
+                "week_end": week_end,
+                "performance": aggregate_ai_performance(week_pairs),
+            }
+        )
+
+    trend.reverse()
+    return trend
+
+
+def get_last_week_main_races(end_day=None):
+    """直近7日間のメインレース（11R）の的中・回収結果を日付順で返す
+
+    Args:
+        end_day (date): 直近7日間の終端日（初期値: 今日）
+    Returns:
+        list[dict]: [{"race_day", "race_id", "place_id", "result"}, ...]（日付昇順）。
+            result は calc_race_hit_returns の戻り値（データが無ければNone）。
+    """
+    end_day = end_day or date.today()
+    start_day = end_day - timedelta(days=6)
+
+    main_race_pairs = [
+        (day, rid)
+        for day, rid in list_predicted_races()
+        if start_day <= day <= end_day and parse_race_id(rid)["race_num"] == 11
+    ]
+    main_race_pairs.sort()
+
+    return [
+        {
+            "race_day": day,
+            "race_id": rid,
+            "place_id": parse_race_id(rid)["place_id"],
+            "result": calc_race_hit_returns(day, rid),
+        }
+        for day, rid in main_race_pairs
+    ]

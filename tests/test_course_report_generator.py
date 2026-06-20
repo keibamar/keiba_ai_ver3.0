@@ -59,14 +59,30 @@ def test_course_report_to_html_structure():
     assert '<a href="../../index.html">&larr; HOMEへ戻る</a>' in html
 
 
-def test_make_course_index_page_generates_html(new_roots):
+def test_make_course_index_page_generates_html(new_roots, monkeypatch):
+    from datetime import date
+
+    monkeypatch.setattr(
+        c.calc, "get_current_meetings",
+        lambda: [{"place_id": 5, "times": 3, "first_day": date(2026, 6, 6), "last_day": date(2026, 6, 21)}],
+    )
+
     c.make_course_index_page()
 
     out_file = new_roots / "public_html" / "courses" / "index.html"
     assert out_file.exists()
     html_content = out_file.read_text(encoding="utf-8")
+
+    print(f"\n--- make_course_index_page() ---")
+    print(html_content)
+
     assert "<h1>コース詳細データ</h1>" in html_content
-    assert '<a href="05_tokyo/index.html">東京</a>' in html_content
+    # 開催中（東京）は大きいタイル
+    assert '<div class="course-tile active">' in html_content
+    assert '<a href="05_tokyo/index.html"><span class="place-name">東京</span></a>' in html_content
+    assert "3回 開催中（06/06〜06/21）" in html_content
+    # 非開催（例: 中山）は小さいリンク
+    assert '<div class="course-tile inactive"><a href="06_nakayama/index.html">中山</a></div>' in html_content
 
 
 def test_make_track_page_generates_html(new_roots):

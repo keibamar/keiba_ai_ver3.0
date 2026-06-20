@@ -1,4 +1,11 @@
 // calendar.js
+//
+// 埋め込みページの階層によって public_html/ までの相対パスが異なるため、
+// 各ページ側で <script>window.CALENDAR_BASE_PATH = "...";</script> を
+// このファイルの読み込み前に置く（races/index.html なら "../"、
+// ルート直下のHomeなら ""）。未設定時は "" にフォールバックする。
+const CALENDAR_BASE_PATH = window.CALENDAR_BASE_PATH || "";
+
 let currentDate = new Date();
 
 function renderCalendar(year, month) {
@@ -28,7 +35,7 @@ function renderCalendar(year, month) {
     const dateStr = `${year}${String(month+1).padStart(2,"0")}${String(d).padStart(2,"0")}`;
     let link = "";
     if (window.racedays && window.racedays.includes(dateStr)) {
-      link = `<a href="../races/${dateStr}/index.html">${d}</a>`;
+      link = `<a href="${CALENDAR_BASE_PATH}races/${dateStr}/index.html">${d}</a>`;
     } else {
       link = d;
     }
@@ -57,7 +64,7 @@ function showTodayRaceLink() {
 
   if (window.racedays && window.racedays.includes(todayStr)) {
     todayRaceDiv.innerHTML = `
-      <a href="../races/${todayStr}/index.html">
+      <a href="${CALENDAR_BASE_PATH}races/${todayStr}/index.html">
         本日のレースを見る (${yyyy}/${mm}/${dd})
       </a>
     `;

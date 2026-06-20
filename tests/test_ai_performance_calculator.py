@@ -155,6 +155,57 @@ def test_filter_by_course_uses_saved_race_info(new_roots, monkeypatch):
     assert ai.filter_by_course(pairs, 5, "ダート", "1200") == []
 
 
+def test_get_current_meetings_returns_real_meetings_for_date():
+    meetings = ai.get_current_meetings(date(2026, 6, 19))
+
+    print(f"\n--- get_current_meetings(2026-06-19) ---")
+    print(f"  結果: {meetings}")
+
+    assert all(m["first_day"] <= date(2026, 6, 19) <= m["last_day"] for m in meetings)
+    place_ids = [m["place_id"] for m in meetings]
+    assert place_ids == sorted(place_ids)
+
+
+def test_get_current_meetings_returns_empty_for_offseason_date():
+    # JRAは年末年始は基本的に開催がない
+    meetings = ai.get_current_meetings(date(2026, 1, 1))
+    assert meetings == []
+
+
+def test_weekly_trend_groups_pairs_by_week(monkeypatch):
+    monkeypatch.setattr(
+        ai, "list_predicted_races",
+        lambda: [(date(2026, 6, 1), "A"), (date(2026, 6, 7), "B"), (date(2026, 6, 8), "C")],
+    )
+    # aggregate_ai_performanceをそのまま使うと的中判定で実データI/Oが走るため、
+    # 集計対象のpairsをそのまま返すダミーに差し替えてグルーピング結果のみ検証する
+    monkeypatch.setattr(ai, "aggregate_ai_performance", lambda pairs: {"pairs": pairs})
+
+    trend = ai.weekly_trend(num_weeks=2, end_day=date(2026, 6, 14))
+
+    print(f"\n--- weekly_trend(num_weeks=2, end_day=2026-06-14) ---")
+    for week in trend:
+        print(f"  {week['week_start']}~{week['week_end']}: {week['performance']['pairs']}")
+
+    assert [w["week_start"] for w in trend] == [date(2026, 6, 1), date(2026, 6, 8)]
+    assert [w["week_end"] for w in trend] == [date(2026, 6, 7), date(2026, 6, 14)]
+    # week_start=6/1の週にはA, Bが含まれる（B=6/7は週末日に含まれる）
+    assert trend[0]["performance"]["pairs"] == [(date(2026, 6, 1), "A"), (date(2026, 6, 7), "B")]
+    assert trend[1]["performance"]["pairs"] == [(date(2026, 6, 8), "C")]
+
+
+def test_get_last_week_main_races_filters_race_num_11():
+    # 2026-06-07が含まれる週には202605030111(5R...11)/202609030111/202605030211/202609030211 がある
+    main_races = ai.get_last_week_main_races(date(2026, 6, 7))
+
+    print(f"\n--- get_last_week_main_races(2026-06-07) ---")
+    print(f"  結果: {main_races}")
+
+    assert len(main_races) == 4
+    assert all(ai.parse_race_id(r["race_id"])["race_num"] == 11 for r in main_races)
+    assert main_races == sorted(main_races, key=lambda r: r["race_day"])
+
+
 def test_list_predicted_races_returns_real_dates(new_roots):
     # new_rootsで20241020分のみ用意しているため、その1日・1レースのみ列挙される
     pairs = ai.list_predicted_races()

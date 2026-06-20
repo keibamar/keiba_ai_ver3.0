@@ -31,3 +31,17 @@ def test_make_home_page_generates_index_html(new_roots):
     assert '<a href="races/index.html">レースカレンダー</a>' in html_content
     assert '<a href="performance/index.html">AI成績</a>' in html_content
     assert '<a href="courses/index.html">コース詳細データ</a>' in html_content
+
+    # カレンダーwidget（base_path=""で埋め込まれている）
+    assert 'window.CALENDAR_BASE_PATH = "";' in html_content
+    assert '<script src="assets/js/raceDays.js"></script>' in html_content
+
+    # AI成績サマリーカード
+    assert "<h3>AI予想成績</h3>" in html_content
+    assert "単勝的中率（全期間）" in html_content
+    assert "週別推移（単勝的中率、直近8週）" in html_content
+    assert "開催中の競馬場の成績" in html_content
+    assert '<a class="card-link" href="performance/index.html">AI成績の詳細を見る &rarr;</a>' in html_content
+
+    # 先週の結果カード
+    assert "<h3>先週の結果（メインレース）</h3>" in html_content
