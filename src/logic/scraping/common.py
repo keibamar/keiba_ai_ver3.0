@@ -29,14 +29,18 @@ def url_exists(url: str) -> bool:
         return False
 
 
-def fetch_soup(url: str) -> BeautifulSoup:
+def fetch_soup(url: str, timeout: int = 15) -> BeautifulSoup:
     """urlを取得し、エンコーディングを自動検出してデコードしたBeautifulSoupを返す
 
     db.netkeiba.com（EUC-JP）と race.netkeiba.com（UTF-8）でページごとに
     エンコーディングが異なるため、固定値ではなく requests の apparent_encoding
     （chardetによる自動検出）を使う。検出に失敗した場合はEUC-JPにフォールバックする。
+
+    timeoutを指定しないと、応答が無いサーバーに対してrequests.getが無期限に
+    ブロックし続けてしまう（多数のレースを一括処理するバッチで1件がハングすると
+    全体が止まってしまう）ため、必ずタイムアウトを設定する。
     """
-    html = requests.get(url, headers=scraping_header)
+    html = requests.get(url, headers=scraping_header, timeout=timeout)
     encoding = html.apparent_encoding or "EUC-JP"
     return BeautifulSoup(html.content.decode(encoding, "ignore"), "html.parser")
 

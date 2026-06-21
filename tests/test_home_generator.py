@@ -24,7 +24,39 @@ def new_roots(tmp_path, monkeypatch):
     return tmp_path
 
 
-def test_make_home_page_generates_index_html(new_roots):
+def test_make_home_page_generates_index_html(new_roots, monkeypatch):
+    # get_week_main_races_with_course・get_weekend_main_race_detailsは出走馬一覧
+    # ページのスクレイピング・複数データセットの参照を伴うため、オフラインテストでは
+    # 固定値に差し替える
+    week_race = {
+        "race_id": "202605030611",
+        "place_id": 5,
+        "race_name": "府中牝馬S",
+        "race_time": "1545",
+        "race_type": "芝",
+        "course_len": 1800,
+        "race_day": date(2026, 6, 21),
+    }
+    monkeypatch.setattr(h.calc, "get_week_main_races_with_course", lambda today: [week_race])
+    monkeypatch.setattr(
+        h.calc,
+        "get_weekend_main_race_details",
+        lambda weekend_end: [
+            {
+                "race_day": weekend_end,
+                "place_id": 5,
+                "race_name": "ジューンS",
+                "winner_name": "カネラフィーナ",
+                "pick_name": "カネラフィーナ",
+                "pick_finish": "1",
+                "win_hit": True,
+                "win_payout": 510.0,
+                "place_hit": True,
+                "place_payout": 210.0,
+            }
+        ],
+    )
+
     h.make_home_page()
 
     out_file = new_roots / "public_html" / "index.html"
@@ -51,12 +83,33 @@ def test_make_home_page_generates_index_html(new_roots):
     assert "開催中の競馬場の成績" in html_content
     assert '<a class="card-link" href="performance/index.html">AI成績の詳細を見る &rarr;</a>' in html_content
 
-    # 先週の結果カード
-    assert "<h3>先週の結果（メインレース）</h3>" in html_content
+    # メインレースカード（今週のメインレース + 先週の結果）
+    assert "<h3>メインレース</h3>" in html_content
+    assert "<h4>今週のメインレース</h4>" in html_content
+    assert "<h4>先週の結果</h4>" in html_content
+    # 今週のメインレースは、コース詳細データへ直接リンクする
+    assert html_content.count('<a href="courses/05_tokyo/芝-1800.html">東京 芝1800m</a>') == 1
+    # 先週の結果は、的中率ではなく的中時の配当そのものを表示する
+    assert "カネラフィーナ" in html_content
+    assert "510円" in html_content
 
     # サイト共通ナビゲーション・列ソートJSが追加されている
     assert '<nav class="site-nav">' in html_content
     assert '<script src="assets/js/sortable-table.js"></script>' in html_content
+
+
+def test_home_template_applies_weekend_gating_to_last_week_results(monkeypatch):
+    # 「先週の結果」は、current_results_weekend_endが返す週末を基準にする
+    captured = []
+    monkeypatch.setattr(h.calc, "get_week_main_races_with_course", lambda today: [])
+    monkeypatch.setattr(
+        h.calc, "get_weekend_main_race_details", lambda weekend_end: captured.append(weekend_end) and []
+    )
+    monkeypatch.setattr(h.calc, "current_results_weekend_end", lambda today: date(2026, 6, 14))
+
+    h.home_template()
+
+    assert captured == [date(2026, 6, 14)]
 
 
 def test_weekly_trend_html_uses_return_rate_gauge():
@@ -104,3 +157,105 @@ def test_current_meetings_html_links_place_name_to_course_detail_data():
 
 def test_current_meetings_html_handles_no_current_meetings():
     assert "現在開催中の競馬場はありません。" in h._current_meetings_html([], pd.DataFrame())
+
+
+def test_week_main_races_html_shows_date_and_links_to_course():
+    races = [
+        {
+            "race_id": "202602010411",
+            "place_id": 2,
+            "race_name": "UHB杯",
+            "race_time": "1520",
+            "race_type": "芝",
+            "course_len": 1200,
+            "race_day": date(2026, 6, 27),
+        },
+        {
+            "race_id": "202605030711",
+            "place_id": 5,
+            "race_name": "七夕賞",
+            "race_time": "1545",
+            "race_type": None,
+            "course_len": None,
+            "race_day": date(2026, 6, 28),
+        },
+    ]
+
+    html_content = h._week_main_races_html(races)
+
+    print(f"\n--- _week_main_races_html ---\n{html_content}")
+
+    # 土・日それぞれの日付・発走時刻が表示される
+    assert "06/27 15:20" in html_content
+    assert "06/28 15:45" in html_content
+    assert '<a href="courses/02_hakodate/芝-1200.html">函館 芝1200m</a>' in html_content
+    # コース情報が取得できなかった場合は競馬場のコース一覧へリンクする
+    assert '<a href="courses/05_tokyo/index.html">東京</a>' in html_content
+
+
+def test_week_main_races_html_handles_no_main_races():
+    assert "今週のメインレース（11R）はありません。" in h._week_main_races_html([])
+
+
+def test_bet_result_cell_html_shows_payout_instead_of_rate_when_hit():
+    html_content = h._bet_result_cell_html(True, 510.0)
+
+    assert '<span class="hit-badge win">的中</span>' in html_content
+    assert "510円" in html_content
+    # 的中率(%)としては表示しない
+    assert "%" not in html_content
+
+
+def test_bet_result_cell_html_shows_only_miss_badge_when_not_hit():
+    html_content = h._bet_result_cell_html(False, None)
+
+    assert html_content == '<span class="hit-badge miss">不的中</span>'
+
+
+def test_weekend_results_html_shows_winner_pick_and_payout_on_hit():
+    races = [
+        {
+            "race_day": date(2026, 6, 13),
+            "place_id": 5,
+            "race_name": "ジューンS",
+            "winner_name": "カネラフィーナ",
+            "pick_name": "カネラフィーナ",
+            "pick_finish": "1",
+            "win_hit": True,
+            "win_payout": 510.0,
+            "place_hit": True,
+            "place_payout": 210.0,
+        },
+        {
+            "race_day": date(2026, 6, 13),
+            "place_id": 9,
+            "race_name": "三宮S",
+            "winner_name": "グランドプラージュ",
+            "pick_name": "メイショウズイウン",
+            "pick_finish": "9",
+            "win_hit": False,
+            "win_payout": None,
+            "place_hit": False,
+            "place_payout": None,
+        },
+    ]
+
+    html_content = h._weekend_results_html(races)
+
+    print(f"\n--- _weekend_results_html ---\n{html_content}")
+
+    assert "06/13" in html_content
+    assert "東京11R ジューンS" in html_content
+    assert "カネラフィーナ" in html_content
+    assert "1着" in html_content
+    assert "510円" in html_content
+    assert "210円" in html_content
+    # 不的中のレースは本命馬の着順も表示する
+    assert "阪神11R 三宮S" in html_content
+    assert "メイショウズイウン" in html_content
+    assert "9着" in html_content
+    assert '<span class="hit-badge miss">不的中</span>' in html_content
+
+
+def test_weekend_results_html_handles_no_races():
+    assert "対象レースのデータがありません。" in h._weekend_results_html([])

@@ -112,30 +112,45 @@ def test_get_current_meetings_returns_empty_for_offseason_date():
     assert meetings == []
 
 
-def test_get_last_week_main_races_filters_race_num_11():
-    # 2026-06-08〜06-14週（todayが属する週の直前の月〜日）の前の週は06-01〜06-07で、
-    # そこに202605030111(5R...11)/202609030111/202605030211/202609030211 がある
-    main_races = ai.get_last_week_main_races(date(2026, 6, 10))
-
-    print(f"\n--- get_last_week_main_races(2026-06-10) ---")
-    print(f"  結果: {main_races}")
-
-    assert len(main_races) == 4
-    assert all(ai.parse_race_id(r["race_id"])["race_num"] == 11 for r in main_races)
-    assert main_races == sorted(main_races, key=lambda r: r["race_day"])
+def test_current_results_weekend_end_stays_on_previous_weekend_before_wednesday():
+    # 2026-06-20(土)/06-21(日)の週末を基準に考える。
+    # その週末が終わった直後（月〜火）は、まだその週末を「今週」とみなさず、
+    # 1つ前の週末（06-14）を指す。
+    assert ai.current_results_weekend_end(date(2026, 6, 22)) == date(2026, 6, 14)  # 月
+    assert ai.current_results_weekend_end(date(2026, 6, 23)) == date(2026, 6, 14)  # 火
 
 
-def test_get_last_week_main_races_uses_previous_calendar_week_not_rolling_window():
-    # todayが日曜（その週の最終日）でも、直近7日間ではなく前の週（月〜日）を対象にする。
-    # 2026-06-21（日）が属する週は06-15〜06-21なので、「先週」は06-08〜06-14のはず。
-    # その期間には予想データ自体が存在しないため、ローリングウィンドウ（直近7日間で
-    # 06-20を含めてしまう）であれば結果が出てしまうが、正しい先週の定義では0件になる。
-    main_races = ai.get_last_week_main_races(date(2026, 6, 21))
+def test_current_results_weekend_end_advances_on_wednesday():
+    # 週末（06-20/06-21）から3日後の水曜日（06-24）になった時点で、
+    # その週末自身（06-21）が「今週」になる。木・金（その先）も同じ週末を指す。
+    # （週末自身、つまり日曜06-21時点ではまだ3日経っていないため、1つ前の週末を指す）
+    assert ai.current_results_weekend_end(date(2026, 6, 21)) == date(2026, 6, 14)  # 日（週末自身）
+    assert ai.current_results_weekend_end(date(2026, 6, 24)) == date(2026, 6, 21)  # 水
+    assert ai.current_results_weekend_end(date(2026, 6, 26)) == date(2026, 6, 21)  # 金
 
-    print(f"\n--- get_last_week_main_races(2026-06-21) ---")
-    print(f"  結果: {main_races}")
 
-    assert main_races == []
+def test_get_weekend_main_race_details_returns_winner_pick_and_hit_payout():
+    # 2026-06-13(土)/06-14(日)の週末には出馬表・確定結果・配当が揃っている
+    races = ai.get_weekend_main_race_details(date(2026, 6, 14))
+
+    print(f"\n--- get_weekend_main_race_details(2026-06-14) ---")
+    for r in races:
+        print(f"  {r}")
+
+    assert len(races) == 6
+    assert all(r["race_day"] in (date(2026, 6, 13), date(2026, 6, 14)) for r in races)
+    # 東京11R(06-13 ジューンS)はAI本命馬カネラフィーナが1着で単勝・複勝とも的中する
+    tokyo_race = next(r for r in races if r["race_day"] == date(2026, 6, 13) and r["place_id"] == 5)
+    assert tokyo_race["pick_name"] == tokyo_race["winner_name"] == "カネラフィーナ"
+    assert tokyo_race["pick_finish"] == "1"
+    assert tokyo_race["win_hit"] is True
+    assert tokyo_race["win_payout"] == pytest.approx(510.0)
+    assert tokyo_race["place_hit"] is True
+    assert tokyo_race["place_payout"] == pytest.approx(210.0)
+
+
+def test_get_weekend_main_race_details_returns_empty_list_when_no_schedule():
+    assert ai.get_weekend_main_race_details(date(2020, 1, 5)) == []
 
 
 def test_list_predicted_races_returns_real_dates(new_roots):
@@ -146,3 +161,79 @@ def test_list_predicted_races_returns_real_dates(new_roots):
     print(f"  結果: {pairs}")
 
     assert pairs == [(SAMPLE_RACE_DAY, SAMPLE_RACE_ID)]
+
+
+def test_get_today_main_races_with_course_scrapes_course_info(monkeypatch, tmp_path):
+    from src.logic.scraping import netkeiba_scraper
+
+    today = date(2026, 6, 21)
+    time_id_dir = tmp_path / "race_time_id_list"
+    time_id_dir.mkdir(parents=True)
+    pd.DataFrame(
+        {
+            "race_time": ["0950", "1545", "1530", "1520"],
+            "race_id": ["202602010401", "202605030611", "202609030611", "202602010411"],
+            "race_name": ["3歳未勝利", "府中牝馬S", "しらさぎS", "UHB杯"],
+        }
+    ).to_csv(time_id_dir / "20260621.csv", index=False)
+    monkeypatch.setattr(paths, "RACE_TIME_ID_LIST_PATH", str(time_id_dir))
+
+    def fake_scrape_race_card(race_id):
+        if str(race_id) == "202605030611":
+            return (["dummy"], pd.DataFrame([{"race_type": "芝", "course_len": 1800}]), pd.DataFrame())
+        return (["dummy"], pd.DataFrame(), pd.DataFrame())
+
+    monkeypatch.setattr(netkeiba_scraper, "scrape_race_card", fake_scrape_race_card)
+
+    races = ai.get_today_main_races_with_course(today)
+
+    print(f"\n--- get_today_main_races_with_course(2026-06-21) ---")
+    print(f"  結果: {races}")
+
+    # メインレース（11R）以外は除外され、発走時刻昇順で返る
+    assert [r["race_id"] for r in races] == ["202602010411", "202609030611", "202605030611"]
+    # スクレイピングに成功したレースはrace_type/course_lenが入る
+    tokyo_race = next(r for r in races if r["race_id"] == "202605030611")
+    assert tokyo_race["race_type"] == "芝"
+    assert tokyo_race["course_len"] == 1800
+    assert tokyo_race["place_id"] == 5
+    # 失敗したレースはNoneのまま（呼び出し側でリンクなし表示に切り替えられる）
+    hanshin_race = next(r for r in races if r["race_id"] == "202609030611")
+    assert hanshin_race["race_type"] is None
+    # race_dayは指定した日付がそのまま入る
+    assert tokyo_race["race_day"] == today
+
+
+def test_get_today_main_races_with_course_returns_empty_when_no_schedule(tmp_path, monkeypatch):
+    monkeypatch.setattr(paths, "RACE_TIME_ID_LIST_PATH", str(tmp_path / "race_time_id_list"))
+    assert ai.get_today_main_races_with_course(date(2026, 6, 21)) == []
+
+
+def test_get_week_main_races_with_course_combines_saturday_and_sunday(monkeypatch):
+    # 2026-06-22(月)は、今週(06-27/06-28)の水曜(06-24)より前なので、
+    # current_schedule_weekend_endにより1つ前の週末(06-20/06-21)が対象になる
+    captured_days = []
+
+    def fake_get_today_main_races_with_course(day):
+        captured_days.append(day)
+        return [{"race_id": f"dummy-{day}", "race_day": day}]
+
+    monkeypatch.setattr(ai, "get_today_main_races_with_course", fake_get_today_main_races_with_course)
+
+    races = ai.get_week_main_races_with_course(date(2026, 6, 22))
+
+    assert captured_days == [date(2026, 6, 20), date(2026, 6, 21)]
+    assert [r["race_day"] for r in races] == [date(2026, 6, 20), date(2026, 6, 21)]
+
+
+def test_current_schedule_weekend_end_stays_on_previous_weekend_before_wednesday():
+    # 今週(06-27/06-28)の水曜(06-24)より前（月・火）は、まだ出馬表が公開されて
+    # いないことが多いため、1つ前の週末(06-21)を指す
+    assert ai.current_schedule_weekend_end(date(2026, 6, 22)) == date(2026, 6, 21)  # 月
+    assert ai.current_schedule_weekend_end(date(2026, 6, 23)) == date(2026, 6, 21)  # 火
+
+
+def test_current_schedule_weekend_end_advances_on_wednesday():
+    # 水曜(06-24)になった時点で、今週本来の週末(06-28)に切り替わる
+    assert ai.current_schedule_weekend_end(date(2026, 6, 24)) == date(2026, 6, 28)  # 水
+    assert ai.current_schedule_weekend_end(date(2026, 6, 26)) == date(2026, 6, 28)  # 金
