@@ -156,17 +156,25 @@ def get_current_meetings(today=None):
     return current_meetings
 
 
-def get_last_week_main_races(end_day=None):
-    """直近7日間のメインレース（11R）の的中・回収結果を日付順で返す
+def get_last_week_main_races(today=None):
+    """「先週」（月曜始まりの直前のカレンダー週）のメインレース（11R）の
+    的中・回収結果を日付順で返す
+
+    todayが属する週（月〜日）の直前の週を「先週」とする。例えばtodayが日曜
+    （その週の最終日）でも、直近7日間ではなくきちんと前の週末（土・日）を指すように
+    したもの（直近7日間のローリングウィンドウでは、今日が日曜だと今日自身の
+    土曜日のレースを「先週」として誤って表示してしまうため）。
 
     Args:
-        end_day (date): 直近7日間の終端日（初期値: 今日）
+        today (date): 基準日（初期値: 今日）。この日が属する週の前の週を対象にする。
     Returns:
         list[dict]: [{"race_day", "race_id", "place_id", "result"}, ...]（日付昇順）。
             result は calc_race_hit_returns の戻り値（データが無ければNone）。
     """
-    end_day = end_day or date.today()
-    start_day = end_day - timedelta(days=6)
+    today = today or date.today()
+    this_week_start = today - timedelta(days=today.weekday())
+    start_day = this_week_start - timedelta(days=7)
+    end_day = this_week_start - timedelta(days=1)
 
     main_race_pairs = [
         (day, rid)

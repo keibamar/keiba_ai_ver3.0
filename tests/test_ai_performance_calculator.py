@@ -113,15 +113,29 @@ def test_get_current_meetings_returns_empty_for_offseason_date():
 
 
 def test_get_last_week_main_races_filters_race_num_11():
-    # 2026-06-07が含まれる週には202605030111(5R...11)/202609030111/202605030211/202609030211 がある
-    main_races = ai.get_last_week_main_races(date(2026, 6, 7))
+    # 2026-06-08〜06-14週（todayが属する週の直前の月〜日）の前の週は06-01〜06-07で、
+    # そこに202605030111(5R...11)/202609030111/202605030211/202609030211 がある
+    main_races = ai.get_last_week_main_races(date(2026, 6, 10))
 
-    print(f"\n--- get_last_week_main_races(2026-06-07) ---")
+    print(f"\n--- get_last_week_main_races(2026-06-10) ---")
     print(f"  結果: {main_races}")
 
     assert len(main_races) == 4
     assert all(ai.parse_race_id(r["race_id"])["race_num"] == 11 for r in main_races)
     assert main_races == sorted(main_races, key=lambda r: r["race_day"])
+
+
+def test_get_last_week_main_races_uses_previous_calendar_week_not_rolling_window():
+    # todayが日曜（その週の最終日）でも、直近7日間ではなく前の週（月〜日）を対象にする。
+    # 2026-06-21（日）が属する週は06-15〜06-21なので、「先週」は06-08〜06-14のはず。
+    # その期間には予想データ自体が存在しないため、ローリングウィンドウ（直近7日間で
+    # 06-20を含めてしまう）であれば結果が出てしまうが、正しい先週の定義では0件になる。
+    main_races = ai.get_last_week_main_races(date(2026, 6, 21))
+
+    print(f"\n--- get_last_week_main_races(2026-06-21) ---")
+    print(f"  結果: {main_races}")
+
+    assert main_races == []
 
 
 def test_list_predicted_races_returns_real_dates(new_roots):

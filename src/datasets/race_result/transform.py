@@ -36,7 +36,9 @@ def format_race_results_dataframe(race_results_df):
     Returns:
         pd.DataFrame: フォーマットされたrace_resultデータセット
     """
-    race_results_df.fillna(np.nan)
+    # 欠損値を先に空文字列にしてからastype(str)する（先にastype(str)すると、
+    # NaNがそのまま文字列"nan"になってCSVに保存されてしまうため）
+    race_results_df = race_results_df.fillna("")
     race_results_df = race_results_df.astype(str)
     race_results_df = race_results_df.drop_duplicates(keep="first")
     return race_results_df

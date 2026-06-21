@@ -12,7 +12,7 @@ data/race_card/ の全件スキャンを避けて高速に生成できる
 
 from datetime import date, timedelta
 
-from src.config.constants import NAME_LIST
+from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator import daily_index_generator
 from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
@@ -56,26 +56,33 @@ def _weekly_trend_html(trend):
 
 
 def _current_meetings_html(meetings, df):
+    """開催中の競馬場の成績テーブルを返す
+
+    競馬場名はそのコースのコース詳細データ（courses/{place}/index.html）への
+    リンクにし、Homeから開催中コースのコース別データへすぐアクセスできるようにする。
+    """
     if not meetings:
         return "<p>現在開催中の競馬場はありません。</p>"
 
     rows = ""
     for meeting in meetings:
-        place_name = NAME_LIST[meeting["place_id"] - 1]
+        place_id = meeting["place_id"]
+        place_name = NAME_LIST[place_id - 1]
+        place_link = f'<a href="courses/{PLACE_LIST[place_id - 1]}/index.html">{place_name}</a>'
         meeting_df = dataset_manager.filter_by_meeting(
-            df, meeting["first_day"].year, meeting["place_id"], meeting["times"]
+            df, meeting["first_day"].year, place_id, meeting["times"]
         )
         performance = dataset_manager.aggregate(meeting_df)
         win = performance["win"]
         rows += (
-            f"<tr><td>{place_name}{meeting['times']}回</td>"
+            f"<tr><td>{place_link} {meeting['times']}回</td>"
             f"<td>{hit_rate_gauge_html(win['hit_rate'])}</td>"
             f"<td>{return_rate_gauge_html(win['return_rate'])}</td><td>{win['n']}</td></tr>\n"
         )
 
     return f"""<div class="table-wrap">
   <table class="sortable">
-    <thead><tr><th>開催</th><th>単勝的中率</th><th>単勝回収率</th><th>対象レース数</th></tr></thead>
+    <thead><tr><th>開催（コース詳細データへ）</th><th>単勝的中率</th><th>単勝回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       {rows}
     </tbody>

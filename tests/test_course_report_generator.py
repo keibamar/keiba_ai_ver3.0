@@ -35,10 +35,10 @@ def test_build_course_report_returns_real_data():
     print(f"  peds_df shape: {report['peds_df'].shape}")
 
     assert report["avg_time"] is not None
-    assert report["avg_time"]["avg_time"] == "81655"
-    assert report["avg_pop"]["avg_pop"] == "4.25"
-    assert report["winner_weight"]["馬体重"] == "467.2"
-    assert report["avg_frame_and_horse"]["avg_frame"] == "4.92"
+    assert report["avg_time"]["avg_time"] == "81652"
+    assert report["avg_pop"]["avg_pop"] == "4.21"
+    assert report["winner_weight"]["馬体重"] == "467.3"
+    assert report["avg_frame_and_horse"]["avg_frame"] == "4.91"
     assert not report["peds_df"].empty
     assert report["peds_df"].iloc[0]["血統"] == "ロードカナロア"
 

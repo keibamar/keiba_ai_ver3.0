@@ -4,6 +4,9 @@ Homeページ（public_html/index.html）が、レースカレンダー・AI成�
 リンクを含む形で生成されることを確認する。
 """
 
+from datetime import date
+
+import pandas as pd
 import pytest
 
 from src.config import paths
@@ -82,3 +85,22 @@ def test_weekly_trend_html_uses_return_rate_gauge():
     # 各週の回収率ゲージ（ai_performance_report_generatorと共通の色付きゲージ）が使われる
     assert return_rate_gauge_html(523.9) in html_content
     assert return_rate_gauge_html(0.0) in html_content
+
+
+def test_current_meetings_html_links_place_name_to_course_detail_data():
+    meetings = [{"place_id": 5, "first_day": date(2026, 6, 20), "times": 2}]
+    df = pd.DataFrame(
+        columns=["race_day", "year", "place_id", "times", "win_hit", "win_return", "place_hit", "place_return", "trio_box_hit", "trio_box_return"]
+    )
+
+    html_content = h._current_meetings_html(meetings, df)
+
+    print(f"\n--- _current_meetings_html ---\n{html_content}")
+
+    # 開催中の競馬場名から、そのコースのコース詳細データへ直接アクセスできる
+    assert '<a href="courses/05_tokyo/index.html">東京</a>' in html_content
+    assert "2回" in html_content
+
+
+def test_current_meetings_html_handles_no_current_meetings():
+    assert "現在開催中の競馬場はありません。" in h._current_meetings_html([], pd.DataFrame())

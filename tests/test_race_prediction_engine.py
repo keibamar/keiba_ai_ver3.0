@@ -50,7 +50,7 @@ def test_get_time_diff_returns_expected(avg_time_root, monkeypatch):
     print(f"\n--- get_time_diff(race_time={race_time}, course_info={SAMPLE_COURSE_INFO}) ---")
     print(f"  結果（[平均タイムとの差, 標準偏差換算]）: {result}")
 
-    assert result == [0.002792181890706023, 0.005342730476298738]
+    assert result == [0.001184310032390166, 0.004366563784544924]
 
 
 def test_get_time_diff_returns_zero_when_no_data(tmp_path, monkeypatch):

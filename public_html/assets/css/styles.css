@@ -487,6 +487,8 @@ td a:hover {
 
 .table-wrap {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 480px;
   margin-bottom: 16px;
 }
 
@@ -495,6 +497,10 @@ td a:hover {
 }
 
 .table-wrap thead th {
+  /* overflow-yをtable-wrap自身に持たせることで、ヘッダーの固定（sticky）が
+     ページ全体ではなくこの表の内側だけで効くようにする（overflow-yが無いと
+     sticky配置がビューポート基準になり、短い表が並ぶページ（Home等）で
+     ヘッダーが他の要素に重なって表示されてしまう）。 */
   position: sticky;
   top: 0;
   z-index: 1;
@@ -955,10 +961,15 @@ details.breakdown summary:hover {
 
 .calendar-widget #todayRace {
   margin-top: 20px;
+  margin-bottom: 20px;
   font-size: 1.2em;
 }
 
 .calendar-widget #todayRace a {
+  /* デフォルトのdisplay:inlineのままpaddingを付けると、ボタンの背景が
+     行の高さ分の領域を確保せず、直後の要素（カード等）に重なって表示されて
+     しまうため、inline-blockにして確実に高さ分のスペースを確保する */
+  display: inline-block;
   text-decoration: none;
   color: white;
   background-color: var(--mar-primary);

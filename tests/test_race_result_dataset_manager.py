@@ -36,6 +36,18 @@ def test_format_race_results_dataframe_drops_duplicates():
     assert result["a"].tolist() == ["1", "2"]
 
 
+def test_format_race_results_dataframe_keeps_blank_for_missing_values():
+    # astype(str)を先にすると欠損値がそのまま文字列"nan"になってCSVに保存されて
+    # しまうバグがあったため、空文字列のまま保たれることを確認する
+    df = pd.DataFrame({"着差": ["1", np.nan], "通過": [np.nan, "3-3"]})
+
+    result = transform.format_race_results_dataframe(df)
+
+    assert result["着差"].tolist() == ["1", ""]
+    assert result["通過"].tolist() == ["", "3-3"]
+    assert not (result == "nan").any().any()
+
+
 @pytest.mark.parametrize(
     "val, expected",
     [
