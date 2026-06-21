@@ -1,5 +1,29 @@
+/* --- MARブランドカラー --- */
+/* ボルドー（ワインレッド）をベースに、サイト全体のナビゲーション・見出し・
+   アクセント装飾に使う。的中率/回収率ゲージや優位/不利バッジ等の「意味を持つ色」
+   （青=中立、緑=有利、赤=不利）とは別軸の色として、ブランド色は混同しないよう
+   ボルドー系でまとめる。 */
+:root {
+  --mar-primary: #7a2438;
+  --mar-primary-dark: #5c1b2a;
+  --mar-accent: #b04a5a;
+  --mar-bg-accent: #fbeef0;
+  --mar-bg-accent-strong: #f3d9de;
+}
+
 body {
   font-family: sans-serif;
+  color: #2a2a2a;
+}
+
+h1 {
+  color: var(--mar-primary);
+  border-bottom: 3px solid var(--mar-accent);
+  padding-bottom: 8px;
+}
+
+h2 {
+  color: var(--mar-primary);
 }
 
 .nav {
@@ -8,7 +32,7 @@ body {
 
 .nav a {
   text-decoration: none;
-  color: blue;
+  color: var(--mar-accent);
 }
 
 table {
@@ -24,7 +48,8 @@ th, td {
 }
 
 th {
-  background: #f0f0f0;
+  background: var(--mar-bg-accent);
+  color: var(--mar-primary);
 }
 
 td a {
@@ -34,7 +59,7 @@ td a {
 
 td a:hover {
   text-decoration: underline;
-  color: blue;
+  color: var(--mar-accent);
 }
 
 /* --- カード型レイアウト --- */
@@ -49,6 +74,7 @@ td a:hover {
 .card {
   flex: 1 1 280px;
   border: 1px solid #ddd;
+  border-top: 3px solid var(--mar-accent);
   border-radius: 8px;
   padding: 16px 20px;
   background: #fff;
@@ -63,6 +89,7 @@ td a:hover {
   display: inline-block;
   margin-top: 8px;
   font-weight: bold;
+  color: var(--mar-primary);
 }
 
 /* --- 的中率・回収率の大きい数字表示 --- */
@@ -81,7 +108,7 @@ td a:hover {
   display: block;
   font-size: 2em;
   font-weight: bold;
-  color: #0044cc;
+  color: var(--mar-primary);
 }
 
 .summary-stat .label {
@@ -368,7 +395,7 @@ details.breakdown summary {
 }
 
 details.breakdown summary:hover {
-  color: #0044cc;
+  color: var(--mar-accent);
 }
 
 /* --- サイト共通ナビゲーション --- */
@@ -379,17 +406,193 @@ details.breakdown summary:hover {
   gap: 8px 20px;
   margin-bottom: 20px;
   padding-bottom: 12px;
-  border-bottom: 2px solid #0044cc;
+  border-bottom: 2px solid var(--mar-primary);
 }
 
 .site-nav a {
   text-decoration: none;
-  color: #0044cc;
+  color: var(--mar-primary);
   font-weight: bold;
 }
 
 .site-nav a:hover {
   text-decoration: underline;
+  color: var(--mar-accent);
+}
+
+/* --- 競馬場・コースの検索ボックス（page-search.js） --- */
+
+.page-search {
+  position: relative;
+  margin-left: auto;
+}
+
+.page-search-input {
+  width: 260px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+.page-search-input:focus {
+  outline: none;
+  border-color: var(--mar-accent);
+}
+
+.page-search-results {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 5;
+  width: 280px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.page-search-results li {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.page-search-results li:last-child {
+  border-bottom: none;
+}
+
+.page-search-results a {
+  display: block;
+  padding: 8px 12px;
+  text-decoration: none;
+  color: #2a2a2a;
+  font-size: 0.9em;
+}
+
+.page-search-results a:hover {
+  background: var(--mar-bg-accent);
+  color: var(--mar-primary);
+}
+
+/* --- ブレッドクラム（現在地の階層パス） --- */
+
+.breadcrumb {
+  margin: 0 0 16px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.breadcrumb a {
+  text-decoration: none;
+  color: var(--mar-accent);
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb-current {
+  font-weight: bold;
+  color: var(--mar-primary);
+}
+
+/* --- 本文+右サイドバーの2カラムレイアウト（page-sidebar） --- */
+/* 階層が深いページ（コース詳細・AI成績のコース別ページ等）で、兄弟ページ
+   （他のコース・他の競馬場・他の年度等）へすぐ移動できるようにする。 */
+
+.page-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.page-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-sidebar {
+  flex: 0 0 220px;
+  position: sticky;
+  top: 12px;
+  background: var(--mar-bg-accent);
+  border: 1px solid var(--mar-bg-accent-strong);
+  border-top: 3px solid var(--mar-primary);
+  border-radius: 8px;
+  padding: 16px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+}
+
+/* 「ひとつ上の階層へ」リンク：各セクション一覧より上に固定表示し、
+   見た目でも下のセクション群と区別する */
+.page-sidebar-up {
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--mar-bg-accent-strong);
+  font-size: 0.9em;
+}
+
+.page-sidebar-up a {
+  text-decoration: none;
+  color: var(--mar-primary);
+  font-weight: bold;
+}
+
+.page-sidebar-up a:hover {
+  text-decoration: underline;
+}
+
+.page-sidebar h3 {
+  margin: 16px 0 4px;
+  font-size: 0.95em;
+  color: var(--mar-primary);
+}
+
+.page-sidebar h3:first-of-type {
+  margin-top: 0;
+}
+
+.page-sidebar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.page-sidebar li {
+  margin-bottom: 6px;
+  font-size: 0.9em;
+}
+
+.page-sidebar a {
+  text-decoration: none;
+  color: var(--mar-accent);
+}
+
+.page-sidebar a:hover {
+  text-decoration: underline;
+}
+
+.page-sidebar-current {
+  font-weight: bold;
+  color: var(--mar-primary);
+}
+
+@media (max-width: 800px) {
+  .page-layout {
+    flex-direction: column;
+  }
+
+  .page-sidebar {
+    flex-basis: auto;
+    width: 100%;
+    position: static;
+    max-height: none;
+  }
 }
 
 /* --- セクション分けカード型UI + セクション間タブナビゲーション（section-tabs.js） --- */
@@ -428,8 +631,8 @@ details.breakdown summary:hover {
 
 .section-tabs button[aria-selected="true"] {
   background: #fff;
-  color: #0044cc;
-  border-color: #0044cc;
+  color: var(--mar-primary);
+  border-color: var(--mar-primary);
   border-bottom: 2px solid #fff;
 }
 
@@ -443,6 +646,46 @@ details.breakdown summary:hover {
 
 .section-panel > h3:first-child {
   margin-top: 0;
+}
+
+/* --- 年度別トレンドのスパークライン（sparkline_html.py） --- */
+
+.trend-section {
+  margin: 0 0 16px;
+}
+
+.sparkline-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  vertical-align: middle;
+}
+
+.sparkline-labels {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85em;
+  color: #555;
+}
+
+/* --- 馬場×クラスのインタラクティブ絞り込み（cross-filter.js） --- */
+
+.cross-filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.cross-filter-controls select {
+  margin-left: 6px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.cross-filter-empty {
+  color: #777;
 }
 
 /* --- カード型のセクション見出し階層調整（.card内のh3/h4が詰まって見えないように） --- */
@@ -462,10 +705,10 @@ details.breakdown summary:hover {
 
 .course-tile.active {
   flex: 1 1 220px;
-  border: 2px solid #0044cc;
+  border: 2px solid var(--mar-primary);
   border-radius: 8px;
   padding: 16px;
-  background: #f4f8ff;
+  background: var(--mar-bg-accent);
 }
 
 .course-tile.active .place-name {
@@ -507,7 +750,7 @@ details.breakdown summary:hover {
 
 .calendar-widget #calendar a {
   text-decoration: none;
-  color: blue;
+  color: var(--mar-accent);
   font-weight: bold;
 }
 
@@ -524,14 +767,14 @@ details.breakdown summary:hover {
 .calendar-widget #todayRace a {
   text-decoration: none;
   color: white;
-  background-color: #007bff;
+  background-color: var(--mar-primary);
   padding: 10px 20px;
   border-radius: 5px;
   font-weight: bold;
 }
 
 .calendar-widget #todayRace a:hover {
-  background-color: #0056b3;
+  background-color: var(--mar-primary-dark);
 }
 
 .calendar-widget #todayRace p {

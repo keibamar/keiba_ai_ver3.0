@@ -249,3 +249,22 @@ def group_breakdown(df, column):
             continue
         result.append({"value": value, "performance": aggregate(group_df)})
     return result
+
+
+def cross_breakdown(df, column_a, column_b):
+    """2列（例: ground_state, class）の組み合わせごとに集計する
+
+    group_breakdownと同様、値が空・欠損の行は内訳から除外する。
+
+    Returns:
+        dict[tuple, dict]: {(column_aの値, column_bの値): aggregate(...), ...}
+    """
+    if df.empty or column_a not in df.columns or column_b not in df.columns:
+        return {}
+
+    result = {}
+    for (value_a, value_b), group_df in df.groupby([column_a, column_b]):
+        if value_a in (None, "") or value_b in (None, ""):
+            continue
+        result[(value_a, value_b)] = aggregate(group_df)
+    return result

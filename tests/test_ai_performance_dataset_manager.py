@@ -212,3 +212,30 @@ def test_group_breakdown_excludes_blank_values():
     values = {b["value"] for b in breakdown}
     assert "" not in values
     assert values == {"未勝利", "1勝クラス"}
+
+
+def test_cross_breakdown_combines_two_columns():
+    breakdown = m.cross_breakdown(SAMPLE_DATASET, "ground_state", "class")
+
+    print(f"\n--- cross_breakdown(ground_state, class) ---")
+    print(breakdown)
+
+    assert set(breakdown.keys()) == {("良", "未勝利"), ("稍重", "1勝クラス")}
+    # A・B（良×未勝利）: win hit=1/2=50.0%
+    assert breakdown[("良", "未勝利")]["win"]["n"] == 2
+    assert breakdown[("良", "未勝利")]["win"]["hit_rate"] == pytest.approx(50.0)
+    # C（稍重×1勝クラス）: win hit=1/1=100.0%
+    assert breakdown[("稍重", "1勝クラス")]["win"]["n"] == 1
+
+
+def test_cross_breakdown_excludes_blank_values():
+    df = SAMPLE_DATASET.copy()
+    df.loc["A", "class"] = ""
+
+    breakdown = m.cross_breakdown(df, "ground_state", "class")
+    assert ("良", "") not in breakdown
+    assert ("稍重", "1勝クラス") in breakdown
+
+
+def test_cross_breakdown_returns_empty_dict_for_empty_dataframe():
+    assert m.cross_breakdown(SAMPLE_DATASET.iloc[0:0], "ground_state", "class") == {}

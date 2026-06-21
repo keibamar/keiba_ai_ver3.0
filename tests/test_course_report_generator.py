@@ -68,11 +68,12 @@ def test_course_report_to_html_structure():
     assert html.index("summary-stats") < html.index('<div class="tabbed-section">')
     assert '<button data-target="overview"' not in html
 
-    # 4つのタブ（クラス別等/通過順/人気枠順/血統）に分かれている
+    # 5つのタブ（クラス別等/馬場×クラス/通過順/人気枠順/血統）に分かれている
     assert '<div class="tabbed-section">' in html
     assert '<div class="section-tabs">' in html
     for target, label in [
         ("breakdown", "クラス別・馬場別・年度別"),
+        ("cross", "馬場×クラス"),
         ("passage", "通過順"),
         ("chakudo", "人気・枠順"),
         ("peds", "血統別成績"),
@@ -81,9 +82,26 @@ def test_course_report_to_html_structure():
         assert f">{label}</button>" in html
     # 最初のタブ（クラス別等）は初期表示、他はhidden属性で初期非表示
     assert '<div class="section-panel" data-section="breakdown">' in html
+    assert '<div class="section-panel" data-section="cross" hidden>' in html
     assert '<div class="section-panel" data-section="passage" hidden>' in html
     assert '<div class="section-panel" data-section="chakudo" hidden>' in html
     assert '<div class="section-panel" data-section="peds" hidden>' in html
+    # 馬場×クラスの絞り込みUI: 馬場/クラスのセレクトと、組み合わせごとの事前計算パネル
+    assert '<div class="cross-filter">' in html
+    assert 'class="cross-filter-ground-state"' in html
+    assert 'class="cross-filter-class"' in html
+    assert '<option value="良">良</option>' in html
+    assert '<div class="cross-filter-panel" data-ground-state="全" data-class="all" hidden>' in html
+    assert '<div class="cross-filter-panel" data-ground-state="良" data-class="all" hidden>' in html
+    assert '<div class="cross-filter-panel" data-ground-state="全" data-class="未勝利" hidden>' in html
+    # 各組み合わせのパネルには、平均成績の表に加えて人気・枠順データ（着度数）と
+    # 血統データも折りたたみで表示される
+    assert "<summary>人気・枠順データを表示</summary>" in html
+    assert "<summary>血統データを表示</summary>" in html
+    assert "<h4>人気別着度数</h4>" in html
+    assert "<h4>枠番別着度数</h4>" in html
+    assert "<h4>馬番別着度数</h4>" in html
+    assert "<h4>血統別成績（上位5件）</h4>" in html
 
     # クラス別・馬場別・年度別の内訳テーブルが追加されている
     assert "<h3>クラス別</h3>" in html
@@ -130,9 +148,30 @@ def test_course_report_to_html_structure():
     assert '<a href="../../performance/index.html">AI成績</a>' in html
     assert '<script src="../../assets/js/sortable-table.js"></script>' in html
     assert '<script src="../../assets/js/section-tabs.js"></script>' in html
+    assert '<script src="../../assets/js/cross-filter.js"></script>' in html
     # 3つの既存の年度別折りたたみ + 人気/枠番/馬番のクラス別・馬場別の折りたたみ6つ
-    assert html.count('<details class="breakdown">') == 9
+    # + 馬場×クラスの組み合わせごとに2つ（人気・枠順データ/血統データ）の折りたたみ
+    cross_combo_count = len(c.build_cross_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN))
+    assert html.count('<details class="breakdown">') == 9 + cross_combo_count * 2
     assert html.count("<summary>年度別を表示</summary>") == 3
+    # ブレッドクラム（現在地の階層）と右サイドバー（このコースの他のコース一覧）が追加されている
+    assert '<p class="breadcrumb">' in html
+    assert '<a href="../../index.html">HOME</a>' in html
+    assert '<a href="../../courses/index.html">コース詳細データ</a>' in html
+    assert '<a href="../../courses/05_tokyo/index.html">東京</a>' in html
+    assert '<span class="breadcrumb-current">芝1400m</span>' in html
+    assert '<div class="page-layout">' in html
+    assert '<main class="page-content">' in html
+    assert '<aside class="page-sidebar">' in html
+    # サイドバーは「上の階層へ」+「競馬場」+「このコースの他のコース」の階層構造になっている
+    assert '<p class="page-sidebar-up"><a href="index.html">&uarr; 東京のコース一覧</a></p>' in html
+    assert "<h3>競馬場</h3>" in html
+    assert '<li><a href="../06_nakayama/index.html">中山</a></li>' in html
+    assert '<li><span class="page-sidebar-current">東京</span></li>' in html
+    assert "<h3>東京のコース</h3>" in html
+    assert '<li><a href="芝-1600.html">芝1600m</a></li>' in html
+    # 現在表示中のコース自身はサイドバーでリンクにせず強調表示する
+    assert '<li><span class="page-sidebar-current">芝1400m</span></li>' in html
 
 
 def test_build_class_passage_breakdown_returns_per_class_rows():
@@ -486,6 +525,54 @@ def test_build_ground_state_breakdown_returns_ordered_rows():
     assert "全" not in {r["value"] for r in rows}
 
 
+def test_build_cross_breakdown_returns_rows_keyed_by_ground_state_and_class():
+    cross = c.build_cross_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN)
+
+    print(f"\n--- build_cross_breakdown(東京, 芝1400m) ---")
+    for key, row in cross.items():
+        print(f"  {key}: {row}")
+
+    assert cross  # 実データなので少なくとも1組み合わせは存在するはず
+    # 各軸の「全て」（馬場状態="全"・クラス="all"）を含む全組み合わせが入っている
+    for ground_state, class_name in cross:
+        assert ground_state in ["全"] + c.GROUND_STATE_ORDER
+        assert class_name == "all" or class_name != ""
+    assert ("全", "all") in cross  # 全体合計
+    assert any(gs != "全" and cls == "all" for gs, cls in cross)  # 馬場のみ
+    assert any(gs == "全" and cls != "all" for gs, cls in cross)  # クラスのみ
+    assert any(gs != "全" and cls != "all" for gs, cls in cross)  # 完全な組み合わせ
+    # 各行は build_class_breakdown/build_ground_state_breakdown と同じ統計フィールドを持つ
+    sample_row = next(iter(cross.values()))
+    assert {"avg_time", "avg_pop", "weight", "avg_frame", "avg_horse", "win_return"} <= sample_row.keys()
+
+
+def test_peds_table_for_combo_returns_top_n_sorted_by_first_place():
+    df = c._peds_table_for_combo(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN, "全", "未勝利", top_n=5)
+
+    print(f"\n--- _peds_table_for_combo(東京, 芝1400m, 全, 未勝利) ---")
+    print(df)
+
+    assert df is not None
+    assert len(df) <= 5
+    counts = pd.to_numeric(df["1着"], errors="coerce").tolist()
+    assert counts == sorted(counts, reverse=True)
+
+
+def test_peds_table_for_combo_translates_total_ground_state_sentinel():
+    # get_total_peds_results_csvは全体合計を"全"ではなく"all"で表すため、
+    # 馬場状態="全"を渡しても正しく変換されて結果が取れることを確認する
+    total_df = c._peds_table_for_combo(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN, "全", "all")
+    direct_df = c.peds_results_dataset_manager.get_total_peds_results_csv(
+        SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN, "all"
+    )
+    assert total_df is not None
+    assert not direct_df.empty
+
+
+def test_peds_table_for_combo_returns_none_for_unknown_combination():
+    assert c._peds_table_for_combo(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN, "不良", "存在しないクラス") is None
+
+
 def test_build_year_breakdown_returns_years_newest_first():
     rows = c.build_year_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN)
 
@@ -537,6 +624,10 @@ def test_make_course_index_page_generates_html(new_roots, monkeypatch):
     assert "<h1>コース詳細データ</h1>" in html_content
     assert '<nav class="site-nav">' in html_content
     assert '<a href="../performance/index.html">AI成績</a>' in html_content
+    # トップ階層はブレッドクラムのみ（サイドバーは追加しない）
+    assert '<p class="breadcrumb">' in html_content
+    assert '<span class="breadcrumb-current">コース詳細データ</span>' in html_content
+    assert '<aside class="page-sidebar">' not in html_content
     # 開催中（東京）は大きいタイル
     assert '<div class="course-tile active">' in html_content
     assert '<a href="05_tokyo/index.html"><span class="place-name">東京</span></a>' in html_content
@@ -567,6 +658,16 @@ def test_make_track_page_generates_html(new_roots):
     assert '<div class="table-wrap">' in html_content
     assert '<table class="sortable">' in html_content
     assert '<script src="../../assets/js/sortable-table.js"></script>' in html_content
+    # ブレッドクラム（現在地）と右サイドバー（他の競馬場一覧）が追加されている
+    assert '<p class="breadcrumb">' in html_content
+    assert '<a href="../../courses/index.html">コース詳細データ</a>' in html_content
+    assert '<span class="breadcrumb-current">東京</span>' in html_content
+    assert '<aside class="page-sidebar">' in html_content
+    assert '<p class="page-sidebar-up"><a href="../index.html">&uarr; コース詳細データ一覧</a></p>' in html_content
+    assert "<h3>競馬場</h3>" in html_content
+    assert '<li><a href="../06_nakayama/index.html">中山</a></li>' in html_content
+    # 現在表示中の競馬場自身はサイドバーでリンクにせず強調表示する
+    assert '<li><span class="page-sidebar-current">東京</span></li>' in html_content
 
 
 def test_make_course_detail_page_generates_html(new_roots):

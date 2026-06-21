@@ -30,7 +30,7 @@ import pandas as pd
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import COURSE_LISTS
 from src.logic.calculators import ai_performance_calculator as calc
-from src.logic.html_generator.site_nav_html import site_nav_html
+from src.logic.html_generator.site_nav_html import breadcrumb_html, sidebar_html, site_nav_html
 from src.managers import html_manager, peds_results_dataset_manager, race_info_dataset_manager
 
 ANNUAL_START_YEAR = 2019
@@ -209,6 +209,31 @@ def build_ground_state_breakdown(place_id, race_type, course_len):
         for ground_state in GROUND_STATE_ORDER
     ]
     return [r for r in rows if r is not None]
+
+
+def build_cross_breakdown(place_id, race_type, course_len):
+    """馬場状態×クラスの組み合わせごとの内訳（平均勝ち時計・人気・体重・枠番・配当）を返す
+
+    build_class_breakdown/build_ground_state_breakdownはそれぞれ片方の軸だけを
+    動かすが、ここでは両軸を組み合わせて集計し、ユーザーが両方を選んで絞り込める
+    ようにする。各軸の「全て」（馬場状態="全"・クラス="all"）も組み合わせに含めるため、
+    全体合計・馬場のみ・クラスのみ・完全な組み合わせのすべてがこの1つの辞書に入る。
+    データが存在しない組み合わせ（_breakdown_rowがNoneを返す）は除外する。
+
+    Returns:
+        dict[tuple, dict]: {(馬場状態, クラス): _breakdown_rowの戻り値, ...}
+    """
+    time_df = race_info_dataset_manager.get_total_average_time_csv(place_id)
+    sub = _filter_rows(time_df, race_type, course_len, ground_state="全")
+    classes = [c for c in sub["class"].unique() if c != "all"] if not sub.empty else []
+
+    result = {}
+    for ground_state in ["全"] + GROUND_STATE_ORDER:
+        for class_name in ["all"] + classes:
+            row = _breakdown_row(place_id, race_type, course_len, f"{ground_state}×{class_name}", ground_state, class_name)
+            if row is not None:
+                result[(ground_state, class_name)] = row
+    return result
 
 
 def build_year_breakdown(place_id, race_type, course_len, start_year=ANNUAL_START_YEAR, current_year=None):
@@ -560,6 +585,119 @@ def _breakdown_table_html(rows, value_label, title):
     return f"<h3>{title}</h3>\n  {body}"
 
 
+def _peds_table_for_combo(place_id, race_type, course_len, ground_state, class_name, top_n=5):
+    """馬場状態×クラスの組み合わせに対応する血統別成績（上位top_n件）を返す
+
+    peds_results_dataset_manager.get_total_peds_results_csvのground_state引数は
+    「全体」をsentinel "全"ではなく"all"で表す（馬場別ファイルが
+    Total/{race_type}_{course_len}m_{ground_state}.csvとして個別に存在し、
+    全体合計分は"_all.csv"という別ファイルのため）。クラス側のsentinelは
+    他の集計と同じ"all"で共通のため変換不要。
+    """
+    peds_ground_state = "all" if ground_state == "全" else ground_state
+    df = peds_results_dataset_manager.get_total_peds_results_csv(place_id, race_type, course_len, peds_ground_state)
+    if df.empty or "クラス" not in df.columns:
+        return None
+    sub = df[df["クラス"] == class_name].copy()
+    if sub.empty:
+        return None
+    for col in ["1着", "2着", "3着", "着外"]:
+        sub[col] = pd.to_numeric(sub[col], errors="coerce").fillna(0)
+    sub = sub.sort_values("1着", ascending=False).head(top_n)
+    return sub if not sub.empty else None
+
+
+def _cross_filter_panel_html(
+    place_id, race_type, course_len, ground_state, class_name, row,
+    pop_chakudo_df, frame_chakudo_df, horse_chakudo_df,
+):
+    if row is None:
+        body = "<p>対象データがありません。</p>"
+    else:
+        body = f"""<div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>平均勝ち時計</th><th>平均人気</th><th>勝ち馬平均体重</th><th>平均枠番</th><th>平均馬番</th><th>平均配当(単勝)</th></tr></thead>
+    <tbody>
+      <tr><td>{row['avg_time']}</td><td>{row['avg_pop']}</td><td>{row['weight']}</td><td>{row['avg_frame']}</td><td>{row['avg_horse']}</td><td>{row['win_return']}</td></tr>
+    </tbody>
+  </table>
+  </div>"""
+
+    pop_chakudo_html = _chakudo_chart_html(
+        pop_chakudo_df, race_type, course_len, "人気", range(1, 19), "人気別着度数",
+        show_advantage=False, ground_state=ground_state, class_name=class_name, heading_level="h4",
+    )
+    frame_chakudo_html = _chakudo_chart_html(
+        frame_chakudo_df, race_type, course_len, "枠番", range(1, 9), "枠番別着度数",
+        ground_state=ground_state, class_name=class_name, heading_level="h4",
+    )
+    horse_chakudo_html = _chakudo_chart_html(
+        horse_chakudo_df, race_type, course_len, "馬番", range(1, 19), "馬番別着度数",
+        ground_state=ground_state, class_name=class_name, heading_level="h4",
+    )
+    peds_html = _peds_table_html(
+        _peds_table_for_combo(place_id, race_type, course_len, ground_state, class_name),
+        "血統別成績（上位5件）", heading_level="h4",
+    )
+
+    return f"""<div class="cross-filter-panel" data-ground-state="{ground_state}" data-class="{class_name}" hidden>
+    {body}
+    <details class="breakdown">
+      <summary>人気・枠順データを表示</summary>
+      {pop_chakudo_html}
+      {frame_chakudo_html}
+      {horse_chakudo_html}
+    </details>
+    <details class="breakdown">
+      <summary>血統データを表示</summary>
+      {peds_html}
+    </details>
+  </div>"""
+
+
+def _cross_filter_html(
+    place_id, race_type, course_len, cross_breakdown,
+    pop_chakudo_df, frame_chakudo_df, horse_chakudo_df, class_names,
+):
+    """馬場状態×クラスを2つのセレクトボックスで選び、平均勝ち時計・人気・体重・枠番・
+    配当に加え、人気・枠順データ（着度数）・血統データもその組み合わせに絞り込んで
+    表示するインタラクティブなUIを返す
+
+    ai_performance_report_generator._cross_filter_htmlと同じ「サーバー側で全組み合わせ
+    ぶん事前計算し、JS（assets/js/cross-filter.js）は表示/非表示の切り替えのみ行う」
+    方針を踏襲する（同じJSファイルをそのまま再利用できる）。
+    """
+    ground_options = "".join(f'<option value="{gs}">{gs}</option>\n' for gs in GROUND_STATE_ORDER)
+    class_options = "".join(f'<option value="{cls}">{cls}</option>\n' for cls in class_names)
+
+    panels = [
+        _cross_filter_panel_html(
+            place_id, race_type, course_len, gs, cls, row,
+            pop_chakudo_df, frame_chakudo_df, horse_chakudo_df,
+        )
+        for (gs, cls), row in cross_breakdown.items()
+    ]
+
+    return f"""<div class="cross-filter">
+    <div class="cross-filter-controls">
+      <label>馬場状態:
+        <select class="cross-filter-ground-state">
+          <option value="全">全て</option>
+          {ground_options}
+        </select>
+      </label>
+      <label>クラス:
+        <select class="cross-filter-class">
+          <option value="all">全て</option>
+          {class_options}
+        </select>
+      </label>
+    </div>
+    {"".join(panels)}
+    <p class="cross-filter-empty" hidden>対象データがありません。</p>
+  </div>"""
+
+
 def _peds_table_html(peds_df, title, heading_level="h3", top_n=10):
     if peds_df is None or peds_df.empty:
         rows = "<tr><td colspan='5'>データなし</td></tr>"
@@ -698,6 +836,7 @@ def course_report_to_html(report):
     class_breakdown = build_class_breakdown(place_id, race_type, course_len)
     ground_state_breakdown = build_ground_state_breakdown(place_id, race_type, course_len)
     year_breakdown = build_year_breakdown(place_id, race_type, course_len)
+    cross_breakdown = build_cross_breakdown(place_id, race_type, course_len)
 
     class_passage_breakdown = build_class_passage_breakdown(place_id, race_type, course_len)
     ground_state_passage_breakdown = build_ground_state_passage_breakdown(place_id, race_type, course_len)
@@ -733,11 +872,42 @@ def course_report_to_html(report):
     horse_chakudo_class_html = _chakudo_class_breakdown_html(horse_chakudo_df, race_type, course_len, "馬番", range(1, 19))
     horse_chakudo_ground_html = _chakudo_ground_state_breakdown_html(horse_chakudo_df, race_type, course_len, "馬番", range(1, 19))
 
+    cross_filter_html = _cross_filter_html(
+        place_id, race_type, course_len, cross_breakdown,
+        pop_chakudo_df, frame_chakudo_df, horse_chakudo_df,
+        [item["value"] for item in class_breakdown],
+    )
+
     peds_df = report["peds_df"]
     peds_total_df = peds_df[peds_df["クラス"] == "all"] if not peds_df.empty and "クラス" in peds_df.columns else peds_df
     peds_class_breakdown = build_peds_class_breakdown(peds_df)
     peds_ground_state_breakdown = build_peds_ground_state_breakdown(place_id, race_type, course_len)
     peds_year_breakdown = build_peds_year_breakdown(place_id, race_type, course_len)
+
+    current_label = f"{race_type}{course_len}m"
+    sidebar = sidebar_html(
+        [
+            (
+                "競馬場",
+                [(NAME_LIST[i], f"../{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))],
+                place_name,
+            ),
+            (
+                f"{place_name}のコース",
+                [(f"{rt}{cl}m", f"{rt}-{cl}.html") for rt, cl in COURSE_LISTS[place_id - 1]],
+                current_label,
+            ),
+        ],
+        up_link=(f"{place_name}のコース一覧", "index.html"),
+    )
+    breadcrumb = breadcrumb_html(
+        [
+            ("コース詳細データ", "courses/index.html"),
+            (place_name, f"courses/{PLACE_LIST[place_id - 1]}/index.html"),
+            (current_label, None),
+        ],
+        base_path="../../",
+    )
 
     return f"""
 <!DOCTYPE html>
@@ -749,6 +919,9 @@ def course_report_to_html(report):
 </head>
 <body>
   {site_nav_html(base_path="../../")}
+  {breadcrumb}
+  <div class="page-layout">
+  <main class="page-content">
   <p><a href="index.html">&larr; {place_name}のコース一覧へ</a></p>
   <h1>{place_name} {race_type}{course_len}m コース詳細</h1>
 
@@ -778,6 +951,7 @@ def course_report_to_html(report):
   <div class="tabbed-section">
     <div class="section-tabs">
       <button data-target="breakdown" aria-selected="true">クラス別・馬場別・年度別</button>
+      <button data-target="cross" aria-selected="false">馬場×クラス</button>
       <button data-target="passage" aria-selected="false">通過順</button>
       <button data-target="chakudo" aria-selected="false">人気・枠順</button>
       <button data-target="peds" aria-selected="false">血統別成績</button>
@@ -790,6 +964,10 @@ def course_report_to_html(report):
         <summary>年度別を表示</summary>
         {_breakdown_table_html(year_breakdown, "年度", "年度別")}
       </details>
+    </div>
+
+    <div class="section-panel" data-section="cross" hidden>
+      {cross_filter_html}
     </div>
 
     <div class="section-panel" data-section="passage" hidden>
@@ -844,8 +1022,12 @@ def course_report_to_html(report):
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../../index.html">&larr; HOMEへ戻る</a></p>
+  </main>
+  {sidebar}
+  </div>
   <script src="../../assets/js/sortable-table.js"></script>
   <script src="../../assets/js/section-tabs.js"></script>
+  <script src="../../assets/js/cross-filter.js"></script>
 </body>
 </html>
 """
@@ -886,6 +1068,7 @@ def make_course_index_page():
 </head>
 <body>
   {site_nav_html(base_path="../")}
+  {breadcrumb_html([("コース詳細データ", None)], base_path="../")}
   <h1>コース詳細データ</h1>
 
   <h2>開催中の競馬場</h2>
@@ -934,6 +1117,20 @@ def make_track_page(place_id):
         for race_type in sorted({race_type for race_type, _ in course_list})
     )
 
+    sidebar = sidebar_html(
+        [
+            (
+                "競馬場",
+                [(NAME_LIST[i], f"../{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))],
+                place_name,
+            ),
+        ],
+        up_link=("コース詳細データ一覧", "../index.html"),
+    )
+    breadcrumb = breadcrumb_html(
+        [("コース詳細データ", "courses/index.html"), (place_name, None)], base_path="../../",
+    )
+
     html = f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -944,6 +1141,9 @@ def make_track_page(place_id):
 </head>
 <body>
   {site_nav_html(base_path="../../")}
+  {breadcrumb}
+  <div class="page-layout">
+  <main class="page-content">
   <h1>{place_name} コース一覧</h1>
 
   <div class="card-grid">
@@ -967,6 +1167,9 @@ def make_track_page(place_id):
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/index.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../index.html">&larr; コース詳細データ一覧へ</a></p>
+  </main>
+  {sidebar}
+  </div>
   <script src="../../assets/js/sortable-table.js"></script>
 </body>
 </html>

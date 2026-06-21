@@ -12,7 +12,17 @@
   <a href="../../../races/index.html">レースカレンダー</a>
   <a href="../../../performance/index.html">AI成績</a>
   <a href="../../../courses/index.html">コース詳細データ</a>
+  <div class="page-search" data-base-path="../../../">
+    <input type="text" id="page-search-input" class="page-search-input"
+      placeholder="競馬場・コースを検索（例: 東京 芝1400）" autocomplete="off">
+    <ul id="page-search-results" class="page-search-results" hidden></ul>
+  </div>
 </nav>
+<script src="../../../assets/js/page-search-index.js"></script>
+<script src="../../../assets/js/page-search.js"></script>
+  <p class="breadcrumb"><a href="../../../index.html">HOME</a> &rsaquo; <a href="../../../performance/index.html">AI成績</a> &rsaquo; <a href="../../../performance/course/10_kokura/index.html">小倉</a> &rsaquo; <span class="breadcrumb-current">ダート1700m</span></p>
+  <div class="page-layout">
+  <main class="page-content">
   <h1>小倉 ダート1700m AI予想成績</h1>
 
   <div class="tabbed-section">
@@ -20,6 +30,7 @@
       <button data-target="overview" aria-selected="true">トータル/今年</button>
       <button data-target="breakdown" aria-selected="false">クラス別・馬場別</button>
       <button data-target="year" aria-selected="false">年度別</button>
+      <button data-target="cross" aria-selected="false">馬場×クラス</button>
     </div>
 
     <div class="section-panel" data-section="overview">
@@ -80,6 +91,28 @@
     </div>
 
     <div class="section-panel" data-section="year" hidden>
+      <div class="trend-section">
+  <p class="trend-label">単勝的中率の推移 <span class="sparkline-wrap">
+  <svg class="sparkline" width="180" height="40" viewBox="0 0 180 40">
+    <polyline points="6.0,34.0 174.0,6.0" fill="none" stroke="#b04a5a" stroke-width="2"></polyline>
+    <circle cx="6.0" cy="34.0" r="2.5" fill="#b04a5a"></circle><circle cx="174.0" cy="6.0" r="2.5" fill="#b04a5a"></circle>
+  </svg>
+  <span class="sparkline-labels">
+    <span class="sparkline-label-start">2025: 14.6</span>
+    <span class="sparkline-label-end">2026: 15.6</span>
+  </span>
+</span></p>
+  <p class="trend-label">単勝回収率の推移 <span class="sparkline-wrap">
+  <svg class="sparkline" width="180" height="40" viewBox="0 0 180 40">
+    <polyline points="6.0,6.0 174.0,34.0" fill="none" stroke="#b04a5a" stroke-width="2"></polyline>
+    <circle cx="6.0" cy="6.0" r="2.5" fill="#b04a5a"></circle><circle cx="174.0" cy="34.0" r="2.5" fill="#b04a5a"></circle>
+  </svg>
+  <span class="sparkline-labels">
+    <span class="sparkline-label-start">2025: 241.0</span>
+    <span class="sparkline-label-end">2026: 54.4</span>
+  </span>
+</span></p>
+</div>
       <h3>年度別成績</h3>
   <div class="table-wrap">
   <table class="sortable">
@@ -92,11 +125,361 @@
   </table>
   </div>
     </div>
+
+    <div class="section-panel" data-section="cross" hidden>
+      <div class="cross-filter">
+    <div class="cross-filter-controls">
+      <label>馬場状態:
+        <select class="cross-filter-ground-state">
+          <option value="all">全て</option>
+          <option value="不良">不良</option>
+<option value="稍重">稍重</option>
+<option value="良">良</option>
+<option value="重">重</option>
+
+        </select>
+      </label>
+      <label>クラス:
+        <select class="cross-filter-class">
+          <option value="all">全て</option>
+          <option value="1勝クラス">1勝クラス</option>
+<option value="2勝クラス">2勝クラス</option>
+<option value="3勝クラス">3勝クラス</option>
+<option value="オープン">オープン</option>
+<option value="未勝利">未勝利</option>
+
+        </select>
+      </label>
+    </div>
+    <div class="cross-filter-panel" data-ground-state="all" data-class="all" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 15.1%; background: rgb(86,69,164);"></span></span><span class="gauge-value">15.1%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 79.6%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">159.2%</span></span></td><td>73</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 43.8%; background: rgb(191,51,68);"></span></span><span class="gauge-value">43.8%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 53.1%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">106.2%</span></span></td><td>73</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 11.0%; background: rgb(71,72,177);"></span></span><span class="gauge-value">11.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 56.1%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">112.1%</span></span></td><td>73</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="不良" data-class="all" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="稍重" data-class="all" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 25.0%; background: rgb(122,63,130);"></span></span><span class="gauge-value">25.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 40.8%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">81.7%</span></span></td><td>12</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 41.7%; background: rgb(184,52,75);"></span></span><span class="gauge-value">41.7%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 30.8%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">61.7%</span></span></td><td>12</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>12</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="良" data-class="all" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 13.5%; background: rgb(80,70,169);"></span></span><span class="gauge-value">13.5%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 96.3%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">192.7%</span></span></td><td>52</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 46.2%; background: rgb(200,49,60);"></span></span><span class="gauge-value">46.2%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 60.9%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">121.7%</span></span></td><td>52</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 15.4%; background: rgb(87,69,163);"></span></span><span class="gauge-value">15.4%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 78.7%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">157.4%</span></span></td><td>52</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="重" data-class="all" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 14.3%; background: rgb(83,70,166);"></span></span><span class="gauge-value">14.3%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 44.3%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">88.6%</span></span></td><td>7</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 42.9%; background: rgb(188,52,71);"></span></span><span class="gauge-value">42.9%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 48.6%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">97.1%</span></span></td><td>7</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>7</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="all" data-class="1勝クラス" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 20.0%; background: rgb(104,66,147);"></span></span><span class="gauge-value">20.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 100.0%; background: #cc2222;"></span><span class="gauge-marker"></span></span><span class="gauge-value">311.6%</span></span></td><td>25</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 28.0%; background: rgb(133,61,120);"></span></span><span class="gauge-value">28.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 45.4%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">90.8%</span></span></td><td>25</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 12.0%; background: rgb(75,71,174);"></span></span><span class="gauge-value">12.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 44.1%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">88.1%</span></span></td><td>25</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="all" data-class="2勝クラス" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>13</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 46.2%; background: rgb(200,49,60);"></span></span><span class="gauge-value">46.2%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 52.7%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">105.4%</span></span></td><td>13</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 15.4%; background: rgb(87,69,163);"></span></span><span class="gauge-value">15.4%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 45.8%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">91.5%</span></span></td><td>13</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="all" data-class="3勝クラス" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>5</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 60.0%; background: rgb(214,47,47);"></span></span><span class="gauge-value">60.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 73.0%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">146.0%</span></span></td><td>5</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 20.0%; background: rgb(104,66,147);"></span></span><span class="gauge-value">20.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 44.9%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">89.8%</span></span></td><td>5</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="all" data-class="オープン" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>3</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 33.3%; background: rgb(153,58,103);"></span></span><span class="gauge-value">33.3%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 55.0%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">110.0%</span></span></td><td>3</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>3</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="all" data-class="未勝利" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 22.2%; background: rgb(112,65,140);"></span></span><span class="gauge-value">22.2%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 70.9%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">141.9%</span></span></td><td>27</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 55.6%; background: rgb(214,47,47);"></span></span><span class="gauge-value">55.6%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 56.5%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">113.0%</span></span></td><td>27</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 7.4%; background: rgb(58,74,189);"></span></span><span class="gauge-value">7.4%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 80.4%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">160.9%</span></span></td><td>27</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="不良" data-class="未勝利" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="稍重" data-class="1勝クラス" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 40.0%; background: rgb(177,53,80);"></span></span><span class="gauge-value">40.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 61.0%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">122.0%</span></span></td><td>5</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 40.0%; background: rgb(177,53,80);"></span></span><span class="gauge-value">40.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 29.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">58.0%</span></span></td><td>5</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>5</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="稍重" data-class="2勝クラス" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="稍重" data-class="3勝クラス" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>1</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>1</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>1</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="稍重" data-class="未勝利" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 25.0%; background: rgb(122,63,130);"></span></span><span class="gauge-value">25.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 46.2%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">92.5%</span></span></td><td>4</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 75.0%; background: rgb(214,47,47);"></span></span><span class="gauge-value">75.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 56.2%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">112.5%</span></span></td><td>4</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>4</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="良" data-class="1勝クラス" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 17.6%; background: rgb(96,68,155);"></span></span><span class="gauge-value">17.6%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 100.0%; background: #cc2222;"></span><span class="gauge-marker"></span></span><span class="gauge-value">422.4%</span></span></td><td>17</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 29.4%; background: rgb(139,60,116);"></span></span><span class="gauge-value">29.4%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 58.2%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">116.5%</span></span></td><td>17</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 17.6%; background: rgb(96,68,155);"></span></span><span class="gauge-value">17.6%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 64.8%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">129.6%</span></span></td><td>17</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="良" data-class="2勝クラス" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>9</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 44.4%; background: rgb(194,51,66);"></span></span><span class="gauge-value">44.4%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 48.3%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">96.7%</span></span></td><td>9</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 22.2%; background: rgb(112,65,140);"></span></span><span class="gauge-value">22.2%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 66.1%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">132.2%</span></span></td><td>9</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="良" data-class="3勝クラス" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>4</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 75.0%; background: rgb(214,47,47);"></span></span><span class="gauge-value">75.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 91.2%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">182.5%</span></span></td><td>4</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 25.0%; background: rgb(122,63,130);"></span></span><span class="gauge-value">25.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 56.1%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">112.2%</span></span></td><td>4</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="良" data-class="オープン" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 50.0%; background: rgb(214,47,47);"></span></span><span class="gauge-value">50.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 82.5%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">165.0%</span></span></td><td>2</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="良" data-class="未勝利" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 20.0%; background: rgb(104,66,147);"></span></span><span class="gauge-value">20.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 71.0%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">142.0%</span></span></td><td>20</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 55.0%; background: rgb(214,47,47);"></span></span><span class="gauge-value">55.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 60.5%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">121.0%</span></span></td><td>20</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 10.0%; background: rgb(68,73,181);"></span></span><span class="gauge-value">10.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 100.0%; background: #cc2222;"></span><span class="gauge-marker"></span></span><span class="gauge-value">217.2%</span></span></td><td>20</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="重" data-class="1勝クラス" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>3</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>3</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>3</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="重" data-class="2勝クラス" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 100.0%; background: rgb(214,47,47);"></span></span><span class="gauge-value">100.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 100.0%; background: #cc2222;"></span><span class="gauge-marker"></span></span><span class="gauge-value">250.0%</span></span></td><td>2</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>2</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="重" data-class="オープン" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>1</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>1</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>1</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div><div class="cross-filter-panel" data-ground-state="重" data-class="未勝利" hidden>
+    <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 100.0%; background: rgb(214,47,47);"></span></span><span class="gauge-value">100.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 100.0%; background: #cc2222;"></span><span class="gauge-marker"></span></span><span class="gauge-value">620.0%</span></span></td><td>1</td></tr>
+<tr><td>複勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 100.0%; background: rgb(214,47,47);"></span></span><span class="gauge-value">100.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 90.0%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">180.0%</span></span></td><td>1</td></tr>
+<tr><td>三連複(5頭BOX)</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>1</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  </div>
+    <p class="cross-filter-empty" hidden>対象データがありません。</p>
+  </div>
+    </div>
   </div>
 
   <p><a href="../../../courses/10_kokura/ダート-1700.html">&larr; コース詳細データへ</a></p>
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
+  </main>
+  <aside class="page-sidebar">
+  <p class="page-sidebar-up"><a href="index.html">&uarr; 小倉のAI成績</a></p>
+  <h3>競馬場</h3>
+  <ul>
+    <li><a href="../01_sapporo/index.html">札幌</a></li>
+<li><a href="../02_hakodate/index.html">函館</a></li>
+<li><a href="../03_fukushima/index.html">福島</a></li>
+<li><a href="../04_nigata/index.html">新潟</a></li>
+<li><a href="../05_tokyo/index.html">東京</a></li>
+<li><a href="../06_nakayama/index.html">中山</a></li>
+<li><a href="../07_chukyo/index.html">中京</a></li>
+<li><a href="../08_kyoto/index.html">京都</a></li>
+<li><a href="../09_hanshin/index.html">阪神</a></li>
+<li><span class="page-sidebar-current">小倉</span></li>
+
+  </ul>
+  <h3>小倉のコース</h3>
+  <ul>
+    <li><a href="芝-1200.html">芝1200m</a></li>
+<li><a href="芝-1700.html">芝1700m</a></li>
+<li><a href="芝-1800.html">芝1800m</a></li>
+<li><a href="芝-2000.html">芝2000m</a></li>
+<li><a href="芝-2600.html">芝2600m</a></li>
+<li><a href="ダート-1000.html">ダート1000m</a></li>
+<li><span class="page-sidebar-current">ダート1700m</span></li>
+<li><a href="ダート-2400.html">ダート2400m</a></li>
+
+  </ul>
+  </aside>
+  </div>
   <script src="../../../assets/js/sortable-table.js"></script>
   <script src="../../../assets/js/section-tabs.js"></script>
+  <script src="../../../assets/js/cross-filter.js"></script>
 </body>
 </html>
