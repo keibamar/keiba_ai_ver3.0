@@ -268,3 +268,27 @@ def cross_breakdown(df, column_a, column_b):
             continue
         result[(value_a, value_b)] = aggregate(group_df)
     return result
+
+
+def group_breakdown_by_week(df):
+    """race_dayから算出した「週の開始日（月曜）」でグループ化し、週ごとの集計を返す
+
+    開催（重賞・通常開催とも）は基本的に土日に行われるため、月曜始まりの週で
+    グループ化すると同じ開催に属するレースがおおむね1グループにまとまる。
+    年間ページ等で「開催週ごとの傾向・推移」を見せる用途に使う。
+
+    Returns:
+        list[dict]: [{"value": 週開始日（YYYY-MM-DD）, "performance": aggregate(...)}, ...]
+            週開始日の昇順（古い→新しい）で返す。
+    """
+    if df.empty:
+        return []
+
+    week_start = pd.to_datetime(df["race_day"])
+    week_start = week_start - pd.to_timedelta(week_start.dt.weekday, unit="D")
+    result = [
+        {"value": value, "performance": aggregate(group_df)}
+        for value, group_df in df.groupby(week_start.dt.strftime("%Y-%m-%d"))
+    ]
+    result.sort(key=lambda item: item["value"])
+    return result

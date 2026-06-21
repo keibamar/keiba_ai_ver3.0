@@ -48,3 +48,19 @@ def test_return_rate_gauge_color_thresholds():
     assert "#1f4fd6" in blue_html
     assert "#e07b00" in orange_html
     assert "#cc2222" in red_html
+
+
+def test_return_rate_big_html_renders_value_with_same_color_thresholds():
+    html = g.return_rate_big_html(150.0)
+
+    print(f"\n--- return_rate_big_html(150.0) ---\n{html}")
+
+    assert html == '<span class="rate-big" style="color: #e07b00;">150.0%</span>'
+    assert "#1f4fd6" in g.return_rate_big_html(99.9)
+    assert "#cc2222" in g.return_rate_big_html(250.0)
+
+
+def test_return_rate_color_matches_gauge_thresholds():
+    assert g.return_rate_color(99.9) == "#1f4fd6"
+    assert g.return_rate_color(150.0) == "#e07b00"
+    assert g.return_rate_color(250.0) == "#cc2222"

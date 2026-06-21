@@ -239,3 +239,44 @@ def test_cross_breakdown_excludes_blank_values():
 
 def test_cross_breakdown_returns_empty_dict_for_empty_dataframe():
     assert m.cross_breakdown(SAMPLE_DATASET.iloc[0:0], "ground_state", "class") == {}
+
+
+WEEKLY_DATASET = pd.DataFrame(
+    {
+        # 2024-10-19(土)・2024-10-20(日)は同じ週（月曜始まり週開始日2024-10-14）、
+        # 2024-10-26(土)は次の週（週開始日2024-10-21）
+        "race_day": ["2024-10-19", "2024-10-20", "2024-10-26"],
+        "year": ["2024", "2024", "2024"],
+        "place_id": ["4", "4", "4"],
+        "times": ["4", "4", "4"],
+        "race_type": ["芝", "芝", "芝"],
+        "course_len": ["2000", "2000", "2000"],
+        "ground_state": ["良", "良", "良"],
+        "class": ["未勝利", "未勝利", "未勝利"],
+        "win_hit": ["1", "0", "1"],
+        "win_return": ["160.0", "0.0", "300.0"],
+        "place_hit": ["1", "0", "1"],
+        "place_return": ["110.0", "0.0", "180.0"],
+        "trio_box_hit": ["1", "0", "0"],
+        "trio_box_return": ["422.0", "0.0", "0.0"],
+    },
+    index=["A", "B", "C"],
+)
+
+
+def test_group_breakdown_by_week_groups_same_meeting_weekend_together():
+    breakdown = m.group_breakdown_by_week(WEEKLY_DATASET)
+
+    print(f"\n--- group_breakdown_by_week ---")
+    print(breakdown)
+
+    assert [b["value"] for b in breakdown] == ["2024-10-14", "2024-10-21"]
+    # 1週目（A・B）: win hit=1/2=50.0%, return=(160+0)/2=80.0
+    assert breakdown[0]["performance"]["win"]["n"] == 2
+    assert breakdown[0]["performance"]["win"]["hit_rate"] == pytest.approx(50.0)
+    # 2週目（Cのみ）
+    assert breakdown[1]["performance"]["win"]["n"] == 1
+
+
+def test_group_breakdown_by_week_returns_empty_list_for_empty_dataframe():
+    assert m.group_breakdown_by_week(WEEKLY_DATASET.iloc[0:0]) == []

@@ -16,7 +16,7 @@ import pytest
 
 from src.config import paths
 from src.logic.html_generator import ai_performance_report_generator as r
-from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
+from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_big_html, return_rate_gauge_html
 
 SAMPLE_DF = pd.DataFrame(
     {
@@ -69,25 +69,32 @@ def test_make_ai_performance_index_page_generates_html(new_roots, fake_dataset):
     assert "<h3>トータル成績</h3>" in html_content
     assert "<h3>2026年の成績</h3>" in html_content
     # トータル成績（4レース全体）: win hit=2/4=50.0%, return=(200+0+100+0)/4=75.0%
-    assert (
-        f"<td>単勝</td><td>{hit_rate_gauge_html(50.0)}</td><td>{return_rate_gauge_html(75.0)}</td><td>4</td>"
-        in html_content
-    )
+    # 回収率を主役（大きな数字+大きめのゲージ）、的中率を脇役（小さなゲージ）にしたカード表示
+    assert '<div class="bet-stat-label">単勝</div>' in html_content
+    assert return_rate_big_html(75.0) in html_content
+    assert '<div class="bet-stat-primary-gauge">' in html_content
+    assert hit_rate_gauge_html(50.0) in html_content
+    assert "対象 4件" in html_content
     # 新しい年から順にリンクされる
     assert html_content.index("annual/2026.html") < html_content.index("annual/2025.html") < html_content.index("annual/2024.html")
     assert '<a href="annual/2026.html">2026年</a>' in html_content
     assert '<a href="course/05_tokyo/index.html">東京</a>' in html_content
     assert '<nav class="site-nav">' in html_content
-    assert '<table class="sortable">' in html_content
     assert '<script src="../assets/js/sortable-table.js"></script>' in html_content
     # トップ階層はブレッドクラムのみ（サイドバーは追加しない）
     assert '<p class="breadcrumb">' in html_content
     assert '<span class="breadcrumb-current">AI成績</span>' in html_content
     assert '<aside class="page-sidebar">' not in html_content
-    # 年間成績の上に、単勝的中率・回収率の年次トレンド（スパークライン）が追加されている
+    # 「今年の成績の推移」（年間成績より上）と「年間成績」内の年次トレンドの両方に、
+    # 単勝・複勝の的中率・回収率グラフ（左軸=的中率、右軸=回収率）が追加されている
+    # （週別トレンド2つ + 年次トレンド2つ = 合計4つのグラフ）
+    assert "<h2>今年の成績の推移</h2>" in html_content
+    assert html_content.index("今年の成績の推移") < html_content.index("年間成績")
     assert '<div class="trend-section">' in html_content
-    assert '<svg class="sparkline"' in html_content
-    assert html_content.count('<svg class="sparkline"') == 2
+    assert '<svg class="trend-chart"' in html_content
+    assert html_content.count('<svg class="trend-chart"') == 4
+    assert "単勝 的中率・回収率の推移" in html_content
+    assert "複勝 的中率・回収率の推移" in html_content
 
 
 def test_make_ai_performance_index_page_handles_empty_dataset(new_roots, empty_dataset):
@@ -96,7 +103,7 @@ def test_make_ai_performance_index_page_handles_empty_dataset(new_roots, empty_d
     out_file = new_roots / "public_html" / "performance" / "index.html"
     html_content = out_file.read_text(encoding="utf-8")
     assert "予想データがまだありません。" in html_content
-    assert '<svg class="sparkline"' not in html_content
+    assert '<svg class="trend-chart"' not in html_content
 
 
 def test_make_annual_performance_page_generates_html(new_roots, fake_dataset):
@@ -111,10 +118,8 @@ def test_make_annual_performance_page_generates_html(new_roots, fake_dataset):
 
     assert "<h1>2026年 AI予想成績</h1>" in html_content
     # 2026年はB・Cの2レース: win hit=1/2=50.0%, return=(0+100)/2=50.0
-    assert (
-        f"<td>単勝</td><td>{hit_rate_gauge_html(50.0)}</td><td>{return_rate_gauge_html(50.0)}</td><td>2</td>"
-        in html_content
-    )
+    assert return_rate_big_html(50.0) in html_content
+    assert hit_rate_gauge_html(50.0) in html_content
     # ブレッドクラムと、他の年度へのサイドバーが追加されている
     assert '<a href="../../performance/index.html">AI成績</a>' in html_content
     assert '<span class="breadcrumb-current">2026年</span>' in html_content
@@ -123,6 +128,15 @@ def test_make_annual_performance_page_generates_html(new_roots, fake_dataset):
     assert "<h3>年度</h3>" in html_content
     assert '<li><a href="2025.html">2025年</a></li>' in html_content
     assert '<li><span class="page-sidebar-current">2026年</span></li>' in html_content
+    # 開催週ごとの傾向・推移（B=2026-04-01週、C=2026-04-08週は別の週開始日になる）
+    assert "<h2>開催週別の傾向・推移</h2>" in html_content
+    assert html_content.count('<svg class="trend-chart"') == 2
+    # グラフの横軸は年を省いた短縮表記（週開始日テーブルは元のまま完全な日付を保持する）
+    assert ">3/30</text>" in html_content
+    assert ">4/6</text>" in html_content
+    assert "<h3>開催週別成績</h3>" in html_content
+    assert "<td>2026-03-30</td>" in html_content
+    assert "<td>2026-04-06</td>" in html_content
 
 
 def test_make_meeting_performance_page_generates_html(new_roots, fake_dataset):
@@ -133,10 +147,8 @@ def test_make_meeting_performance_page_generates_html(new_roots, fake_dataset):
     html_content = out_file.read_text(encoding="utf-8")
     assert "<h1>2025年 東京1回 AI予想成績</h1>" in html_content
     # 2025年東京1回はAのみ: win hit=1/1=100.0%, return=200.0
-    assert (
-        f"<td>単勝</td><td>{hit_rate_gauge_html(100.0)}</td><td>{return_rate_gauge_html(200.0)}</td><td>1</td>"
-        in html_content
-    )
+    assert return_rate_big_html(200.0) in html_content
+    assert hit_rate_gauge_html(100.0) in html_content
     # 開催別ページはブレッドクラムのみ（サイドバーは追加しない）
     assert '<p class="breadcrumb">' in html_content
     assert '<span class="breadcrumb-current">2025年 東京1回</span>' in html_content
@@ -155,10 +167,14 @@ def test_make_course_performance_page_generates_html(new_roots, fake_dataset):
 
     assert "<h1>東京 芝1400m AI予想成績</h1>" in html_content
     # 東京 芝1400mはA・Bの2レース: win hit=1/2=50.0%, return=(200+0)/2=100.0
-    assert (
-        f"<td>単勝</td><td>{hit_rate_gauge_html(50.0)}</td><td>{return_rate_gauge_html(100.0)}</td><td>2</td>"
-        in html_content
-    )
+    assert return_rate_big_html(100.0) in html_content
+    assert hit_rate_gauge_html(50.0) in html_content
+    # 内訳テーブルの各セルは、トータル成績カードと同じ「上に回収率(大)・下に的中率(小)」
+    assert "<th>単勝</th>" in html_content
+    assert '<div class="cell-stat">' in html_content
+    assert '<div class="cell-stat-primary">' in html_content
+    assert '<div class="cell-stat-primary-gauge">' in html_content
+    assert '<div class="cell-stat-secondary">' in html_content
     assert "<h3>クラス別成績</h3>" in html_content
     assert "<h3>馬場別成績</h3>" in html_content
     assert "<h3>年度別成績</h3>" in html_content
@@ -175,10 +191,10 @@ def test_make_course_performance_page_generates_html(new_roots, fake_dataset):
     assert '<script src="../../../assets/js/sortable-table.js"></script>' in html_content
     assert '<script src="../../../assets/js/section-tabs.js"></script>' in html_content
     assert '<script src="../../../assets/js/cross-filter.js"></script>' in html_content
-    # 年度別タブにスパークライン（2026年と2025年のトレンド）が追加されている
+    # 年度別タブに推移グラフ（2026年と2025年のトレンド）が追加されている
     assert '<div class="section-panel" data-section="cross" hidden>' in html_content
     assert '<div class="trend-section">' in html_content
-    assert '<svg class="sparkline"' in html_content
+    assert '<svg class="trend-chart"' in html_content
     # 馬場×クラスの絞り込みUI: 馬場/クラスのセレクトと、組み合わせごとの事前計算パネル
     assert '<div class="cross-filter">' in html_content
     assert 'class="cross-filter-ground-state"' in html_content
@@ -215,14 +231,25 @@ def test_make_course_performance_index_page_generates_html(new_roots, fake_datas
     assert '<a href="../../index.html">&larr; AI成績トップへ</a>' in html_content
 
     # 東京全体（A・B・C）: win hit=2/3=66.7%, return=(200+0+100)/3=100.0
-    assert (
-        f"<td>単勝</td><td>{hit_rate_gauge_html(2 / 3 * 100)}</td><td>{return_rate_gauge_html(100.0)}</td><td>3</td>"
-        in html_content
-    )
+    assert return_rate_big_html(100.0) in html_content
+    assert hit_rate_gauge_html(2 / 3 * 100) in html_content
+    # 今年（2026年）の成績の下に、直近の開催週別の傾向・推移が追加されている
+    # （B=2026-04-01週、C=2026-04-08週は7日違いの同じ曜日なので別の週開始日になる）
+    # （年度別タブの年次トレンドと合わせて、推移グラフは単勝/複勝×2セクション=4つになる）
+    assert "<h4>直近の開催週別の傾向・推移</h4>" in html_content
+    assert html_content.count('<svg class="trend-chart"') == 4
+    assert ">3/30</text>" in html_content
+    assert ">4/6</text>" in html_content
+    assert "<h3>開催週別成績</h3>" in html_content
+    assert "<td>2026-03-30</td>" in html_content
+    assert "<td>2026-04-06</td>" in html_content
     assert "<h3>年度別成績</h3>" in html_content
     assert "<h3>クラス別成績</h3>" in html_content
     assert "<h3>芝/ダート別成績</h3>" in html_content
     assert "<h3>馬場別成績</h3>" in html_content
+    # 内訳テーブルの回収率列は概要カードと同じ「大きな数字+ゲージ」で表示する
+    assert '<div class="cell-stat-primary">' in html_content
+    assert '<div class="cell-stat-primary-gauge">' in html_content
     # トータル/今年・クラス別等・年度別がタブに分かれている
     assert '<div class="tabbed-section">' in html_content
     assert '<button data-target="breakdown" aria-selected="false">クラス別・芝ダート別・馬場別</button>' in html_content
@@ -231,9 +258,9 @@ def test_make_course_performance_index_page_generates_html(new_roots, fake_datas
     assert '<script src="../../../assets/js/section-tabs.js"></script>' in html_content
     assert '<script src="../../../assets/js/cross-filter.js"></script>' in html_content
     assert '<nav class="site-nav">' in html_content
-    # 年度別タブにスパークライン（年次トレンド）が追加されている
+    # 年度別タブに推移グラフ（年次トレンド）が追加されている
     assert '<div class="trend-section">' in html_content
-    assert '<svg class="sparkline"' in html_content
+    assert '<svg class="trend-chart"' in html_content
     # 馬場×クラスの絞り込みUI: 東京全体（A・C=良×未勝利、B=稍重×1勝クラス）の組み合わせパネル
     assert '<div class="cross-filter">' in html_content
     assert '<div class="cross-filter-panel" data-ground-state="all" data-class="all" hidden>' in html_content

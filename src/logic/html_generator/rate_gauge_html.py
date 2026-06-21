@@ -29,6 +29,15 @@ def _return_rate_color(return_rate):
     return "#1f4fd6"
 
 
+def return_rate_color(return_rate):
+    """回収率に応じた色（100%以下=青、100%超=橙、200%超=赤）を返す
+
+    sparkline_html（推移グラフ）が、ゲージ・大きな数字表示と同じ基準で
+    損益分岐点（100%）超えを強調するために使う。
+    """
+    return _return_rate_color(return_rate)
+
+
 def hit_rate_gauge_html(hit_rate):
     """的中率（0〜100%）を、値が高いほど赤くなるゲージバーHTMLとして返す"""
     width = max(min(hit_rate, 100.0), 0.0)
@@ -58,3 +67,14 @@ def return_rate_gauge_html(return_rate):
         f'<span class="gauge-value">{return_rate:.1f}%</span>'
         "</span>"
     )
+
+
+def return_rate_big_html(return_rate):
+    """回収率を大きな数字で強調表示するHTMLを返す
+
+    的中率より回収率を主役として見せたい場面（AI成績の式別ごとの主要表示）向けに、
+    ゲージバーではなく色付きの大きな数字のみを返す。色分けはreturn_rate_gauge_htmlと
+    同じ基準（100%以下=青、100%超=橙、200%超=赤）を流用する。
+    """
+    color = _return_rate_color(return_rate)
+    return f'<span class="rate-big" style="color: {color};">{return_rate:.1f}%</span>'

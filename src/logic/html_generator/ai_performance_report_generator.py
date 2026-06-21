@@ -10,13 +10,13 @@ data/race_card/ の全件スキャンを伴うライブ計算（旧 ai_performan
 ver2.0でも未実装だったため、ページ構成のみを参考にした新規実装。
 """
 
-from datetime import date
+from datetime import date, datetime
 
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import COURSE_LISTS
-from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
+from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_big_html, return_rate_gauge_html
 from src.logic.html_generator.site_nav_html import breadcrumb_html, sidebar_html, site_nav_html
-from src.logic.html_generator.sparkline_html import sparkline_svg
+from src.logic.html_generator.sparkline_html import hit_return_trend_svg
 from src.managers import ai_performance_dataset_manager as m
 from src.managers import html_manager
 
@@ -24,38 +24,65 @@ BET_TYPE_LABELS = {"win": "単勝", "place": "複勝", "trio_box": "三連複(5�
 
 
 def _performance_table_html(performance, title=None):
-    rows = "".join(
-        f"<tr><td>{BET_TYPE_LABELS[bet_type]}</td>"
-        f"<td>{hit_rate_gauge_html(performance[bet_type]['hit_rate'])}</td>"
-        f"<td>{return_rate_gauge_html(performance[bet_type]['return_rate'])}</td>"
-        f"<td>{performance[bet_type]['n']}</td></tr>\n"
+    """式別（単勝/複勝/三連複）ごとの成績をカードで表示する
+
+    回収率を主役（大きな数字+大きめのゲージ）、的中率を脇役（小さなゲージ）として
+    縦に並べることで、的中率より回収率を重視して見てほしいという方針を視覚的に表す。
+    回収率も的中率と同様にゲージ（グラフ）で見せることで、数字だけでなく一目で
+    良し悪しが分かるようにする。
+    """
+    cards = "".join(
+        f"""<div class="bet-stat-card">
+      <div class="bet-stat-label">{BET_TYPE_LABELS[bet_type]}</div>
+      <div class="bet-stat-primary">
+        {return_rate_big_html(performance[bet_type]['return_rate'])}
+        <span class="bet-stat-primary-label">回収率</span>
+        <div class="bet-stat-primary-gauge">{return_rate_gauge_html(performance[bet_type]['return_rate'])}</div>
+      </div>
+      <div class="bet-stat-secondary">
+        <span class="bet-stat-secondary-label">的中率</span>
+        {hit_rate_gauge_html(performance[bet_type]['hit_rate'])}
+      </div>
+      <div class="bet-stat-n">対象 {performance[bet_type]['n']}件</div>
+    </div>"""
         for bet_type in BET_TYPE_LABELS
     )
     heading = f"<h3>{title}</h3>\n  " if title else ""
-    return f"""{heading}<div class="table-wrap">
-  <table class="sortable">
-    <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
-    <tbody>
-      {rows}
-    </tbody>
-  </table>
+    return f"""{heading}<div class="bet-stat-cards">
+    {cards}
+  </div>"""
+
+
+def _bet_stat_cell_html(performance):
+    """1つの式別の成績を、トータル成績カードと同じ「上に回収率(大)・下に的中率(小)」の
+    縦並びで返す（内訳テーブルの1セル分）
+    """
+    return f"""<div class="cell-stat">
+    <div class="cell-stat-primary">
+      {return_rate_big_html(performance['return_rate'])}
+      <span class="cell-stat-primary-label">回収率</span>
+      <div class="cell-stat-primary-gauge">{return_rate_gauge_html(performance['return_rate'])}</div>
+    </div>
+    <div class="cell-stat-secondary">
+      <span class="cell-stat-secondary-label">的中率</span>
+      {hit_rate_gauge_html(performance['hit_rate'])}
+    </div>
   </div>"""
 
 
 def _breakdown_table_html(breakdown, value_label, title=None):
+    """クラス別・馬場別・年度別等、行数の多い内訳を表で表示する
+
+    各式別のセルは、トータル成績カードと同じ「上に回収率(大)・下に的中率(小)」の
+    縦並びにし、内訳テーブルでもカードと同じ主従関係を一目で分かるようにする。
+    """
     if not breakdown:
         body = "<p>対象データがありません。</p>"
     else:
-        header_cells = "".join(
-            f"<th>{label}的中率</th><th>{label}回収率</th>" for label in BET_TYPE_LABELS.values()
-        )
+        header_cells = "".join(f"<th>{label}</th>" for label in BET_TYPE_LABELS.values())
         rows = "".join(
             f"<tr><td>{item['value']}</td>"
-            + "".join(
-                f"<td>{hit_rate_gauge_html(item['performance'][bt]['hit_rate'])}</td>"
-                f"<td>{return_rate_gauge_html(item['performance'][bt]['return_rate'])}</td>"
-                for bt in BET_TYPE_LABELS
-            )
+            + "".join(f"<td>{_bet_stat_cell_html(item['performance'][bt])}</td>" for bt in BET_TYPE_LABELS)
             + f"<td>{item['performance']['win']['n']}</td></tr>\n"
             for item in breakdown
         )
@@ -72,20 +99,55 @@ def _breakdown_table_html(breakdown, value_label, title=None):
     return f"{heading}{body}"
 
 
+def _short_trend_label(value):
+    """週開始日（YYYY-MM-DD）は年を省いた "M/D" 表記に短縮する
+
+    推移グラフの横軸は点ごとに表示するため、年を含めた長い日付だと重なって
+    見づらくなる。年度別breakdownの値（西暦の年）はそのまま文字列化して返す。
+    """
+    try:
+        parsed = datetime.strptime(str(value), "%Y-%m-%d")
+    except ValueError:
+        return str(value)
+    return f"{parsed.month}/{parsed.day}"
+
+
+def _trend_html(chronological_breakdown):
+    """古い→新しい順のbreakdownリストから、単勝・複勝の的中率・回収率の推移を
+    1つの折れ線グラフ（左軸=的中率、右軸=回収率）で返す。2点未満（折れ線が
+    描けない）の場合は空文字列。
+    """
+    if len(chronological_breakdown) < 2:
+        return ""
+    labels = [_short_trend_label(item["value"]) for item in chronological_breakdown]
+    items = "".join(
+        f"""<div class="trend-item">
+    <div class="trend-item-label">{BET_TYPE_LABELS[bet_type]} 的中率・回収率の推移</div>
+    {hit_return_trend_svg(
+            labels,
+            [item["performance"][bet_type]["hit_rate"] for item in chronological_breakdown],
+            [item["performance"][bet_type]["return_rate"] for item in chronological_breakdown],
+        )}
+  </div>"""
+        for bet_type in ("win", "place")
+    )
+    return f"""<div class="trend-section">
+  {items}
+</div>"""
+
+
 def _year_trend_html(by_year):
     """年度別成績（新しい順のbreakdownリスト）から、単勝の的中率・回収率の
-    年次トレンドをスパークラインで返す。2年未満（折れ線が描けない）の場合は空文字列。
+    年次トレンドをスパークラインで返す。
     """
-    if len(by_year) < 2:
-        return ""
-    chronological = list(reversed(by_year))
-    years = [item["value"] for item in chronological]
-    hit_rates = [item["performance"]["win"]["hit_rate"] for item in chronological]
-    return_rates = [item["performance"]["win"]["return_rate"] for item in chronological]
-    return f"""<div class="trend-section">
-  <p class="trend-label">単勝的中率の推移 {sparkline_svg(hit_rates, years)}</p>
-  <p class="trend-label">単勝回収率の推移 {sparkline_svg(return_rates, years)}</p>
-</div>"""
+    return _trend_html(list(reversed(by_year)))
+
+
+def _week_trend_html(by_week):
+    """週別成績（古い→新しい順のbreakdownリスト、group_breakdown_by_weekの戻り値）から、
+    単勝の的中率・回収率の週次トレンドをスパークラインで返す。
+    """
+    return _trend_html(by_week)
 
 
 def _cross_filter_panel_html(ground_state, class_value, performance):
@@ -145,7 +207,9 @@ def make_ai_performance_index_page():
     this_year = date.today().year
 
     total_performance = m.aggregate(df)
-    this_year_performance = m.aggregate(m.filter_by_year(df, this_year))
+    this_year_df = m.filter_by_year(df, this_year)
+    this_year_performance = m.aggregate(this_year_df)
+    this_year_week_trend = _week_trend_html(m.group_breakdown_by_week(this_year_df))
 
     years = sorted({int(year) for year in df["year"]}) if not df.empty else []
     if years:
@@ -182,6 +246,9 @@ def make_ai_performance_index_page():
   {_performance_table_html(total_performance, title="トータル成績")}
   {_performance_table_html(this_year_performance, title=f"{this_year}年の成績")}
 
+  <h2>今年の成績の推移</h2>
+  {this_year_week_trend}
+
   <h2>年間成績</h2>
   {trend_section}
   {annual_section}
@@ -209,9 +276,17 @@ def make_all_annual_performance_pages():
 
 
 def make_annual_performance_page(year, df=None):
-    """年間成績ページ（public_html/performance/annual/{year}.html）を生成する"""
+    """年間成績ページ（public_html/performance/annual/{year}.html）を生成する
+
+    年間トータルの成績に加え、開催週ごとの的中率・回収率のトレンド（スパークライン）と
+    内訳テーブルを表示し、年間の中での傾向・推移が分かるようにする。
+    """
     df = df if df is not None else m.get_ai_performance_dataset()
-    performance = m.aggregate(m.filter_by_year(df, year))
+    year_df = m.filter_by_year(df, year)
+    performance = m.aggregate(year_df)
+    week_breakdown = m.group_breakdown_by_week(year_df)
+    week_trend = _week_trend_html(week_breakdown)
+    week_table = _breakdown_table_html(list(reversed(week_breakdown)), "週(開始日)", title="開催週別成績")
 
     years = sorted({int(y) for y in df["year"]}, reverse=True) if not df.empty else []
     sidebar = sidebar_html(
@@ -235,6 +310,11 @@ def make_annual_performance_page(year, df=None):
   <main class="page-content">
   <h1>{year}年 AI予想成績</h1>
   {_performance_table_html(performance)}
+
+  <h2>開催週別の傾向・推移</h2>
+  {week_trend}
+  {week_table}
+
   <p><a href="../index.html">&larr; AI成績トップへ</a></p>
   </main>
   {sidebar}
@@ -286,7 +366,13 @@ def make_course_performance_index_page(place_id, df=None):
 
     place_df = m.filter_by_place(df, place_id)
     total_performance = m.aggregate(place_df)
-    this_year_performance = m.aggregate(m.filter_by_year(place_df, this_year))
+    this_year_df = m.filter_by_year(place_df, this_year)
+    this_year_performance = m.aggregate(this_year_df)
+    this_year_week_breakdown = m.group_breakdown_by_week(this_year_df)
+    this_year_week_trend = _week_trend_html(this_year_week_breakdown)
+    this_year_week_table = _breakdown_table_html(
+        list(reversed(this_year_week_breakdown)), "週(開始日)", title="開催週別成績",
+    )
     by_year = sorted(m.group_breakdown(place_df, "year"), key=lambda item: item["value"], reverse=True)
     by_class = m.group_breakdown(place_df, "class")
     by_race_type = m.group_breakdown(place_df, "race_type")
@@ -335,6 +421,9 @@ def make_course_performance_index_page(place_id, df=None):
     <div class="section-panel" data-section="overview">
       {_performance_table_html(total_performance, title="トータル成績")}
       {_performance_table_html(this_year_performance, title=f"{this_year}年の成績")}
+      <h4>直近の開催週別の傾向・推移</h4>
+      {this_year_week_trend}
+      {this_year_week_table}
     </div>
 
     <div class="section-panel" data-section="breakdown" hidden>

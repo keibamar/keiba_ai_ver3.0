@@ -179,6 +179,147 @@ td a:hover {
   font-size: 0.9em;
 }
 
+/* --- 式別ごとの回収率(主)・的中率(副)カード（AI成績ページ） --- */
+/* 回収率を主役にして大きく、的中率は脇役として小さく添える。 */
+
+.bet-stat-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 12px 0;
+}
+
+.bet-stat-card {
+  flex: 1 1 160px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: #fff;
+  text-align: center;
+}
+
+.bet-stat-label {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.bet-stat-primary {
+  margin-bottom: 8px;
+}
+
+.rate-big {
+  font-size: 1.9em;
+  font-weight: bold;
+  line-height: 1.1;
+}
+
+.bet-stat-primary-label {
+  display: block;
+  font-size: 0.75em;
+  color: #888;
+}
+
+.bet-stat-primary-gauge {
+  margin-top: 6px;
+  display: flex;
+  justify-content: center;
+}
+
+.bet-stat-primary-gauge .rate-gauge {
+  width: 100%;
+  max-width: 160px;
+}
+
+.bet-stat-primary-gauge .gauge-track {
+  height: 18px;
+}
+
+.bet-stat-primary-gauge .gauge-value {
+  /* 数値は上の大きな数字（.rate-big）で既に表示しているため、ここでは重複させない */
+  display: none;
+}
+
+.bet-stat-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.85em;
+  color: #666;
+}
+
+.bet-stat-secondary .rate-gauge {
+  min-width: 0;
+}
+
+.bet-stat-n {
+  margin-top: 8px;
+  font-size: 0.8em;
+  color: #888;
+}
+
+/* --- 内訳テーブルの式別セル（_breakdown_table_html／_bet_stat_cell_html） --- */
+/* 概要カード（.bet-stat-card）と同じ「上に回収率(大)・下に的中率(小)」の縦並びを
+   1セルの中で再現し、内訳テーブルでもカードと同じ主従関係を一目で分かるようにする。 */
+
+.cell-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.cell-stat-primary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.cell-stat-primary .rate-big {
+  font-size: 1.15em;
+}
+
+.cell-stat-primary-label {
+  font-size: 0.7em;
+  color: #888;
+}
+
+.cell-stat-primary-gauge .rate-gauge {
+  width: 100%;
+  max-width: 90px;
+}
+
+.cell-stat-primary-gauge .gauge-track {
+  height: 10px;
+}
+
+.cell-stat-primary-gauge .gauge-value {
+  /* 数値は.rate-bigで既に表示しているため、ここでは重複させない */
+  display: none;
+}
+
+.cell-stat-secondary {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8em;
+  color: #888;
+  border-top: 1px dashed #ddd;
+  padding-top: 4px;
+  width: 100%;
+  justify-content: center;
+}
+
+.cell-stat-secondary .rate-gauge {
+  min-width: 0;
+}
+
+.cell-stat-secondary .gauge-value {
+  font-size: 0.85em;
+  color: #888;
+}
+
 /* --- 的中/不的中バッジ --- */
 
 .hit-badge {
@@ -648,24 +789,77 @@ details.breakdown summary:hover {
   margin-top: 0;
 }
 
-/* --- 年度別トレンドのスパークライン（sparkline_html.py） --- */
+/* --- 年度別/週別トレンドの折れ線グラフ（sparkline_html.py） --- */
+/* 的中率（左軸・青）と回収率（右軸・損益分岐点100%で色分け）を1つのグラフに重ねて
+   表示し、何を表しているグラフかキャプション付きのカードで明示する。横軸の日付/年度は
+   グラフの脇に置かず、対応する点の真下にSVG内テキストとして配置する。 */
 
 .trend-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
   margin: 0 0 16px;
 }
 
-.sparkline-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  vertical-align: middle;
+.trend-item {
+  flex: 1 1 320px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #fff;
 }
 
-.sparkline-labels {
+.trend-item-label {
+  font-weight: bold;
+  font-size: 0.9em;
+  margin-bottom: 4px;
+  color: #444;
+}
+
+.trend-chart-wrap {
   display: flex;
-  flex-direction: column;
-  font-size: 0.85em;
-  color: #555;
+}
+
+.trend-chart {
+  width: 100%;
+  height: auto;
+}
+
+.trend-chart-breakeven {
+  stroke: #999;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.trend-chart-breakeven-label {
+  font-size: 8px;
+  fill: #999;
+}
+
+.trend-chart-axis-label {
+  font-size: 8px;
+  fill: #888;
+}
+
+.trend-chart-axis-hit {
+  fill: #aaa;
+}
+
+.trend-chart-axis-return {
+  fill: #888;
+}
+
+.trend-chart-legend-label {
+  font-size: 8px;
+  fill: #555;
+}
+
+.trend-chart-hit-line {
+  opacity: 0.8;
+}
+
+.trend-chart circle {
+  cursor: pointer;
 }
 
 /* --- 馬場×クラスのインタラクティブ絞り込み（cross-filter.js） --- */
