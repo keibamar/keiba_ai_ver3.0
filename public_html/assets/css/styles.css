@@ -171,6 +171,286 @@ td a:hover {
   background: #aaa;
 }
 
+/* --- 優位/不利/ねらい目バッジ（着度数・内訳表の「傾向」列） --- */
+
+.advantage-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.85em;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.advantage-badge.high {
+  background: #e6f4ea;
+  color: #1e7d34;
+  border: 1px solid #1e7d34;
+}
+
+.advantage-badge.low {
+  background: #fdeaea;
+  color: #c62828;
+  border: 1px solid #c62828;
+}
+
+/* --- 着度数の積み上げ横バーチャート（人気/枠番/馬番） --- */
+/* 行数の多い数表の代わりに、1着/2着/3着/着外の内訳を色分けした帯（合計100%）で
+   視覚化する。出走自体が無いランクは行を出さない。有利/不利のバッジは固定幅の枠
+   （.chakudo-badge-slot）に表示し、バッジの有無でバーの開始位置がズレないようにする。 */
+
+.chakudo-legend {
+  margin: 0 0 4px;
+  font-size: 0.85em;
+  color: #888;
+}
+
+.chakudo-chart {
+  margin: 12px 0;
+}
+
+.chakudo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 0.95em;
+}
+
+.chakudo-row .chakudo-label {
+  width: 28px;
+  flex-shrink: 0;
+  text-align: right;
+  color: #555;
+  font-weight: bold;
+}
+
+.chakudo-row .chakudo-badge-slot {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.chakudo-row .chakudo-bar-track {
+  display: flex;
+  flex: 1;
+  min-width: 160px;
+  height: 28px;
+  border-radius: 4px;
+  background: #eee;
+  /* overflow:hiddenにすると子要素のカスタムツールチップまで切り取られてしまうため、
+     角丸は各セグメントの最初/最後の要素側だけに付ける */
+}
+
+.chakudo-segment:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.chakudo-segment:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.chakudo-segment {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #fff;
+  font-size: 0.9em;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* ネイティブのtitle属性のツールチップは小さく見づらいため、
+   大きく読みやすいカスタムツールチップをCSSのみで表示する */
+.chakudo-segment .chakudo-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 130%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 1.05em;
+  font-weight: normal;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.chakudo-segment:hover .chakudo-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.chakudo-segment.seg-1st {
+  background: #1565c0;
+}
+
+.chakudo-segment.seg-2nd {
+  background: #42a5f5;
+}
+
+.chakudo-segment.seg-3rd {
+  background: #90caf9;
+  color: #2a2a2a;
+}
+
+.chakudo-segment.seg-out {
+  background: #e0e0e0;
+  color: #555;
+}
+
+.chakudo-row .chakudo-value {
+  width: 72px;
+  flex-shrink: 0;
+  text-align: right;
+  color: #333;
+  font-size: 0.9em;
+}
+
+/* --- 表の視認性向上（横スクロール対応・ヘッダー固定・縞模様） --- */
+
+.table-wrap {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.table-wrap table {
+  margin-bottom: 0;
+}
+
+.table-wrap thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+table tbody tr:nth-child(even) {
+  background: #f7f9fb;
+}
+
+/* --- 列ソート可能な表（sortable-table.js） --- */
+
+table.sortable thead th {
+  cursor: pointer;
+  user-select: none;
+}
+
+table.sortable thead th:hover {
+  background: #e2e6ea;
+}
+
+table.sortable thead th.sort-asc::after {
+  content: " \25B2";
+}
+
+table.sortable thead th.sort-desc::after {
+  content: " \25BC";
+}
+
+/* --- 折りたたみセクション（年度別など行数の多い内訳） --- */
+
+details.breakdown {
+  margin: 8px 0 16px;
+}
+
+details.breakdown summary {
+  cursor: pointer;
+  font-weight: bold;
+  padding: 6px 0;
+}
+
+details.breakdown summary:hover {
+  color: #0044cc;
+}
+
+/* --- サイト共通ナビゲーション --- */
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #0044cc;
+}
+
+.site-nav a {
+  text-decoration: none;
+  color: #0044cc;
+  font-weight: bold;
+}
+
+.site-nav a:hover {
+  text-decoration: underline;
+}
+
+/* --- セクション分けカード型UI + セクション間タブナビゲーション（section-tabs.js） --- */
+/* 縦に長い「見出し→表→見出し→表」の羅列を避け、関連セクションをタブで切り替えて
+   見せる。タブの中身（.section-panel）はカード調の見た目にして視覚的にグループ化する。 */
+
+.tabbed-section {
+  margin: 16px 0 24px;
+}
+
+.section-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 2;
+  padding: 4px 0;
+}
+
+.section-tabs button {
+  border: 1px solid #ccd6e0;
+  background: #f4f6f8;
+  color: #444;
+  padding: 8px 16px;
+  border-radius: 8px 8px 0 0;
+  font-size: 0.95em;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.section-tabs button:hover {
+  background: #e9eef4;
+}
+
+.section-tabs button[aria-selected="true"] {
+  background: #fff;
+  color: #0044cc;
+  border-color: #0044cc;
+  border-bottom: 2px solid #fff;
+}
+
+.section-panel {
+  border: 1px solid #ccd6e0;
+  border-radius: 0 8px 8px 8px;
+  padding: 16px 20px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.section-panel > h3:first-child {
+  margin-top: 0;
+}
+
+/* --- カード型のセクション見出し階層調整（.card内のh3/h4が詰まって見えないように） --- */
+
+.card h4 {
+  margin-bottom: 6px;
+}
+
 /* --- コース一覧（開催中/非開催で大小表示） --- */
 
 .course-tile-grid {

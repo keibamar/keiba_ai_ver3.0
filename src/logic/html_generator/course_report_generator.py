@@ -30,6 +30,7 @@ import pandas as pd
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import COURSE_LISTS
 from src.logic.calculators import ai_performance_calculator as calc
+from src.logic.html_generator.site_nav_html import site_nav_html
 from src.managers import html_manager, peds_results_dataset_manager, race_info_dataset_manager
 
 ANNUAL_START_YEAR = 2019
@@ -62,6 +63,19 @@ def _fmt_time(row, key="avg_time"):
     if row is None or key not in row.index:
         return "データなし"
     return _format_time(row[key])
+
+
+def _raw_float(row, key):
+    """rowからkeyの値を生のfloatとして取り出す（欠損・変換不可ならNone）"""
+    if row is None or key not in row.index:
+        return None
+    value = row[key]
+    if value is None or value == "" or (isinstance(value, float) and value != value):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _filter_rows(df, race_type, course_len, ground_state=None, class_name=None):
@@ -172,6 +186,7 @@ def _breakdown_row(place_id, race_type, course_len, value_label, ground_state, c
         "avg_frame": _fmt(frame_row, "avg_frame"),
         "avg_horse": _fmt(frame_row, "avg_horse"),
         "win_return": _fmt(return_row, "win_return", "円"),
+        "win_return_raw": _raw_float(return_row, "win_return"),
     }
 
 
@@ -267,30 +282,74 @@ def build_year_passage_breakdown(place_id, race_type, course_len, start_year=ANN
     return rows
 
 
-def _passage_breakdown_table_html(rows, value_label, title):
+PASSAGE_KEYS = ["passage1", "passage2", "passage3", "passage4"]
+PASSAGE_LABELS = {"passage1": "通過1", "passage2": "通過2", "passage3": "通過3", "passage4": "通過4"}
+
+
+def available_passage_keys(place_id, race_type, course_len):
+    """そのコースで実際に通過データが存在する列（通過1〜4のうち）を返す
+
+    コースの距離によって通過のタイミング計測ポイント数が異なり（例: 短距離は
+    通過1・2のみ）、無いものは表に列ごと出さない（「データなし」で埋めない）。
+    全体（馬場=全・クラス=all）の行を基準に、その列が一度も記録されていなければ
+    そのコースには存在しない通過ポイントと判断する。
+    """
+    row = _filter_overall_row_by(
+        race_info_dataset_manager.get_total_winner_time_csv(place_id), race_type, course_len, "全", "all"
+    )
+    if row is None:
+        return PASSAGE_KEYS
+
+    keys = []
+    for i, key in enumerate(PASSAGE_KEYS, start=1):
+        value = row.get(f"通過{i}")
+        if value is not None and value == value and str(value).strip() != "":
+            keys.append(key)
+    return keys
+
+
+def _passage_breakdown_table_html(rows, value_label, title, passage_keys=PASSAGE_KEYS):
     if not rows:
         body = "<p>対象データがありません。</p>"
     else:
+        header_cells = "".join(f"<th>{PASSAGE_LABELS[key]}</th>" for key in passage_keys)
         trs = "".join(
-            f"<tr><td>{r['value']}</td><td>{r['agari']}</td><td>{r['passage1']}</td>"
-            f"<td>{r['passage2']}</td><td>{r['passage3']}</td><td>{r['passage4']}</td></tr>\n"
+            f"<tr><td>{r['value']}</td><td>{r['agari']}</td>"
+            + "".join(f"<td>{r[key]}</td>" for key in passage_keys)
+            + "</tr>\n"
             for r in rows
         )
-        body = f"""<table>
-    <thead><tr><th>{value_label}</th><th>上り(勝ち馬)</th><th>通過1</th><th>通過2</th><th>通過3</th><th>通過4</th></tr></thead>
+        body = f"""<div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>{value_label}</th><th>上り(勝ち馬)</th>{header_cells}</tr></thead>
     <tbody>
       {trs}
     </tbody>
-  </table>"""
+  </table>
+  </div>"""
     return f"<h3>{title}</h3>\n  {body}"
 
 
 ADVANTAGE_THRESHOLD_POINTS = 8.0  # 複勝率(着内率)が平均よりこの値(%pt)以上離れていたら有利/不利と判定する
 
 
-def _chakudo_rows(df, race_type, course_len, rank_column, rank_range):
-    """rank_range分の着度数（1着/2着/3着/着外・着内率）の行を返す（データなしは0で埋める）"""
-    sub = df[(df["race_type"] == race_type) & (df["course_len"].astype(str) == str(course_len))] if not df.empty else df
+def _chakudo_rows(df, race_type, course_len, rank_column, rank_range, ground_state="全", class_name="all"):
+    """rank_range分の着度数（1着/2着/3着/着外・着内率）の行を返す（データなしは0で埋める）
+
+    着度数CSVはrace_type/course_len/ground_state/classの組み合わせごとに行を持つため、
+    既定（ground_state="全", class="all"）では全体の集計を、クラス別・馬場別の内訳を
+    見たい場合はground_state/class_nameを指定して絞り込む。
+    """
+    sub = (
+        df[
+            (df["race_type"] == race_type)
+            & (df["course_len"].astype(str) == str(course_len))
+            & (df["ground_state"] == ground_state)
+            & (df["class"] == class_name)
+        ]
+        if not df.empty
+        else df
+    )
     rows_by_rank = {str(row[rank_column]): row for _, row in sub.iterrows()} if not sub.empty else {}
 
     result = []
@@ -305,78 +364,199 @@ def _chakudo_rows(df, race_type, course_len, rank_column, rank_range):
     return result
 
 
-def _label_advantage(rows, exclude_ranks=(), high_label="◎ 有利", low_label="▲ 不利"):
-    """着内率(top3_rate)が他より明確に高い/低いランクに有利/不利のラベルを付ける
+def _advantage_labels(items, exclude=(), high_label="◎ 有利", low_label="▲ 不利", threshold=ADVANTAGE_THRESHOLD_POINTS):
+    """(id, value)のリストから、有利/不利のラベルをidごとに算出する（共通ロジック）
 
-    対象（exclude_ranksを除く、出走実績のあるランク）の平均着内率からの差が
-    ADVANTAGE_THRESHOLD_POINTS以上の場合のみラベルを付ける。差が小さい（フラットな）
-    場合や対象が1件以下の場合は何も付けない。low_labelを空文字にすると不利側は
-    付けない（人気データのように「人気が低いほど不利なのは当然」で不要な場合）。
+    対象（valueがNoneでなくexcludeに含まれないid）の平均からの差がthreshold以上の
+    場合のみラベルを付ける。差が小さい（フラットな）場合や対象が1件以下の場合は
+    何も付けない。low_labelを空文字にすると不利側のラベルは付けない（人気データのように
+    「人気が低いほど不利なのは当然」で不要な場合）。
+
+    Returns:
+        dict[Any, tuple[str, str]]: {id: (note_text, note_kind)}（note_kindは"high"/"low"/""）
     """
-    candidates = [r for r in rows if r["total"] > 0 and r["rank"] not in exclude_ranks]
+    candidates = [(i, v) for i, v in items if v is not None and i not in exclude]
     if len(candidates) < 2:
-        for r in rows:
-            r["note"] = ""
-        return rows
+        return {i: ("", "") for i, _ in items}
 
-    avg = sum(r["top3_rate"] for r in candidates) / len(candidates)
-    for r in rows:
-        if r["total"] == 0 or r["rank"] in exclude_ranks:
-            r["note"] = ""
+    avg = sum(v for _, v in candidates) / len(candidates)
+    labels = {}
+    for i, v in items:
+        if v is None or i in exclude:
+            labels[i] = ("", "")
             continue
-        diff = r["top3_rate"] - avg
-        if diff >= ADVANTAGE_THRESHOLD_POINTS:
-            r["note"] = high_label
-        elif low_label and diff <= -ADVANTAGE_THRESHOLD_POINTS:
-            r["note"] = low_label
+        diff = v - avg
+        if diff >= threshold:
+            labels[i] = (high_label, "high")
+        elif low_label and diff <= -threshold:
+            labels[i] = (low_label, "low")
         else:
-            r["note"] = ""
+            labels[i] = ("", "")
+    return labels
+
+
+def _label_advantage(rows, exclude_ranks=(), high_label="◎ 有利", low_label="▲ 不利"):
+    """着度数の各行（rank/total/top3_rate）に有利/不利のラベル（note_text/note_kind）を付与する"""
+    items = [(r["rank"], r["top3_rate"] if r["total"] > 0 else None) for r in rows]
+    labels = _advantage_labels(items, exclude=exclude_ranks, high_label=high_label, low_label=low_label)
+    for r in rows:
+        r["note_text"], r["note_kind"] = labels[r["rank"]]
     return rows
 
 
-def _chakudo_table_html(df, race_type, course_len, rank_column, rank_range, title, exclude_ranks=(), high_label="◎ 有利", low_label="▲ 不利"):
-    """人気別・枠番別・馬番別の着度数（1着/2着/3着/着外）をテーブルHTMLにする
+def _advantage_badge_html(note_text, note_kind):
+    """有利/不利のラベルを色付きバッジHTMLにする（ラベルが無ければ空文字）"""
+    if not note_text:
+        return ""
+    return f'<span class="advantage-badge {note_kind}">{note_text}</span>'
 
-    rank_range（人気順位/枠番/馬番の番号）は省略せず全件表示する。着内率が他より
-    明確に高い/低いランクには「傾向」列に有利/不利（または任意のラベル）を表示し、
-    差が小さい（フラットな）場合は何も表示しない。
+
+CHAKUDO_SEGMENT_LABELS = ["1着", "2着", "3着", "着外"]
+CHAKUDO_SEGMENT_CLASSES = {"1着": "seg-1st", "2着": "seg-2nd", "3着": "seg-3rd", "着外": "seg-out"}
+
+
+def _chakudo_chart_html(df, race_type, course_len, rank_column, rank_range, title, exclude_ranks=(), high_label="◎ 有利", low_label="▲ 不利", show_advantage=True, ground_state="全", class_name="all", heading_level="h3"):
+    """人気別・枠番別・馬番別の着度数を、1着/2着/3着/着外の積み上げ横バーチャートで表示する
+
+    各ランクの全出走数を100%として、1着/2着/3着/着外の内訳を色分けした帯で示す
+    （単一の％バーよりも結果の分布がひと目で分かる）。帯が細い場合も件数は省略せず
+    表示する（マウスホバーのツールチップでは割合・2着・3着は1着からの累積割合も
+    確認できる）。出走自体が無いランクは行ごと表示しない（「データなし」とは書かない）。
+
+    有利/不利のバッジは固定幅の枠（.chakudo-badge-slot）に入れ、バッジの有無に
+    関わらずバーの開始位置が行ごとにズレないようにする。show_advantage=Trueの
+    ときのみ、着内率が他より明確に高い/低いランクにバッジを付ける（人気データは
+    「人気が高いほど強いのは当然」で意味が薄いため、呼び出し側でshow_advantage=False
+    にして無効化する）。ground_state/class_nameを指定すると、その条件のみに
+    絞り込んだ内訳（クラス別・馬場別の個別チャート）を描ける。
     """
     if df.empty:
-        return f"<h3>{title}</h3>\n  <p>対象データがありません。</p>"
+        return f"<{heading_level}>{title}</{heading_level}>\n  <p>対象データがありません。</p>"
 
-    rows = _chakudo_rows(df, race_type, course_len, rank_column, rank_range)
-    rows = _label_advantage(rows, exclude_ranks=exclude_ranks, high_label=high_label, low_label=low_label)
+    rows = [
+        r for r in _chakudo_rows(df, race_type, course_len, rank_column, rank_range, ground_state=ground_state, class_name=class_name)
+        if r["total"] > 0
+    ]
+    if not rows:
+        return f"<{heading_level}>{title}</{heading_level}>\n  <p>対象データがありません。</p>"
 
-    trs = "".join(
-        f"<tr><td>{r['rank']}</td><td>{r['1着']}</td><td>{r['2着']}</td>"
-        f"<td>{r['3着']}</td><td>{r['着外']}</td><td>{r['note']}</td></tr>\n"
-        for r in rows
+    if show_advantage:
+        rows = _label_advantage(rows, exclude_ranks=exclude_ranks, high_label=high_label, low_label=low_label)
+    else:
+        for r in rows:
+            r["note_text"], r["note_kind"] = "", ""
+
+    bar_rows = ""
+    for r in rows:
+        segments = ""
+        cumulative = 0.0
+        for label in CHAKUDO_SEGMENT_LABELS:
+            count = r[label]
+            width = count / r["total"] * 100
+            cumulative += width
+            if label in ("2着", "3着"):
+                tooltip = f"{label}: {width:.1f}%（累積{cumulative:.1f}%）"
+            else:
+                tooltip = f"{label}: {width:.1f}%"
+            segments += (
+                f'<span class="chakudo-segment {CHAKUDO_SEGMENT_CLASSES[label]}" '
+                f'style="width: {width:.2f}%">{count}'
+                f'<span class="chakudo-tooltip">{tooltip}</span></span>'
+            )
+        badge = _advantage_badge_html(r["note_text"], r["note_kind"])
+        bar_rows += f"""<div class="chakudo-row">
+      <span class="chakudo-label">{r['rank']}</span>
+      <span class="chakudo-badge-slot">{badge}</span>
+      <span class="chakudo-bar-track">{segments}</span>
+      <span class="chakudo-value">n={r['total']}</span>
+    </div>\n"""
+
+    return f"""<{heading_level}>{title}</{heading_level}>
+  <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+  <div class="chakudo-chart">
+{bar_rows}  </div>"""
+
+
+def _available_chakudo_classes(df, race_type, course_len):
+    """着度数CSVから、そのコースで実際に存在するクラス（"all"を除く）を返す"""
+    if df.empty:
+        return []
+    sub = df[
+        (df["race_type"] == race_type) & (df["course_len"].astype(str) == str(course_len)) & (df["ground_state"] == "全")
+    ]
+    return [c for c in sub["class"].unique() if c != "all"]
+
+
+def _available_chakudo_ground_states(df, race_type, course_len):
+    """着度数CSVから、そのコースで実際に存在する馬場状態（"全"を除く）を良→稍重→重→不良の順で返す"""
+    if df.empty:
+        return []
+    sub = df[
+        (df["race_type"] == race_type) & (df["course_len"].astype(str) == str(course_len)) & (df["class"] == "all")
+    ]
+    found = set(sub["ground_state"].unique())
+    return [g for g in GROUND_STATE_ORDER if g in found]
+
+
+def _chakudo_class_breakdown_html(df, race_type, course_len, rank_column, rank_range, exclude_ranks=(), high_label="◎ 有利", low_label="▲ 不利", show_advantage=True):
+    """クラスごとの着度数チャートを連結して返す（h4見出し、馬場状態は全体「全」で固定）"""
+    classes = _available_chakudo_classes(df, race_type, course_len)
+    if not classes:
+        return "<p>対象データがありません。</p>"
+    return "\n  ".join(
+        _chakudo_chart_html(
+            df, race_type, course_len, rank_column, rank_range, class_name,
+            exclude_ranks=exclude_ranks, high_label=high_label, low_label=low_label, show_advantage=show_advantage,
+            ground_state="全", class_name=class_name, heading_level="h4",
+        )
+        for class_name in classes
     )
 
-    return f"""<h3>{title}</h3>
-  <table>
-    <thead><tr><th>順位/番号</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>傾向</th></tr></thead>
-    <tbody>
-      {trs}
-    </tbody>
-  </table>"""
+
+def _chakudo_ground_state_breakdown_html(df, race_type, course_len, rank_column, rank_range, exclude_ranks=(), high_label="◎ 有利", low_label="▲ 不利", show_advantage=True):
+    """馬場状態ごとの着度数チャートを連結して返す（h4見出し、クラスは全体「all」で固定、良→稍重→重→不良の順）"""
+    ground_states = _available_chakudo_ground_states(df, race_type, course_len)
+    if not ground_states:
+        return "<p>対象データがありません。</p>"
+    return "\n  ".join(
+        _chakudo_chart_html(
+            df, race_type, course_len, rank_column, rank_range, ground_state,
+            exclude_ranks=exclude_ranks, high_label=high_label, low_label=low_label, show_advantage=show_advantage,
+            ground_state=ground_state, class_name="all", heading_level="h4",
+        )
+        for ground_state in ground_states
+    )
 
 
 def _breakdown_table_html(rows, value_label, title):
+    """クラス別・馬場別・年度別の内訳表（平均タイム/人気/体重/枠番/配当）をHTMLにする
+
+    平均配当（win_return_raw）が他の行より明確に高い/低い行には「傾向」列に
+    色付きバッジで注目（高配当）/堅め（低配当）を表示する（差が小さければ何も表示しない）。
+    """
     if not rows:
         body = "<p>対象データがありません。</p>"
     else:
+        # 平均配当は円単位（数百〜数千円）で、的中率等とは値のスケールが異なるため、
+        # ADVANTAGE_THRESHOLD_POINTS（%pt用）ではなくここでは円単位の固定閾値を使う
+        labels = _advantage_labels(
+            [(r["value"], r["win_return_raw"]) for r in rows],
+            high_label="◎ 注目（高配当）", low_label="▲ 堅め（低配当）", threshold=100.0,
+        )
         trs = "".join(
             f"<tr><td>{r['value']}</td><td>{r['avg_time']}</td><td>{r['avg_pop']}</td>"
-            f"<td>{r['weight']}</td><td>{r['avg_frame']}</td><td>{r['avg_horse']}</td><td>{r['win_return']}</td></tr>\n"
+            f"<td>{r['weight']}</td><td>{r['avg_frame']}</td><td>{r['avg_horse']}</td><td>{r['win_return']}</td>"
+            f"<td>{_advantage_badge_html(*labels[r['value']])}</td></tr>\n"
             for r in rows
         )
-        body = f"""<table>
-    <thead><tr><th>{value_label}</th><th>平均勝ち時計</th><th>平均人気</th><th>勝ち馬平均体重</th><th>平均枠番</th><th>平均馬番</th><th>平均配当(単勝)</th></tr></thead>
+        body = f"""<div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>{value_label}</th><th>平均勝ち時計</th><th>平均人気</th><th>勝ち馬平均体重</th><th>平均枠番</th><th>平均馬番</th><th>平均配当(単勝)</th><th>傾向</th></tr></thead>
     <tbody>
       {trs}
     </tbody>
-  </table>"""
+  </table>
+  </div>"""
     return f"<h3>{title}</h3>\n  {body}"
 
 
@@ -390,12 +570,14 @@ def _peds_table_html(peds_df, title, heading_level="h3", top_n=10):
             for _, row in peds_df.head(top_n).iterrows()
         )
     return f"""<{heading_level}>{title}</{heading_level}>
-  <table>
+  <div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>血統(父)</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th></tr></thead>
     <tbody>
       {rows}
     </tbody>
-  </table>"""
+  </table>
+  </div>"""
 
 
 def build_peds_class_breakdown(peds_df, top_n=5):
@@ -418,6 +600,28 @@ def build_peds_class_breakdown(peds_df, top_n=5):
         sub = sub.sort_values("1着", ascending=False).head(top_n)
         if not sub.empty:
             result.append({"class": class_name, "peds_df": sub})
+    return result
+
+
+def build_peds_ground_state_breakdown(place_id, race_type, course_len, top_n=5):
+    """このコースの血統別成績を馬場別（"all"クラスのみ）上位top_n件で返す（良→稍重→重→不良の順）
+
+    Total/{race_type}_{course_len}m_{ground_state}.csv は馬場状態ごとに個別のファイルとして
+    既に集計済みのため、新しい統計ロジックは追加せずそれぞれ読み取るのみ。
+    """
+    result = []
+    for ground_state in GROUND_STATE_ORDER:
+        df = peds_results_dataset_manager.get_total_peds_results_csv(place_id, race_type, course_len, ground_state)
+        if df.empty or "クラス" not in df.columns:
+            continue
+        sub = df[df["クラス"] == "all"].copy()
+        if sub.empty:
+            continue
+        for col in ["1着", "2着", "3着", "着外"]:
+            sub[col] = pd.to_numeric(sub[col], errors="coerce").fillna(0)
+        sub = sub.sort_values("1着", ascending=False).head(top_n)
+        if not sub.empty:
+            result.append({"ground_state": ground_state, "peds_df": sub})
     return result
 
 
@@ -498,26 +702,41 @@ def course_report_to_html(report):
     class_passage_breakdown = build_class_passage_breakdown(place_id, race_type, course_len)
     ground_state_passage_breakdown = build_ground_state_passage_breakdown(place_id, race_type, course_len)
     year_passage_breakdown = build_year_passage_breakdown(place_id, race_type, course_len)
+    passage_keys = available_passage_keys(place_id, race_type, course_len)
 
-    pop_chakudo_table = _chakudo_table_html(
-        race_info_dataset_manager.get_total_pop_chakudo_csv(place_id),
-        race_type, course_len, "人気", range(1, 19), "人気データ（人気別着度数、全体）",
-        # 1〜3番人気が強いのは当然のため評価対象から除外し、それ以外で着内率が
-        # 目立って高いランクのみ「ねらい目」として示す（人気が低いほど不利、は表示しない）
-        exclude_ranks={1, 2, 3}, high_label="★ ねらい目", low_label="",
+    pop_chakudo_df = race_info_dataset_manager.get_total_pop_chakudo_csv(place_id)
+    frame_chakudo_df = race_info_dataset_manager.get_total_frame_chakudo_csv(place_id)
+    horse_chakudo_df = race_info_dataset_manager.get_total_horse_chakudo_csv(place_id)
+
+    # 人気は「ねらい目」がだいたい3〜6番人気あたりに集中し、あまり意味のある
+    # 情報にならないため、有利/不利のバッジ付けは行わない（クラス別・馬場別も同様）
+    pop_chakudo_chart = _chakudo_chart_html(
+        pop_chakudo_df, race_type, course_len, "人気", range(1, 19), "人気データ（人気別着度数、全体）",
+        show_advantage=False,
     )
-    frame_chakudo_table = _chakudo_table_html(
-        race_info_dataset_manager.get_total_frame_chakudo_csv(place_id),
-        race_type, course_len, "枠番", range(1, 9), "枠順データ（枠番別着度数、全体）",
+    pop_chakudo_class_html = _chakudo_class_breakdown_html(
+        pop_chakudo_df, race_type, course_len, "人気", range(1, 19), show_advantage=False,
     )
-    horse_chakudo_table = _chakudo_table_html(
-        race_info_dataset_manager.get_total_horse_chakudo_csv(place_id),
-        race_type, course_len, "馬番", range(1, 19), "枠順データ（馬番別着度数、全体）",
+    pop_chakudo_ground_html = _chakudo_ground_state_breakdown_html(
+        pop_chakudo_df, race_type, course_len, "人気", range(1, 19), show_advantage=False,
     )
+
+    frame_chakudo_chart = _chakudo_chart_html(
+        frame_chakudo_df, race_type, course_len, "枠番", range(1, 9), "枠順データ（枠番別着度数、全体）",
+    )
+    frame_chakudo_class_html = _chakudo_class_breakdown_html(frame_chakudo_df, race_type, course_len, "枠番", range(1, 9))
+    frame_chakudo_ground_html = _chakudo_ground_state_breakdown_html(frame_chakudo_df, race_type, course_len, "枠番", range(1, 9))
+
+    horse_chakudo_chart = _chakudo_chart_html(
+        horse_chakudo_df, race_type, course_len, "馬番", range(1, 19), "枠順データ（馬番別着度数、全体）",
+    )
+    horse_chakudo_class_html = _chakudo_class_breakdown_html(horse_chakudo_df, race_type, course_len, "馬番", range(1, 19))
+    horse_chakudo_ground_html = _chakudo_ground_state_breakdown_html(horse_chakudo_df, race_type, course_len, "馬番", range(1, 19))
 
     peds_df = report["peds_df"]
     peds_total_df = peds_df[peds_df["クラス"] == "all"] if not peds_df.empty and "クラス" in peds_df.columns else peds_df
     peds_class_breakdown = build_peds_class_breakdown(peds_df)
+    peds_ground_state_breakdown = build_peds_ground_state_breakdown(place_id, race_type, course_len)
     peds_year_breakdown = build_peds_year_breakdown(place_id, race_type, course_len)
 
     return f"""
@@ -529,6 +748,7 @@ def course_report_to_html(report):
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 <body>
+  {site_nav_html(base_path="../../")}
   <p><a href="index.html">&larr; {place_name}のコース一覧へ</a></p>
   <h1>{place_name} {race_type}{course_len}m コース詳細</h1>
 
@@ -555,28 +775,77 @@ def course_report_to_html(report):
     </div>
   </div>
 
-  <h2>クラス別・馬場別・年度別データ</h2>
-  {_breakdown_table_html(class_breakdown, "クラス", "クラス別")}
-  {_breakdown_table_html(ground_state_breakdown, "馬場状態", "馬場別")}
-  {_breakdown_table_html(year_breakdown, "年度", "年度別")}
+  <div class="tabbed-section">
+    <div class="section-tabs">
+      <button data-target="breakdown" aria-selected="true">クラス別・馬場別・年度別</button>
+      <button data-target="passage" aria-selected="false">通過順</button>
+      <button data-target="chakudo" aria-selected="false">人気・枠順</button>
+      <button data-target="peds" aria-selected="false">血統別成績</button>
+    </div>
 
-  <h2>通過順（クラス別・馬場別・年度別）</h2>
-  {_passage_breakdown_table_html(class_passage_breakdown, "クラス", "クラス別")}
-  {_passage_breakdown_table_html(ground_state_passage_breakdown, "馬場状態", "馬場別")}
-  {_passage_breakdown_table_html(year_passage_breakdown, "年度", "年度別")}
+    <div class="section-panel" data-section="breakdown">
+      {_breakdown_table_html(class_breakdown, "クラス", "クラス別")}
+      {_breakdown_table_html(ground_state_breakdown, "馬場状態", "馬場別")}
+      <details class="breakdown">
+        <summary>年度別を表示</summary>
+        {_breakdown_table_html(year_breakdown, "年度", "年度別")}
+      </details>
+    </div>
 
-  <h2>人気・枠順データ</h2>
-  {pop_chakudo_table}
-  {frame_chakudo_table}
-  {horse_chakudo_table}
+    <div class="section-panel" data-section="passage" hidden>
+      {_passage_breakdown_table_html(class_passage_breakdown, "クラス", "クラス別", passage_keys)}
+      {_passage_breakdown_table_html(ground_state_passage_breakdown, "馬場状態", "馬場別", passage_keys)}
+      <details class="breakdown">
+        <summary>年度別を表示</summary>
+        {_passage_breakdown_table_html(year_passage_breakdown, "年度", "年度別", passage_keys)}
+      </details>
+    </div>
 
-  <h2>血統別成績</h2>
-  {_peds_table_html(peds_total_df, "TOTAL（上位10件）")}
-  {_peds_breakdown_html(peds_class_breakdown, "class", "クラス別")}
-  {_peds_breakdown_html(peds_year_breakdown, "year", "年度別")}
+    <div class="section-panel" data-section="chakudo" hidden>
+      {pop_chakudo_chart}
+      <details class="breakdown">
+        <summary>人気データ：クラス別を表示</summary>
+        {pop_chakudo_class_html}
+      </details>
+      <details class="breakdown">
+        <summary>人気データ：馬場別を表示</summary>
+        {pop_chakudo_ground_html}
+      </details>
+      {frame_chakudo_chart}
+      <details class="breakdown">
+        <summary>枠番データ：クラス別を表示</summary>
+        {frame_chakudo_class_html}
+      </details>
+      <details class="breakdown">
+        <summary>枠番データ：馬場別を表示</summary>
+        {frame_chakudo_ground_html}
+      </details>
+      {horse_chakudo_chart}
+      <details class="breakdown">
+        <summary>馬番データ：クラス別を表示</summary>
+        {horse_chakudo_class_html}
+      </details>
+      <details class="breakdown">
+        <summary>馬番データ：馬場別を表示</summary>
+        {horse_chakudo_ground_html}
+      </details>
+    </div>
+
+    <div class="section-panel" data-section="peds" hidden>
+      {_peds_table_html(peds_total_df, "TOTAL（上位10件）")}
+      {_peds_breakdown_html(peds_class_breakdown, "class", "クラス別")}
+      {_peds_breakdown_html(peds_ground_state_breakdown, "ground_state", "馬場別")}
+      <details class="breakdown">
+        <summary>年度別を表示</summary>
+        {_peds_breakdown_html(peds_year_breakdown, "year", "年度別")}
+      </details>
+    </div>
+  </div>
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../../index.html">&larr; HOMEへ戻る</a></p>
+  <script src="../../assets/js/sortable-table.js"></script>
+  <script src="../../assets/js/section-tabs.js"></script>
 </body>
 </html>
 """
@@ -616,6 +885,7 @@ def make_course_index_page():
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
 <body>
+  {site_nav_html(base_path="../")}
   <h1>コース詳細データ</h1>
 
   <h2>開催中の競馬場</h2>
@@ -673,20 +943,31 @@ def make_track_page(place_id):
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 <body>
+  {site_nav_html(base_path="../../")}
   <h1>{place_name} コース一覧</h1>
 
-  <table>
-    <thead><tr><th>コース</th><th>平均勝ち時計</th><th>平均人気</th></tr></thead>
-    <tbody>
-      {rows}
-    </tbody>
-  </table>
+  <div class="card-grid">
+    <div class="card" style="flex-basis: 100%;">
+      <h2>コース別データ</h2>
+      <div class="table-wrap">
+      <table class="sortable">
+        <thead><tr><th>コース</th><th>平均勝ち時計</th><th>平均人気</th></tr></thead>
+        <tbody>
+          {rows}
+        </tbody>
+      </table>
+      </div>
+    </div>
 
-  <h2>血統別成績（芝/ダート別）</h2>
-  {peds_sections}
+    <div class="card" style="flex-basis: 100%;">
+      <h2>血統別成績（芝/ダート別）</h2>
+      {peds_sections}
+    </div>
+  </div>
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/index.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../index.html">&larr; コース詳細データ一覧へ</a></p>
+  <script src="../../assets/js/sortable-table.js"></script>
 </body>
 </html>
 """

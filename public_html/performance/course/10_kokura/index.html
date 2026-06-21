@@ -7,10 +7,25 @@
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
 <body>
+  <nav class="site-nav">
+  <a href="../../../index.html">HOME</a>
+  <a href="../../../races/index.html">レースカレンダー</a>
+  <a href="../../../performance/index.html">AI成績</a>
+  <a href="../../../courses/index.html">コース詳細データ</a>
+</nav>
   <h1>小倉 AI予想成績</h1>
 
-  <h3>トータル成績</h3>
-  <table>
+  <div class="tabbed-section">
+    <div class="section-tabs">
+      <button data-target="overview" aria-selected="true">トータル/今年</button>
+      <button data-target="breakdown" aria-selected="false">クラス別・芝ダート別・馬場別</button>
+      <button data-target="year" aria-selected="false">年度別</button>
+    </div>
+
+    <div class="section-panel" data-section="overview">
+      <h3>トータル成績</h3>
+  <div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 11.5%; background: rgb(73,72,175);"></span></span><span class="gauge-value">11.5%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 37.8%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">75.6%</span></span></td><td>286</td></tr>
@@ -19,8 +34,10 @@
 
     </tbody>
   </table>
-  <h3>2026年の成績</h3>
-  <table>
+  </div>
+      <h3>2026年の成績</h3>
+  <div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 8.7%; background: rgb(63,73,185);"></span></span><span class="gauge-value">8.7%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 14.6%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">29.1%</span></span></td><td>126</td></tr>
@@ -29,17 +46,13 @@
 
     </tbody>
   </table>
-  <h3>年度別成績</h3>
-  <table>
-    <thead><tr><th>年度</th><th>単勝的中率</th><th>単勝回収率</th><th>複勝的中率</th><th>複勝回収率</th><th>三連複(5頭BOX)的中率</th><th>三連複(5頭BOX)回収率</th><th>対象レース数</th></tr></thead>
-    <tbody>
-      <tr><td>2026</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 8.7%; background: rgb(63,73,185);"></span></span><span class="gauge-value">8.7%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 14.6%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">29.1%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 28.6%; background: rgb(136,61,119);"></span></span><span class="gauge-value">28.6%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 62.9%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">125.8%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 8.7%; background: rgb(63,73,185);"></span></span><span class="gauge-value">8.7%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 55.6%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">111.2%</span></span></td><td>126</td></tr>
-<tr><td>2025</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 13.8%; background: rgb(81,70,168);"></span></span><span class="gauge-value">13.8%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 56.1%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">112.2%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 37.5%; background: rgb(168,55,89);"></span></span><span class="gauge-value">37.5%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 45.8%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">91.6%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 8.1%; background: rgb(61,74,187);"></span></span><span class="gauge-value">8.1%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 31.6%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">63.2%</span></span></td><td>160</td></tr>
+  </div>
+    </div>
 
-    </tbody>
-  </table>
-  <h3>クラス別成績</h3>
-  <table>
+    <div class="section-panel" data-section="breakdown" hidden>
+      <h3>クラス別成績</h3>
+  <div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>クラス</th><th>単勝的中率</th><th>単勝回収率</th><th>複勝的中率</th><th>複勝回収率</th><th>三連複(5頭BOX)的中率</th><th>三連複(5頭BOX)回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       <tr><td>1勝クラス</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 11.2%; background: rgb(72,72,177);"></span></span><span class="gauge-value">11.2%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 47.2%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">94.5%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 29.0%; background: rgb(137,60,117);"></span></span><span class="gauge-value">29.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 35.2%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">70.4%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 9.3%; background: rgb(65,73,183);"></span></span><span class="gauge-value">9.3%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 67.9%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">135.8%</span></span></td><td>107</td></tr>
@@ -51,8 +64,10 @@
 
     </tbody>
   </table>
-  <h3>芝/ダート別成績</h3>
-  <table>
+  </div>
+      <h3>芝/ダート別成績</h3>
+  <div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>芝/ダート</th><th>単勝的中率</th><th>単勝回収率</th><th>複勝的中率</th><th>複勝回収率</th><th>三連複(5頭BOX)的中率</th><th>三連複(5頭BOX)回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       <tr><td>ダート</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 18.5%; background: rgb(99,67,152);"></span></span><span class="gauge-value">18.5%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 81.4%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">162.8%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 42.6%; background: rgb(187,52,72);"></span></span><span class="gauge-value">42.6%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 47.6%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">95.2%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 13.9%; background: rgb(82,70,168);"></span></span><span class="gauge-value">13.9%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 51.4%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">102.9%</span></span></td><td>108</td></tr>
@@ -60,8 +75,10 @@
 
     </tbody>
   </table>
-  <h3>馬場別成績</h3>
-  <table>
+  </div>
+      <h3>馬場別成績</h3>
+  <div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>馬場状態</th><th>単勝的中率</th><th>単勝回収率</th><th>複勝的中率</th><th>複勝回収率</th><th>三連複(5頭BOX)的中率</th><th>三連複(5頭BOX)回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       <tr><td>不良</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 25.0%; background: rgb(122,63,130);"></span></span><span class="gauge-value">25.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 100.0%; background: #cc2222;"></span><span class="gauge-marker"></span></span><span class="gauge-value">263.0%</span></span></td><td>4</td></tr>
@@ -71,6 +88,23 @@
 
     </tbody>
   </table>
+  </div>
+    </div>
+
+    <div class="section-panel" data-section="year" hidden>
+      <h3>年度別成績</h3>
+  <div class="table-wrap">
+  <table class="sortable">
+    <thead><tr><th>年度</th><th>単勝的中率</th><th>単勝回収率</th><th>複勝的中率</th><th>複勝回収率</th><th>三連複(5頭BOX)的中率</th><th>三連複(5頭BOX)回収率</th><th>対象レース数</th></tr></thead>
+    <tbody>
+      <tr><td>2026</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 8.7%; background: rgb(63,73,185);"></span></span><span class="gauge-value">8.7%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 14.6%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">29.1%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 28.6%; background: rgb(136,61,119);"></span></span><span class="gauge-value">28.6%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 62.9%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">125.8%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 8.7%; background: rgb(63,73,185);"></span></span><span class="gauge-value">8.7%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 55.6%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">111.2%</span></span></td><td>126</td></tr>
+<tr><td>2025</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 13.8%; background: rgb(81,70,168);"></span></span><span class="gauge-value">13.8%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 56.1%; background: #e07b00;"></span><span class="gauge-marker"></span></span><span class="gauge-value">112.2%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 37.5%; background: rgb(168,55,89);"></span></span><span class="gauge-value">37.5%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 45.8%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">91.6%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 8.1%; background: rgb(61,74,187);"></span></span><span class="gauge-value">8.1%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 31.6%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">63.2%</span></span></td><td>160</td></tr>
+
+    </tbody>
+  </table>
+  </div>
+    </div>
+  </div>
 
   <h2>コース別成績</h2>
   <ul>
@@ -85,5 +119,7 @@
 
   </ul>
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
+  <script src="../../../assets/js/sortable-table.js"></script>
+  <script src="../../../assets/js/section-tabs.js"></script>
 </body>
 </html>

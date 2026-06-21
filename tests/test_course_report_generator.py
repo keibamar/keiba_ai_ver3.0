@@ -63,6 +63,28 @@ def test_course_report_to_html_structure():
     # 走破時計は msec の生値ではなく「分:秒.コンマ」形式で表示する
     assert "1:21.7" in html
     assert "ロードカナロア" in html
+
+    # 概要はタブではなくページ上部に表示される
+    assert html.index("summary-stats") < html.index('<div class="tabbed-section">')
+    assert '<button data-target="overview"' not in html
+
+    # 4つのタブ（クラス別等/通過順/人気枠順/血統）に分かれている
+    assert '<div class="tabbed-section">' in html
+    assert '<div class="section-tabs">' in html
+    for target, label in [
+        ("breakdown", "クラス別・馬場別・年度別"),
+        ("passage", "通過順"),
+        ("chakudo", "人気・枠順"),
+        ("peds", "血統別成績"),
+    ]:
+        assert f'<button data-target="{target}"' in html
+        assert f">{label}</button>" in html
+    # 最初のタブ（クラス別等）は初期表示、他はhidden属性で初期非表示
+    assert '<div class="section-panel" data-section="breakdown">' in html
+    assert '<div class="section-panel" data-section="passage" hidden>' in html
+    assert '<div class="section-panel" data-section="chakudo" hidden>' in html
+    assert '<div class="section-panel" data-section="peds" hidden>' in html
+
     # クラス別・馬場別・年度別の内訳テーブルが追加されている
     assert "<h3>クラス別</h3>" in html
     assert "<h3>馬場別</h3>" in html
@@ -71,24 +93,46 @@ def test_course_report_to_html_structure():
     assert "平均配当（単勝）" in html
     assert "平均配当(単勝)" in html
     assert "円" in html
-    # 通過順（クラス別・馬場別・年度別）が追加されている
-    assert "<h2>通過順（クラス別・馬場別・年度別）</h2>" in html
+    # 通過順データが追加されている。東京芝1400mは通過1・2のみ記録されているコースのため、
+    # 存在しない通過3・4は「データなし」で埋めず、列ごと出さない
     assert "上り(勝ち馬)" in html
-    # 人気データ・枠順データは着度数（1着/2着/3着/着外）で、馬番は11以降にまとめず全件表示する
+    assert "<th>通過1</th>" in html
+    assert "<th>通過2</th>" in html
+    assert "<th>通過3</th>" not in html
+    assert "<th>通過4</th>" not in html
+    # 人気データ・枠順データは表ではなく1着/2着/3着/着外の積み上げ横バーチャートで表示し、
+    # 出走自体が無いランクは省略するが「11以降」のようにまとめない
     assert "<h3>人気データ（人気別着度数、全体）</h3>" in html
     assert "<h3>枠順データ（枠番別着度数、全体）</h3>" in html
     assert "<h3>枠順データ（馬番別着度数、全体）</h3>" in html
-    assert "<th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>傾向</th>" in html
-    assert "<tr><td>18</td>" in html
+    assert '<div class="chakudo-chart">' in html
+    assert '<span class="chakudo-segment seg-1st"' in html
     assert "以降" not in html
-    # 血統別成績はTOTAL（既存）に加え、クラス別・年度別の内訳も追加されている
+    # 人気・枠順データにも、クラス別・馬場別の内訳が折りたたみで追加されている
+    assert "<summary>人気データ：クラス別を表示</summary>" in html
+    assert "<summary>人気データ：馬場別を表示</summary>" in html
+    assert "<summary>枠番データ：クラス別を表示</summary>" in html
+    assert "<summary>枠番データ：馬場別を表示</summary>" in html
+    assert "<summary>馬番データ：クラス別を表示</summary>" in html
+    assert "<summary>馬番データ：馬場別を表示</summary>" in html
+    # 血統別成績はTOTAL（既存）に加え、クラス別・馬場別・年度別の内訳も追加されている
     assert "<h3>TOTAL（上位10件）</h3>" in html
     assert "<h3>クラス別</h3>" in html
+    assert "<h3>馬場別</h3>" in html
     assert "<h3>年度別</h3>" in html
     assert "<h4>未勝利" in html
+    assert "<h4>良" in html
     # 個別コースのAI成績ページへの相互リンクが追加されている
     assert '<a href="../../performance/course/05_tokyo/芝-1400.html">&larr; このコースのAI成績を見る</a>' in html
     assert '<a href="../../index.html">&larr; HOMEへ戻る</a>' in html
+    # サイト共通ナビゲーション・列ソートJS・タブJS・年度別の折りたたみが追加されている
+    assert '<nav class="site-nav">' in html
+    assert '<a href="../../performance/index.html">AI成績</a>' in html
+    assert '<script src="../../assets/js/sortable-table.js"></script>' in html
+    assert '<script src="../../assets/js/section-tabs.js"></script>' in html
+    # 3つの既存の年度別折りたたみ + 人気/枠番/馬番のクラス別・馬場別の折りたたみ6つ
+    assert html.count('<details class="breakdown">') == 9
+    assert html.count("<summary>年度別を表示</summary>") == 3
 
 
 def test_build_class_passage_breakdown_returns_per_class_rows():
@@ -114,11 +158,48 @@ def test_build_year_passage_breakdown_returns_years_newest_first():
     assert years == sorted(years, reverse=True)
 
 
-def test_chakudo_table_html_shows_all_ranks_without_grouping():
+def test_available_passage_keys_omits_missing_checkpoints_for_short_course():
+    # 東京芝1400mは通過1・2のみ記録されている短距離コース
+    keys = c.available_passage_keys(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN)
+    assert keys == ["passage1", "passage2"]
+
+
+def test_available_passage_keys_includes_all_checkpoints_for_long_course():
+    # 東京芝2400mは通過1〜4まで記録されている長距離コース
+    keys = c.available_passage_keys(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, "2400")
+    assert keys == ["passage1", "passage2", "passage3", "passage4"]
+
+
+def test_passage_breakdown_table_html_omits_missing_passage_columns():
+    rows = [{"value": "未勝利", "agari": "34.0秒", "passage1": "6.0", "passage2": "5.0", "passage3": "データなし", "passage4": "データなし"}]
+
+    html = c._passage_breakdown_table_html(rows, "クラス", "クラス別", ["passage1", "passage2"])
+
+    assert "<th>通過1</th>" in html
+    assert "<th>通過2</th>" in html
+    assert "<th>通過3</th>" not in html
+    assert "<td>34.0秒</td><td>6.0</td><td>5.0</td>" in html
+
+
+def test_build_peds_ground_state_breakdown_returns_ordered_rows():
+    breakdown = c.build_peds_ground_state_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN)
+
+    print(f"\n--- build_peds_ground_state_breakdown(東京, 芝1400m) ---")
+    for item in breakdown:
+        print(f"  {item['ground_state']}: {item['peds_df']['血統'].tolist()}")
+
+    ground_states = [item["ground_state"] for item in breakdown]
+    assert ground_states == [g for g in c.GROUND_STATE_ORDER if g in ground_states]
+    assert "良" in ground_states
+
+
+def test_chakudo_chart_html_shows_only_ranks_with_data_as_stacked_bars():
     df = pd.DataFrame(
         {
             "race_type": ["芝", "芝", "芝"],
             "course_len": ["1400", "1400", "1400"],
+            "ground_state": ["全", "全", "全"],
+            "class": ["all", "all", "all"],
             "人気": [1, 2, 11],
             "1着": [10, 3, 0],
             "2着": [4, 5, 1],
@@ -127,23 +208,143 @@ def test_chakudo_table_html_shows_all_ranks_without_grouping():
         }
     )
 
-    html = c._chakudo_table_html(df, "芝", "1400", "人気", range(1, 12), "人気データ")
+    html = c._chakudo_chart_html(df, "芝", "1400", "人気", range(1, 12), "人気データ")
 
-    print(f"\n--- _chakudo_table_html(全件表示) ---\n{html}")
+    print(f"\n--- _chakudo_chart_html(積み上げバー表示) ---\n{html}")
 
-    # 1人気は着内率(94.1%)が他より明確に高いため「有利」、11人気は著しく低いため「不利」
-    assert "<tr><td>1</td><td>10</td><td>4</td><td>2</td><td>1</td><td>◎ 有利</td></tr>" in html
-    # 2人気は他との差が小さいため、傾向は付かない
-    assert "<tr><td>2</td><td>3</td><td>5</td><td>2</td><td>6</td><td></td></tr>" in html
-    # データがない順位（3〜10）も省略せず0で表示する
-    assert "<tr><td>3</td><td>0</td><td>0</td><td>0</td><td>0</td><td></td></tr>" in html
-    # 11位も「11以降」のようにまとめず、そのまま表示する
-    assert "<tr><td>11</td><td>0</td><td>1</td><td>0</td><td>8</td><td>▲ 不利</td></tr>" in html
+    # 1着/2着/3着/着外を内訳とした積み上げバー（合計100%）になっている
+    # ツールチップは件数ではなく割合（2着・3着は累積割合も）を示すカスタムツールチップ
+    # （ネイティブのtitle属性ではなく、CSSで大きく表示する.chakudo-tooltip）
+    assert '<span class="chakudo-label">1</span>' in html
+    assert (
+        '<span class="chakudo-segment seg-1st" style="width: 58.82%">10'
+        '<span class="chakudo-tooltip">1着: 58.8%</span></span>' in html
+    )
+    assert (
+        '<span class="chakudo-segment seg-2nd" style="width: 23.53%">4'
+        '<span class="chakudo-tooltip">2着: 23.5%（累積82.4%）</span></span>' in html
+    )
+    assert (
+        '<span class="chakudo-segment seg-3rd" style="width: 11.76%">2'
+        '<span class="chakudo-tooltip">3着: 11.8%（累積94.1%）</span></span>' in html
+    )
+    # 1人気は着内率(94.1%)が他より明確に高いため「有利」バッジが付く。バッジは
+    # バーより前（固定幅の枠の中）に表示され、バーの開始位置はズレない
+    assert html.index('<span class="advantage-badge high">◎ 有利</span>') < html.index('chakudo-bar-track')
+    assert '<span class="chakudo-badge-slot"><span class="advantage-badge high">◎ 有利</span></span>' in html
+    # 件数（n=17）も表示される
+    assert '<span class="chakudo-value">n=17</span>' in html
+    # 出走自体が無い順位（3〜10）は行ごと表示しない（「データなし」とは書かない）
+    assert '<span class="chakudo-label">3</span>' not in html
+    assert "データなし" not in html
+    # 11位は著しく低いため「不利」バッジが付く。「11以降」のようにまとめない
+    assert '<span class="chakudo-label">11</span>' in html
+    assert '<span class="advantage-badge low">▲ 不利</span>' in html
     assert "以降" not in html
+    # 表ではなく積み上げ横バーチャートになっている
+    assert "<table" not in html
+    assert '<div class="chakudo-chart">' in html
 
 
-def test_chakudo_table_html_handles_missing_data():
-    html = c._chakudo_table_html(pd.DataFrame(), "芝", "1400", "人気", range(1, 3), "人気データ")
+def test_chakudo_chart_html_always_shows_segment_numbers_even_when_small():
+    df = pd.DataFrame(
+        {
+            "race_type": ["芝"], "course_len": ["1400"], "ground_state": ["全"], "class": ["all"],
+            "人気": [1], "1着": [90], "2着": [5], "3着": [2], "着外": [3],
+        }
+    )
+
+    html = c._chakudo_chart_html(df, "芝", "1400", "人気", range(1, 2), "人気データ")
+
+    # 幅が小さい（2%の）セグメントでも数値を省略しない
+    assert (
+        '<span class="chakudo-segment seg-3rd" style="width: 2.00%">2'
+        '<span class="chakudo-tooltip">3着: 2.0%（累積97.0%）</span></span>' in html
+    )
+    assert (
+        '<span class="chakudo-segment seg-1st" style="width: 90.00%">90'
+        '<span class="chakudo-tooltip">1着: 90.0%</span></span>' in html
+    )
+
+
+def test_chakudo_chart_html_reserves_badge_slot_even_without_badge():
+    df = pd.DataFrame(
+        {
+            "race_type": ["芝", "芝"], "course_len": ["1400", "1400"], "ground_state": ["全", "全"], "class": ["all", "all"],
+            "人気": [1, 2], "1着": [50, 49], "2着": [10, 10], "3着": [5, 5], "着外": [5, 6],
+        }
+    )
+
+    html = c._chakudo_chart_html(df, "芝", "1400", "人気", range(1, 3), "人気データ", show_advantage=False)
+
+    # バッジが無い場合でも.chakudo-badge-slot自体は出力され、バーの開始位置を揃える
+    assert html.count('<span class="chakudo-badge-slot"></span>') == 2
+    assert "advantage-badge" not in html
+
+
+def test_chakudo_chart_html_disables_advantage_when_show_advantage_false():
+    df = pd.DataFrame(
+        {
+            "race_type": ["芝", "芝"], "course_len": ["1400", "1400"], "ground_state": ["全", "全"], "class": ["all", "all"],
+            "人気": [1, 2], "1着": [50, 1], "2着": [10, 1], "3着": [5, 1], "着外": [5, 47],
+        }
+    )
+
+    html = c._chakudo_chart_html(df, "芝", "1400", "人気", range(1, 3), "人気データ", show_advantage=False)
+
+    assert "advantage-badge" not in html
+
+
+def test_chakudo_chart_html_handles_missing_data():
+    html = c._chakudo_chart_html(pd.DataFrame(), "芝", "1400", "人気", range(1, 3), "人気データ")
+    assert "対象データがありません。" in html
+
+
+def test_chakudo_chart_html_handles_all_ranks_without_data():
+    df = pd.DataFrame(
+        {
+            "race_type": ["芝"], "course_len": ["1400"], "ground_state": ["全"], "class": ["all"],
+            "人気": [5], "1着": [0], "2着": [0], "3着": [0], "着外": [0],
+        }
+    )
+    html = c._chakudo_chart_html(df, "芝", "1400", "人気", range(1, 3), "人気データ")
+    assert "対象データがありません。" in html
+
+
+def test_chakudo_class_breakdown_html_returns_per_class_charts():
+    df = pd.DataFrame(
+        {
+            "race_type": ["芝", "芝"], "course_len": ["1400", "1400"], "ground_state": ["全", "全"],
+            "class": ["未勝利", "1勝クラス"], "人気": [1, 1], "1着": [10, 8], "2着": [4, 3], "3着": [2, 2], "着外": [4, 7],
+        }
+    )
+
+    html = c._chakudo_class_breakdown_html(df, "芝", "1400", "人気", range(1, 19))
+
+    assert "<h4>未勝利</h4>" in html
+    assert "<h4>1勝クラス</h4>" in html
+    # "all"（全クラス合算）は内訳の対象外
+    assert "<h4>all</h4>" not in html
+
+
+def test_chakudo_ground_state_breakdown_html_returns_ordered_charts():
+    df = pd.DataFrame(
+        {
+            "race_type": ["芝", "芝", "芝"], "course_len": ["1400", "1400", "1400"],
+            "ground_state": ["不良", "良", "稍重"], "class": ["all", "all", "all"],
+            "人気": [1, 1, 1], "1着": [3, 10, 5], "2着": [1, 4, 2], "3着": [1, 2, 1], "着外": [2, 4, 3],
+        }
+    )
+
+    html = c._chakudo_ground_state_breakdown_html(df, "芝", "1400", "人気", range(1, 19))
+
+    # 良→稍重→重→不良の順（このサンプルには「重」が無いため省略される）
+    assert html.index("<h4>良</h4>") < html.index("<h4>稍重</h4>") < html.index("<h4>不良</h4>")
+    assert "<h4>重</h4>" not in html
+
+
+def test_chakudo_class_breakdown_html_handles_no_data():
+    html = c._chakudo_class_breakdown_html(pd.DataFrame(), "芝", "1400", "人気", range(1, 19))
     assert "対象データがありません。" in html
 
 
@@ -159,7 +360,7 @@ def test_label_advantage_marks_nothing_when_flat():
 
     result = c._label_advantage(rows)
 
-    assert all(r["note"] == "" for r in result)
+    assert all(r["note_text"] == "" and r["note_kind"] == "" for r in result)
 
 
 def test_label_advantage_marks_high_and_low_when_notably_different():
@@ -167,8 +368,10 @@ def test_label_advantage_marks_high_and_low_when_notably_different():
 
     result = c._label_advantage(rows)
 
-    assert result[0]["note"] == "◎ 有利"
-    assert result[2]["note"] == "▲ 不利"
+    assert result[0]["note_text"] == "◎ 有利"
+    assert result[0]["note_kind"] == "high"
+    assert result[2]["note_text"] == "▲ 不利"
+    assert result[2]["note_kind"] == "low"
 
 
 def test_label_advantage_excludes_ranks_and_suppresses_low_label():
@@ -177,10 +380,52 @@ def test_label_advantage_excludes_ranks_and_suppresses_low_label():
 
     result = c._label_advantage(rows, exclude_ranks={1, 2, 3}, high_label="★ ねらい目", low_label="")
 
-    assert result[0]["note"] == ""
-    assert result[2]["note"] == ""
+    assert result[0]["note_text"] == ""
+    assert result[2]["note_text"] == ""
     # 4番人気は対象（1〜3を除いた候補は4のみ）だが、候補が1件のためラベルなし
-    assert result[3]["note"] == ""
+    assert result[3]["note_text"] == ""
+
+
+def test_advantage_badge_html_renders_span_or_empty():
+    assert c._advantage_badge_html("◎ 有利", "high") == '<span class="advantage-badge high">◎ 有利</span>'
+    assert c._advantage_badge_html("", "") == ""
+
+
+def _breakdown_row_stub(value, win_return_raw):
+    return {
+        "value": value,
+        "avg_time": "1:21.0",
+        "avg_pop": "4.0",
+        "weight": "460.0kg",
+        "avg_frame": "4.5",
+        "avg_horse": "8.0",
+        "win_return": f"{win_return_raw}円" if win_return_raw is not None else "データなし",
+        "win_return_raw": win_return_raw,
+    }
+
+
+def test_breakdown_table_html_highlights_notably_high_and_low_return():
+    rows = [
+        _breakdown_row_stub("未勝利", 150.0),
+        _breakdown_row_stub("1勝クラス", 160.0),
+        _breakdown_row_stub("オープン", 400.0),
+    ]
+
+    html = c._breakdown_table_html(rows, "クラス", "クラス別")
+
+    print(f"\n--- _breakdown_table_html(平均配当の偏差) ---\n{html}")
+
+    assert '<th>傾向</th>' in html
+    assert '<span class="advantage-badge high">◎ 注目（高配当）</span>' in html
+    # 未勝利・1勝クラスは差が小さいため、傾向は付かない
+    assert html.count('<span class="advantage-badge') == 1
+    assert '<div class="table-wrap">' in html
+    assert '<table class="sortable">' in html
+
+
+def test_breakdown_table_html_handles_empty_rows():
+    html = c._breakdown_table_html([], "クラス", "クラス別")
+    assert "対象データがありません。" in html
 
 
 def test_build_peds_class_breakdown_excludes_all_class():
@@ -290,6 +535,8 @@ def test_make_course_index_page_generates_html(new_roots, monkeypatch):
     print(html_content)
 
     assert "<h1>コース詳細データ</h1>" in html_content
+    assert '<nav class="site-nav">' in html_content
+    assert '<a href="../performance/index.html">AI成績</a>' in html_content
     # 開催中（東京）は大きいタイル
     assert '<div class="course-tile active">' in html_content
     assert '<a href="05_tokyo/index.html"><span class="place-name">東京</span></a>' in html_content
@@ -316,6 +563,10 @@ def test_make_track_page_generates_html(new_roots):
     assert "<h3>芝（全距離合算・上位10件）</h3>" in html_content
     assert "<h3>ダート（全距離合算・上位10件）</h3>" in html_content
     assert '<a href="../../performance/course/05_tokyo/index.html">&larr; このコースのAI成績を見る</a>' in html_content
+    assert '<nav class="site-nav">' in html_content
+    assert '<div class="table-wrap">' in html_content
+    assert '<table class="sortable">' in html_content
+    assert '<script src="../../assets/js/sortable-table.js"></script>' in html_content
 
 
 def test_make_course_detail_page_generates_html(new_roots):

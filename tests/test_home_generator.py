@@ -51,6 +51,10 @@ def test_make_home_page_generates_index_html(new_roots):
     # 先週の結果カード
     assert "<h3>先週の結果（メインレース）</h3>" in html_content
 
+    # サイト共通ナビゲーション・列ソートJSが追加されている
+    assert '<nav class="site-nav">' in html_content
+    assert '<script src="assets/js/sortable-table.js"></script>' in html_content
+
 
 def test_weekly_trend_html_uses_return_rate_gauge():
     from datetime import date

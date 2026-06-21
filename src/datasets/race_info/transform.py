@@ -87,7 +87,7 @@ def aggregate_winner_weights(results_by_year):
 
 def _analyze_rank_chakudo(df_raw, courses, rank_column, rank_range):
     """指定した列（人気/枠番/馬番）の値ごとに、1着・2着・3着・着外の回数を
-    race_type, course_len ごとに算出する（全馬が対象、勝ち馬限定ではない）
+    race_type, course_len, ground_state, class ごとに算出する（全馬が対象、勝ち馬限定ではない）
     """
     df = df_raw.copy()
     df["着順"] = pd.to_numeric(df["着順"], errors="coerce")
@@ -95,25 +95,39 @@ def _analyze_rank_chakudo(df_raw, courses, rank_column, rank_range):
     df["course_len"] = pd.to_numeric(df["course_len"], errors="coerce")
     df = df.dropna(subset=["着順", rank_column])
 
+    rank_range_set = set(rank_range)
     all_results = []
     for race_type, course_len in courses:
         base = df[(df["race_type"] == race_type) & (df["course_len"] == float(course_len))]
         if base.empty:
             continue
-        for rank in rank_range:
-            tmp = base[base[rank_column] == rank]
-            if tmp.empty:
-                continue
-            all_results.append({
-                "race_type": race_type,
-                "course_len": int(course_len),
-                rank_column: rank,
-                "1着": int((tmp["着順"] == 1).sum()),
-                "2着": int((tmp["着順"] == 2).sum()),
-                "3着": int((tmp["着順"] == 3).sum()),
-                "着外": int((~tmp["着順"].isin([1, 2, 3])).sum()),
-            })
-    return pd.DataFrame(all_results, columns=["race_type", "course_len", rank_column, "1着", "2着", "3着", "着外"])
+        for cls in model.CLASSES:
+            for grd in model.GROUNDS:
+                tmp = base
+                if cls != "all":
+                    tmp = tmp[tmp["class"] == cls]
+                if grd != "全":
+                    tmp = tmp[tmp["ground_state"] == grd]
+                if tmp.empty:
+                    continue
+                for rank, rank_group in tmp.groupby(rank_column):
+                    if rank not in rank_range_set:
+                        continue
+                    all_results.append({
+                        "race_type": race_type,
+                        "course_len": int(course_len),
+                        "ground_state": grd,
+                        "class": cls,
+                        # groupbyのキーはpd.to_numericでfloat64化されているため、
+                        # CSV保存後の文字列比較ズレ（"1.0" vs "1"）を防ぐためintに揃える
+                        rank_column: int(rank),
+                        "1着": int((rank_group["着順"] == 1).sum()),
+                        "2着": int((rank_group["着順"] == 2).sum()),
+                        "3着": int((rank_group["着順"] == 3).sum()),
+                        "着外": int((~rank_group["着順"].isin([1, 2, 3])).sum()),
+                    })
+    columns = ["race_type", "course_len", "ground_state", "class", rank_column, "1着", "2着", "3着", "着外"]
+    return pd.DataFrame(all_results, columns=columns)
 
 
 def analyze_pop_chakudo(df_raw, courses):
@@ -136,7 +150,7 @@ def _aggregate_rank_chakudo(results_by_year, rank_column):
         return pd.DataFrame()
 
     combined_df = pd.concat(results_by_year.values(), ignore_index=True)
-    group_cols = ["race_type", "course_len", rank_column]
+    group_cols = ["race_type", "course_len", "ground_state", "class", rank_column]
     total_df = combined_df.groupby(group_cols, as_index=False)[["1着", "2着", "3着", "着外"]].sum()
     return total_df.sort_values(group_cols).reset_index(drop=True)
 

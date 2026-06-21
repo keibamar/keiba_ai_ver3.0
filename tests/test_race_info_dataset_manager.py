@@ -103,10 +103,12 @@ def test_analyze_pop_chakudo_returns_real_data():
     print(f"  shape: {result.shape}")
     print(result.head().to_string())
 
-    assert result.columns.tolist() == ["race_type", "course_len", "人気", "1着", "2着", "3着", "着外"]
+    assert result.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "人気", "1着", "2着", "3着", "着外"]
     first = result.iloc[0]
     assert first["race_type"] == "芝"
     assert first["course_len"] == 1000
+    assert first["ground_state"] == "全"
+    assert first["class"] == "all"
     assert first["人気"] == 1
     # 1人気の出走数 = 1着+2着+3着+着外 のはず
     assert first[["1着", "2着", "3着", "着外"]].sum() > 0
@@ -124,12 +126,28 @@ def test_analyze_horse_chakudo_limits_to_eighteen_horses():
     assert result["馬番"].min() >= 1
 
 
+def test_analyze_pop_chakudo_includes_class_and_ground_state_breakdown():
+    result = new_race_info.analyze_pop_chakudo(SAMPLE_PLACE_ID, 2019)
+
+    # "all"/"全"以外のクラス・馬場別の内訳も含まれている
+    assert (result["class"] != "all").any()
+    assert (result["ground_state"] != "全").any()
+
+
 def test_analyze_pop_chakudo_multi_years_sums_across_years():
     single = new_race_info.analyze_pop_chakudo(SAMPLE_PLACE_ID, 2019)
     multi = new_race_info.analyze_pop_chakudo_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2019)
 
-    single_first = single[(single["race_type"] == "芝") & (single["course_len"] == 1000) & (single["人気"] == 1)]
-    multi_first = multi[(multi["race_type"] == "芝") & (multi["course_len"] == 1000) & (multi["人気"] == 1)]
+    cond_single = (
+        (single["race_type"] == "芝") & (single["course_len"] == 1000)
+        & (single["ground_state"] == "全") & (single["class"] == "all") & (single["人気"] == 1)
+    )
+    cond_multi = (
+        (multi["race_type"] == "芝") & (multi["course_len"] == 1000)
+        & (multi["ground_state"] == "全") & (multi["class"] == "all") & (multi["人気"] == 1)
+    )
+    single_first = single[cond_single]
+    multi_first = multi[cond_multi]
 
     assert multi_first.iloc[0]["1着"] == single_first.iloc[0]["1着"]
 
@@ -535,15 +553,15 @@ def test_update_chakudo_writes_expected_files(new_race_info_root):
     out_dir = new_race_info_root / "chakudo" / SAMPLE_PLACE
 
     pop_df = pd.read_csv(out_dir / "total_pop_chakudo.csv", dtype=str)
-    assert pop_df.columns.tolist() == ["race_type", "course_len", "人気", "1着", "2着", "3着", "着外"]
+    assert pop_df.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "人気", "1着", "2着", "3着", "着外"]
     assert not pop_df.empty
 
     frame_df = pd.read_csv(out_dir / "total_frame_chakudo.csv", dtype=str)
-    assert frame_df.columns.tolist() == ["race_type", "course_len", "枠番", "1着", "2着", "3着", "着外"]
+    assert frame_df.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "枠番", "1着", "2着", "3着", "着外"]
     assert not frame_df.empty
 
     horse_df = pd.read_csv(out_dir / "total_horse_chakudo.csv", dtype=str)
-    assert horse_df.columns.tolist() == ["race_type", "course_len", "馬番", "1着", "2着", "3着", "着外"]
+    assert horse_df.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "馬番", "1着", "2着", "3着", "着外"]
     assert not horse_df.empty
 
 

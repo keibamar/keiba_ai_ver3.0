@@ -16,6 +16,7 @@ from src.config.constants import NAME_LIST
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator import daily_index_generator
 from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
+from src.logic.html_generator.site_nav_html import site_nav_html
 from src.managers import ai_performance_dataset_manager as dataset_manager
 from src.managers import html_manager
 
@@ -72,12 +73,14 @@ def _current_meetings_html(meetings, df):
             f"<td>{return_rate_gauge_html(win['return_rate'])}</td><td>{win['n']}</td></tr>\n"
         )
 
-    return f"""<table>
+    return f"""<div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>開催</th><th>単勝的中率</th><th>単勝回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       {rows}
     </tbody>
-  </table>"""
+  </table>
+  </div>"""
 
 
 def _last_week_results_html(main_races):
@@ -102,12 +105,14 @@ def _last_week_results_html(main_races):
             f"<tr><td>{date_str}</td><td>{place_name}11R</td><td>{badge}</td><td>{return_text}</td></tr>\n"
         )
 
-    return f"""<table>
+    return f"""<div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>日付</th><th>レース</th><th>単勝</th><th>回収率</th></tr></thead>
     <tbody>
       {rows}
     </tbody>
-  </table>"""
+  </table>
+  </div>"""
 
 
 def _weekly_trend(df, num_weeks, end_day):
@@ -146,6 +151,7 @@ def home_template():
 </head>
 <body>
   <main>
+    {site_nav_html(base_path="")}
     <h1>{SITE_TITLE}</h1>
     <p>このサイトでは、競馬AIの成績、レースカレンダー、コース別データを閲覧できます。</p>
 
@@ -169,17 +175,11 @@ def home_template():
         <a class="card-link" href="races/index.html">レースカレンダーを見る &rarr;</a>
       </div>
     </div>
-
-    <h2>メニュー</h2>
-    <ul>
-      <li><a href="races/index.html">レースカレンダー</a></li>
-      <li><a href="performance/index.html">AI成績</a></li>
-      <li><a href="courses/index.html">コース詳細データ</a></li>
-    </ul>
   </main>
   <footer>
     &copy; 競馬AIデータシステム
   </footer>
+  <script src="assets/js/sortable-table.js"></script>
 </body>
 </html>
 """

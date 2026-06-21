@@ -7,10 +7,25 @@
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
 <body>
+  <nav class="site-nav">
+  <a href="../../../index.html">HOME</a>
+  <a href="../../../races/index.html">レースカレンダー</a>
+  <a href="../../../performance/index.html">AI成績</a>
+  <a href="../../../courses/index.html">コース詳細データ</a>
+</nav>
   <h1>東京 芝2300m AI予想成績</h1>
 
-  <h3>トータル成績</h3>
-  <table>
+  <div class="tabbed-section">
+    <div class="section-tabs">
+      <button data-target="overview" aria-selected="true">トータル/今年</button>
+      <button data-target="breakdown" aria-selected="false">クラス別・馬場別</button>
+      <button data-target="year" aria-selected="false">年度別</button>
+    </div>
+
+    <div class="section-panel" data-section="overview">
+      <h3>トータル成績</h3>
+  <div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>0</td></tr>
@@ -19,8 +34,10 @@
 
     </tbody>
   </table>
-  <h3>2026年の成績</h3>
-  <table>
+  </div>
+      <h3>2026年の成績</h3>
+  <div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       <tr><td>単勝</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>0</td></tr>
@@ -29,14 +46,25 @@
 
     </tbody>
   </table>
-  <h3>クラス別成績</h3>
+  </div>
+    </div>
+
+    <div class="section-panel" data-section="breakdown" hidden>
+      <h3>クラス別成績</h3>
   <p>対象データがありません。</p>
-  <h3>馬場別成績</h3>
+      <h3>馬場別成績</h3>
   <p>対象データがありません。</p>
-  <h3>年度別成績</h3>
+    </div>
+
+    <div class="section-panel" data-section="year" hidden>
+      <h3>年度別成績</h3>
   <p>対象データがありません。</p>
+    </div>
+  </div>
 
   <p><a href="../../../courses/05_tokyo/芝-2300.html">&larr; コース詳細データへ</a></p>
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
+  <script src="../../../assets/js/sortable-table.js"></script>
+  <script src="../../../assets/js/section-tabs.js"></script>
 </body>
 </html>

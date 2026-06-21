@@ -8,6 +8,12 @@
 </head>
 <body>
   <main>
+    <nav class="site-nav">
+  <a href="index.html">HOME</a>
+  <a href="races/index.html">レースカレンダー</a>
+  <a href="performance/index.html">AI成績</a>
+  <a href="courses/index.html">コース詳細データ</a>
+</nav>
     <h1>MAR(まーる）|競馬AIデータサイト</h1>
     <p>このサイトでは、競馬AIの成績、レースカレンダー、コース別データを閲覧できます。</p>
 
@@ -82,7 +88,8 @@
     </div>
 </div>
         <h4>開催中の競馬場の成績</h4>
-        <table>
+        <div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>開催</th><th>単勝的中率</th><th>単勝回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       <tr><td>函館1回</td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: rgb(31,79,214);"></span></span><span class="gauge-value">0.0%</span></span></td><td><span class="rate-gauge"><span class="gauge-track"><span class="gauge-fill" style="width: 0.0%; background: #1f4fd6;"></span><span class="gauge-marker"></span></span><span class="gauge-value">0.0%</span></span></td><td>0</td></tr>
@@ -91,12 +98,14 @@
 
     </tbody>
   </table>
+  </div>
         <a class="card-link" href="performance/index.html">AI成績の詳細を見る &rarr;</a>
       </div>
 
       <div class="card">
         <h3>先週の結果（メインレース）</h3>
-        <table>
+        <div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>日付</th><th>レース</th><th>単勝</th><th>回収率</th></tr></thead>
     <tbody>
       <tr><td>06/20</td><td>函館11R</td><td><span class="hit-badge miss">データなし</span></td><td>-</td></tr>
@@ -105,19 +114,14 @@
 
     </tbody>
   </table>
+  </div>
         <a class="card-link" href="races/index.html">レースカレンダーを見る &rarr;</a>
       </div>
     </div>
-
-    <h2>メニュー</h2>
-    <ul>
-      <li><a href="races/index.html">レースカレンダー</a></li>
-      <li><a href="performance/index.html">AI成績</a></li>
-      <li><a href="courses/index.html">コース詳細データ</a></li>
-    </ul>
   </main>
   <footer>
     &copy; 競馬AIデータシステム
   </footer>
+  <script src="assets/js/sortable-table.js"></script>
 </body>
 </html>

@@ -77,6 +77,9 @@ def test_make_ai_performance_index_page_generates_html(new_roots, fake_dataset):
     assert html_content.index("annual/2026.html") < html_content.index("annual/2025.html") < html_content.index("annual/2024.html")
     assert '<a href="annual/2026.html">2026年</a>' in html_content
     assert '<a href="course/05_tokyo/index.html">東京</a>' in html_content
+    assert '<nav class="site-nav">' in html_content
+    assert '<table class="sortable">' in html_content
+    assert '<script src="../assets/js/sortable-table.js"></script>' in html_content
 
 
 def test_make_ai_performance_index_page_handles_empty_dataset(new_roots, empty_dataset):
@@ -140,6 +143,15 @@ def test_make_course_performance_page_generates_html(new_roots, fake_dataset):
     assert "<h3>年度別成績</h3>" in html_content
     assert "<td>未勝利</td>" in html_content
     assert "<td>1勝クラス</td>" in html_content
+    # トータル/今年・クラス別・馬場別・年度別がタブに分かれている
+    assert '<div class="tabbed-section">' in html_content
+    assert '<button data-target="overview" aria-selected="true">トータル/今年</button>' in html_content
+    assert '<button data-target="breakdown" aria-selected="false">クラス別・馬場別</button>' in html_content
+    assert '<button data-target="year" aria-selected="false">年度別</button>' in html_content
+    assert '<div class="section-panel" data-section="year" hidden>' in html_content
+    assert '<nav class="site-nav">' in html_content
+    assert '<script src="../../../assets/js/sortable-table.js"></script>' in html_content
+    assert '<script src="../../../assets/js/section-tabs.js"></script>' in html_content
 
 
 def test_make_course_performance_index_page_generates_html(new_roots, fake_dataset):
@@ -165,6 +177,12 @@ def test_make_course_performance_index_page_generates_html(new_roots, fake_datas
     assert "<h3>クラス別成績</h3>" in html_content
     assert "<h3>芝/ダート別成績</h3>" in html_content
     assert "<h3>馬場別成績</h3>" in html_content
+    # トータル/今年・クラス別等・年度別がタブに分かれている
+    assert '<div class="tabbed-section">' in html_content
+    assert '<button data-target="breakdown" aria-selected="false">クラス別・芝ダート別・馬場別</button>' in html_content
+    assert '<div class="section-panel" data-section="year" hidden>' in html_content
+    assert '<script src="../../../assets/js/section-tabs.js"></script>' in html_content
+    assert '<nav class="site-nav">' in html_content
 
 
 def test_make_all_annual_performance_pages_generates_for_each_year(new_roots, fake_dataset):

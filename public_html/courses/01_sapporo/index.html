@@ -7,12 +7,22 @@
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 <body>
+  <nav class="site-nav">
+  <a href="../../index.html">HOME</a>
+  <a href="../../races/index.html">レースカレンダー</a>
+  <a href="../../performance/index.html">AI成績</a>
+  <a href="../../courses/index.html">コース詳細データ</a>
+</nav>
   <h1>札幌 コース一覧</h1>
 
-  <table>
-    <thead><tr><th>コース</th><th>平均勝ち時計</th><th>平均人気</th></tr></thead>
-    <tbody>
-      <tr><td><a href="芝-1000.html">芝1000m</a></td><td>0:56.9</td><td>4.15</td></tr>
+  <div class="card-grid">
+    <div class="card" style="flex-basis: 100%;">
+      <h2>コース別データ</h2>
+      <div class="table-wrap">
+      <table class="sortable">
+        <thead><tr><th>コース</th><th>平均勝ち時計</th><th>平均人気</th></tr></thead>
+        <tbody>
+          <tr><td><a href="芝-1000.html">芝1000m</a></td><td>0:56.9</td><td>4.15</td></tr>
 <tr><td><a href="芝-1200.html">芝1200m</a></td><td>1:09.4</td><td>4.68</td></tr>
 <tr><td><a href="芝-1500.html">芝1500m</a></td><td>1:29.7</td><td>4.3</td></tr>
 <tr><td><a href="芝-1800.html">芝1800m</a></td><td>1:49.6</td><td>4.65</td></tr>
@@ -22,12 +32,16 @@
 <tr><td><a href="ダート-1700.html">ダート1700m</a></td><td>1:46.2</td><td>4.6</td></tr>
 <tr><td><a href="ダート-2400.html">ダート2400m</a></td><td>2:35.9</td><td>6.14</td></tr>
 
-    </tbody>
-  </table>
+        </tbody>
+      </table>
+      </div>
+    </div>
 
-  <h2>血統別成績（芝/ダート別）</h2>
-  <h3>ダート（全距離合算・上位10件）</h3>
-  <table>
+    <div class="card" style="flex-basis: 100%;">
+      <h2>血統別成績（芝/ダート別）</h2>
+      <h3>ダート（全距離合算・上位10件）</h3>
+  <div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>血統(父)</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th></tr></thead>
     <tbody>
       <tr><td>ヘニーヒューズ</td><td>25</td><td>16</td><td>10</td><td>107</td></tr>
@@ -43,8 +57,10 @@
 
     </tbody>
   </table>
+  </div>
   <h3>芝（全距離合算・上位10件）</h3>
-  <table>
+  <div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>血統(父)</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th></tr></thead>
     <tbody>
       <tr><td>ロードカナロア</td><td>37</td><td>32</td><td>25</td><td>236</td></tr>
@@ -60,8 +76,12 @@
 
     </tbody>
   </table>
+  </div>
+    </div>
+  </div>
 
   <p><a href="../../performance/course/01_sapporo/index.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../index.html">&larr; コース詳細データ一覧へ</a></p>
+  <script src="../../assets/js/sortable-table.js"></script>
 </body>
 </html>

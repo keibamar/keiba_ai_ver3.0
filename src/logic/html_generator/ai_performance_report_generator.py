@@ -15,6 +15,7 @@ from datetime import date
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import COURSE_LISTS
 from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
+from src.logic.html_generator.site_nav_html import site_nav_html
 from src.managers import ai_performance_dataset_manager as m
 from src.managers import html_manager
 
@@ -30,12 +31,14 @@ def _performance_table_html(performance, title=None):
         for bet_type in BET_TYPE_LABELS
     )
     heading = f"<h3>{title}</h3>\n  " if title else ""
-    return f"""{heading}<table>
+    return f"""{heading}<div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>式別</th><th>的中率</th><th>回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       {rows}
     </tbody>
-  </table>"""
+  </table>
+  </div>"""
 
 
 def _breakdown_table_html(breakdown, value_label, title=None):
@@ -55,12 +58,14 @@ def _breakdown_table_html(breakdown, value_label, title=None):
             + f"<td>{item['performance']['win']['n']}</td></tr>\n"
             for item in breakdown
         )
-        body = f"""<table>
+        body = f"""<div class="table-wrap">
+  <table class="sortable">
     <thead><tr><th>{value_label}</th>{header_cells}<th>対象レース数</th></tr></thead>
     <tbody>
       {rows}
     </tbody>
-  </table>"""
+  </table>
+  </div>"""
 
     heading = f"<h3>{title}</h3>\n  " if title else ""
     return f"{heading}{body}"
@@ -100,6 +105,7 @@ def make_ai_performance_index_page():
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
 <body>
+  {site_nav_html(base_path="../")}
   <h1>AI予想成績</h1>
 
   {_performance_table_html(total_performance, title="トータル成績")}
@@ -114,6 +120,7 @@ def make_ai_performance_index_page():
   </ul>
 
   <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
+  <script src="../assets/js/sortable-table.js"></script>
 </body>
 </html>
 """
@@ -143,9 +150,11 @@ def make_annual_performance_page(year, df=None):
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 <body>
+  {site_nav_html(base_path="../../")}
   <h1>{year}年 AI予想成績</h1>
   {_performance_table_html(performance)}
   <p><a href="../index.html">&larr; AI成績トップへ</a></p>
+  <script src="../../assets/js/sortable-table.js"></script>
 </body>
 </html>
 """
@@ -167,9 +176,11 @@ def make_meeting_performance_page(year, place_id, times, df=None):
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
 <body>
+  {site_nav_html(base_path="../../../")}
   <h1>{year}年 {place_name}{times}回 AI予想成績</h1>
   {_performance_table_html(performance)}
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
+  <script src="../../../assets/js/sortable-table.js"></script>
 </body>
 </html>
 """
@@ -208,20 +219,39 @@ def make_course_performance_index_page(place_id, df=None):
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
 <body>
+  {site_nav_html(base_path="../../../")}
   <h1>{place_name} AI予想成績</h1>
 
-  {_performance_table_html(total_performance, title="トータル成績")}
-  {_performance_table_html(this_year_performance, title=f"{this_year}年の成績")}
-  {_breakdown_table_html(by_year, "年度", title="年度別成績")}
-  {_breakdown_table_html(by_class, "クラス", title="クラス別成績")}
-  {_breakdown_table_html(by_race_type, "芝/ダート", title="芝/ダート別成績")}
-  {_breakdown_table_html(by_ground_state, "馬場状態", title="馬場別成績")}
+  <div class="tabbed-section">
+    <div class="section-tabs">
+      <button data-target="overview" aria-selected="true">トータル/今年</button>
+      <button data-target="breakdown" aria-selected="false">クラス別・芝ダート別・馬場別</button>
+      <button data-target="year" aria-selected="false">年度別</button>
+    </div>
+
+    <div class="section-panel" data-section="overview">
+      {_performance_table_html(total_performance, title="トータル成績")}
+      {_performance_table_html(this_year_performance, title=f"{this_year}年の成績")}
+    </div>
+
+    <div class="section-panel" data-section="breakdown" hidden>
+      {_breakdown_table_html(by_class, "クラス", title="クラス別成績")}
+      {_breakdown_table_html(by_race_type, "芝/ダート", title="芝/ダート別成績")}
+      {_breakdown_table_html(by_ground_state, "馬場状態", title="馬場別成績")}
+    </div>
+
+    <div class="section-panel" data-section="year" hidden>
+      {_breakdown_table_html(by_year, "年度", title="年度別成績")}
+    </div>
+  </div>
 
   <h2>コース別成績</h2>
   <ul>
     {course_rows}
   </ul>
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
+  <script src="../../../assets/js/sortable-table.js"></script>
+  <script src="../../../assets/js/section-tabs.js"></script>
 </body>
 </html>
 """
@@ -253,16 +283,35 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
 <body>
+  {site_nav_html(base_path="../../../")}
   <h1>{place_name} {race_type}{course_len}m AI予想成績</h1>
 
-  {_performance_table_html(total_performance, title="トータル成績")}
-  {_performance_table_html(this_year_performance, title=f"{this_year}年の成績")}
-  {_breakdown_table_html(by_class, "クラス", title="クラス別成績")}
-  {_breakdown_table_html(by_ground_state, "馬場状態", title="馬場別成績")}
-  {_breakdown_table_html(by_year, "年度", title="年度別成績")}
+  <div class="tabbed-section">
+    <div class="section-tabs">
+      <button data-target="overview" aria-selected="true">トータル/今年</button>
+      <button data-target="breakdown" aria-selected="false">クラス別・馬場別</button>
+      <button data-target="year" aria-selected="false">年度別</button>
+    </div>
+
+    <div class="section-panel" data-section="overview">
+      {_performance_table_html(total_performance, title="トータル成績")}
+      {_performance_table_html(this_year_performance, title=f"{this_year}年の成績")}
+    </div>
+
+    <div class="section-panel" data-section="breakdown" hidden>
+      {_breakdown_table_html(by_class, "クラス", title="クラス別成績")}
+      {_breakdown_table_html(by_ground_state, "馬場状態", title="馬場別成績")}
+    </div>
+
+    <div class="section-panel" data-section="year" hidden>
+      {_breakdown_table_html(by_year, "年度", title="年度別成績")}
+    </div>
+  </div>
 
   <p><a href="../../../courses/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; コース詳細データへ</a></p>
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
+  <script src="../../../assets/js/sortable-table.js"></script>
+  <script src="../../../assets/js/section-tabs.js"></script>
 </body>
 </html>
 """
