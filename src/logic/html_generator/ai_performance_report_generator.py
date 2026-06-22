@@ -16,7 +16,7 @@ from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import COURSE_LISTS
 from src.logic.html_generator.race_type_badge_html import course_label_html, race_type_span_html
 from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_big_html, return_rate_gauge_html
-from src.logic.html_generator.site_nav_html import breadcrumb_html, sidebar_html, site_nav_html
+from src.logic.html_generator.site_nav_html import breadcrumb_html, sidebar_html, site_footer_html, site_nav_html
 from src.logic.html_generator.sparkline_html import hit_return_trend_svg
 from src.managers import ai_performance_dataset_manager as m
 from src.managers import html_manager
@@ -276,6 +276,7 @@ def make_ai_performance_index_page():
   </ul>
 
   <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
+  {site_footer_html()}
   <script src="../assets/js/sortable-table.js"></script>
 </body>
 </html>
@@ -337,6 +338,7 @@ def make_annual_performance_page(year, df=None):
   </main>
   {sidebar}
   </div>
+  {site_footer_html()}
   <script src="../../assets/js/sortable-table.js"></script>
 </body>
 </html>
@@ -365,6 +367,7 @@ def make_meeting_performance_page(year, place_id, times, df=None):
   <h1>{year}年 {place_name}{times}回 AI予想成績</h1>
   {_performance_table_html(performance)}
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
+  {site_footer_html()}
   <script src="../../../assets/js/sortable-table.js"></script>
 </body>
 </html>
@@ -469,6 +472,7 @@ def make_course_performance_index_page(place_id, df=None):
     {course_rows}
   </ul>
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
+  {site_footer_html()}
   <script src="../../../assets/js/sortable-table.js"></script>
   <script src="../../../assets/js/section-tabs.js"></script>
   <script src="../../../assets/js/cross-filter.js"></script>
@@ -562,6 +566,7 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
 
   <p><a href="../../../courses/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; コース詳細データへ</a></p>
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
+  {site_footer_html()}
   <script src="../../../assets/js/sortable-table.js"></script>
   <script src="../../../assets/js/section-tabs.js"></script>
   <script src="../../../assets/js/cross-filter.js"></script>

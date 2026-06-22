@@ -12,6 +12,7 @@ import pandas as pd
 
 from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS, WAKU_COLORS
 from src.logic.html_generator import horse_report_generator
+from src.logic.html_generator.site_nav_html import breadcrumb_html, site_footer_html, site_nav_html
 from src.managers import (
     html_manager,
     peds_results_dataset_manager,
@@ -210,16 +211,25 @@ def build_nav_html(date_str, place_id, target_id):
     return nav_html
 
 
-def build_html_content(date_display, place_id, race_num, race_name, race_time, nav_html, table_rows, run_time_info, weight_info, peds_info, pops_info, frames_info, recent_html, result_table_html, payout_table_html):
+def build_html_content(date_str, date_display, place_id, race_num, race_name, race_time, nav_html, table_rows, run_time_info, weight_info, peds_info, pops_info, frames_info, recent_html, result_table_html, payout_table_html):
     """HTMLテンプレートを返す"""
     race_time_display = f"{race_time[:2]}:{race_time[2:]}" if race_time else ""
     place_name = NAME_LIST[place_id - 1]
+    breadcrumb_items = [
+        ("レースカレンダー", "races/index.html"),
+        (date_display, f"races/{date_str}/index.html"),
+        (race_name or f"{place_name}{race_num}R", None),
+    ]
+    site_nav = site_nav_html(base_path="../../", breadcrumb_items=breadcrumb_items)
+    breadcrumb = breadcrumb_html(breadcrumb_items, base_path="../../")
+    footer = site_footer_html()
     return """
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <title>{date_display} {place_name}競馬場 第{race_num}R {race_name}</title>
+  <link rel="stylesheet" href="../../assets/css/styles.css">
   <style>
     body {{
       font-family: sans-serif;
@@ -368,11 +378,14 @@ def build_html_content(date_display, place_id, race_num, race_name, race_time, n
   </style>
 </head>
 <body>
+  {site_nav}
+  {breadcrumb}
   {nav_html}
   <h2>{date_display} </h2>
   <h2>{place_name}競馬場 第{race_num}R </h2>
   <h2>{race_name}</h2>
   <p>発走時刻: {race_time_display}</p>
+  <div class="table-wrap">
   <table id="raceTable">
     <thead>
       <tr>
@@ -391,6 +404,7 @@ def build_html_content(date_display, place_id, race_num, race_name, race_time, n
       {table_rows}
     </tbody>
   </table>
+  </div>
 
   {result_table_html}
   {payout_table_html}
@@ -539,6 +553,7 @@ def build_html_content(date_display, place_id, race_num, race_name, race_time, n
     }});
   }});
   </script>
+  {footer}
 </body>
 </html>
 """.format(
@@ -547,6 +562,9 @@ def build_html_content(date_display, place_id, race_num, race_name, race_time, n
     race_num=race_num,
     race_name=race_name,
     race_time_display=race_time_display,
+    site_nav=site_nav,
+    breadcrumb=breadcrumb,
+    footer=footer,
     nav_html=nav_html,
     table_rows=table_rows,
     run_time_info=run_time_info,
@@ -629,6 +647,7 @@ def generate_result_table(df):
 
     result_table = f"""
     <h2>レース結果</h2>
+    <div class="table-wrap">
     <table id="resultTable">
       <thead>
         <tr>
@@ -642,6 +661,7 @@ def generate_result_table(df):
         {result_rows}
       </tbody>
     </table>
+    </div>
     """
     return result_table
 
@@ -680,6 +700,7 @@ def generate_payout_table_html(df):
         """
     payout_html = f"""
     <h2>配当結果</h2>
+    <div class="table-wrap">
     <table id="payoutTable">
       <thead>
         <tr>
@@ -693,6 +714,7 @@ def generate_payout_table_html(df):
         {rows_html}
       </tbody>
     </table>
+    </div>
     """
 
     return payout_html
@@ -830,6 +852,7 @@ def generate_run_time_info(date_str, place_id, target_id):
     run_time_info_html = f"""
     <div id="runtimeInfo" style="margin: 20px 0; padding: 10px; border: 1px solid #ccc; background: #fafafa;">
       <h3>🕐 コース別平均タイム情報 ({race_type} {course_len}m {ground_state} {race_class})</h3>
+      <div class="table-wrap">
       <table style="border-collapse: collapse; width: 100%; text-align: center;">
         <thead>
           <tr style="background: #f2f2f2;">
@@ -869,6 +892,7 @@ def generate_run_time_info(date_str, place_id, target_id):
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
     """.strip()
 
@@ -925,6 +949,7 @@ def generate_weight_info(date_str, place_id, target_id):
     weight_info_html = f"""
     <div id="weightInfo" style="margin: 20px 0; padding: 10px; border: 1px solid #ccc; background: #fefefe;">
       <h3>🐎 コース別平均馬体重情報 ({race_type} {course_len}m {ground_state} {race_class})</h3>
+      <div class="table-wrap">
       <table style="border-collapse: collapse; width: 100%; text-align: center;">
         <thead>
           <tr style="background: #f2f2f2;">
@@ -954,6 +979,7 @@ def generate_weight_info(date_str, place_id, target_id):
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
     """.strip()
 
@@ -1015,12 +1041,14 @@ def generate_peds_result_html(date_str, place_id, target_id):
 
         html = f"""
         <h4>{title} </h4>
+        <div class="table-wrap">
         <table class="peds-table">
           <thead>
             <tr><th>血統</th><th>成績(1,2,3,着外)</th><th>勝率</th><th>複勝率</th></tr>
           </thead>
           <tbody>{rows}</tbody>
         </table>
+        </div>
         """
         return html
 
@@ -1106,6 +1134,7 @@ def generate_pops_info(date_str, place_id, target_id):
     pops_info_html = f"""
     <div id="popsInfo" style="margin: 20px 0; padding: 10px; border: 1px solid #ccc; background: #fefefe;">
       <h3>📊 コース別平均人気情報 ({race_type} {course_len}m {ground_state} {race_class})</h3>
+      <div class="table-wrap">
       <table style="border-collapse: collapse; width: 100%; text-align: center;">
         <thead>
           <tr style="background: #f2f2f2;">
@@ -1140,6 +1169,7 @@ def generate_pops_info(date_str, place_id, target_id):
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
     """.strip()
 
@@ -1230,6 +1260,7 @@ def generate_frame_horse_info(date_str, place_id, target_id):
     html = f"""
     <div id="frameHorseInfo" style="margin:20px 0; padding:10px; border:1px solid #ccc; background:#fefefe;">
       <h3>📊 枠番・馬番 平均情報 ({race_type} {course_len}m {ground_state} {race_class})</h3>
+      <div class="table-wrap">
       <table style="border-collapse:collapse; width:100%; text-align:center;">
         <thead>
           <tr style="background:#f2f2f2;">
@@ -1274,6 +1305,7 @@ def generate_frame_horse_info(date_str, place_id, target_id):
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
     """.strip()
 
@@ -1346,6 +1378,7 @@ def generate_recent_same_condition_html(date_str, place_id, target_id):
         html += f"""
         <div style="margin-top:10px; padding:5px; border:1px solid #ddd;">
           <h4>{race_date_dsp}:{race_num}R {race_name} {type}{len}m {race_class_name} ({ground})</h4>
+          <div class="table-wrap">
           <table style="width:100%; border-collapse:collapse; text-align:center; font-size:14px;">
             <thead>
               <tr style="background:#f2f2f2;">
@@ -1408,7 +1441,7 @@ def generate_recent_same_condition_html(date_str, place_id, target_id):
             </tr>
           """
 
-        html += "</tbody></table></div>"
+        html += "</tbody></table></div></div>"
 
     html += "</div>"
     return html
@@ -1543,6 +1576,7 @@ def make_race_card_html(date_str, place_id, target_id):
 
     # --- HTML生成・書き込み ---
     html_content = build_html_content(
+        date_str=date_str,
         date_display=date_display,
         place_id=place_id,
         race_num=race_num,

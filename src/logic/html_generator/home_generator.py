@@ -20,7 +20,7 @@ from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator.race_type_badge_html import course_label_html
 from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
-from src.logic.html_generator.site_nav_html import site_nav_html
+from src.logic.html_generator.site_nav_html import site_footer_html, site_nav_html
 from src.managers import ai_performance_dataset_manager as dataset_manager
 from src.managers import html_manager
 
@@ -331,9 +331,7 @@ def home_template():
       </div>
     </div>
   </main>
-  <footer>
-    &copy; 競馬AIデータシステム
-  </footer>
+  {site_footer_html()}
   <script src="assets/js/sortable-table.js"></script>
 </body>
 </html>

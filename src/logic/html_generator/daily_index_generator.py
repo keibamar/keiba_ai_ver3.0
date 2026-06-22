@@ -151,6 +151,11 @@ def make_index_page(date_str, files_info_list):
 
 
 def daily_index_template(date_display, nav_links, place_races, place_keys, table_rows):
+    # site_nav_html（site_nav_html.pyからdaily_index_generator.calendar_widget_htmlを
+    # 参照している）との循環importを避けるため、ここで遅延importする。
+    from src.logic.html_generator.site_nav_html import breadcrumb_html, site_footer_html, site_nav_html
+
+    breadcrumb_items = [("レースカレンダー", "races/index.html"), (date_display, None)]
     return f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -214,8 +219,11 @@ def daily_index_template(date_display, nav_links, place_races, place_keys, table
   </style>
 </head>
 <body class="section-calendar">
+  {site_nav_html(base_path="../../", breadcrumb_items=breadcrumb_items)}
+  {breadcrumb_html(breadcrumb_items, base_path="../../")}
   {nav_links}
   <h1>{date_display} レース一覧</h1>
+  <div class="table-wrap">
   <table>
     <thead>
       <tr>
@@ -227,6 +235,8 @@ def daily_index_template(date_display, nav_links, place_races, place_keys, table
       {table_rows}
     </tbody>
   </table>
+  </div>
+  {site_footer_html()}
 </body>
 </html>
 """
@@ -320,7 +330,13 @@ def races_calendar_template():
 
     旧 web/site/races/index.html の構成を移植。大きな月表示カレンダーをここに
     集約し、本日開催がある場合は出馬表・コース詳細データへのリンクも併せて表示する。
+    このページ自身が大きな月表示カレンダーを持つため、右側タブには同じカレンダーを
+    二重に表示しないようshow_calendar=Falseを渡す（階層表示のみ出す）。
     """
+    # site_nav_html（site_nav_html.pyからdaily_index_generator.calendar_widget_htmlを
+    # 参照している）との循環importを避けるため、ここで遅延importする。
+    from src.logic.html_generator.site_nav_html import breadcrumb_html, site_footer_html, site_nav_html
+
     today_races = ai_performance_calculator.get_today_main_races_with_course(date.today())
 
     return f"""
@@ -332,6 +348,8 @@ def races_calendar_template():
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
 <body class="section-calendar">
+  {site_nav_html(base_path="../", current_path="races/index.html", show_calendar=False)}
+  {breadcrumb_html([("レースカレンダー", None)], base_path="../")}
   <h1>開催日カレンダー</h1>
 
   {calendar_widget_html(base_path="../")}
@@ -340,6 +358,7 @@ def races_calendar_template():
   {_today_meetings_html(today_races, base_path="../")}
 
   <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
+  {site_footer_html()}
 </body>
 </html>
 """

@@ -32,7 +32,7 @@ from src.config.lists import COURSE_LISTS
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.calculators import average_calculator
 from src.logic.html_generator.race_type_badge_html import course_label_html, race_type_span_html
-from src.logic.html_generator.site_nav_html import breadcrumb_html, site_nav_html
+from src.logic.html_generator.site_nav_html import breadcrumb_html, site_footer_html, site_nav_html
 from src.logic.html_generator.sparkline_html import single_line_trend_svg
 from src.managers import (
     html_manager,
@@ -1446,6 +1446,7 @@ def course_report_to_html(report):
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../../index.html">&larr; HOMEへ戻る</a></p>
+  {site_footer_html()}
   <script src="../../assets/js/sortable-table.js"></script>
   <script src="../../assets/js/section-tabs.js"></script>
   <script src="../../assets/js/cross-filter.js"></script>
@@ -1510,6 +1511,7 @@ def make_course_index_page():
   </div>
 
   <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
+  {site_footer_html()}
 </body>
 </html>
 """
@@ -1597,6 +1599,7 @@ def make_track_page(place_id):
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/index.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../index.html">&larr; コース詳細データ一覧へ</a></p>
+  {site_footer_html()}
   <script src="../../assets/js/sortable-table.js"></script>
 </body>
 </html>

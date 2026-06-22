@@ -710,6 +710,7 @@ def horse_report_to_html(report):
         html.append("<div>血統データなし</div>")
     else:
         html.append(f"<h4>🧬 {place_num} {race_type}{course_len}m ({ground_state})</h4>")
+        html.append('<div class="table-wrap">')
         html.append("<table style='width:100%; border-collapse: collapse; text-align: center;'>")
         html.append(
             "<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th>"
@@ -729,9 +730,11 @@ def horse_report_to_html(report):
             html.append("</tr>")
 
         html.append("</tbody></table>")
+        html.append("</div>")
 
     html.append("<h4>📊 近5走成績</h4>")
     if report.get("recent5"):
+        html.append('<div class="table-wrap">')
         html.append("<table style='width:100%; border-collapse: collapse; text-align: center; font-size: 12px;'>")
         html.append(
             "<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th>"
@@ -794,10 +797,12 @@ def horse_report_to_html(report):
             html.append("</tr>")
 
         html.append("</tbody></table>")
+        html.append("</div>")
     else:
         html.append("<div>直近5走データなし</div>")
 
     html.append("<h4>🏇 芝/ダートサマリ</h4>")
+    html.append('<div class="table-wrap">')
     html.append(
         """
     <table border="1" style="border-collapse:collapse; text-align:center;">
@@ -849,6 +854,7 @@ def horse_report_to_html(report):
             )
 
     html.append("</tbody></table>")
+    html.append("</div>")
 
     scb = report.get("same_course_best")
     html.append(f"<h4>⏱️ {place_num} {race_type}{course_len}m 持ち時計</h4>")

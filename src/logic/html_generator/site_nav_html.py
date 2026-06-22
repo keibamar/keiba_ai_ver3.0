@@ -5,12 +5,13 @@ Home・AI成績・コース詳細データの各ページ群を横断して同�
 アクセスできるようにする。daily_index_generator.calendar_widget_html(base_path=...)と
 同じ「埋め込み先ページの階層に応じた相対パスを引数で受け取る」パターンを踏襲する。
 
-また、site_nav_htmlは大きな月表示カレンダー自体を持つレースカレンダーページ
-（races_calendar_template）以外のどのページからも必ず1回呼ばれるため、ここに
+また、site_nav_htmlはサイト内の全ページから必ず1回呼ばれるため、ここに
 「常に右側に小さく表示するカレンダー（矢印で前後の月へ移動可能）＋現在地（階層）表示」
 のタブ（page_calendar_tab_html）も統合し、ページ生成側の個別対応なしに行き渡らせる。
 画面上部のnav本体には主要セクションへのリンクを並べず（右側タブに一本化し、
-画面TOPとサイドバーでの二重表示を避ける）、検索ボックスのみを置く。
+画面TOPとサイドバーでの二重表示を避ける）、検索ボックスのみを置く。大きな月表示
+カレンダー自体を持つレースカレンダーページ（races_calendar_template）だけは、
+右側タブの小カレンダーを二重表示しないようshow_calendar=Falseを渡す。
 """
 
 from src.logic.html_generator import daily_index_generator
@@ -36,15 +37,16 @@ NAV_COLOR_CLASSES = {
 }
 
 
-def site_nav_html(base_path="", current_path=None, breadcrumb_items=None):
+def site_nav_html(base_path="", current_path=None, breadcrumb_items=None, show_calendar=True):
     """サイト共通ナビゲーションのHTML断片を返す
 
     競馬場・コースのページ検索ボックス（search_box_html）、それを動かすための
     スクリプトタグ、右側の小さなカレンダータブ（page_calendar_tab_html）も併せて
     返す。主要セクションへのリンクは右側タブに一本化しているため、画面上部のnav
-    本体には検索ボックスのみを置く。site_nav_htmlはどのページでも
-    （レースカレンダーページを除き）必ず1回呼ばれるため、ここにまとめることで
-    ページ生成側の個別対応なしに全ページへ行き渡らせる。
+    本体には検索ボックスのみを置く。site_nav_htmlはサイト内の全ページで必ず1回
+    呼ばれるため、ここにまとめることでページ生成側の個別対応なしに全ページへ
+    行き渡らせる（ヘッダー・フッター・右側タブの統一はsite_footer_htmlと合わせて
+    この2つの共通部品だけで実現する）。
 
     Args:
         base_path (str): 埋め込み先ページからpublic_html直下までの相対パス
@@ -57,17 +59,32 @@ def site_nav_html(base_path="", current_path=None, breadcrumb_items=None):
             ("東京", "courses/05_tokyo/index.html"), ("芝1800m", None)]）。指定すると
             右側タブの現在地表示がNAV_LINKSの大分類だけでなく、その下の階層
             （競馬場・コース等）まで含めて表示し、各階層へ直接遷移できるようになる。
+        show_calendar (bool): Falseにすると右側タブの小カレンダーを省略し、
+            階層表示のみにする（レースカレンダーページ自身は大きな月表示
+            カレンダーを別途持つため、右側タブで同じカレンダーを二重に
+            表示しないようにする用途）。
     """
     return f"""<nav class="site-nav">
   {search_box_html(base_path)}
 </nav>
 <script src="{base_path}assets/js/page-search-index.js"></script>
 <script src="{base_path}assets/js/page-search.js"></script>
-{page_calendar_tab_html(base_path, current_path, breadcrumb_items)}
+{page_calendar_tab_html(base_path, current_path, breadcrumb_items, show_calendar=show_calendar)}
 <script src="{base_path}assets/js/calendar-tab-height.js"></script>"""
 
 
-def page_calendar_tab_html(base_path="", current_path=None, breadcrumb_items=None):
+def site_footer_html():
+    """サイト共通フッターのHTML断片を返す
+
+    site_nav_htmlと対になる、全ページ共通のフッター。ページ生成側で個別に
+    フッターを書く・書き忘れるのを防ぐため、ここに集約する。
+    """
+    return """<footer>
+    &copy; 競馬AIデータシステム
+  </footer>"""
+
+
+def page_calendar_tab_html(base_path="", current_path=None, breadcrumb_items=None, show_calendar=True):
     """ページ右側に常時表示する、小さなカレンダー＋現在地（階層）表示のタブを返す
 
     カレンダー部分はdaily_index_generator.calendar_widget_htmlをそのまま再利用する
@@ -85,11 +102,18 @@ def page_calendar_tab_html(base_path="", current_path=None, breadcrumb_items=Non
             同じ形式の階層パス（先頭の要素のラベルがNAV_LINKSの大分類のいずれかと
             一致する想定。例: [("コース詳細データ", "courses/index.html"),
             ("東京", "courses/05_tokyo/index.html"), ("芝1800m", None)]）。
+        show_calendar (bool): Falseにすると小カレンダー部分を省略する
+            （site_nav_html参照）。
     """
-    return f"""<aside class="page-calendar-tab">
-  <div class="page-calendar-tab-calendar">
+    calendar_html = (
+        f"""<div class="page-calendar-tab-calendar">
     {daily_index_generator.calendar_widget_html(base_path=base_path)}
-  </div>
+  </div>"""
+        if show_calendar
+        else ""
+    )
+    return f"""<aside class="page-calendar-tab">
+  {calendar_html}
   <ul class="page-calendar-tab-location">
     {_location_tree_html(base_path, current_path, breadcrumb_items)}
   </ul>

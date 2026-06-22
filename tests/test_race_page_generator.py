@@ -113,6 +113,16 @@ def test_make_race_card_html_generates_full_page(new_roots):
     print(f"  出力先: {out_file}")
     print(f"  HTML文字数: {len(html_content)}")
 
+    # --- サイト共通ヘッダー・フッター・右側タブ（他ページと統一） ---
+    assert '<link rel="stylesheet" href="../../assets/css/styles.css">' in html_content
+    assert '<nav class="site-nav">' in html_content
+    assert '<aside class="page-calendar-tab">' in html_content
+    assert "<footer>" in html_content
+    assert "競馬AIデータシステム" in html_content
+    # ブレッドクラム（レースカレンダー→その日→このレース）
+    assert '<a href="../../races/index.html">レースカレンダー</a>' in html_content
+    assert '<a href="../../races/20241020/index.html">2024/10/20</a>' in html_content
+
     # --- ナビゲーション・見出し ---
     assert '<div class="nav">' in html_content
     assert "<h2>2024/10/20 </h2>" in html_content

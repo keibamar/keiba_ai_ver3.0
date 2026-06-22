@@ -275,4 +275,29 @@ def test_sidebar_html_without_current_label_links_everything():
 
     assert '<a href="../05_tokyo/index.html">東京</a>' in html
     assert '<a href="../06_nakayama/index.html">中山</a>' in html
+
+
+def test_site_footer_html_renders_footer():
+    html = n.site_footer_html()
+
+    assert html == '<footer>\n    &copy; 競馬AIデータシステム\n  </footer>'
+
+
+def test_site_nav_html_show_calendar_false_omits_small_calendar():
+    html = n.site_nav_html(base_path="../", current_path="races/index.html", show_calendar=False)
+
+    print(f"\n--- site_nav_html(show_calendar=False) ---\n{html}")
+
+    # 小カレンダー（page-calendar-tab-calendar）は省略されるが、階層表示は残る
+    assert "page-calendar-tab-calendar" not in html
+    assert "calendar-widget" not in html
+    assert '<aside class="page-calendar-tab">' in html
+    assert "page-calendar-tab-location" in html
+
+
+def test_site_nav_html_show_calendar_true_by_default_includes_calendar():
+    html = n.site_nav_html(base_path="../")
+
+    assert "page-calendar-tab-calendar" in html
+    assert "calendar-widget" in html
     assert "page-sidebar-current" not in html

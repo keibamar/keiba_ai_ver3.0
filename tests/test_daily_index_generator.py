@@ -65,6 +65,11 @@ def test_make_daily_index_page_generates_index_html(new_roots):
     assert "<h1>2024/10/20 レース一覧</h1>" in html_content
     # public_html/races/{date}/index.html から public_html/assets/css/styles.css への正しい相対パス
     assert '<link rel="stylesheet" href="../../assets/css/styles.css">' in html_content
+    # サイト共通ヘッダー・フッター・右側タブ（他ページと統一）
+    assert '<nav class="site-nav">' in html_content
+    assert '<aside class="page-calendar-tab">' in html_content
+    assert "<footer>" in html_content
+    assert '<a href="../../races/index.html">レースカレンダー</a>' in html_content
     assert "<th>新潟競馬場</th>" in html_content
     assert "<th>東京競馬場</th>" in html_content
     assert "<th>京都競馬場</th>" in html_content
@@ -106,6 +111,15 @@ def test_make_races_calendar_page_generates_index_html(new_roots, monkeypatch):
 
     # レースカレンダーのページ全体に専用のサブカラー（section-calendar）を適用する
     assert '<body class="section-calendar">' in html_content
+    # サイト共通ヘッダー・右側タブ（他ページと統一）。このページ自身が大きな
+    # 月表示カレンダーを持つため、右側タブの小カレンダーは二重表示しない
+    assert '<nav class="site-nav">' in html_content
+    assert '<aside class="page-calendar-tab">' in html_content
+    assert "page-calendar-tab-calendar" not in html_content
+    assert "<footer>" in html_content
+    # courses/index.html・performance/index.htmlと同様、トップレベルのページでも
+    # 横並びのパンくず（HOME > レースカレンダー）を表示する
+    assert '<p class="breadcrumb"><a href="../index.html">HOME</a> &rsaquo; <span class="breadcrumb-current">レースカレンダー</span></p>' in html_content
     assert "<h1>開催日カレンダー</h1>" in html_content
     assert '<table id="calendar"></table>' in html_content
     assert 'window.CALENDAR_BASE_PATH = "../";' in html_content
