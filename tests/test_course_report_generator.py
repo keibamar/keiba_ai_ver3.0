@@ -187,8 +187,10 @@ def test_course_report_to_html_structure():
     # 通過順・peds各1つの年度別折りたたみ + 人気/枠番/馬番のクラス別・馬場別の折りたたみ6つ
     # + 馬体重のクラス別・馬場別の折りたたみ2つ
     # + 馬場×クラス×年度の組み合わせごとに5つ（血統/枠番/馬番/馬体重/人気データ）の折りたたみ
+    # （メインタブの5つはデフォルトで展開済み(open属性)、それ以外は閉じた状態）
     cross_combo_count = len(c.build_cross_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN))
-    assert html.count('<details class="breakdown">') == 10 + cross_combo_count * 5
+    assert html.count('<details class="breakdown">') == 10
+    assert html.count('<details class="breakdown" open>') == cross_combo_count * 5
     assert html.count("<summary>年度別を表示</summary>") == 2
     # ブレッドクラム（現在地の階層）が追加されている
     assert '<p class="breadcrumb">' in html

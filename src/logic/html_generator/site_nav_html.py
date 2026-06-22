@@ -63,7 +63,8 @@ def site_nav_html(base_path="", current_path=None, breadcrumb_items=None):
 </nav>
 <script src="{base_path}assets/js/page-search-index.js"></script>
 <script src="{base_path}assets/js/page-search.js"></script>
-{page_calendar_tab_html(base_path, current_path, breadcrumb_items)}"""
+{page_calendar_tab_html(base_path, current_path, breadcrumb_items)}
+<script src="{base_path}assets/js/calendar-tab-height.js"></script>"""
 
 
 def page_calendar_tab_html(base_path="", current_path=None, breadcrumb_items=None):

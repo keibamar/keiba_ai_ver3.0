@@ -325,9 +325,13 @@ def _breakdown_row_from_winners(winners_df, place_returns_df, value_label, groun
         "value": value_label,
         "avg_time": avg_time_fmt,
         "avg_pop": "データなし" if avg_pop is None else str(avg_pop),
+        "avg_pop_raw": avg_pop,
         "weight": "データなし" if avg_weight is None else f"{avg_weight}kg",
+        "weight_raw": avg_weight,
         "avg_frame": "データなし" if avg_frame is None else str(avg_frame),
+        "avg_frame_raw": avg_frame,
         "avg_horse": "データなし" if avg_horse is None else str(avg_horse),
+        "avg_horse_raw": avg_horse,
         "win_return": "データなし" if win_return_raw is None else f"{win_return_raw}円",
         "win_return_raw": win_return_raw,
         "place_return": "データなし" if place_return_raw is None else f"{place_return_raw}円",
@@ -393,7 +397,31 @@ def build_cross_breakdown(place_id, race_type, course_len, oldest_year=ANNUAL_ST
                 )
                 if row is not None:
                     result[(ground_state, class_name, start_year)] = row
+
+    baseline = result.get(("全", "all", oldest_year))
+    if baseline is not None:
+        for row in result.values():
+            _apply_summary_stat_trends(row, baseline)
     return result
+
+
+def _apply_summary_stat_trends(row, baseline):
+    """平均人気・配当(単勝/複勝)・体重・枠番/馬番が、コース全体（baseline）の値より
+    SUMMARY_STAT_ADVANTAGE_THRESHOLDS以上離れている場合、rowに{key}_trend（"high"/"low"/""）
+    を追加する（概要カードの色付けに使う。サマリー・カードの表示用なので、対象自身が
+    baselineの場合は常に差0で何も付かない）。
+    """
+    for key, threshold in SUMMARY_STAT_ADVANTAGE_THRESHOLDS.items():
+        value = row.get(key)
+        base_value = baseline.get(key)
+        trend = ""
+        if value is not None and base_value is not None:
+            diff = value - base_value
+            if diff >= threshold:
+                trend = "high"
+            elif diff <= -threshold:
+                trend = "low"
+        row[f"{key}_trend"] = trend
 
 
 def build_year_breakdown(place_id, race_type, course_len, start_year=ANNUAL_START_YEAR, current_year=None):
@@ -516,6 +544,19 @@ def _passage_breakdown_table_html(rows, value_label, title, passage_keys=PASSAGE
 
 
 ADVANTAGE_THRESHOLD_POINTS = 8.0  # 複勝率(着内率)が平均よりこの値(%pt)以上離れていたら有利/不利と判定する
+
+# 馬場×クラス×年度パネルの概要カード（平均人気・配当・体重・枠番/馬番）について、
+# そのコース全体（全×all×全期間）の値からどれだけ離れていれば「傾向がある」と見るかの
+# 閾値。全コースの馬場別・クラス別の内訳とコース全体平均との差（849件）を実データで
+# 集計し、上位10%程度（ノイズではなくはっきりした差と言えるライン）を採用している。
+SUMMARY_STAT_ADVANTAGE_THRESHOLDS = {
+    "avg_pop_raw": 1.0,
+    "win_return_raw": 500.0,
+    "place_return_raw": 100.0,
+    "weight_raw": 15.0,
+    "avg_frame_raw": 0.9,
+    "avg_horse_raw": 1.7,
+}
 
 
 def _chakudo_rows(df, race_type, course_len, rank_column, rank_range, ground_state="全", class_name="all"):
@@ -896,29 +937,34 @@ def _cross_filter_panel_html(
     if row is None:
         body = "<p>対象データがありません。</p>"
     else:
+        def trend_span(text, trend_key):
+            trend = row.get(trend_key, "")
+            cls = f" value-trend-{trend}" if trend else ""
+            return f'<span class="{cls.strip()}">{text}</span>' if cls else text
+
         body = f"""<div class="summary-stats">
     <div class="summary-stat summary-stat-primary">
       <span class="value">{row['avg_time']}</span>
       <span class="label">平均勝ち時計</span>
     </div>
     <div class="summary-stat summary-stat-secondary">
-      <span class="value">{row['avg_pop']}</span>
+      <span class="value">{trend_span(row['avg_pop'], 'avg_pop_raw_trend')}</span>
       <span class="label">平均人気</span>
     </div>
     <div class="summary-stat summary-stat-secondary">
-      <span class="value">{row['win_return']}</span>
+      <span class="value">{trend_span(row['win_return'], 'win_return_raw_trend')}</span>
       <span class="label">平均配当（単勝）</span>
     </div>
     <div class="summary-stat summary-stat-secondary">
-      <span class="value">{row['place_return']}</span>
+      <span class="value">{trend_span(row['place_return'], 'place_return_raw_trend')}</span>
       <span class="label">平均配当（複勝）</span>
     </div>
     <div class="summary-stat summary-stat-secondary">
-      <span class="value">{row['weight']}</span>
+      <span class="value">{trend_span(row['weight'], 'weight_raw_trend')}</span>
       <span class="label">勝ち馬平均体重</span>
     </div>
     <div class="summary-stat summary-stat-secondary">
-      <span class="value">{row['avg_frame']} / {row['avg_horse']}</span>
+      <span class="value">{trend_span(row['avg_frame'], 'avg_frame_raw_trend')} / {trend_span(row['avg_horse'], 'avg_horse_raw_trend')}</span>
       <span class="label">平均枠番 / 平均馬番</span>
     </div>
   </div>"""
@@ -953,23 +999,23 @@ def _cross_filter_panel_html(
     <h3>{heading}</h3>
     {feature_html}
     {body}
-    <details class="breakdown">
+    <details class="breakdown" open>
       <summary>血統データを表示</summary>
       {peds_html}
     </details>
-    <details class="breakdown">
+    <details class="breakdown" open>
       <summary>枠番データを表示</summary>
       {frame_chakudo_html}
     </details>
-    <details class="breakdown">
+    <details class="breakdown" open>
       <summary>馬番データを表示</summary>
       {horse_chakudo_html}
     </details>
-    <details class="breakdown">
+    <details class="breakdown" open>
       <summary>馬体重データを表示</summary>
       {weight_chakudo_html}
     </details>
-    <details class="breakdown">
+    <details class="breakdown" open>
       <summary>人気データを表示</summary>
       {pop_chakudo_html}
     </details>

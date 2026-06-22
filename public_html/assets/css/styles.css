@@ -209,6 +209,22 @@ td a:hover {
   font-size: 0.8em;
 }
 
+/* 概要カードの平均人気・配当・体重・枠番/馬番が、このコース全体（全×all×全期間）の
+   値からはっきり離れている場合に色を付ける（advantage-badgeと同じ配色。閾値は
+   全コースの実データから「ノイズではない差」のラインを集計して決めている）。
+   高い方向（荒れ傾向・配当高め等）は緑、低い方向（堅め・配当低め等）は赤で示す。
+   どちらが「得」かは指標ごとに異なるため、色は単に「平均からはっきり離れている」
+   ことを示すだけで、優劣の意味は持たせない。 */
+.value-trend-high {
+  color: #1e7d34;
+  font-weight: bold;
+}
+
+.value-trend-low {
+  color: #c62828;
+  font-weight: bold;
+}
+
 /* --- 週別推移の簡易バーチャート（CSSのみ、JSライブラリ不使用） --- */
 
 .bar-chart {
@@ -1209,6 +1225,10 @@ details.breakdown summary:hover {
   border-radius: 8px;
   background: #fafafa;
   font-size: 0.8em;
+  /* floatの高さがカレンダー＋階層表示自体の高さしかないと、本文がそこで
+     右側いっぱいに広がってしまい、グラフ等の終端位置が途中でズレて見える。
+     画面の高さ分だけは必ず確保し、本文の折り返し幅を画面下まで揃える。 */
+  min-height: 100vh;
 }
 
 .page-calendar-tab .calendar-widget #calendar {
@@ -1315,6 +1335,7 @@ details.breakdown summary:hover {
   .page-calendar-tab {
     float: none;
     width: auto;
+    min-height: auto;
   }
 }
 
