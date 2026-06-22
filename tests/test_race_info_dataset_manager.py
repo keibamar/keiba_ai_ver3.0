@@ -144,8 +144,10 @@ def test_analyze_weight_chakudo_buckets_into_10kg_ranges():
     assert result.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "体重帯", "1着", "2着", "3着", "着外"]
     # 馬体重帯は10kg刻みの下限値（例: 458kg→450）になっている
     assert (result["体重帯"] % 10 == 0).all()
+    # サンプル数が極端に少ない両端（390kg未満・550kg以上）は10kg刻みのままにせず、
+    # 380=「390kg未満」、550=「550kg以上」の1つの帯にまとめる（clipで吸収する）
     assert result["体重帯"].min() >= 380
-    assert result["体重帯"].max() <= 560
+    assert result["体重帯"].max() <= 550
     assert (result[["1着", "2着", "3着", "着外"]].sum(axis=1) > 0).any()
 
 

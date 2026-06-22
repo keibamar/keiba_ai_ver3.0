@@ -166,6 +166,12 @@ def test_course_report_to_html_structure():
     assert '<div class="section-panel" data-section="weight" hidden>' in html
     assert "<h3>馬体重データ（馬体重帯別着度数、全体）</h3>" in html
     assert "kg台" in html
+    # サンプル数が極端に少ない両端（390kg未満・550kg以上）は10kg刻みのままにせず、
+    # 1つの開放区間の帯にまとめて表示する
+    assert "390kg未満" in html
+    assert "550kg以上" in html
+    assert "380kg台" not in html
+    assert "560kg台" not in html
     assert '<polyline points=' in html
     assert "<summary>馬体重データ：クラス別を表示</summary>" in html
     assert "<summary>馬体重データ：馬場別を表示</summary>" in html

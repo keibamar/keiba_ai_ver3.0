@@ -145,20 +145,27 @@ def analyze_horse_chakudo(df_raw, courses):
     return _analyze_rank_chakudo(df_raw, courses, "馬番", range(1, 19))
 
 
-WEIGHT_BUCKET_SIZE = 10  # 馬体重を10kg刻みでバケット化する
-WEIGHT_BUCKET_RANGE = range(380, 561, WEIGHT_BUCKET_SIZE)  # 380kg〜560kg台を想定
+WEIGHT_BUCKET_SIZE = 10  # 馬体重を10kg刻みでバケット化する（中心部のみ。両端は開放バケットにする）
+WEIGHT_BUCKET_LOW = 390  # これ未満は1つの「390kg未満」バケットにまとめる
+WEIGHT_BUCKET_HIGH = 550  # これ以上は1つの「550kg以上」バケットにまとめる
+# 380=「390kg未満」、390〜540=10kg刻みの帯、550=「550kg以上」
+WEIGHT_BUCKET_RANGE = range(WEIGHT_BUCKET_LOW - WEIGHT_BUCKET_SIZE, WEIGHT_BUCKET_HIGH + 1, WEIGHT_BUCKET_SIZE)
 
 
 def analyze_weight_chakudo(df_raw, courses, bucket_size=WEIGHT_BUCKET_SIZE):
     """馬体重（bucket_size刻みの帯）別の着度数を race_type, course_len ごとに算出する
 
     例えばbucket_size=10なら、馬体重458kgは450（450〜459kg帯）に丸めて集計する。
+    390kg未満・550kg以上は件数が極端に少なく（全体の0.3%程度）10kg刻みのままでは
+    1帯あたり数十件程度までサンプル数が減って傾向がブレるため、それぞれ
+    「390kg未満」「550kg以上」の1つの帯にまとめる（clipで両端を吸収する）。
     人気/枠番/馬番と同じ_analyze_rank_chakudoを再利用するため、先に馬体重を
     帯の下限値に変換した列を作ってから渡す。
     """
     df = df_raw.copy()
     df["馬体重"] = pd.to_numeric(df["馬体重"], errors="coerce")
-    df["体重帯"] = (df["馬体重"] // bucket_size * bucket_size)
+    raw_bucket = df["馬体重"] // bucket_size * bucket_size
+    df["体重帯"] = raw_bucket.clip(lower=WEIGHT_BUCKET_LOW - bucket_size, upper=WEIGHT_BUCKET_HIGH)
     return _analyze_rank_chakudo(df, courses, "体重帯", WEIGHT_BUCKET_RANGE)
 
 

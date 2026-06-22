@@ -45,9 +45,11 @@ ANNUAL_START_YEAR = 2019
 GROUND_STATE_ORDER = ["良", "稍重", "重", "不良"]
 
 # race_info_dataset_manager.update_chakudo（馬体重帯別着度数）と同じ刻み・範囲
-# （src/datasets/race_info/transform.pyのWEIGHT_BUCKET_SIZE/WEIGHT_BUCKET_RANGEと揃える）
+# （src/datasets/race_info/transform.pyのWEIGHT_BUCKET_SIZE/WEIGHT_BUCKET_LOW/HIGH/RANGEと揃える）
 WEIGHT_BUCKET_SIZE = 10
-WEIGHT_BUCKET_RANGE = range(380, 561, WEIGHT_BUCKET_SIZE)
+WEIGHT_BUCKET_LOW = 390
+WEIGHT_BUCKET_HIGH = 550
+WEIGHT_BUCKET_RANGE = range(WEIGHT_BUCKET_LOW - WEIGHT_BUCKET_SIZE, WEIGHT_BUCKET_HIGH + 1, WEIGHT_BUCKET_SIZE)
 
 
 def _format_time(value):
@@ -711,8 +713,17 @@ def _chakudo_chart_html(df, race_type, course_len, rank_column, rank_range, titl
 
 
 def _weight_bucket_label(bucket_start):
-    """馬体重帯の下限値（例: 450）を表示用ラベル（例: "450kg台"）にする"""
-    return f"{int(bucket_start)}kg台"
+    """馬体重帯の下限値（例: 450）を表示用ラベル（例: "450kg台"）にする
+
+    両端（サンプル数が極端に少ない390kg未満・550kg以上）は1つの帯にまとめているため、
+    "kg台"ではなく"未満"/"以上"の開放区間として表示する。
+    """
+    bucket_start = int(bucket_start)
+    if bucket_start < WEIGHT_BUCKET_LOW:
+        return f"{WEIGHT_BUCKET_LOW}kg未満"
+    if bucket_start >= WEIGHT_BUCKET_HIGH:
+        return f"{WEIGHT_BUCKET_HIGH}kg以上"
+    return f"{bucket_start}kg台"
 
 
 def _weight_trend_chart_html(df, race_type, course_len, ground_state="全", class_name="all"):
