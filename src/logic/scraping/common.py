@@ -90,7 +90,18 @@ def scrape_df(url: str) -> list:
         if not validate_soup(soup, url, "scrape_df", require_table=True):
             return []
 
-        tables = [pd.read_html(str(t))[0] for t in soup.select("table:has(tr td)")]
+        tables = []
+        for t in soup.select("table:has(tr td)"):
+            # pd.read_htmlがそのtableをDataFrameとして解釈できない場合（データ行が
+            # 無いレイアウト用のtable等）に空リストを返すことがあり、[0]で
+            # IndexErrorになる。1つのtableの解析失敗でページ全体（他の正常な
+            # table）を捨てないよう、そのtableだけスキップする。
+            try:
+                parsed = pd.read_html(str(t))
+            except (IndexError, ValueError):
+                continue
+            if parsed:
+                tables.append(parsed[0])
         if not tables:
             print("scrape_df: No table found ", url)
         return tables

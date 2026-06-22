@@ -135,9 +135,11 @@ def _week_main_races_html(races):
         time_str = str(race["race_time"]).zfill(4)
         time_disp = f"{time_str[:2]}:{time_str[2:]}"
         if race["race_type"] and race["course_len"]:
+            # 「函館芝1200m」のように競馬場名とコースが続けて並ぶと読みにくいため、
+            # 間で改行する（例: 函館 / 芝1200m）。
             course_link = (
                 f'<a href="courses/{place_key}/{race["race_type"]}-{race["course_len"]}.html">'
-                f'{place_name} {course_label_html(race["race_type"], race["course_len"])}</a>'
+                f'{place_name}<br>{course_label_html(race["race_type"], race["course_len"])}</a>'
             )
         else:
             course_link = f'<a href="courses/{place_key}/index.html">{place_name}</a>'
@@ -178,6 +180,9 @@ def _weekend_results_html(races):
     """週末のメインレース結果（勝ち馬・AI本命馬・本命馬の着順・単勝/複勝の的中結果）を返す
 
     ai_performance_calculator.get_weekend_main_race_detailsの戻り値をそのまま表示する。
+    レース名は、_week_main_races_htmlと同様にその日の出馬表ページ
+    （races/{date}/{place}R11.html）が生成済みであればそこへリンクする
+    （結果が出た後でも、出走馬・オッズ等の詳細を確認できるようにする）。
     """
     if not races:
         return "<p>対象レースのデータがありません。</p>"
@@ -185,9 +190,16 @@ def _weekend_results_html(races):
     rows = ""
     for race in races:
         place_name = NAME_LIST[race["place_id"] - 1]
+        place_key = PLACE_LIST[race["place_id"] - 1]
         date_str = _date_with_weekday_html(race["race_day"])
         pick_finish = f"{race['pick_finish']}着" if race["pick_finish"] is not None else "-"
-        race_cell = _main_sub_cell_html(race["race_name"], f"{place_name}11R")
+        race_day_str = race["race_day"].strftime("%Y%m%d")
+        race_card_file = f"{place_key}R11.html"
+        if html_manager.race_page_exists(race_day_str, race_card_file):
+            race_name_html = f'<a href="races/{race_day_str}/{race_card_file}">{race["race_name"]}</a>'
+        else:
+            race_name_html = race["race_name"]
+        race_cell = _main_sub_cell_html(race_name_html, f"{place_name}11R")
         rows += (
             f"<tr><td>{date_str}</td><td>{race_cell}</td>"
             f"<td>{race['winner_name'] or '-'}</td>"

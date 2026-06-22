@@ -274,6 +274,11 @@ def _load_course_place_returns(place_id, start_year=ANNUAL_START_YEAR, current_y
         df = df[df["式別"] == "複勝"]
         if df.empty:
             continue
+        df = df.copy()
+        # get_race_returns_csvのインデックス名は、consolidate_race_returns経由（名前あり）
+        # か週次更新のスクレイピング経由（名前なし）かで変わるため、reset_index前に
+        # 明示的に"race_id"へ統一する（インデックスの値自体はどちらもrace_id）。
+        df.index.name = "race_id"
         df = df.reset_index()[["race_id", "馬番", "配当"]]
         frames.append(df)
     if not frames:

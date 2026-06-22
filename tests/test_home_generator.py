@@ -122,7 +122,7 @@ def test_make_home_page_generates_index_html(new_roots, monkeypatch):
     assert "<h4>今週のメインレース</h4>" in html_content
     assert "<h4>先週の結果</h4>" in html_content
     # 今週のメインレースは、コース詳細データへ直接リンクする
-    assert html_content.count('<a href="courses/05_tokyo/芝-1800.html">東京 <span class="race-type-turf">芝1800m</span></a>') == 1
+    assert html_content.count('<a href="courses/05_tokyo/芝-1800.html">東京<br><span class="race-type-turf">芝1800m</span></a>') == 1
     # 先週の結果は、的中率ではなく的中時の配当そのものを表示する
     assert "カネラフィーナ" in html_content
     assert "510円" in html_content
@@ -280,7 +280,8 @@ def test_week_main_races_html_shows_date_and_links_to_course():
     # 土・日それぞれの日付（曜日付き）・発走時刻が表示される（土曜は青、日曜は赤）
     assert '06/27<span class="weekday-sat">(土)</span> 15:20' in html_content
     assert '06/28<span class="weekday-sun">(日)</span> 15:45' in html_content
-    assert '<a href="courses/02_hakodate/芝-1200.html">函館 <span class="race-type-turf">芝1200m</span></a>' in html_content
+    # 「函館芝1200m」のように続けて並ぶと読みにくいため、競馬場名とコースの間で改行する
+    assert '<a href="courses/02_hakodate/芝-1200.html">函館<br><span class="race-type-turf">芝1200m</span></a>' in html_content
     # コース情報が取得できなかった場合は競馬場のコース一覧へリンクする
     assert '<a href="courses/05_tokyo/index.html">東京</a>' in html_content
     # レース名がメイン、開催場・レース番号がサブの2行表示
@@ -341,13 +342,15 @@ def test_weekend_results_html_shows_winner_pick_and_payout_on_hit():
 
     # 2026-06-13は土曜なので青色の曜日表示になる
     assert '06/13<span class="weekday-sat">(土)</span>' in html_content
-    assert '<span class="main">ジューンS</span><span class="sub">東京11R</span>' in html_content
+    # レース名は、その日の出馬表ページ（races/{date}/{place}R11.html）が生成済みなら
+    # そこへリンクする（結果が出た後でも出走馬・オッズ等を確認できるようにする）
+    assert '<span class="main"><a href="races/20260613/05_tokyoR11.html">ジューンS</a></span><span class="sub">東京11R</span>' in html_content
     assert "カネラフィーナ" in html_content
     assert "1着" in html_content
     assert "510円" in html_content
     assert "210円" in html_content
     # 不的中のレースは本命馬の着順も表示する
-    assert '<span class="main">三宮S</span><span class="sub">阪神11R</span>' in html_content
+    assert '<span class="main"><a href="races/20260613/09_hanshinR11.html">三宮S</a></span><span class="sub">阪神11R</span>' in html_content
     assert "メイショウズイウン" in html_content
     assert "9着" in html_content
     assert '<span class="hit-badge miss">不的中</span>' in html_content

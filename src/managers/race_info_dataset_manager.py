@@ -596,11 +596,18 @@ def get_race_returns_csv(place_id, year):
 
 
 def save_race_returns_dataset(place_id, year, race_returns_df):
-    """race_returnsのDataFrameを重複排除のうえcsv/pickleに保存する"""
+    """race_returnsのDataFrameを重複排除のうえcsv/pickleに保存する
+
+    インデックス（race_id）を含めずに重複判定すると、別のレースの行が
+    （式別・馬番・配当・人気）たまたま完全に一致した場合に重複と誤判定され、
+    後勝ち馬の複勝配当の行が消えてしまうことがあった（実データで発見）。
+    reset_indexしてrace_id自体も判定列に含めることで、別レースの行を
+    誤って重複排除しないようにする。
+    """
     if race_returns_df.empty:
         return
 
-    race_returns_df = race_returns_df.drop_duplicates(keep="first")
+    race_returns_df = race_returns_df[~race_returns_df.reset_index().duplicated(keep="first").values]
 
     out_dir = os.path.join(RACE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1])
     os.makedirs(out_dir, exist_ok=True)
