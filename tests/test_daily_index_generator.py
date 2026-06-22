@@ -104,6 +104,8 @@ def test_make_races_calendar_page_generates_index_html(new_roots, monkeypatch):
     print(f"  出力先: {out_file}")
     print(f"  HTML文字数: {len(html_content)}")
 
+    # レースカレンダーのページ全体に専用のサブカラー（section-calendar）を適用する
+    assert '<body class="section-calendar">' in html_content
     assert "<h1>開催日カレンダー</h1>" in html_content
     assert '<table id="calendar"></table>' in html_content
     assert 'window.CALENDAR_BASE_PATH = "../";' in html_content
@@ -113,7 +115,7 @@ def test_make_races_calendar_page_generates_index_html(new_roots, monkeypatch):
 
     # 「本日の開催」に、コース詳細データへのリンクが含まれる
     assert "<h2>本日の開催</h2>" in html_content
-    assert '<a href="../courses/05_tokyo/芝-1800.html">東京 芝1800m</a>' in html_content
+    assert '<a href="../courses/05_tokyo/芝-1800.html">東京 <span class="race-type-turf">芝1800m</span></a>' in html_content
 
 
 def test_calendar_widget_html_uses_given_base_path():
@@ -145,7 +147,7 @@ def test_today_meetings_html_links_to_race_card_and_course_data(monkeypatch):
     print(f"\n--- _today_meetings_html ---\n{html_content}")
 
     assert '<a href="../races/20241020/05_tokyoR11.html">府中牝馬S</a>' in html_content
-    assert '<a href="../courses/05_tokyo/芝-1800.html">東京 芝1800m</a>' in html_content
+    assert '<a href="../courses/05_tokyo/芝-1800.html">東京 <span class="race-type-turf">芝1800m</span></a>' in html_content
 
 
 def test_today_meetings_html_falls_back_when_race_card_missing(monkeypatch):

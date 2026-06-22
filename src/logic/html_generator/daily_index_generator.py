@@ -8,6 +8,7 @@ from datetime import date, datetime
 
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator
+from src.logic.html_generator.race_type_badge_html import course_label_html
 from src.managers import html_manager, race_card_dataset_manager, race_schedule_dataset_manager
 from src.utils.format_data import format_date
 
@@ -212,7 +213,7 @@ def daily_index_template(date_display, nav_links, place_races, place_keys, table
     }}
   </style>
 </head>
-<body>
+<body class="section-calendar">
   {nav_links}
   <h1>{date_display} レース一覧</h1>
   <table>
@@ -299,7 +300,7 @@ def _today_meetings_html(races, base_path=""):
         if race["race_type"] and race["course_len"]:
             course_link = (
                 f'<a href="{base_path}courses/{place_key}/{race["race_type"]}-{race["course_len"]}.html">'
-                f'{place_name} {race["race_type"]}{race["course_len"]}m</a>'
+                f'{place_name} {course_label_html(race["race_type"], race["course_len"])}</a>'
             )
         else:
             course_link = f'<a href="{base_path}courses/{place_key}/index.html">{place_name}</a>'
@@ -330,7 +331,7 @@ def races_calendar_template():
   <title>開催日カレンダー</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
-<body>
+<body class="section-calendar">
   <h1>開催日カレンダー</h1>
 
   {calendar_widget_html(base_path="../")}

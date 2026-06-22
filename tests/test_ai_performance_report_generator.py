@@ -168,7 +168,7 @@ def test_make_course_performance_page_generates_html(new_roots, fake_dataset):
     print(f"\n--- make_course_performance_page(東京, 芝1400m) ---")
     print(html_content)
 
-    assert "<h1>東京 芝1400m AI予想成績</h1>" in html_content
+    assert '<h1>東京 <span class="race-type-turf">芝1400m</span> AI予想成績</h1>' in html_content
     # 東京 芝1400mはA・Bの2レース: win hit=1/2=50.0%, return=(200+0)/2=100.0
     assert return_rate_big_html(100.0) in html_content
     assert hit_rate_gauge_html(50.0) in html_content
@@ -209,13 +209,13 @@ def test_make_course_performance_page_generates_html(new_roots, fake_dataset):
     assert '<div class="cross-filter-panel" data-ground-state="稍重" data-class="1勝クラス" hidden>' in html_content
     # ブレッドクラムが追加されている
     assert '<a href="../../../performance/course/05_tokyo/index.html">東京</a>' in html_content
-    assert '<span class="breadcrumb-current">芝1400m</span>' in html_content
+    assert '<span class="breadcrumb-current"><span class="race-type-turf">芝1400m</span></span>' in html_content
     # 旧来の右サイドバー（競馬場・コース選択）は、右側タブの階層表示と重複するため廃止した
     assert '<aside class="page-sidebar">' not in html_content
     # 右側タブに同じ階層（他の競馬場・このコースの他の距離）が表示される
     assert '<a href="../../../performance/course/06_nakayama/index.html">中山</a>' in html_content
-    assert '<a href="../../../performance/course/05_tokyo/ダート-1600.html">ダート1600m</a>' in html_content
-    assert '<span class="page-calendar-tab-current">芝1400m</span>' in html_content
+    assert '<a href="../../../performance/course/05_tokyo/ダート-1600.html"><span class="race-type-dirt">ダート1600m</span></a>' in html_content
+    assert '<span class="page-calendar-tab-current"><span class="race-type-turf">芝1400m</span></span>' in html_content
 
 
 def test_make_course_performance_index_page_generates_html(new_roots, fake_dataset):
@@ -228,8 +228,10 @@ def test_make_course_performance_index_page_generates_html(new_roots, fake_datas
     print(f"\n--- make_course_performance_index_page(place_id=5) ---")
     print(html_content)
 
+    # AI成績のページ全体に専用のサブカラー（section-performance）を適用する
+    assert '<body class="section-performance">' in html_content
     assert "<h1>東京 AI予想成績</h1>" in html_content
-    assert '<a href="芝-1400.html">芝1400m</a>' in html_content
+    assert '<a href="芝-1400.html"><span class="race-type-turf">芝1400m</span></a>' in html_content
     assert '<a href="../../index.html">&larr; AI成績トップへ</a>' in html_content
 
     # 東京全体（A・B・C）: win hit=2/3=66.7%, return=(200+0+100)/3=100.0

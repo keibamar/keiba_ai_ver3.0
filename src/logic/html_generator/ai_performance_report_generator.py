@@ -14,6 +14,7 @@ from datetime import date, datetime
 
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import COURSE_LISTS
+from src.logic.html_generator.race_type_badge_html import course_label_html, race_type_span_html
 from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_big_html, return_rate_gauge_html
 from src.logic.html_generator.site_nav_html import breadcrumb_html, sidebar_html, site_nav_html
 from src.logic.html_generator.sparkline_html import hit_return_trend_svg
@@ -97,6 +98,15 @@ def _breakdown_table_html(breakdown, value_label, title=None):
 
     heading = f"<h3>{title}</h3>\n  " if title else ""
     return f"{heading}{body}"
+
+
+def _colored_race_type_breakdown(by_race_type):
+    """芝/ダート別breakdownのvalue（"芝"/"ダート"）を色分けしたspanに置き換える
+
+    _breakdown_table_htmlは汎用関数（クラス別・馬場別等でも使う）のため、
+    芝/ダートの色分けはここで呼び出し側だけに適用し、他の内訳には影響させない。
+    """
+    return [{**item, "value": race_type_span_html(item["value"])} for item in by_race_type]
 
 
 def _short_trend_label(value):
@@ -245,7 +255,7 @@ def make_ai_performance_index_page():
   <title>AI予想成績</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
-<body>
+<body class="section-performance">
   {site_nav_html(base_path="../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb_html(breadcrumb_items, base_path="../")}
   <h1>AI予想成績</h1>
@@ -311,7 +321,7 @@ def make_annual_performance_page(year, df=None):
   <title>{year}年 AI予想成績</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
-<body>
+<body class="section-performance">
   {site_nav_html(base_path="../../", breadcrumb_items=breadcrumb_items)}
   {breadcrumb}
   <div class="page-layout">
@@ -349,7 +359,7 @@ def make_meeting_performance_page(year, place_id, times, df=None):
   <title>{year}年 {place_name}{times}回 AI予想成績</title>
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
-<body>
+<body class="section-performance">
   {site_nav_html(base_path="../../../", breadcrumb_items=breadcrumb_items)}
   {breadcrumb_html(breadcrumb_items, base_path="../../../")}
   <h1>{year}年 {place_name}{times}回 AI予想成績</h1>
@@ -388,7 +398,7 @@ def make_course_performance_index_page(place_id, df=None):
     by_ground_state = m.group_breakdown(place_df, "ground_state")
 
     course_rows = "".join(
-        f'<li><a href="{race_type}-{course_len}.html">{race_type}{course_len}m</a></li>\n'
+        f'<li><a href="{race_type}-{course_len}.html">{course_label_html(race_type, course_len)}</a></li>\n'
         for race_type, course_len in course_list
     )
     breadcrumb_items = [("AI成績", "performance/index.html"), (place_name, None)]
@@ -396,10 +406,12 @@ def make_course_performance_index_page(place_id, df=None):
 
     # 右側タブでは、横並びのbreadcrumbとは別に「全競馬場」「この競馬場の全コース」も
     # 兄弟項目として並べて表示し、どの競馬場・コースへもタブから直接遷移できるようにする。
+    # コースのラベルは芝/ダートで色分けし、一覧の中でも区別しやすくする。
     venue_siblings = [(NAME_LIST[i], f"performance/course/{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))]
     venue_siblings[place_id - 1] = (place_name, None)
     course_siblings = [
-        (f"{rt}{cl}m", f"performance/course/{PLACE_LIST[place_id - 1]}/{rt}-{cl}.html") for rt, cl in course_list
+        (course_label_html(rt, cl), f"performance/course/{PLACE_LIST[place_id - 1]}/{rt}-{cl}.html")
+        for rt, cl in course_list
     ]
     tab_hierarchy_items = [
         ("AI成績", "performance/index.html"),
@@ -415,7 +427,7 @@ def make_course_performance_index_page(place_id, df=None):
   <title>{place_name} AI予想成績</title>
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
-<body>
+<body class="section-performance">
   {site_nav_html(base_path="../../../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb}
   <h1>{place_name} AI予想成績</h1>
@@ -438,7 +450,7 @@ def make_course_performance_index_page(place_id, df=None):
 
     <div class="section-panel" data-section="breakdown" hidden>
       {_breakdown_table_html(by_class, "クラス", title="クラス別成績")}
-      {_breakdown_table_html(by_race_type, "芝/ダート", title="芝/ダート別成績")}
+      {_breakdown_table_html(_colored_race_type_breakdown(by_race_type), "芝/ダート", title="芝/ダート別成績")}
       {_breakdown_table_html(by_ground_state, "馬場状態", title="馬場別成績")}
     </div>
 
@@ -482,20 +494,21 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
     by_ground_state = m.group_breakdown(course_df, "ground_state")
     by_year = sorted(m.group_breakdown(course_df, "year"), key=lambda item: item["value"], reverse=True)
 
-    current_label = f"{race_type}{course_len}m"
+    current_label_html = course_label_html(race_type, course_len)
     breadcrumb_items = [
         ("AI成績", "performance/index.html"),
         (place_name, f"performance/course/{PLACE_LIST[place_id - 1]}/index.html"),
-        (current_label, None),
+        (current_label_html, None),
     ]
     breadcrumb = breadcrumb_html(breadcrumb_items, base_path="../../../")
 
     # 右側タブでは、横並びのbreadcrumbとは別に「全競馬場」「この競馬場の全コース」も
     # 兄弟項目として並べて表示し、どの競馬場・コースへもタブから直接遷移できるようにする。
+    # コースのラベルは芝/ダートで色分けし、一覧の中でも区別しやすくする。
     venue_siblings = [(NAME_LIST[i], f"performance/course/{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))]
     course_siblings = [
         (
-            f"{rt}{cl}m",
+            course_label_html(rt, cl),
             None if (rt, cl) == (race_type, course_len) else f"performance/course/{PLACE_LIST[place_id - 1]}/{rt}-{cl}.html",
         )
         for rt, cl in COURSE_LISTS[place_id - 1]
@@ -503,7 +516,7 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
     tab_hierarchy_items = [
         ("AI成績", "performance/index.html"),
         (place_name, f"performance/course/{PLACE_LIST[place_id - 1]}/index.html", venue_siblings),
-        (current_label, None, course_siblings),
+        (current_label_html, None, course_siblings),
     ]
 
     html = f"""
@@ -514,10 +527,10 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
   <title>{place_name} {race_type}{course_len}m AI予想成績</title>
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
-<body>
+<body class="section-performance">
   {site_nav_html(base_path="../../../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb}
-  <h1>{place_name} {race_type}{course_len}m AI予想成績</h1>
+  <h1>{place_name} {current_label_html} AI予想成績</h1>
 
   <div class="tabbed-section">
     <div class="section-tabs">

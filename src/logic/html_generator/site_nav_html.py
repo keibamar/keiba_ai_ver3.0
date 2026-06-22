@@ -9,6 +9,8 @@ Home・AI成績・コース詳細データの各ページ群を横断して同�
 （races_calendar_template）以外のどのページからも必ず1回呼ばれるため、ここに
 「常に右側に小さく表示するカレンダー（矢印で前後の月へ移動可能）＋現在地（階層）表示」
 のタブ（page_calendar_tab_html）も統合し、ページ生成側の個別対応なしに行き渡らせる。
+画面上部のnav本体には主要セクションへのリンクを並べず（右側タブに一本化し、
+画面TOPとサイドバーでの二重表示を避ける）、検索ボックスのみを置く。
 """
 
 from src.logic.html_generator import daily_index_generator
@@ -16,9 +18,22 @@ from src.logic.html_generator import daily_index_generator
 NAV_LINKS = [
     ("HOME", "index.html"),
     ("レースカレンダー", "races/index.html"),
-    ("AI成績", "performance/index.html"),
     ("コース詳細データ", "courses/index.html"),
+    ("AI成績", "performance/index.html"),
 ]
+
+# レースカレンダー/コース詳細データ/AI成績を、サイドバー上で色とアイコンで区別する。
+# ベースのボルドー（var(--mar-primary)）の雰囲気は変えず、差し色として使うだけ。
+NAV_ICONS = {
+    "レースカレンダー": "📅",
+    "コース詳細データ": "🏟️",
+    "AI成績": "📊",
+}
+NAV_COLOR_CLASSES = {
+    "レースカレンダー": "nav-color-calendar",
+    "コース詳細データ": "nav-color-courses",
+    "AI成績": "nav-color-performance",
+}
 
 
 def site_nav_html(base_path="", current_path=None, breadcrumb_items=None):
@@ -26,9 +41,10 @@ def site_nav_html(base_path="", current_path=None, breadcrumb_items=None):
 
     競馬場・コースのページ検索ボックス（search_box_html）、それを動かすための
     スクリプトタグ、右側の小さなカレンダータブ（page_calendar_tab_html）も併せて
-    返す。site_nav_htmlはどのページでも（レースカレンダーページを除き）必ず1回
-    呼ばれるため、ここにまとめることでページ生成側の個別対応なしに全ページへ
-    行き渡らせる。
+    返す。主要セクションへのリンクは右側タブに一本化しているため、画面上部のnav
+    本体には検索ボックスのみを置く。site_nav_htmlはどのページでも
+    （レースカレンダーページを除き）必ず1回呼ばれるため、ここにまとめることで
+    ページ生成側の個別対応なしに全ページへ行き渡らせる。
 
     Args:
         base_path (str): 埋め込み先ページからpublic_html直下までの相対パス
@@ -42,9 +58,7 @@ def site_nav_html(base_path="", current_path=None, breadcrumb_items=None):
             右側タブの現在地表示がNAV_LINKSの大分類だけでなく、その下の階層
             （競馬場・コース等）まで含めて表示し、各階層へ直接遷移できるようになる。
     """
-    links = "\n  ".join(f'<a href="{base_path}{path}">{label}</a>' for label, path in NAV_LINKS)
     return f"""<nav class="site-nav">
-  {links}
   {search_box_html(base_path)}
 </nav>
 <script src="{base_path}assets/js/page-search-index.js"></script>
@@ -126,9 +140,12 @@ def _nested_crumbs_html(items, base_path="", current_class="page-calendar-tab-cu
 def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
     """HOMEを根に、NAV_LINKSの3項目を1段下にネストした、常時表示用の階層ツリーを返す
 
-    HOME・レースカレンダー・AI成績・コース詳細データはどのページからも常にリンク
+    HOME・レースカレンダー・コース詳細データ・AI成績はどのページからも常にリンク
     として表示する。breadcrumb_itemsが指定され、その先頭ラベルがNAV_LINKSの
     いずれかと一致する場合は、その項目の下にさらにページ固有の階層を入れ子で続ける。
+    各大分類にはアイコン（NAV_ICONS）を常に付け、現在その大分類の中にいる場合は
+    専用の差し色（NAV_COLOR_CLASSES、CSS側で定義）でその枝全体（入れ子の下の階層も
+    含む）を強調し、今どのページ系列にいるかを色とアイコンの両方で分かるようにする。
     """
     home_is_current = breadcrumb_items == [] or (breadcrumb_items is None and current_path == "index.html")
     home_crumb = _crumb_item_html("HOME", None if home_is_current else "index.html", base_path)
@@ -136,11 +153,26 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
     active_label = breadcrumb_items[0][0] if breadcrumb_items else None
     sub_rows = ""
     for label, path in NAV_LINKS[1:]:
+        icon = NAV_ICONS.get(label, "")
+        icon_html = f'<span class="nav-icon">{icon}</span> ' if icon else ""
+
         if breadcrumb_items is not None and label == active_label:
-            sub_rows += _nested_crumbs_html(breadcrumb_items, base_path)
+            head_path = breadcrumb_items[0][1]
+            crumb = _crumb_item_html(label, head_path, base_path)
+            nested_html = _nested_crumbs_html(breadcrumb_items[1:], base_path)
+            is_active = True
         else:
             is_current = breadcrumb_items is None and current_path == path
-            sub_rows += _nested_crumbs_html([(label, None if is_current else path)], base_path)
+            crumb = _crumb_item_html(label, None if is_current else path, base_path)
+            nested_html = ""
+            is_active = is_current
+
+        color_class = NAV_COLOR_CLASSES.get(label, "") if is_active else ""
+        li_class = f' class="{color_class}"' if color_class else ""
+        if nested_html:
+            sub_rows += f'<li{li_class}>{icon_html}{crumb}\n<ul class="page-calendar-tab-sublevel">\n{nested_html}</ul></li>\n'
+        else:
+            sub_rows += f"<li{li_class}>{icon_html}{crumb}</li>\n"
 
     return f'<li>{home_crumb}\n<ul class="page-calendar-tab-sublevel">\n{sub_rows}</ul></li>\n'
 

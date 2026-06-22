@@ -30,6 +30,7 @@ import pandas as pd
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import COURSE_LISTS
 from src.logic.calculators import ai_performance_calculator as calc
+from src.logic.html_generator.race_type_badge_html import course_label_html, race_type_span_html
 from src.logic.html_generator.site_nav_html import breadcrumb_html, site_nav_html
 from src.managers import html_manager, peds_results_dataset_manager, race_info_dataset_manager
 
@@ -884,25 +885,29 @@ def course_report_to_html(report):
     peds_ground_state_breakdown = build_peds_ground_state_breakdown(place_id, race_type, course_len)
     peds_year_breakdown = build_peds_year_breakdown(place_id, race_type, course_len)
 
-    current_label = f"{race_type}{course_len}m"
+    current_label_html = course_label_html(race_type, course_len)
     breadcrumb_items = [
         ("コース詳細データ", "courses/index.html"),
         (place_name, f"courses/{PLACE_LIST[place_id - 1]}/index.html"),
-        (current_label, None),
+        (current_label_html, None),
     ]
     breadcrumb = breadcrumb_html(breadcrumb_items, base_path="../../")
 
     # 右側タブでは、横並びのbreadcrumbとは別に「全競馬場」「この競馬場の全コース」も
     # 兄弟項目として並べて表示し、どの競馬場・コースへもタブから直接遷移できるようにする。
+    # コースのラベルは芝/ダートで色分けし、一覧の中でも区別しやすくする。
     venue_siblings = [(NAME_LIST[i], f"courses/{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))]
     course_siblings = [
-        (f"{rt}{cl}m", None if (rt, cl) == (race_type, course_len) else f"courses/{PLACE_LIST[place_id - 1]}/{rt}-{cl}.html")
+        (
+            course_label_html(rt, cl),
+            None if (rt, cl) == (race_type, course_len) else f"courses/{PLACE_LIST[place_id - 1]}/{rt}-{cl}.html",
+        )
         for rt, cl in COURSE_LISTS[place_id - 1]
     ]
     tab_hierarchy_items = [
         ("コース詳細データ", "courses/index.html"),
         (place_name, f"courses/{PLACE_LIST[place_id - 1]}/index.html", venue_siblings),
-        (current_label, None, course_siblings),
+        (current_label_html, None, course_siblings),
     ]
 
     return f"""
@@ -913,11 +918,11 @@ def course_report_to_html(report):
   <title>{place_name} {race_type}{course_len}m コース詳細</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
-<body>
+<body class="section-courses">
   {site_nav_html(base_path="../../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb}
   <p><a href="index.html">&larr; {place_name}のコース一覧へ</a></p>
-  <h1>{place_name} {race_type}{course_len}m コース詳細</h1>
+  <h1>{place_name} {current_label_html} コース詳細</h1>
 
   <div class="summary-stats">
     <div class="summary-stat">
@@ -1064,7 +1069,7 @@ def make_course_index_page():
   <title>コース詳細データ</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
-<body>
+<body class="section-courses">
   {site_nav_html(base_path="../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb_html(breadcrumb_items, base_path="../")}
   <h1>コース詳細データ</h1>
@@ -1104,13 +1109,14 @@ def make_track_page(place_id):
         time_row = _filter_overall_row(time_df, race_type, course_len)
         pop_row = _filter_overall_row(pop_df, race_type, course_len)
         rows += (
-            f'<tr><td><a href="{race_type}-{course_len}.html">{race_type}{course_len}m</a></td>'
+            f'<tr><td><a href="{race_type}-{course_len}.html">{course_label_html(race_type, course_len)}</a></td>'
             f"<td>{_fmt_time(time_row)}</td><td>{_fmt(pop_row, 'avg_pop')}</td></tr>\n"
         )
 
     peds_sections = "\n  ".join(
         _peds_table_html(
-            aggregate_peds_by_race_type(place_id, race_type), f"{race_type}（全距離合算・上位10件）"
+            aggregate_peds_by_race_type(place_id, race_type),
+            f"{race_type_span_html(race_type)}（全距離合算・上位10件）",
         )
         for race_type in sorted({race_type for race_type, _ in course_list})
     )
@@ -1124,7 +1130,7 @@ def make_track_page(place_id):
     venue_siblings = [(NAME_LIST[i], f"courses/{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))]
     venue_siblings[place_id - 1] = (place_name, None)
     course_siblings = [
-        (f"{rt}{cl}m", f"courses/{PLACE_LIST[place_id - 1]}/{rt}-{cl}.html") for rt, cl in course_list
+        (course_label_html(rt, cl), f"courses/{PLACE_LIST[place_id - 1]}/{rt}-{cl}.html") for rt, cl in course_list
     ]
     tab_hierarchy_items = [
         ("コース詳細データ", "courses/index.html"),
@@ -1140,7 +1146,7 @@ def make_track_page(place_id):
   <title>{place_name} コース一覧</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
-<body>
+<body class="section-courses">
   {site_nav_html(base_path="../../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb}
   <h1>{place_name} コース一覧</h1>

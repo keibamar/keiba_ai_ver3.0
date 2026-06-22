@@ -9,6 +9,15 @@
   --mar-accent: #b04a5a;
   --mar-bg-accent: #fbeef0;
   --mar-bg-accent-strong: #f3d9de;
+
+  /* セクション識別色（レースカレンダー/コース詳細データ/AI成績）。
+     ボルドーの雰囲気は崩さず、サイドバーで「今どのページにいるか」を
+     色とアイコンで区別するためだけに使う差し色。コース詳細データ・AI成績は
+     芝（緑）・ダート（茶）の色分けと混同しないよう、ボルドーと同系（赤紫〜赤）の
+     色味でまとめつつ、互いに見分けられるよう色相をずらしている。 */
+  --mar-section-calendar: #2f6690;
+  --mar-section-courses: #7a3d6e;
+  --mar-section-performance: #9c4a2f;
 }
 
 body {
@@ -24,6 +33,74 @@ h1 {
 
 h2 {
   color: var(--mar-primary);
+}
+
+/* --- セクション別のサブカラー（レースカレンダー/コース詳細データ/AI成績） --- */
+/* ボルドーをベースに保ちつつ、見出し・カードの上線・表ヘッダーの背景に差し色を
+   使うことで、サイドバーの文字色だけでなくページ全体としてどの種類のページに
+   いるかひと目で分かるようにする（差し色はサイドバーと同じ変数を使う）。 */
+
+body.section-calendar h1,
+body.section-calendar h2 {
+  color: var(--mar-section-calendar);
+}
+
+body.section-calendar h1 {
+  border-bottom-color: var(--mar-section-calendar);
+}
+
+body.section-calendar .card {
+  border-top-color: var(--mar-section-calendar);
+}
+
+body.section-calendar th {
+  background: #e8f0f7;
+}
+
+body.section-courses h1,
+body.section-courses h2 {
+  color: var(--mar-section-courses);
+}
+
+body.section-courses h1 {
+  border-bottom-color: var(--mar-section-courses);
+}
+
+body.section-courses .card {
+  border-top-color: var(--mar-section-courses);
+}
+
+body.section-courses th {
+  background: #f3e8f0;
+}
+
+body.section-performance h1,
+body.section-performance h2 {
+  color: var(--mar-section-performance);
+}
+
+body.section-performance h1 {
+  border-bottom-color: var(--mar-section-performance);
+}
+
+body.section-performance .card {
+  border-top-color: var(--mar-section-performance);
+}
+
+body.section-performance th {
+  background: #f7e8e0;
+}
+
+/* --- 芝/ダートの色分け（コース一覧・右側タブの階層表示等） --- */
+
+.race-type-turf {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.race-type-dirt {
+  color: #8d6e3a;
+  font-weight: 600;
 }
 
 .nav {
@@ -1128,6 +1205,41 @@ details.breakdown summary:hover {
 .page-calendar-tab-current {
   font-weight: bold;
   color: var(--mar-primary);
+}
+
+.nav-icon {
+  display: inline-block;
+}
+
+/* レースカレンダー/コース詳細データ/AI成績のうち、今いる大分類の枝だけを
+   差し色にする（ボルドーはベースのまま、識別のためだけの差し色として使う）。
+   入れ子の下の階層（page-calendar-tab-sublevel）の左線にも同じ色を継承させ、
+   どれだけ深い階層にいても「同じ系列にいる」ことが分かるようにする。 */
+.page-calendar-tab-location li.nav-color-calendar > a,
+.page-calendar-tab-location li.nav-color-calendar > span.page-calendar-tab-current {
+  color: var(--mar-section-calendar);
+}
+
+.page-calendar-tab-location li.nav-color-calendar .page-calendar-tab-sublevel {
+  border-left-color: var(--mar-section-calendar);
+}
+
+.page-calendar-tab-location li.nav-color-courses > a,
+.page-calendar-tab-location li.nav-color-courses > span.page-calendar-tab-current {
+  color: var(--mar-section-courses);
+}
+
+.page-calendar-tab-location li.nav-color-courses .page-calendar-tab-sublevel {
+  border-left-color: var(--mar-section-courses);
+}
+
+.page-calendar-tab-location li.nav-color-performance > a,
+.page-calendar-tab-location li.nav-color-performance > span.page-calendar-tab-current {
+  color: var(--mar-section-performance);
+}
+
+.page-calendar-tab-location li.nav-color-performance .page-calendar-tab-sublevel {
+  border-left-color: var(--mar-section-performance);
 }
 
 @media (max-width: 800px) {

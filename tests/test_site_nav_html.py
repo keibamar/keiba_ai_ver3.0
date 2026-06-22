@@ -21,6 +21,37 @@ def test_site_nav_html_default_base_path():
     assert '<button id="prevMonth">&larr;</button>' in html
 
 
+def test_site_nav_html_top_nav_has_no_duplicate_links_with_sidebar():
+    html = n.site_nav_html()
+
+    # 主要セクションへのリンクは右側タブに一本化し、画面上部のnav本体には
+    # 検索ボックスのみを置く（タブとの二重表示を避ける）
+    nav_only = html[: html.index("</nav>")]
+    assert "<a href=" not in nav_only
+    assert '<div class="page-search"' in nav_only
+
+
+def test_nav_links_order_is_calendar_courses_performance():
+    assert [label for label, _ in n.NAV_LINKS] == ["HOME", "レースカレンダー", "コース詳細データ", "AI成績"]
+
+
+def test_location_tree_always_shows_icons_for_each_section():
+    html = n.page_calendar_tab_html(base_path="")
+
+    assert '<span class="nav-icon">📅</span>' in html
+    assert '<span class="nav-icon">🏟️</span>' in html
+    assert '<span class="nav-icon">📊</span>' in html
+
+
+def test_location_tree_highlights_active_section_with_color_class():
+    html = n.page_calendar_tab_html(base_path="", breadcrumb_items=[("AI成績", None)])
+
+    assert 'class="nav-color-performance"' in html
+    # 他の2つ（現在地ではない）には差し色クラスが付かない
+    assert "nav-color-calendar" not in html
+    assert "nav-color-courses" not in html
+
+
 def test_site_nav_html_with_nested_base_path():
     html = n.site_nav_html(base_path="../../")
 
@@ -156,7 +187,10 @@ def test_site_nav_html_passes_breadcrumb_items_to_calendar_tab():
     )
 
     tab_html = html[html.index('<aside class="page-calendar-tab">') :]
-    assert '<li><span class="page-calendar-tab-current">コース詳細データ</span></li>' in tab_html
+    assert '<span class="page-calendar-tab-current">コース詳細データ</span>' in tab_html
+    # 現在地の大分類（コース詳細データ）はアイコン+専用の差し色クラスが付く
+    assert 'class="nav-color-courses"' in tab_html
+    assert '<span class="nav-icon">🏟️</span>' in tab_html
 
 
 def test_search_box_html_renders_input_and_results_container():

@@ -59,7 +59,7 @@ def test_course_report_to_html_structure():
     print(f"\n--- course_report_to_html(東京, 芝1400m) ---")
     print(html)
 
-    assert "<h1>東京 芝1400m コース詳細</h1>" in html
+    assert '<h1>東京 <span class="race-type-turf">芝1400m</span> コース詳細</h1>' in html
     # 走破時計は msec の生値ではなく「分:秒.コンマ」形式で表示する
     assert "1:21.7" in html
     assert "ロードカナロア" in html
@@ -159,13 +159,13 @@ def test_course_report_to_html_structure():
     assert '<a href="../../index.html">HOME</a>' in html
     assert '<a href="../../courses/index.html">コース詳細データ</a>' in html
     assert '<a href="../../courses/05_tokyo/index.html">東京</a>' in html
-    assert '<span class="breadcrumb-current">芝1400m</span>' in html
+    assert '<span class="breadcrumb-current"><span class="race-type-turf">芝1400m</span></span>' in html
     # 旧来の右サイドバー（競馬場・コース選択）は、右側タブの階層表示と重複するため廃止した
     assert '<aside class="page-sidebar">' not in html
     # 右側タブに同じ階層（他の競馬場・このコースの他の距離）が表示される
     assert '<a href="../../courses/06_nakayama/index.html">中山</a>' in html
-    assert '<a href="../../courses/05_tokyo/芝-1600.html">芝1600m</a>' in html
-    assert '<span class="page-calendar-tab-current">芝1400m</span>' in html
+    assert '<a href="../../courses/05_tokyo/芝-1600.html"><span class="race-type-turf">芝1600m</span></a>' in html
+    assert '<span class="page-calendar-tab-current"><span class="race-type-turf">芝1400m</span></span>' in html
 
 
 def test_build_class_passage_breakdown_returns_per_class_rows():
@@ -643,13 +643,15 @@ def test_make_track_page_generates_html(new_roots):
     print(f"\n--- make_track_page(東京) ---")
     print(html_content)
 
+    # コース詳細データのページ全体に専用のサブカラー（section-courses）を適用する
+    assert '<body class="section-courses">' in html_content
     assert "<h1>東京 コース一覧</h1>" in html_content
-    assert '<a href="芝-1400.html">芝1400m</a>' in html_content
+    assert '<a href="芝-1400.html"><span class="race-type-turf">芝1400m</span></a>' in html_content
     # 単なるリンクではなく、平均勝ち時計・人気が一覧表で見える
     assert "1:21.7" in html_content
-    # 芝/ダート別に全距離合算した血統別成績が表示される
-    assert "<h3>芝（全距離合算・上位10件）</h3>" in html_content
-    assert "<h3>ダート（全距離合算・上位10件）</h3>" in html_content
+    # 芝/ダート別に全距離合算した血統別成績が表示される（見出しも芝/ダートで色分けする）
+    assert '<h3><span class="race-type-turf">芝</span>（全距離合算・上位10件）</h3>' in html_content
+    assert '<h3><span class="race-type-dirt">ダート</span>（全距離合算・上位10件）</h3>' in html_content
     assert '<a href="../../performance/course/05_tokyo/index.html">&larr; このコースのAI成績を見る</a>' in html_content
     assert '<nav class="site-nav">' in html_content
     assert '<div class="table-wrap">' in html_content
@@ -664,7 +666,7 @@ def test_make_track_page_generates_html(new_roots):
     # 右側タブに同じ階層（他の競馬場・東京の全コース）が表示される
     assert '<a href="../../courses/06_nakayama/index.html">中山</a>' in html_content
     assert '<span class="page-calendar-tab-current">東京</span>' in html_content
-    assert '<a href="../../courses/05_tokyo/芝-1600.html">芝1600m</a>' in html_content
+    assert '<a href="../../courses/05_tokyo/芝-1600.html"><span class="race-type-turf">芝1600m</span></a>' in html_content
 
 
 def test_make_course_detail_page_generates_html(new_roots):
