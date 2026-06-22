@@ -14,7 +14,20 @@ Home・AI成績・コース詳細データの各ページ群を横断して同�
 右側タブの小カレンダーを二重表示しないようshow_calendar=Falseを渡す。
 """
 
+from datetime import date
+
 from src.logic.html_generator import daily_index_generator
+
+# サイト名（HOMEのタイトル・各ページのヘッダー・フッターで共通して使う）。
+# 「MAR」という名前自体をどのページからでも常に伝えられるよう、site_brand_html
+# （ヘッダー）・site_footer_html（フッター）の両方でこの名前を使う。
+SITE_NAME = "MAR"
+SITE_NAME_READING = "まーる"
+SITE_TAGLINE = "競馬AIデータサイト"
+# HOMEの<title>・<h1>で使ってきた既存の表記（半角(・全角）・半角|の組み合わせ）を
+# そのまま保つ。新規のヘッダー（site_brand_html）・フッターはSITE_NAME/SITE_TAGLINEを
+# 使って半角に統一した表記にする。
+SITE_TITLE = f"{SITE_NAME}({SITE_NAME_READING}）|{SITE_TAGLINE}"
 
 NAV_LINKS = [
     ("HOME", "index.html"),
@@ -65,6 +78,7 @@ def site_nav_html(base_path="", current_path=None, breadcrumb_items=None, show_c
             表示しないようにする用途）。
     """
     return f"""<nav class="site-nav">
+  {site_brand_html(base_path)}
   {search_box_html(base_path)}
 </nav>
 <script src="{base_path}assets/js/page-search-index.js"></script>
@@ -73,14 +87,34 @@ def site_nav_html(base_path="", current_path=None, breadcrumb_items=None, show_c
 <script src="{base_path}assets/js/calendar-tab-height.js"></script>"""
 
 
+def site_brand_html(base_path=""):
+    """ヘッダー左側に常時表示するサイト名（ブランド表示）のHTML断片を返す
+
+    「MAR」という名前自体をどのページからでも常に伝えられるよう、site_nav_html
+    （ヘッダー）に組み込む。HOMEへのリンクも兼ねる。
+    """
+    return (
+        f'<a class="site-brand" href="{base_path}index.html">'
+        f'<span class="site-brand-name">{SITE_NAME}</span>'
+        f'<span class="site-brand-sub">({SITE_NAME_READING}) {SITE_TAGLINE}</span>'
+        f"</a>"
+    )
+
+
 def site_footer_html():
     """サイト共通フッターのHTML断片を返す
 
     site_nav_htmlと対になる、全ページ共通のフッター。ページ生成側で個別に
-    フッターを書く・書き忘れるのを防ぐため、ここに集約する。
+    フッターを書く・書き忘れるのを防ぐため、ここに集約する。「MAR」という
+    名前に加え、予想・データの利用上の注意（免責事項）と、データ最終更新日時
+    （= このページの生成日。週次更新等でデータ取得後にページを再生成する運用のため、
+    生成日をそのまま「データ最終更新」の目安として使う）も表示する。
     """
-    return """<footer>
-    &copy; 競馬AIデータシステム
+    updated_at = date.today().strftime("%Y/%m/%d")
+    return f"""<footer>
+    <p class="site-footer-brand">&copy; {SITE_NAME}({SITE_NAME_READING}) {SITE_TAGLINE}</p>
+    <p class="site-footer-disclaimer">本サイトの予想・データは参考情報です。的中や回収を保証するものではありません。実際の購入は自己責任でお願いします。</p>
+    <p class="site-footer-updated">データ最終更新: {updated_at}</p>
   </footer>"""
 
 

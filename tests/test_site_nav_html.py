@@ -1,5 +1,7 @@
 """src/logic/html_generator/site_nav_html.py のテスト（オフライン）。"""
 
+from datetime import date
+
 from src.logic.html_generator import site_nav_html as n
 
 
@@ -280,7 +282,36 @@ def test_sidebar_html_without_current_label_links_everything():
 def test_site_footer_html_renders_footer():
     html = n.site_footer_html()
 
-    assert html == '<footer>\n    &copy; 競馬AIデータシステム\n  </footer>'
+    print(f"\n--- site_footer_html() ---\n{html}")
+
+    # フッターでも「MAR」という名前を伝える
+    assert '<p class="site-footer-brand">&copy; MAR(まーる) 競馬AIデータサイト</p>' in html
+    # 予想・データの利用上の注意（免責事項）
+    assert '<p class="site-footer-disclaimer">' in html
+    assert "的中や回収を保証するものではありません" in html
+    # データ最終更新日時（ページ生成日をそのまま使う）
+    today_str = date.today().strftime("%Y/%m/%d")
+    assert f'<p class="site-footer-updated">データ最終更新: {today_str}</p>' in html
+
+
+def test_site_brand_html_links_to_home_and_shows_mar():
+    html = n.site_brand_html(base_path="../")
+
+    print(f"\n--- site_brand_html(base_path='../') ---\n{html}")
+
+    assert html == (
+        '<a class="site-brand" href="../index.html">'
+        '<span class="site-brand-name">MAR</span>'
+        '<span class="site-brand-sub">(まーる) 競馬AIデータサイト</span>'
+        "</a>"
+    )
+
+
+def test_site_nav_html_includes_site_brand():
+    html = n.site_nav_html(base_path="../")
+
+    assert '<a class="site-brand" href="../index.html">' in html
+    assert '<span class="site-brand-name">MAR</span>' in html
 
 
 def test_site_nav_html_show_calendar_false_omits_small_calendar():
