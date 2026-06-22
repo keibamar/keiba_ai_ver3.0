@@ -145,3 +145,73 @@ def hit_return_trend_svg(labels, hit_rates, return_rates, width=320, height=170)
     {x_axis_labels}
   </svg>
 </span>"""
+
+
+def single_line_trend_svg(labels, values, counts=None, width=420, height=160, max_value=100.0):
+    """1系列だけの折れ線グラフ（Y軸0〜max_value%）を返す
+
+    馬体重帯別の3着内率のように、X軸がカテゴリの帯ではなく連続的な実数値に近い
+    系列を、バー（積み上げ横バーチャート）より滑らかな「傾向線」として見せたい
+    場合に使う。countsを渡すと各点のツールチップにサンプル数（n=）も表示し、
+    点ごとに信頼度（サンプルの多さ）も確認できるようにする。
+
+    Args:
+        labels (list): 各点のX軸ラベル（例: "450kg台"）。
+        values (list[float]): labelsと同じ長さの値（%、0〜max_value想定）。
+        counts (list[int] | None): labelsと同じ長さのサンプル数（n）。
+        max_value (float): Y軸の上限（的中率・3着内率なら100.0）。
+
+    Returns:
+        str: データ点が2点未満の場合は空文字列。
+    """
+    if len(labels) < 2:
+        return ""
+
+    labels = [str(label) for label in labels]
+    n = len(labels)
+
+    pad_left, pad_right, pad_top, pad_bottom = 34, 12, 14, 16
+    plot_w = width - pad_left - pad_right
+    plot_h = height - pad_top - pad_bottom
+    baseline_y = pad_top + plot_h
+
+    def x_at(i):
+        return pad_left + plot_w * i / (n - 1)
+
+    def y_at(v):
+        return baseline_y - plot_h * max(min(v, max_value), 0.0) / max_value
+
+    points = [(x_at(i), y_at(v)) for i, v in enumerate(values)]
+    line = " ".join(f"{x:.1f},{y:.1f}" for x, y in points)
+
+    def tooltip(i):
+        text = f"{labels[i]} {values[i]:.1f}%"
+        if counts is not None:
+            text += f" (n={counts[i]})"
+        return text
+
+    dots = "".join(
+        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3" fill="#1f4fd6">'
+        f"<title>{tooltip(i)}</title></circle>"
+        for i, (x, y) in enumerate(points)
+    )
+
+    tick_indices = _select_tick_indices(n, _MAX_AXIS_TICKS)
+    axis_y = height - 3
+    x_axis_labels = "".join(
+        f'<text x="{x_at(i):.1f}" y="{axis_y}" class="trend-chart-axis-label" text-anchor="middle">{labels[i]}</text>'
+        for i in tick_indices
+    )
+    y_axis_labels = "".join(
+        f'<text x="2" y="{y_at(v) + 3:.1f}" class="trend-chart-axis-label">{v:.0f}%</text>'
+        for v in (0.0, max_value / 2, max_value)
+    )
+
+    return f"""<span class="trend-chart-wrap">
+  <svg class="trend-chart" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
+    {y_axis_labels}
+    <polyline points="{line}" fill="none" stroke="#1f4fd6" stroke-width="2"></polyline>
+    {dots}
+    {x_axis_labels}
+  </svg>
+</span>"""

@@ -107,6 +107,14 @@ def analyze_horse_chakudo(place_id, year):
     return transform.analyze_horse_chakudo(df_raw, COURSE_LISTS[place_id - 1])
 
 
+def analyze_weight_chakudo(place_id, year):
+    """馬体重帯（10kg刻み）別の着度数を算出する（全馬が対象、勝ち馬限定ではない）"""
+    df_raw = _get_race_results_with_race_id(place_id, year)
+    if df_raw.empty:
+        return pd.DataFrame()
+    return transform.analyze_weight_chakudo(df_raw, COURSE_LISTS[place_id - 1])
+
+
 def _analyze_chakudo_multi_years(analyze_fn, aggregate_fn, place_id, start_year, current_year):
     results_by_year = {}
     for year in range(start_year, current_year + 1):
@@ -131,8 +139,13 @@ def analyze_horse_chakudo_multi_years(place_id, start_year=2019, current_year=da
     return _analyze_chakudo_multi_years(analyze_horse_chakudo, transform.aggregate_horse_chakudo, place_id, start_year, current_year)
 
 
+def analyze_weight_chakudo_multi_years(place_id, start_year=2019, current_year=date.today().year):
+    """各年度（start_year〜current_year）について馬体重帯別着度数を算出し、全期間の合計を返す"""
+    return _analyze_chakudo_multi_years(analyze_weight_chakudo, transform.aggregate_weight_chakudo, place_id, start_year, current_year)
+
+
 def update_chakudo(place_id, year):
-    """指定の開催場・年について、人気別・枠番別・馬番別の着度数（全期間合計）を更新する"""
+    """指定の開催場・年について、人気別・枠番別・馬番別・馬体重帯別の着度数（全期間合計）を更新する"""
     out_dir = os.path.join(CHAKUDO_DATA_PATH, PLACE_LIST[place_id - 1])
     os.makedirs(out_dir, exist_ok=True)
 
@@ -140,6 +153,7 @@ def update_chakudo(place_id, year):
         ("pop", analyze_pop_chakudo_multi_years),
         ("frame", analyze_frame_chakudo_multi_years),
         ("horse", analyze_horse_chakudo_multi_years),
+        ("weight", analyze_weight_chakudo_multi_years),
     ]:
         total = multi_fn(place_id, start_year=2019, current_year=year)
         if not total.empty:
@@ -161,6 +175,12 @@ def get_total_frame_chakudo_csv(place_id):
 def get_total_horse_chakudo_csv(place_id):
     """data/race_info/chakudo/{place}/total_horse_chakudo.csv を取得する"""
     path = os.path.join(CHAKUDO_DATA_PATH, PLACE_LIST[place_id - 1], "total_horse_chakudo.csv")
+    return read_csv_or_empty(path, dtype=str)
+
+
+def get_total_weight_chakudo_csv(place_id):
+    """data/race_info/chakudo/{place}/total_weight_chakudo.csv を取得する"""
+    path = os.path.join(CHAKUDO_DATA_PATH, PLACE_LIST[place_id - 1], "total_weight_chakudo.csv")
     return read_csv_or_empty(path, dtype=str)
 
 
@@ -598,6 +618,42 @@ def split_race_returns_csv(place_id, year):
     os.makedirs(out_dir, exist_ok=True)
     for race_id, group in df.groupby(df.index):
         group.to_csv(os.path.join(out_dir, f"{race_id}.csv"))
+
+
+def consolidate_race_returns(place_id, year):
+    """個別レースの配当ファイル（data/race_info/race_returns/{place}/{year}/{race_id}.csv）を
+    1年分まとめたCSV（{year}_race_returns.csv、get_race_returns_csvと同じ形式）に集約する
+
+    split_race_returns_csvの逆方向の操作（個別ファイル→1年分のまとめ）で、新しい配当
+    データを生成するのではなく、既存の個別ファイルを1つに戻すだけ。多くの開催年は
+    個別ファイルのみ蓄積されており（{year}_race_returns.csv自体は未生成）、コース別の
+    平均複勝配当（勝ち馬の複勝配当の平均）等を計算する際に年ごとの読み込みを高速化する。
+    """
+    in_dir = os.path.join(RACE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1], str(year))
+    if not os.path.isdir(in_dir):
+        return pd.DataFrame()
+
+    frames = []
+    for filename in sorted(os.listdir(in_dir)):
+        if not filename.endswith(".csv"):
+            continue
+        race_id = filename[:-4]
+        df = read_csv_or_empty(os.path.join(in_dir, filename), dtype=str, index_col=0)
+        if df.empty:
+            continue
+        df.index = [race_id] * len(df)
+        frames.append(df)
+
+    if not frames:
+        return pd.DataFrame()
+
+    combined = pd.concat(frames)
+    combined.index.name = "race_id"
+
+    out_dir = os.path.join(RACE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1])
+    os.makedirs(out_dir, exist_ok=True)
+    combined.to_csv(os.path.join(out_dir, f"{year}_race_returns.csv"))
+    return combined
 
 
 def get_race_return_csv_for_race(race_id):

@@ -78,3 +78,36 @@ def test_select_tick_indices_includes_first_and_last():
     assert indices[0] == 0
     assert indices[-1] == 19
     assert len(indices) <= 4
+
+
+def test_single_line_trend_svg_renders_one_line_with_tooltips_and_counts():
+    labels = ["420kg台", "430kg台", "440kg台", "450kg台"]
+    values = [20.0, 35.0, 50.0, 30.0]
+    counts = [5, 12, 20, 8]
+
+    html = s.single_line_trend_svg(labels, values, counts=counts)
+
+    print(f"\n--- single_line_trend_svg ---\n{html}")
+
+    assert '<span class="trend-chart-wrap">' in html
+    assert "<svg" in html
+    assert html.count("<circle") == 4
+    assert '<polyline points="' in html
+    # ホバー用のツールチップに帯ラベル・値・サンプル数(n=)が入っている
+    assert "<title>420kg台 20.0% (n=5)</title>" in html
+    assert "<title>450kg台 30.0% (n=8)</title>" in html
+    # y軸ラベル（0%/50%/100%、デフォルトmax_value=100）
+    assert ">0%</text>" in html
+    assert ">50%</text>" in html
+    assert ">100%</text>" in html
+
+
+def test_single_line_trend_svg_without_counts_omits_n_in_tooltip():
+    html = s.single_line_trend_svg(["A", "B"], [10.0, 20.0])
+
+    assert "<title>A 10.0%</title>" in html
+    assert "n=" not in html
+
+
+def test_single_line_trend_svg_returns_empty_for_single_point():
+    assert s.single_line_trend_svg(["A"], [10.0]) == ""

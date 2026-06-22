@@ -194,6 +194,21 @@ td a:hover {
   color: #666;
 }
 
+/* 馬場×クラス×年度パネルの概要カードで、最重要指標（平均勝ち時計）だけを大きく
+   表示し、それ以外（人気・配当・体重・枠番馬番）はサブとして一回り小さくする */
+
+.summary-stat-primary .value {
+  font-size: 2.6em;
+}
+
+.summary-stat-secondary .value {
+  font-size: 1.3em;
+}
+
+.summary-stat-secondary .label {
+  font-size: 0.8em;
+}
+
 /* --- 週別推移の簡易バーチャート（CSSのみ、JSライブラリ不使用） --- */
 
 .bar-chart {
@@ -502,6 +517,18 @@ td a:hover {
   border: 1px solid #c62828;
 }
 
+/* --- 馬場×クラス×年度パネルの「特徴」コールアウト（外枠優位等） --- */
+/* はっきりした傾向がある場合だけ表示する（無理に特徴を出さない） */
+
+.feature-callout {
+  margin: 0 0 12px;
+  padding: 8px 14px;
+  border-left: 4px solid var(--mar-accent);
+  background: var(--mar-bg-accent);
+  font-weight: bold;
+  color: var(--mar-primary-dark);
+}
+
 /* --- 着度数の積み上げ横バーチャート（人気/枠番/馬番） --- */
 /* 行数の多い数表の代わりに、1着/2着/3着/着外の内訳を色分けした帯（合計100%）で
    視覚化する。出走自体が無いランクは行を出さない。有利/不利のバッジは固定幅の枠
@@ -538,6 +565,20 @@ td a:hover {
 .chakudo-row .peds-label {
   width: 160px;
   text-align: left;
+}
+
+/* 枠番別着度数チャートのラベルに、出馬表ページと同じ枠色を付ける */
+.chakudo-row .waku-1 { background-color: white; color: #000; border: 1px solid #ccc; }
+.chakudo-row .waku-2 { background-color: black; color: #fff; }
+.chakudo-row .waku-3 { background-color: red; color: #fff; }
+.chakudo-row .waku-4 { background-color: blue; color: #fff; }
+.chakudo-row .waku-5 { background-color: yellow; color: #000; }
+.chakudo-row .waku-6 { background-color: green; color: #fff; }
+.chakudo-row .waku-7 { background-color: orange; color: #000; }
+.chakudo-row .waku-8 { background-color: pink; color: #000; }
+.chakudo-row [class*="waku-"] {
+  border-radius: 4px;
+  text-align: center;
 }
 
 .chakudo-row .chakudo-badge-slot {

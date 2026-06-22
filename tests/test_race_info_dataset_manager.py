@@ -134,6 +134,21 @@ def test_analyze_pop_chakudo_includes_class_and_ground_state_breakdown():
     assert (result["ground_state"] != "全").any()
 
 
+def test_analyze_weight_chakudo_buckets_into_10kg_ranges():
+    result = new_race_info.analyze_weight_chakudo(SAMPLE_PLACE_ID, 2019)
+
+    print(f"\n--- analyze_weight_chakudo(place_id={SAMPLE_PLACE_ID}, year=2019) ---")
+    print(f"  shape: {result.shape}")
+    print(result.head().to_string())
+
+    assert result.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "体重帯", "1着", "2着", "3着", "着外"]
+    # 馬体重帯は10kg刻みの下限値（例: 458kg→450）になっている
+    assert (result["体重帯"] % 10 == 0).all()
+    assert result["体重帯"].min() >= 380
+    assert result["体重帯"].max() <= 560
+    assert (result[["1着", "2着", "3着", "着外"]].sum(axis=1) > 0).any()
+
+
 def test_analyze_pop_chakudo_multi_years_sums_across_years():
     single = new_race_info.analyze_pop_chakudo(SAMPLE_PLACE_ID, 2019)
     multi = new_race_info.analyze_pop_chakudo_multi_years(SAMPLE_PLACE_ID, start_year=2019, current_year=2019)
@@ -564,6 +579,10 @@ def test_update_chakudo_writes_expected_files(new_race_info_root):
     assert horse_df.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "馬番", "1着", "2着", "3着", "着外"]
     assert not horse_df.empty
 
+    weight_df = pd.read_csv(out_dir / "total_weight_chakudo.csv", dtype=str)
+    assert weight_df.columns.tolist() == ["race_type", "course_len", "ground_state", "class", "体重帯", "1着", "2着", "3着", "着外"]
+    assert not weight_df.empty
+
 
 def test_update_average_pops_writes_expected_files(new_race_info_root):
     new_race_info.update_average_pops(SAMPLE_PLACE_ID, 2019)
@@ -711,7 +730,12 @@ def test_get_total_frame_chakudo_csv_smoke():
 def test_get_total_horse_chakudo_csv_smoke():
     df = new_race_info.get_total_horse_chakudo_csv(SAMPLE_PLACE_ID)
     assert not df.empty
-    assert "馬番" in df.columns
+
+
+def test_get_total_weight_chakudo_csv_smoke():
+    df = new_race_info.get_total_weight_chakudo_csv(SAMPLE_PLACE_ID)
+    assert not df.empty
+    assert "体重帯" in df.columns
 
 
 def test_get_total_average_returns_csv_smoke():

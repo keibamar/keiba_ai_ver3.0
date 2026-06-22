@@ -74,28 +74,9 @@
   <p><a href="index.html">&larr; 東京のコース一覧へ</a></p>
   <h1>東京 <span class="race-type-dirt">ダート2400m</span> コース詳細</h1>
 
-  <div class="summary-stats">
-    <div class="summary-stat">
-      <span class="value">データなし</span>
-      <span class="label">平均勝ち時計</span>
-    </div>
-    <div class="summary-stat">
-      <span class="value">データなし</span>
-      <span class="label">平均人気</span>
-    </div>
-    <div class="summary-stat">
-      <span class="value">データなし</span>
-      <span class="label">勝ち馬の平均馬体重</span>
-    </div>
-    <div class="summary-stat">
-      <span class="value">データなし / データなし</span>
-      <span class="label">勝ち馬の平均枠番 / 平均馬番</span>
-    </div>
-    <div class="summary-stat">
-      <span class="value">データなし</span>
-      <span class="label">平均配当（単勝）</span>
-    </div>
-  </div>
+  <!-- 常時同じ「全期間トータル」を表示していたsummary-statsは、馬場×クラス×年度の
+       メインタブで同じ情報（より柔軟な絞り込み付き）が見られるため廃止した。
+       将来的にはここにこのコースの解説・特徴（手動執筆）を表示する想定。 -->
 
   <div class="tabbed-section">
     <div class="section-tabs">
@@ -103,6 +84,7 @@
       <span class="section-tabs-sub-label">参考データ:</span>
       <button data-target="passage" aria-selected="false">通過順</button>
       <button data-target="chakudo" aria-selected="false">人気・枠順</button>
+      <button data-target="weight" aria-selected="false">馬体重別成績</button>
       <button data-target="peds" aria-selected="false">血統別成績</button>
     </div>
 
@@ -129,10 +111,17 @@
           
         </select>
       </label>
-      <label>年度:
+      <label>開始年（〜2026年）:
         <select class="cross-filter-year">
-          <option value="全">全期間</option>
-          
+          <option value="2019">全期間</option>
+          <option value="2020">2020年〜</option>
+<option value="2021">2021年〜</option>
+<option value="2022">2022年〜</option>
+<option value="2023">2023年〜</option>
+<option value="2024">2024年〜</option>
+<option value="2025">2025年〜</option>
+<option value="2026">2026年〜</option>
+
         </select>
       </label>
     </div>
@@ -193,16 +182,6 @@
     </div>
 
     <div class="section-panel" data-section="chakudo" hidden>
-      <h3>人気データ（人気別着度数、全体）</h3>
-  <p>対象データがありません。</p>
-      <details class="breakdown">
-        <summary>人気データ：クラス別を表示</summary>
-        <p>対象データがありません。</p>
-      </details>
-      <details class="breakdown">
-        <summary>人気データ：馬場別を表示</summary>
-        <p>対象データがありません。</p>
-      </details>
       <h3>枠順データ（枠番別着度数、全体）</h3>
   <p>対象データがありません。</p>
       <details class="breakdown">
@@ -221,6 +200,36 @@
       </details>
       <details class="breakdown">
         <summary>馬番データ：馬場別を表示</summary>
+        <p>対象データがありません。</p>
+      </details>
+      <h3>人気データ（人気別着度数、全体）</h3>
+  <p>対象データがありません。</p>
+      <details class="breakdown">
+        <summary>人気データ：クラス別を表示</summary>
+        <p>対象データがありません。</p>
+      </details>
+      <details class="breakdown">
+        <summary>人気データ：馬場別を表示</summary>
+        <p>対象データがありません。</p>
+      </details>
+    </div>
+
+    <div class="section-panel" data-section="weight" hidden>
+      <p class="section-panel-intro">
+        馬体重を10kg刻みの帯に分け、帯ごとの着度数（バー）と
+        3着内率の傾向（折れ線）を表示します。バーは帯ごとの内訳の割合、
+        折れ線は帯から帯への変化（傾向の形）を見るのに向いています。
+      </p>
+      <h3>馬体重帯別の3着内率の傾向（全体）</h3>
+      
+      <h3>馬体重データ（馬体重帯別着度数、全体）</h3>
+  <p>対象データがありません。</p>
+      <details class="breakdown">
+        <summary>馬体重データ：クラス別を表示</summary>
+        <p>対象データがありません。</p>
+      </details>
+      <details class="breakdown">
+        <summary>馬体重データ：馬場別を表示</summary>
         <p>対象データがありません。</p>
       </details>
     </div>

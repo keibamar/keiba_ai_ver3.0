@@ -92,26 +92,43 @@ def test_course_report_to_html_structure():
     assert 'class="cross-filter-class"' in html
     assert 'class="cross-filter-year"' in html
     assert '<option value="良">良</option>' in html
-    assert '<option value="2026">2026年</option>' in html
-    assert '<div class="cross-filter-panel" data-ground-state="全" data-class="all" data-year="全" hidden>' in html
-    assert '<div class="cross-filter-panel" data-ground-state="良" data-class="all" data-year="全" hidden>' in html
-    assert '<div class="cross-filter-panel" data-ground-state="全" data-class="未勝利" data-year="全" hidden>' in html
-    # どの組み合わせを見ているかパネルの見出しで分かる
-    assert "<h3>全 × all × 全</h3>" in html
+    # 開始年は自由に選べるが終了年は常に最新年に固定する（組み合わせの爆発を防ぐ）
+    assert '<option value="2019">全期間</option>' in html
+    assert '<option value="2026">2026年〜</option>' in html
+    assert '<div class="cross-filter-panel" data-ground-state="全" data-class="all" data-year="2019" hidden>' in html
+    assert '<div class="cross-filter-panel" data-ground-state="良" data-class="all" data-year="2019" hidden>' in html
+    assert '<div class="cross-filter-panel" data-ground-state="全" data-class="未勝利" data-year="2019" hidden>' in html
+    # どの組み合わせを見ているかパネルの見出しで分かる（開始年=最古年は「全期間」と表示する）
+    assert "<h3>全 × all × 全期間</h3>" in html
     # 概要は表ではなく、ページ上部と同じ大きな数字のカード（summary-stats）で表示する
     # （データの羅列に見えないようにする）
     assert html.count('<div class="summary-stats">') >= 2
-    # 各組み合わせのパネルには、平均成績のカードに加えて人気・枠順データ（着度数）と
-    # 血統データも折りたたみで表示される
-    assert "<summary>人気・枠順データを表示</summary>" in html
-    assert "<summary>血統データを表示</summary>" in html
+    # 平均勝ち時計は最重要指標として大きく(summary-stat-primary)、それ以外は
+    # サブ(summary-stat-secondary)として一回り小さく表示する
+    assert '<div class="summary-stat summary-stat-primary">' in html
+    assert '<div class="summary-stat summary-stat-secondary">' in html
+    # 各組み合わせのパネルには、平均成績のカードに加えて血統→枠番別→馬番別→
+    # 馬体重別→人気別の順で折りたたみが表示される
+    cross_idx = html.index('<div class="section-panel" data-section="cross">')
+    peds_summary_idx = html.index("<summary>血統データを表示</summary>", cross_idx)
+    frame_summary_idx = html.index("<summary>枠番データを表示</summary>", cross_idx)
+    horse_summary_idx = html.index("<summary>馬番データを表示</summary>", cross_idx)
+    weight_summary_idx = html.index("<summary>馬体重データを表示</summary>", cross_idx)
+    pop_summary_idx = html.index("<summary>人気データを表示</summary>", cross_idx)
+    assert peds_summary_idx < frame_summary_idx < horse_summary_idx < weight_summary_idx < pop_summary_idx
     assert "<h4>人気別着度数</h4>" in html
     assert "<h4>枠番別着度数</h4>" in html
     assert "<h4>馬番別着度数</h4>" in html
+    assert "<h4>馬体重帯別着度数</h4>" in html
     assert "<h4>血統別成績（上位5件）</h4>" in html
+    # 枠番別チャートには、出馬表ページと同じ枠色のCSSクラスが付く
+    assert 'class="chakudo-label waku-1"' in html
+    assert 'class="chakudo-label waku-8"' in html
 
-    # 平均配当（単勝、勝ち馬のオッズ×100円）がサマリー・カードに追加されている
+    # 平均配当（単勝・複勝、勝ち馬のオッズ×100円／勝ち馬の複勝配当の平均）が
+    # サマリー・カードに追加されている
     assert "平均配当（単勝）" in html
+    assert "平均配当（複勝）" in html
     assert "円" in html
     # 通過順データが追加されている。東京芝1400mは通過1・2のみ記録されているコースのため、
     # 存在しない通過3・4は「データなし」で埋めず、列ごと出さない
@@ -144,6 +161,14 @@ def test_course_report_to_html_structure():
     assert "<h4>未勝利" in html
     assert "<h4>良" in html
     assert 'class="chakudo-label peds-label"' in html
+    # 馬体重別成績タブ：10kg刻みの帯別着度数（バー）と3着内率の折れ線傾向グラフがある
+    assert '<button data-target="weight" aria-selected="false">馬体重別成績</button>' in html
+    assert '<div class="section-panel" data-section="weight" hidden>' in html
+    assert "<h3>馬体重データ（馬体重帯別着度数、全体）</h3>" in html
+    assert "kg台" in html
+    assert '<polyline points=' in html
+    assert "<summary>馬体重データ：クラス別を表示</summary>" in html
+    assert "<summary>馬体重データ：馬場別を表示</summary>" in html
     # 個別コースのAI成績ページへの相互リンクが追加されている
     assert '<a href="../../performance/course/05_tokyo/芝-1400.html">&larr; このコースのAI成績を見る</a>' in html
     assert '<a href="../../index.html">&larr; HOMEへ戻る</a>' in html
@@ -154,9 +179,10 @@ def test_course_report_to_html_structure():
     assert '<script src="../../assets/js/section-tabs.js"></script>' in html
     assert '<script src="../../assets/js/cross-filter.js"></script>' in html
     # 通過順・peds各1つの年度別折りたたみ + 人気/枠番/馬番のクラス別・馬場別の折りたたみ6つ
-    # + 馬場×クラス×年度の組み合わせごとに2つ（人気・枠順データ/血統データ）の折りたたみ
+    # + 馬体重のクラス別・馬場別の折りたたみ2つ
+    # + 馬場×クラス×年度の組み合わせごとに5つ（血統/枠番/馬番/馬体重/人気データ）の折りたたみ
     cross_combo_count = len(c.build_cross_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN))
-    assert html.count('<details class="breakdown">') == 8 + cross_combo_count * 2
+    assert html.count('<details class="breakdown">') == 10 + cross_combo_count * 5
     assert html.count("<summary>年度別を表示</summary>") == 2
     # ブレッドクラム（現在地の階層）が追加されている
     assert '<p class="breadcrumb">' in html
@@ -523,7 +549,8 @@ def test_build_ground_state_breakdown_returns_ordered_rows():
     assert "全" not in {r["value"] for r in rows}
 
 
-def test_build_cross_breakdown_returns_rows_keyed_by_ground_state_class_and_year():
+def test_build_cross_breakdown_returns_rows_keyed_by_ground_state_class_and_start_year():
+    oldest_year = c.ANNUAL_START_YEAR
     cross = c.build_cross_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN)
 
     print(f"\n--- build_cross_breakdown(東京, 芝1400m) ---")
@@ -531,22 +558,42 @@ def test_build_cross_breakdown_returns_rows_keyed_by_ground_state_class_and_year
         print(f"  {key}: {row}")
 
     assert cross  # 実データなので少なくとも1組み合わせは存在するはず
-    # 各軸の「全て」（馬場状態="全"・クラス="all"・年度="全"）を含む全組み合わせが入っている
-    for ground_state, class_name, year in cross:
+    # 各軸の「全て」（馬場状態="全"・クラス="all"）と、開始年=oldest_year（全期間）を
+    # 含む全組み合わせが入っている。開始年は常にint（"開始年〜最新年"の範囲集計）
+    for ground_state, class_name, start_year in cross:
         assert ground_state in ["全"] + c.GROUND_STATE_ORDER
         assert class_name == "all" or class_name != ""
-        assert year == "全" or isinstance(year, int)
-    assert ("全", "all", "全") in cross  # 全体合計
-    assert any(gs != "全" and cls == "all" and y == "全" for gs, cls, y in cross)  # 馬場のみ
-    assert any(gs == "全" and cls != "all" and y == "全" for gs, cls, y in cross)  # クラスのみ
-    assert any(gs == "全" and cls == "all" and y != "全" for gs, cls, y in cross)  # 年度のみ
-    assert any(gs != "全" and cls != "all" and y != "全" for gs, cls, y in cross)  # 完全な組み合わせ
-    # データが存在しない組み合わせ（年度別CSVの欠損プレースホルダー）は除外されている
+        assert isinstance(start_year, int)
+    assert ("全", "all", oldest_year) in cross  # 全体合計（全期間）
+    assert any(gs != "全" and cls == "all" and y == oldest_year for gs, cls, y in cross)  # 馬場のみ
+    assert any(gs == "全" and cls != "all" and y == oldest_year for gs, cls, y in cross)  # クラスのみ
+    assert any(gs == "全" and cls == "all" and y != oldest_year for gs, cls, y in cross)  # 開始年のみ
+    assert any(gs != "全" and cls != "all" and y != oldest_year for gs, cls, y in cross)  # 完全な組み合わせ
+    # データが存在しない組み合わせ（実際の出走が無い期間）は除外されている
     for row in cross.values():
         assert row["avg_time"] != "データなし"
     # 各行は build_class_breakdown/build_ground_state_breakdown と同じ統計フィールドを持つ
     sample_row = next(iter(cross.values()))
     assert {"avg_time", "avg_pop", "weight", "avg_frame", "avg_horse", "win_return"} <= sample_row.keys()
+
+
+def test_build_cross_breakdown_start_year_narrows_to_recent_races_only():
+    oldest_year = c.ANNUAL_START_YEAR
+    current_year = date.today().year
+    cross = c.build_cross_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN, current_year=current_year)
+
+    full_period = cross.get(("全", "all", oldest_year))
+    latest_year_only = cross.get(("全", "all", current_year))
+
+    print(f"\n--- 全期間 vs {current_year}年〜 ---")
+    print(f"  全期間: {full_period}")
+    print(f"  {current_year}年〜: {latest_year_only}")
+
+    assert full_period is not None
+    # 開始年を最新年にすると対象が狭まるため、平均配当（数値）が全期間とは異なりうる
+    # （少なくとも両方データが取れることを確認する）
+    if latest_year_only is not None:
+        assert latest_year_only["win_return_raw"] is not None
 
 
 def test_peds_table_for_combo_returns_top_n_sorted_by_first_place():

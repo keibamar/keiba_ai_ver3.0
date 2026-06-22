@@ -145,6 +145,23 @@ def analyze_horse_chakudo(df_raw, courses):
     return _analyze_rank_chakudo(df_raw, courses, "馬番", range(1, 19))
 
 
+WEIGHT_BUCKET_SIZE = 10  # 馬体重を10kg刻みでバケット化する
+WEIGHT_BUCKET_RANGE = range(380, 561, WEIGHT_BUCKET_SIZE)  # 380kg〜560kg台を想定
+
+
+def analyze_weight_chakudo(df_raw, courses, bucket_size=WEIGHT_BUCKET_SIZE):
+    """馬体重（bucket_size刻みの帯）別の着度数を race_type, course_len ごとに算出する
+
+    例えばbucket_size=10なら、馬体重458kgは450（450〜459kg帯）に丸めて集計する。
+    人気/枠番/馬番と同じ_analyze_rank_chakudoを再利用するため、先に馬体重を
+    帯の下限値に変換した列を作ってから渡す。
+    """
+    df = df_raw.copy()
+    df["馬体重"] = pd.to_numeric(df["馬体重"], errors="coerce")
+    df["体重帯"] = (df["馬体重"] // bucket_size * bucket_size)
+    return _analyze_rank_chakudo(df, courses, "体重帯", WEIGHT_BUCKET_RANGE)
+
+
 def _aggregate_rank_chakudo(results_by_year, rank_column):
     if not results_by_year:
         return pd.DataFrame()
@@ -168,6 +185,11 @@ def aggregate_frame_chakudo(results_by_year):
 def aggregate_horse_chakudo(results_by_year):
     """年度別の analyze_horse_chakudo 結果を結合し、全期間の合計を算出する"""
     return _aggregate_rank_chakudo(results_by_year, "馬番")
+
+
+def aggregate_weight_chakudo(results_by_year):
+    """年度別の analyze_weight_chakudo 結果を結合し、全期間の合計を算出する"""
+    return _aggregate_rank_chakudo(results_by_year, "体重帯")
 
 
 # --- 平均配当（勝ち馬の単勝オッズ） -------------------------------------------------
