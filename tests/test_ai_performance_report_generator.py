@@ -85,6 +85,9 @@ def test_make_ai_performance_index_page_generates_html(new_roots, fake_dataset):
     assert '<p class="breadcrumb">' in html_content
     assert '<span class="breadcrumb-current">AI成績</span>' in html_content
     assert '<aside class="page-sidebar">' not in html_content
+    # 右側タブには、AI成績の直下に全競馬場が選択肢として表示される
+    assert '<a href="../performance/course/05_tokyo/index.html">東京</a>' in html_content
+    assert '<a href="../performance/course/06_nakayama/index.html">中山</a>' in html_content
     # 「今年の成績の推移」（年間成績より上）と「年間成績」内の年次トレンドの両方に、
     # 単勝・複勝の的中率・回収率グラフ（左軸=的中率、右軸=回収率）が追加されている
     # （週別トレンド2つ + 年次トレンド2つ = 合計4つのグラフ）
@@ -204,16 +207,15 @@ def test_make_course_performance_page_generates_html(new_roots, fake_dataset):
     assert '<div class="cross-filter-panel" data-ground-state="all" data-class="all" hidden>' in html_content
     assert '<div class="cross-filter-panel" data-ground-state="良" data-class="未勝利" hidden>' in html_content
     assert '<div class="cross-filter-panel" data-ground-state="稍重" data-class="1勝クラス" hidden>' in html_content
-    # ブレッドクラムと、東京の他のコースへのサイドバーが追加されている
+    # ブレッドクラムが追加されている
     assert '<a href="../../../performance/course/05_tokyo/index.html">東京</a>' in html_content
     assert '<span class="breadcrumb-current">芝1400m</span>' in html_content
-    assert '<aside class="page-sidebar">' in html_content
-    assert '<p class="page-sidebar-up"><a href="index.html">&uarr; 東京のAI成績</a></p>' in html_content
-    assert "<h3>競馬場</h3>" in html_content
-    assert '<li><a href="../06_nakayama/index.html">中山</a></li>' in html_content
-    assert "<h3>東京のコース</h3>" in html_content
-    assert '<li><a href="ダート-1600.html">ダート1600m</a></li>' in html_content
-    assert '<li><span class="page-sidebar-current">芝1400m</span></li>' in html_content
+    # 旧来の右サイドバー（競馬場・コース選択）は、右側タブの階層表示と重複するため廃止した
+    assert '<aside class="page-sidebar">' not in html_content
+    # 右側タブに同じ階層（他の競馬場・このコースの他の距離）が表示される
+    assert '<a href="../../../performance/course/06_nakayama/index.html">中山</a>' in html_content
+    assert '<a href="../../../performance/course/05_tokyo/ダート-1600.html">ダート1600m</a>' in html_content
+    assert '<span class="page-calendar-tab-current">芝1400m</span>' in html_content
 
 
 def test_make_course_performance_index_page_generates_html(new_roots, fake_dataset):
@@ -266,14 +268,14 @@ def test_make_course_performance_index_page_generates_html(new_roots, fake_datas
     assert '<div class="cross-filter-panel" data-ground-state="all" data-class="all" hidden>' in html_content
     assert '<div class="cross-filter-panel" data-ground-state="良" data-class="未勝利" hidden>' in html_content
     assert '<div class="cross-filter-panel" data-ground-state="稍重" data-class="1勝クラス" hidden>' in html_content
-    # ブレッドクラムと、他の競馬場へのサイドバーが追加されている
+    # ブレッドクラムが追加されている
     assert '<a href="../../../performance/index.html">AI成績</a>' in html_content
     assert '<span class="breadcrumb-current">東京</span>' in html_content
-    assert '<aside class="page-sidebar">' in html_content
-    assert '<p class="page-sidebar-up"><a href="../../index.html">&uarr; AI成績トップ</a></p>' in html_content
-    assert "<h3>競馬場</h3>" in html_content
-    assert '<li><a href="../06_nakayama/index.html">中山</a></li>' in html_content
-    assert '<li><span class="page-sidebar-current">東京</span></li>' in html_content
+    # 旧来の右サイドバー（競馬場選択）は、右側タブの階層表示と重複するため廃止した
+    assert '<aside class="page-sidebar">' not in html_content
+    # 右側タブに同じ階層（他の競馬場・東京の全コース）が表示される
+    assert '<a href="../../../performance/course/06_nakayama/index.html">中山</a>' in html_content
+    assert '<span class="page-calendar-tab-current">東京</span>' in html_content
 
 
 def test_make_all_annual_performance_pages_generates_for_each_year(new_roots, fake_dataset):

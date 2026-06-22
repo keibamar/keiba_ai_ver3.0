@@ -4,9 +4,10 @@
 変更せず、データ取得のみ新アーキテクチャのManager層に切り替えている。
 """
 
-from datetime import datetime
+from datetime import date, datetime
 
 from src.config.constants import NAME_LIST, PLACE_LIST
+from src.logic.calculators import ai_performance_calculator
 from src.managers import html_manager, race_card_dataset_manager, race_schedule_dataset_manager
 from src.utils.format_data import format_date
 
@@ -268,11 +269,59 @@ def calendar_widget_html(base_path=""):
 """
 
 
+def _today_meetings_html(races, base_path=""):
+    """本日のメインレース（11R）について、出馬表・コース詳細データへのリンクを返す
+
+    レースカレンダーページの「本日のレースを見る」ボタン（calendar.js）だけでは
+    開催場ごとの出馬表・コース詳細データへもう1階層辿る必要があるため、
+    ai_performance_calculator.get_today_main_races_with_courseの結果から、
+    レース名（出馬表ページが生成済みならそこへリンク）とコース詳細データへの
+    リンクをまとめて表示する。
+
+    Args:
+        races (list[dict]): get_today_main_races_with_courseと同じ形式のリスト。
+        base_path (str): 埋め込み先ページからpublic_html直下までの相対パス。
+    """
+    if not races:
+        return "<p>本日開催のレースはありません。</p>"
+
+    items = ""
+    for race in races:
+        place_name = NAME_LIST[race["place_id"] - 1]
+        place_key = PLACE_LIST[race["place_id"] - 1]
+        day_str = race["race_day"].strftime("%Y%m%d")
+        race_card_file = f"{place_key}R11.html"
+        if html_manager.race_page_exists(day_str, race_card_file):
+            race_link = f'<a href="{base_path}races/{day_str}/{race_card_file}">{race["race_name"]}</a>'
+        else:
+            race_link = race["race_name"]
+
+        if race["race_type"] and race["course_len"]:
+            course_link = (
+                f'<a href="{base_path}courses/{place_key}/{race["race_type"]}-{race["course_len"]}.html">'
+                f'{place_name} {race["race_type"]}{race["course_len"]}m</a>'
+            )
+        else:
+            course_link = f'<a href="{base_path}courses/{place_key}/index.html">{place_name}</a>'
+
+        items += (
+            f'<li class="today-meeting-item">'
+            f'<span class="main">{race_link}</span>'
+            f'<span class="sub">{place_name}11R ・ {course_link}</span>'
+            f"</li>\n"
+        )
+
+    return f'<ul class="today-meeting-list">\n{items}</ul>'
+
+
 def races_calendar_template():
     """開催日カレンダーページ（public_html/races/index.html）のHTMLを返す
 
-    旧 web/site/races/index.html の構成を移植。
+    旧 web/site/races/index.html の構成を移植。大きな月表示カレンダーをここに
+    集約し、本日開催がある場合は出馬表・コース詳細データへのリンクも併せて表示する。
     """
+    today_races = ai_performance_calculator.get_today_main_races_with_course(date.today())
+
     return f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -285,6 +334,9 @@ def races_calendar_template():
   <h1>開催日カレンダー</h1>
 
   {calendar_widget_html(base_path="../")}
+
+  <h2>本日の開催</h2>
+  {_today_meetings_html(today_races, base_path="../")}
 
   <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
 </body>

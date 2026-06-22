@@ -75,7 +75,25 @@ def test_make_daily_index_page_generates_index_html(new_roots):
     assert '<span class="disabled">→ 次の日</span>' in html_content
 
 
-def test_make_races_calendar_page_generates_index_html(new_roots):
+def test_make_races_calendar_page_generates_index_html(new_roots, monkeypatch):
+    # get_today_main_races_with_courseは出走馬一覧ページのスクレイピングを伴うため、
+    # オフラインテストでは固定値に差し替える
+    monkeypatch.setattr(
+        d.ai_performance_calculator,
+        "get_today_main_races_with_course",
+        lambda today: [
+            {
+                "race_id": "202605030611",
+                "place_id": 5,
+                "race_name": "府中牝馬S",
+                "race_time": "1545",
+                "race_type": "芝",
+                "course_len": 1800,
+                "race_day": today,
+            }
+        ],
+    )
+
     d.make_races_calendar_page()
 
     out_file = new_roots / "public_html" / "races" / "index.html"
@@ -93,6 +111,10 @@ def test_make_races_calendar_page_generates_index_html(new_roots):
     assert '<script src="../assets/js/calendar.js"></script>' in html_content
     assert '<a href="../index.html">&larr; HOMEへ戻る</a>' in html_content
 
+    # 「本日の開催」に、コース詳細データへのリンクが含まれる
+    assert "<h2>本日の開催</h2>" in html_content
+    assert '<a href="../courses/05_tokyo/芝-1800.html">東京 芝1800m</a>' in html_content
+
 
 def test_calendar_widget_html_uses_given_base_path():
     widget = d.calendar_widget_html(base_path="")
@@ -101,3 +123,51 @@ def test_calendar_widget_html_uses_given_base_path():
     assert '<script src="assets/js/raceDays.js"></script>' in widget
     assert '<script src="assets/js/calendar.js"></script>' in widget
     assert '<table id="calendar"></table>' in widget
+
+
+
+def test_today_meetings_html_links_to_race_card_and_course_data(monkeypatch):
+    races = [
+        {
+            "race_id": "202605030611",
+            "place_id": 5,
+            "race_name": "府中牝馬S",
+            "race_time": "1545",
+            "race_type": "芝",
+            "course_len": 1800,
+            "race_day": SAMPLE_RACE_DAY,
+        }
+    ]
+    monkeypatch.setattr(d.html_manager, "race_page_exists", lambda day_str, filename: True)
+
+    html_content = d._today_meetings_html(races, base_path="../")
+
+    print(f"\n--- _today_meetings_html ---\n{html_content}")
+
+    assert '<a href="../races/20241020/05_tokyoR11.html">府中牝馬S</a>' in html_content
+    assert '<a href="../courses/05_tokyo/芝-1800.html">東京 芝1800m</a>' in html_content
+
+
+def test_today_meetings_html_falls_back_when_race_card_missing(monkeypatch):
+    races = [
+        {
+            "race_id": "202605030611",
+            "place_id": 5,
+            "race_name": "府中牝馬S",
+            "race_time": "1545",
+            "race_type": None,
+            "course_len": None,
+            "race_day": SAMPLE_RACE_DAY,
+        }
+    ]
+    monkeypatch.setattr(d.html_manager, "race_page_exists", lambda day_str, filename: False)
+
+    html_content = d._today_meetings_html(races, base_path="../")
+
+    # 出馬表が無い場合はリンクなしのレース名のみ、コース詳細データは競馬場一覧へリンクする
+    assert "<span class=\"main\">府中牝馬S</span>" in html_content
+    assert '<a href="../courses/05_tokyo/index.html">東京</a>' in html_content
+
+
+def test_today_meetings_html_handles_no_races():
+    assert "本日開催のレースはありません。" in d._today_meetings_html([])

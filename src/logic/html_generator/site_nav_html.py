@@ -4,7 +4,14 @@ Home・AI成績・コース詳細データの各ページ群を横断して同�
 ページごとの「&larr; ◯◯へ戻る」リンクだけに頼らずどのページからでも主要セクションに
 アクセスできるようにする。daily_index_generator.calendar_widget_html(base_path=...)と
 同じ「埋め込み先ページの階層に応じた相対パスを引数で受け取る」パターンを踏襲する。
+
+また、site_nav_htmlは大きな月表示カレンダー自体を持つレースカレンダーページ
+（races_calendar_template）以外のどのページからも必ず1回呼ばれるため、ここに
+「常に右側に小さく表示するカレンダー（矢印で前後の月へ移動可能）＋現在地（階層）表示」
+のタブ（page_calendar_tab_html）も統合し、ページ生成側の個別対応なしに行き渡らせる。
 """
+
+from src.logic.html_generator import daily_index_generator
 
 NAV_LINKS = [
     ("HOME", "index.html"),
@@ -14,17 +21,26 @@ NAV_LINKS = [
 ]
 
 
-def site_nav_html(base_path=""):
+def site_nav_html(base_path="", current_path=None, breadcrumb_items=None):
     """サイト共通ナビゲーションのHTML断片を返す
 
-    競馬場・コースのページ検索ボックス（search_box_html）と、それを動かすための
-    スクリプトタグも併せて返す。site_nav_htmlはどのページでも必ず1回呼ばれるため、
-    ここにまとめることで検索ボックスをページ生成側の個別対応なしに全ページへ
+    競馬場・コースのページ検索ボックス（search_box_html）、それを動かすための
+    スクリプトタグ、右側の小さなカレンダータブ（page_calendar_tab_html）も併せて
+    返す。site_nav_htmlはどのページでも（レースカレンダーページを除き）必ず1回
+    呼ばれるため、ここにまとめることでページ生成側の個別対応なしに全ページへ
     行き渡らせる。
 
     Args:
         base_path (str): 埋め込み先ページからpublic_html直下までの相対パス
             （Home直下なら""、1階層下なら"../"、2階層下なら"../../"等）。
+        current_path (str | None): NAV_LINKSのpathのうち、現在表示中のページに
+            対応するもの（例: "courses/index.html"）。breadcrumb_items未指定時の
+            フォールバックとして使う（一致するものを右側タブの現在地表示で強調する）。
+        breadcrumb_items (list[tuple[str, str | None]] | None): breadcrumb_htmlと
+            同じ形式の階層パス（例: [("コース詳細データ", "courses/index.html"),
+            ("東京", "courses/05_tokyo/index.html"), ("芝1800m", None)]）。指定すると
+            右側タブの現在地表示がNAV_LINKSの大分類だけでなく、その下の階層
+            （競馬場・コース等）まで含めて表示し、各階層へ直接遷移できるようになる。
     """
     links = "\n  ".join(f'<a href="{base_path}{path}">{label}</a>' for label, path in NAV_LINKS)
     return f"""<nav class="site-nav">
@@ -32,7 +48,113 @@ def site_nav_html(base_path=""):
   {search_box_html(base_path)}
 </nav>
 <script src="{base_path}assets/js/page-search-index.js"></script>
-<script src="{base_path}assets/js/page-search.js"></script>"""
+<script src="{base_path}assets/js/page-search.js"></script>
+{page_calendar_tab_html(base_path, current_path, breadcrumb_items)}"""
+
+
+def page_calendar_tab_html(base_path="", current_path=None, breadcrumb_items=None):
+    """ページ右側に常時表示する、小さなカレンダー＋現在地（階層）表示のタブを返す
+
+    カレンダー部分はdaily_index_generator.calendar_widget_htmlをそのまま再利用する
+    （矢印での前後月移動・本日のレースへのリンクの仕組みは変えず、CSS側で縮小表示する）。
+    現在地表示は、HOME・レースカレンダー・AI成績・コース詳細データの4項目を
+    どのページからも常にリンクとして表示しつつ（NAV_LINKS）、breadcrumb_itemsを
+    指定すればそのページが属する大分類の下にさらにページ固有の階層
+    （競馬場・コース等）を入れ子で表示し、どの階層からも直接遷移できるようにする。
+
+    Args:
+        base_path (str): 埋め込み先ページからpublic_html直下までの相対パス。
+        current_path (str | None): NAV_LINKSのpathのうち、現在地として強調するもの
+            （breadcrumb_items未指定時のみ使う）。
+        breadcrumb_items (list[tuple[str, str | None]] | None): breadcrumb_htmlと
+            同じ形式の階層パス（先頭の要素のラベルがNAV_LINKSの大分類のいずれかと
+            一致する想定。例: [("コース詳細データ", "courses/index.html"),
+            ("東京", "courses/05_tokyo/index.html"), ("芝1800m", None)]）。
+    """
+    return f"""<aside class="page-calendar-tab">
+  <div class="page-calendar-tab-calendar">
+    {daily_index_generator.calendar_widget_html(base_path=base_path)}
+  </div>
+  <ul class="page-calendar-tab-location">
+    {_location_tree_html(base_path, current_path, breadcrumb_items)}
+  </ul>
+</aside>"""
+
+
+def _crumb_item_html(label, path, base_path="", current_class="page-calendar-tab-current"):
+    """1つの階層項目を、現在地ならspan、そうでなければリンクのHTMLにする"""
+    if path is None:
+        return f'<span class="{current_class}">{label}</span>'
+    return f'<a href="{base_path}{path}">{label}</a>'
+
+
+def _nested_crumbs_html(items, base_path="", current_class="page-calendar-tab-current"):
+    """階層パスを、先頭から順に入れ子の&lt;ul&gt;で階層を表す&lt;li&gt;に変換する
+
+    itemsの各要素は (表示名, 相対パス|None) または (表示名, 相対パス|None, 兄弟一覧) の
+    どちらでもよい。3つ目の要素（兄弟一覧、[(表示名, 相対パス|None), ...]）を指定すると、
+    その階層に存在する全項目（例: 全競馬場・あるコースの全距離）を並べて表示し、
+    その中で現在の項目（1番目・2番目の要素と一致するもの）だけが、続く階層
+    （items[1:]）をさらに入れ子で表示する（他の兄弟はリンクのみで展開しない）。
+
+    例えば[("コース詳細データ", "courses/index.html"),
+    ("東京", "courses/05_tokyo/index.html", [全競馬場のリスト]),
+    ("芝1800m", None, [このコースの全距離のリスト])]なら、コース詳細データ→
+    （全競馬場のうち東京のみ）→（東京の全距離のうち芝1800mのみ現在地）という
+    形で、各階層の兄弟項目も含めて1段ずつインデントが深くなるリストになる。
+    """
+    if not items:
+        return ""
+    item = items[0]
+    if len(item) == 3:
+        label, path, siblings = item
+    else:
+        label, path = item
+        siblings = [(label, path)]
+    rest_html = _nested_crumbs_html(items[1:], base_path, current_class)
+
+    rows = ""
+    for sib_label, sib_path in siblings:
+        crumb = _crumb_item_html(sib_label, sib_path, base_path, current_class)
+        if rest_html and (sib_label, sib_path) == (label, path):
+            rows += f'<li>{crumb}\n<ul class="page-calendar-tab-sublevel">\n{rest_html}</ul></li>\n'
+        else:
+            rows += f"<li>{crumb}</li>\n"
+    return rows
+
+
+def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
+    """HOMEを根に、NAV_LINKSの3項目を1段下にネストした、常時表示用の階層ツリーを返す
+
+    HOME・レースカレンダー・AI成績・コース詳細データはどのページからも常にリンク
+    として表示する。breadcrumb_itemsが指定され、その先頭ラベルがNAV_LINKSの
+    いずれかと一致する場合は、その項目の下にさらにページ固有の階層を入れ子で続ける。
+    """
+    home_is_current = breadcrumb_items == [] or (breadcrumb_items is None and current_path == "index.html")
+    home_crumb = _crumb_item_html("HOME", None if home_is_current else "index.html", base_path)
+
+    active_label = breadcrumb_items[0][0] if breadcrumb_items else None
+    sub_rows = ""
+    for label, path in NAV_LINKS[1:]:
+        if breadcrumb_items is not None and label == active_label:
+            sub_rows += _nested_crumbs_html(breadcrumb_items, base_path)
+        else:
+            is_current = breadcrumb_items is None and current_path == path
+            sub_rows += _nested_crumbs_html([(label, None if is_current else path)], base_path)
+
+    return f'<li>{home_crumb}\n<ul class="page-calendar-tab-sublevel">\n{sub_rows}</ul></li>\n'
+
+
+def _hierarchy_crumbs(items, base_path="", current_class="breadcrumb-current"):
+    """[(表示名, 相対パス|None), ...]を、先頭にHOMEを補ったHTML断片のリストに変換する
+
+    最後の要素のパスがNoneなら現在地として強調表示する。itemsが空の場合は
+    HOME自体が現在地（そのページがHOMEそのもの）とみなす。breadcrumb_htmlが
+    横並びのパンくずを作る際にこのロジックを使う。
+    """
+    simple_items = [(label, path) for label, path, *_ in items]
+    all_items = [("HOME", None if not simple_items else "index.html")] + simple_items
+    return [_crumb_item_html(label, path, base_path, current_class) for label, path in all_items]
 
 
 def search_box_html(base_path=""):
@@ -66,13 +188,7 @@ def breadcrumb_html(items, base_path=""):
             ("東京", "courses/05_tokyo/index.html"), ("芝1400m", None)]）。
         base_path (str): 埋め込み先ページからpublic_html直下までの相対パス。
     """
-    all_items = [("HOME", "index.html")] + list(items)
-    crumbs = []
-    for label, path in all_items:
-        if path is None:
-            crumbs.append(f'<span class="breadcrumb-current">{label}</span>')
-        else:
-            crumbs.append(f'<a href="{base_path}{path}">{label}</a>')
+    crumbs = _hierarchy_crumbs(items, base_path, current_class="breadcrumb-current")
     return f'<p class="breadcrumb">{" &rsaquo; ".join(crumbs)}</p>'
 
 

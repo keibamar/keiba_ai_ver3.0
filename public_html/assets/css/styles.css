@@ -1048,3 +1048,122 @@ details.breakdown summary:hover {
 .calendar-widget #todayRace p {
   color: #555;
 }
+
+/* --- ページ右側に常時表示する、小さなカレンダー＋現在地タブ（page_calendar_tab_html） --- */
+/* レースカレンダーページ（大きな月表示カレンダーを持つ）以外のどのページでも
+   site_nav_html経由で必ず表示される。矢印での前後月移動の仕組み（calendar.js）は
+   そのまま流用し、このタブの中だけで縮小表示する。 */
+
+.page-calendar-tab {
+  float: right;
+  width: 230px;
+  margin: 0 0 16px 16px;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+  font-size: 0.8em;
+}
+
+.page-calendar-tab .calendar-widget #calendar {
+  width: 100%;
+  margin: 6px auto;
+}
+
+.page-calendar-tab .calendar-widget #calendar td,
+.page-calendar-tab .calendar-widget #calendar th {
+  padding: 3px;
+  height: 26px;
+  width: auto;
+}
+
+.page-calendar-tab .calendar-widget #monthYear {
+  font-size: 1em;
+  margin: 0 6px;
+}
+
+.page-calendar-tab .calendar-widget #todayRace {
+  margin: 8px 0;
+  font-size: 1em;
+}
+
+.page-calendar-tab .calendar-widget #todayRace a {
+  padding: 5px 10px;
+  font-size: 0.9em;
+}
+
+.page-calendar-tab-location {
+  list-style: none;
+  padding: 8px 0 0;
+  margin: 8px 0 0;
+  border-top: 1px dashed #ccc;
+}
+
+.page-calendar-tab-location li {
+  list-style: none;
+}
+
+/* HOMEの1段下にレースカレンダー/AI成績/コース詳細データ、さらにその下に
+   ページ固有の階層（競馬場・コース等）と、ネストするごとに字下げ+左線を入れて
+   階層が深くなっていることを視覚的に示す */
+.page-calendar-tab-sublevel {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0 0;
+  padding: 0 0 0 14px;
+  border-left: 1px dashed #ccc;
+}
+
+.page-calendar-tab-location a {
+  text-decoration: none;
+  color: var(--mar-accent);
+}
+
+.page-calendar-tab-location a:hover {
+  text-decoration: underline;
+}
+
+.page-calendar-tab-current {
+  font-weight: bold;
+  color: var(--mar-primary);
+}
+
+@media (max-width: 800px) {
+  .page-calendar-tab {
+    float: none;
+    width: auto;
+  }
+}
+
+/* --- レースカレンダーページの「本日の開催」（出馬表・コース詳細データへのリンク） --- */
+
+.today-meeting-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0;
+  margin: 12px 0 20px;
+}
+
+.today-meeting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+  min-width: 200px;
+}
+
+.today-meeting-item .main {
+  font-weight: 600;
+}
+
+.today-meeting-item .sub {
+  font-size: 0.85em;
+  color: #888;
+}

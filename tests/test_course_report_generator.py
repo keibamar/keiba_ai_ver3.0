@@ -154,24 +154,18 @@ def test_course_report_to_html_structure():
     cross_combo_count = len(c.build_cross_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN))
     assert html.count('<details class="breakdown">') == 9 + cross_combo_count * 2
     assert html.count("<summary>年度別を表示</summary>") == 3
-    # ブレッドクラム（現在地の階層）と右サイドバー（このコースの他のコース一覧）が追加されている
+    # ブレッドクラム（現在地の階層）が追加されている
     assert '<p class="breadcrumb">' in html
     assert '<a href="../../index.html">HOME</a>' in html
     assert '<a href="../../courses/index.html">コース詳細データ</a>' in html
     assert '<a href="../../courses/05_tokyo/index.html">東京</a>' in html
     assert '<span class="breadcrumb-current">芝1400m</span>' in html
-    assert '<div class="page-layout">' in html
-    assert '<main class="page-content">' in html
-    assert '<aside class="page-sidebar">' in html
-    # サイドバーは「上の階層へ」+「競馬場」+「このコースの他のコース」の階層構造になっている
-    assert '<p class="page-sidebar-up"><a href="index.html">&uarr; 東京のコース一覧</a></p>' in html
-    assert "<h3>競馬場</h3>" in html
-    assert '<li><a href="../06_nakayama/index.html">中山</a></li>' in html
-    assert '<li><span class="page-sidebar-current">東京</span></li>' in html
-    assert "<h3>東京のコース</h3>" in html
-    assert '<li><a href="芝-1600.html">芝1600m</a></li>' in html
-    # 現在表示中のコース自身はサイドバーでリンクにせず強調表示する
-    assert '<li><span class="page-sidebar-current">芝1400m</span></li>' in html
+    # 旧来の右サイドバー（競馬場・コース選択）は、右側タブの階層表示と重複するため廃止した
+    assert '<aside class="page-sidebar">' not in html
+    # 右側タブに同じ階層（他の競馬場・このコースの他の距離）が表示される
+    assert '<a href="../../courses/06_nakayama/index.html">中山</a>' in html
+    assert '<a href="../../courses/05_tokyo/芝-1600.html">芝1600m</a>' in html
+    assert '<span class="page-calendar-tab-current">芝1400m</span>' in html
 
 
 def test_build_class_passage_breakdown_returns_per_class_rows():
@@ -628,6 +622,9 @@ def test_make_course_index_page_generates_html(new_roots, monkeypatch):
     assert '<p class="breadcrumb">' in html_content
     assert '<span class="breadcrumb-current">コース詳細データ</span>' in html_content
     assert '<aside class="page-sidebar">' not in html_content
+    # 右側タブには、コース詳細データの直下に全競馬場が選択肢として表示される
+    assert '<a href="../courses/05_tokyo/index.html">東京</a>' in html_content
+    assert '<a href="../courses/06_nakayama/index.html">中山</a>' in html_content
     # 開催中（東京）は大きいタイル
     assert '<div class="course-tile active">' in html_content
     assert '<a href="05_tokyo/index.html"><span class="place-name">東京</span></a>' in html_content
@@ -658,16 +655,16 @@ def test_make_track_page_generates_html(new_roots):
     assert '<div class="table-wrap">' in html_content
     assert '<table class="sortable">' in html_content
     assert '<script src="../../assets/js/sortable-table.js"></script>' in html_content
-    # ブレッドクラム（現在地）と右サイドバー（他の競馬場一覧）が追加されている
+    # ブレッドクラム（現在地）が追加されている
     assert '<p class="breadcrumb">' in html_content
     assert '<a href="../../courses/index.html">コース詳細データ</a>' in html_content
     assert '<span class="breadcrumb-current">東京</span>' in html_content
-    assert '<aside class="page-sidebar">' in html_content
-    assert '<p class="page-sidebar-up"><a href="../index.html">&uarr; コース詳細データ一覧</a></p>' in html_content
-    assert "<h3>競馬場</h3>" in html_content
-    assert '<li><a href="../06_nakayama/index.html">中山</a></li>' in html_content
-    # 現在表示中の競馬場自身はサイドバーでリンクにせず強調表示する
-    assert '<li><span class="page-sidebar-current">東京</span></li>' in html_content
+    # 旧来の右サイドバー（他の競馬場一覧）は、右側タブの階層表示と重複するため廃止した
+    assert '<aside class="page-sidebar">' not in html_content
+    # 右側タブに同じ階層（他の競馬場・東京の全コース）が表示される
+    assert '<a href="../../courses/06_nakayama/index.html">中山</a>' in html_content
+    assert '<span class="page-calendar-tab-current">東京</span>' in html_content
+    assert '<a href="../../courses/05_tokyo/芝-1600.html">芝1600m</a>' in html_content
 
 
 def test_make_course_detail_page_generates_html(new_roots):

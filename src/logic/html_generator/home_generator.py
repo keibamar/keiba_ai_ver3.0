@@ -18,7 +18,6 @@ import jpholiday
 
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator as calc
-from src.logic.html_generator import daily_index_generator
 from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
 from src.logic.html_generator.site_nav_html import site_nav_html
 from src.managers import ai_performance_dataset_manager as dataset_manager
@@ -291,15 +290,12 @@ def home_template():
 </head>
 <body>
   <main>
-    {site_nav_html(base_path="")}
+    {site_nav_html(base_path="", current_path="index.html")}
     <h1>{SITE_TITLE}</h1>
     <p>このサイトでは、競馬AIの成績、レースカレンダー、コース別データを閲覧できます。</p>
 
     <h2>今週の開催</h2>
     {_weekly_meeting_summary_html(weekly_meetings)}
-
-    <h2>レースカレンダー</h2>
-    {daily_index_generator.calendar_widget_html(base_path="")}
 
     <div class="card-grid">
       <div class="card">

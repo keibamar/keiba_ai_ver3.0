@@ -30,7 +30,7 @@ import pandas as pd
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import COURSE_LISTS
 from src.logic.calculators import ai_performance_calculator as calc
-from src.logic.html_generator.site_nav_html import breadcrumb_html, sidebar_html, site_nav_html
+from src.logic.html_generator.site_nav_html import breadcrumb_html, site_nav_html
 from src.managers import html_manager, peds_results_dataset_manager, race_info_dataset_manager
 
 ANNUAL_START_YEAR = 2019
@@ -885,29 +885,25 @@ def course_report_to_html(report):
     peds_year_breakdown = build_peds_year_breakdown(place_id, race_type, course_len)
 
     current_label = f"{race_type}{course_len}m"
-    sidebar = sidebar_html(
-        [
-            (
-                "競馬場",
-                [(NAME_LIST[i], f"../{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))],
-                place_name,
-            ),
-            (
-                f"{place_name}のコース",
-                [(f"{rt}{cl}m", f"{rt}-{cl}.html") for rt, cl in COURSE_LISTS[place_id - 1]],
-                current_label,
-            ),
-        ],
-        up_link=(f"{place_name}のコース一覧", "index.html"),
-    )
-    breadcrumb = breadcrumb_html(
-        [
-            ("コース詳細データ", "courses/index.html"),
-            (place_name, f"courses/{PLACE_LIST[place_id - 1]}/index.html"),
-            (current_label, None),
-        ],
-        base_path="../../",
-    )
+    breadcrumb_items = [
+        ("コース詳細データ", "courses/index.html"),
+        (place_name, f"courses/{PLACE_LIST[place_id - 1]}/index.html"),
+        (current_label, None),
+    ]
+    breadcrumb = breadcrumb_html(breadcrumb_items, base_path="../../")
+
+    # 右側タブでは、横並びのbreadcrumbとは別に「全競馬場」「この競馬場の全コース」も
+    # 兄弟項目として並べて表示し、どの競馬場・コースへもタブから直接遷移できるようにする。
+    venue_siblings = [(NAME_LIST[i], f"courses/{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))]
+    course_siblings = [
+        (f"{rt}{cl}m", None if (rt, cl) == (race_type, course_len) else f"courses/{PLACE_LIST[place_id - 1]}/{rt}-{cl}.html")
+        for rt, cl in COURSE_LISTS[place_id - 1]
+    ]
+    tab_hierarchy_items = [
+        ("コース詳細データ", "courses/index.html"),
+        (place_name, f"courses/{PLACE_LIST[place_id - 1]}/index.html", venue_siblings),
+        (current_label, None, course_siblings),
+    ]
 
     return f"""
 <!DOCTYPE html>
@@ -918,10 +914,8 @@ def course_report_to_html(report):
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 <body>
-  {site_nav_html(base_path="../../")}
+  {site_nav_html(base_path="../../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb}
-  <div class="page-layout">
-  <main class="page-content">
   <p><a href="index.html">&larr; {place_name}のコース一覧へ</a></p>
   <h1>{place_name} {race_type}{course_len}m コース詳細</h1>
 
@@ -1022,9 +1016,6 @@ def course_report_to_html(report):
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../../index.html">&larr; HOMEへ戻る</a></p>
-  </main>
-  {sidebar}
-  </div>
   <script src="../../assets/js/sortable-table.js"></script>
   <script src="../../assets/js/section-tabs.js"></script>
   <script src="../../assets/js/cross-filter.js"></script>
@@ -1058,6 +1049,13 @@ def make_course_index_page():
         else:
             inactive_tiles += f'<div class="course-tile inactive"><a href="{place_key}/index.html">{place_name}</a></div>\n'
 
+    breadcrumb_items = [("コース詳細データ", None)]
+
+    # 右側タブでは、コース詳細データの直下に全競馬場を選択肢として表示し、
+    # トップページからもどの競馬場へも直接遷移できるようにする。
+    venue_siblings = [(NAME_LIST[i], f"courses/{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))]
+    tab_hierarchy_items = [("コース詳細データ", None), ("競馬場", None, venue_siblings)]
+
     html = f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -1067,8 +1065,8 @@ def make_course_index_page():
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
 <body>
-  {site_nav_html(base_path="../")}
-  {breadcrumb_html([("コース詳細データ", None)], base_path="../")}
+  {site_nav_html(base_path="../", breadcrumb_items=tab_hierarchy_items)}
+  {breadcrumb_html(breadcrumb_items, base_path="../")}
   <h1>コース詳細データ</h1>
 
   <h2>開催中の競馬場</h2>
@@ -1117,19 +1115,22 @@ def make_track_page(place_id):
         for race_type in sorted({race_type for race_type, _ in course_list})
     )
 
-    sidebar = sidebar_html(
-        [
-            (
-                "競馬場",
-                [(NAME_LIST[i], f"../{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))],
-                place_name,
-            ),
-        ],
-        up_link=("コース詳細データ一覧", "../index.html"),
-    )
-    breadcrumb = breadcrumb_html(
-        [("コース詳細データ", "courses/index.html"), (place_name, None)], base_path="../../",
-    )
+    breadcrumb_items = [("コース詳細データ", "courses/index.html"), (place_name, None)]
+    breadcrumb = breadcrumb_html(breadcrumb_items, base_path="../../")
+
+    # 右側タブでは、横並びのbreadcrumbとは別に「全競馬場」「この競馬場の全コース」も
+    # 兄弟項目として並べて表示し、どの競馬場・コースへもタブから直接遷移できるようにする
+    # （横並びのbreadcrumbは現在地までの単純な経路のみで、兄弟一覧は出さない）。
+    venue_siblings = [(NAME_LIST[i], f"courses/{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))]
+    venue_siblings[place_id - 1] = (place_name, None)
+    course_siblings = [
+        (f"{rt}{cl}m", f"courses/{PLACE_LIST[place_id - 1]}/{rt}-{cl}.html") for rt, cl in course_list
+    ]
+    tab_hierarchy_items = [
+        ("コース詳細データ", "courses/index.html"),
+        (place_name, None, venue_siblings),
+        (f"{place_name}のコース", None, course_siblings),
+    ]
 
     html = f"""
 <!DOCTYPE html>
@@ -1140,10 +1141,8 @@ def make_track_page(place_id):
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 <body>
-  {site_nav_html(base_path="../../")}
+  {site_nav_html(base_path="../../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb}
-  <div class="page-layout">
-  <main class="page-content">
   <h1>{place_name} コース一覧</h1>
 
   <div class="card-grid">
@@ -1167,9 +1166,6 @@ def make_track_page(place_id):
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/index.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../index.html">&larr; コース詳細データ一覧へ</a></p>
-  </main>
-  {sidebar}
-  </div>
   <script src="../../assets/js/sortable-table.js"></script>
 </body>
 </html>

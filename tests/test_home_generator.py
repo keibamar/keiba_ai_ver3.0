@@ -83,13 +83,21 @@ def test_make_home_page_generates_index_html(new_roots, monkeypatch):
 
     assert "<h1>MAR(まーる）|競馬AIデータサイト</h1>" in html_content
 
-    # Homeの最上部（レースカレンダーより上）に今週の開催情報を、土曜・日曜それぞれ表示する
+    # Homeにも、site_nav_html経由で右側の小さなカレンダータブ（矢印で前後月へ移動可能）
+    # ＋現在地（HOME）の強調表示が常に表示される
+    assert '<aside class="page-calendar-tab">' in html_content
+    assert '<div class="page-calendar-tab-calendar">' in html_content
+    assert '<button id="prevMonth">&larr;</button>' in html_content
+    assert '<button id="nextMonth">&rarr;</button>' in html_content
+    assert '<span class="page-calendar-tab-current">HOME</span>' in html_content
+
+    # Homeの最上部（タイトルの下）に今週の開催情報を、土曜・日曜それぞれ表示する
     assert "<h2>今週の開催</h2>" in html_content
     assert '<span class="main"><a href="courses/05_tokyo/index.html">東京</a> 第2回</span>' in html_content
     # 出馬表一覧ページが生成済みの06-20/06-21は、その日の開催一覧へのリンクになる
     assert '<a href="races/20260620/index.html">06/20(土) 7日目</a>' in html_content
     assert '<a href="races/20260621/index.html">06/21(日) 8日目</a>' in html_content
-    assert html_content.index("<h2>今週の開催</h2>") < html_content.index("<h2>レースカレンダー</h2>")
+    assert html_content.index("<h1>") < html_content.index("<h2>今週の開催</h2>")
 
     # 今週のメインレースは、出馬表生成済みのレース（06-20の東京11R）はレース名から出馬表へ飛べる
     assert '<a href="races/20260620/05_tokyoR11.html">府中牝馬S</a>' in html_content
@@ -98,7 +106,7 @@ def test_make_home_page_generates_index_html(new_roots, monkeypatch):
     assert '<a href="performance/index.html">AI成績</a>' in html_content
     assert '<a href="courses/index.html">コース詳細データ</a>' in html_content
 
-    # カレンダーwidget（base_path=""で埋め込まれている）
+    # カレンダーミニタブ（base_path=""で埋め込まれている）
     assert 'window.CALENDAR_BASE_PATH = "";' in html_content
     assert '<script src="assets/js/raceDays.js"></script>' in html_content
 

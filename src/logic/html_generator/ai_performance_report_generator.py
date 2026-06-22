@@ -230,6 +230,13 @@ def make_ai_performance_index_page():
         f'<li><a href="course/{PLACE_LIST[i]}/index.html">{NAME_LIST[i]}</a></li>\n'
         for i in range(len(PLACE_LIST))
     )
+    breadcrumb_items = [("AI成績", None)]
+
+    # 右側タブでは、AI成績の直下に全競馬場を選択肢として表示し、
+    # トップページからもどの競馬場へも直接遷移できるようにする。
+    venue_siblings = [(NAME_LIST[i], f"performance/course/{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))]
+    tab_hierarchy_items = [("AI成績", None), ("競馬場", None, venue_siblings)]
+
     html = f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -239,8 +246,8 @@ def make_ai_performance_index_page():
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
 <body>
-  {site_nav_html(base_path="../")}
-  {breadcrumb_html([("AI成績", None)], base_path="../")}
+  {site_nav_html(base_path="../", breadcrumb_items=tab_hierarchy_items)}
+  {breadcrumb_html(breadcrumb_items, base_path="../")}
   <h1>AI予想成績</h1>
 
   {_performance_table_html(total_performance, title="トータル成績")}
@@ -293,7 +300,8 @@ def make_annual_performance_page(year, df=None):
         [("年度", [(f"{y}年", f"{y}.html") for y in years], f"{year}年")],
         up_link=("AI成績トップ", "../index.html"),
     )
-    breadcrumb = breadcrumb_html([("AI成績", "performance/index.html"), (f"{year}年", None)], base_path="../../")
+    breadcrumb_items = [("AI成績", "performance/index.html"), (f"{year}年", None)]
+    breadcrumb = breadcrumb_html(breadcrumb_items, base_path="../../")
 
     html = f"""
 <!DOCTYPE html>
@@ -304,7 +312,7 @@ def make_annual_performance_page(year, df=None):
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 <body>
-  {site_nav_html(base_path="../../")}
+  {site_nav_html(base_path="../../", breadcrumb_items=breadcrumb_items)}
   {breadcrumb}
   <div class="page-layout">
   <main class="page-content">
@@ -332,6 +340,7 @@ def make_meeting_performance_page(year, place_id, times, df=None):
     place_name = NAME_LIST[place_id - 1]
     performance = m.aggregate(m.filter_by_meeting(df, year, place_id, times))
 
+    breadcrumb_items = [("AI成績", "performance/index.html"), (f"{year}年 {place_name}{times}回", None)]
     html = f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -341,8 +350,8 @@ def make_meeting_performance_page(year, place_id, times, df=None):
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
 <body>
-  {site_nav_html(base_path="../../../")}
-  {breadcrumb_html([("AI成績", "performance/index.html"), (f"{year}年 {place_name}{times}回", None)], base_path="../../../")}
+  {site_nav_html(base_path="../../../", breadcrumb_items=breadcrumb_items)}
+  {breadcrumb_html(breadcrumb_items, base_path="../../../")}
   <h1>{year}年 {place_name}{times}回 AI予想成績</h1>
   {_performance_table_html(performance)}
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
@@ -382,19 +391,22 @@ def make_course_performance_index_page(place_id, df=None):
         f'<li><a href="{race_type}-{course_len}.html">{race_type}{course_len}m</a></li>\n'
         for race_type, course_len in course_list
     )
-    sidebar = sidebar_html(
-        [
-            (
-                "競馬場",
-                [(NAME_LIST[i], f"../{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))],
-                place_name,
-            ),
-        ],
-        up_link=("AI成績トップ", "../../index.html"),
-    )
-    breadcrumb = breadcrumb_html(
-        [("AI成績", "performance/index.html"), (place_name, None)], base_path="../../../",
-    )
+    breadcrumb_items = [("AI成績", "performance/index.html"), (place_name, None)]
+    breadcrumb = breadcrumb_html(breadcrumb_items, base_path="../../../")
+
+    # 右側タブでは、横並びのbreadcrumbとは別に「全競馬場」「この競馬場の全コース」も
+    # 兄弟項目として並べて表示し、どの競馬場・コースへもタブから直接遷移できるようにする。
+    venue_siblings = [(NAME_LIST[i], f"performance/course/{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))]
+    venue_siblings[place_id - 1] = (place_name, None)
+    course_siblings = [
+        (f"{rt}{cl}m", f"performance/course/{PLACE_LIST[place_id - 1]}/{rt}-{cl}.html") for rt, cl in course_list
+    ]
+    tab_hierarchy_items = [
+        ("AI成績", "performance/index.html"),
+        (place_name, None, venue_siblings),
+        (f"{place_name}のコース", None, course_siblings),
+    ]
+
     html = f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -404,10 +416,8 @@ def make_course_performance_index_page(place_id, df=None):
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
 <body>
-  {site_nav_html(base_path="../../../")}
+  {site_nav_html(base_path="../../../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb}
-  <div class="page-layout">
-  <main class="page-content">
   <h1>{place_name} AI予想成績</h1>
 
   <div class="tabbed-section">
@@ -447,9 +457,6 @@ def make_course_performance_index_page(place_id, df=None):
     {course_rows}
   </ul>
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
-  </main>
-  {sidebar}
-  </div>
   <script src="../../../assets/js/sortable-table.js"></script>
   <script src="../../../assets/js/section-tabs.js"></script>
   <script src="../../../assets/js/cross-filter.js"></script>
@@ -476,29 +483,28 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
     by_year = sorted(m.group_breakdown(course_df, "year"), key=lambda item: item["value"], reverse=True)
 
     current_label = f"{race_type}{course_len}m"
-    sidebar = sidebar_html(
-        [
-            (
-                "競馬場",
-                [(NAME_LIST[i], f"../{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))],
-                place_name,
-            ),
-            (
-                f"{place_name}のコース",
-                [(f"{rt}{cl}m", f"{rt}-{cl}.html") for rt, cl in COURSE_LISTS[place_id - 1]],
-                current_label,
-            ),
-        ],
-        up_link=(f"{place_name}のAI成績", "index.html"),
-    )
-    breadcrumb = breadcrumb_html(
-        [
-            ("AI成績", "performance/index.html"),
-            (place_name, f"performance/course/{PLACE_LIST[place_id - 1]}/index.html"),
-            (current_label, None),
-        ],
-        base_path="../../../",
-    )
+    breadcrumb_items = [
+        ("AI成績", "performance/index.html"),
+        (place_name, f"performance/course/{PLACE_LIST[place_id - 1]}/index.html"),
+        (current_label, None),
+    ]
+    breadcrumb = breadcrumb_html(breadcrumb_items, base_path="../../../")
+
+    # 右側タブでは、横並びのbreadcrumbとは別に「全競馬場」「この競馬場の全コース」も
+    # 兄弟項目として並べて表示し、どの競馬場・コースへもタブから直接遷移できるようにする。
+    venue_siblings = [(NAME_LIST[i], f"performance/course/{PLACE_LIST[i]}/index.html") for i in range(len(PLACE_LIST))]
+    course_siblings = [
+        (
+            f"{rt}{cl}m",
+            None if (rt, cl) == (race_type, course_len) else f"performance/course/{PLACE_LIST[place_id - 1]}/{rt}-{cl}.html",
+        )
+        for rt, cl in COURSE_LISTS[place_id - 1]
+    ]
+    tab_hierarchy_items = [
+        ("AI成績", "performance/index.html"),
+        (place_name, f"performance/course/{PLACE_LIST[place_id - 1]}/index.html", venue_siblings),
+        (current_label, None, course_siblings),
+    ]
 
     html = f"""
 <!DOCTYPE html>
@@ -509,10 +515,8 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
 <body>
-  {site_nav_html(base_path="../../../")}
+  {site_nav_html(base_path="../../../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb}
-  <div class="page-layout">
-  <main class="page-content">
   <h1>{place_name} {race_type}{course_len}m AI予想成績</h1>
 
   <div class="tabbed-section">
@@ -545,9 +549,6 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
 
   <p><a href="../../../courses/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; コース詳細データへ</a></p>
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
-  </main>
-  {sidebar}
-  </div>
   <script src="../../../assets/js/sortable-table.js"></script>
   <script src="../../../assets/js/section-tabs.js"></script>
   <script src="../../../assets/js/cross-filter.js"></script>
