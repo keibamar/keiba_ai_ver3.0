@@ -179,9 +179,17 @@ def _breakdown_row(place_id, race_type, course_len, value_label, ground_state, c
     if time_row is None:
         return None
 
+    avg_time_fmt = _fmt_time(time_row)
+    if avg_time_fmt == "データなし":
+        # 年度別CSVは存在するすべての馬場×クラスの組み合わせ分の行を持つため、
+        # 行自体はマッチしても実際の出走が無い（平均値が欠損の）組み合わせがある。
+        # 3軸（馬場×クラス×年度）まで掛け合わせるとこのケースが大幅に増えるため、
+        # 行が見つかったかどうかだけでなく、実際にデータがあるかどうかも確認して除外する。
+        return None
+
     return {
         "value": value_label,
-        "avg_time": _fmt_time(time_row),
+        "avg_time": avg_time_fmt,
         "avg_pop": _fmt(pop_row, "avg_pop"),
         "weight": _fmt(weight_row, "馬体重", "kg"),
         "avg_frame": _fmt(frame_row, "avg_frame"),
@@ -212,28 +220,38 @@ def build_ground_state_breakdown(place_id, race_type, course_len):
     return [r for r in rows if r is not None]
 
 
-def build_cross_breakdown(place_id, race_type, course_len):
-    """馬場状態×クラスの組み合わせごとの内訳（平均勝ち時計・人気・体重・枠番・配当）を返す
+def build_cross_breakdown(place_id, race_type, course_len, start_year=ANNUAL_START_YEAR, current_year=None):
+    """馬場状態×クラス×年度の組み合わせごとの内訳（平均勝ち時計・人気・体重・枠番・配当）を返す
 
-    build_class_breakdown/build_ground_state_breakdownはそれぞれ片方の軸だけを
-    動かすが、ここでは両軸を組み合わせて集計し、ユーザーが両方を選んで絞り込める
-    ようにする。各軸の「全て」（馬場状態="全"・クラス="all"）も組み合わせに含めるため、
-    全体合計・馬場のみ・クラスのみ・完全な組み合わせのすべてがこの1つの辞書に入る。
-    データが存在しない組み合わせ（_breakdown_rowがNoneを返す）は除外する。
+    build_class_breakdown/build_ground_state_breakdown/build_year_breakdownはそれぞれ
+    1軸だけを動かすが、ここでは3軸を組み合わせて集計し、ユーザーがどの軸も選んで
+    絞り込めるようにする。各軸の「全て」（馬場状態="全"・クラス="all"・年度="全"）も
+    組み合わせに含めるため、全体合計・各軸単体の内訳・完全な組み合わせのすべてが
+    この1つの辞書に入る。データが存在しない組み合わせ（_breakdown_rowがNoneを返す）は
+    除外する（特に年度別は集計済みデータが無い年もあるため、組み合わせ数は実際に
+    データがある分だけに絞られる）。
 
     Returns:
-        dict[tuple, dict]: {(馬場状態, クラス): _breakdown_rowの戻り値, ...}
+        dict[tuple, dict]: {(馬場状態, クラス, 年度): _breakdown_rowの戻り値, ...}
+            （年度は"全"または年（int）。年度="全"はtotal集計、それ以外はannual集計）
     """
+    current_year = current_year or date.today().year
     time_df = race_info_dataset_manager.get_total_average_time_csv(place_id)
     sub = _filter_rows(time_df, race_type, course_len, ground_state="全")
     classes = [c for c in sub["class"].unique() if c != "all"] if not sub.empty else []
+    years = list(range(start_year, current_year + 1))
 
     result = {}
     for ground_state in ["全"] + GROUND_STATE_ORDER:
         for class_name in ["all"] + classes:
-            row = _breakdown_row(place_id, race_type, course_len, f"{ground_state}×{class_name}", ground_state, class_name)
-            if row is not None:
-                result[(ground_state, class_name)] = row
+            for year in ["全"] + years:
+                label = f"{ground_state}×{class_name}×{year}"
+                row = _breakdown_row(
+                    place_id, race_type, course_len, label, ground_state, class_name,
+                    year=None if year == "全" else year,
+                )
+                if row is not None:
+                    result[(ground_state, class_name, year)] = row
     return result
 
 
@@ -586,17 +604,21 @@ def _breakdown_table_html(rows, value_label, title):
     return f"<h3>{title}</h3>\n  {body}"
 
 
-def _peds_table_for_combo(place_id, race_type, course_len, ground_state, class_name, top_n=5):
-    """馬場状態×クラスの組み合わせに対応する血統別成績（上位top_n件）を返す
+def _peds_table_for_combo(place_id, race_type, course_len, ground_state, class_name, year=None, top_n=5):
+    """馬場状態×クラス×年度の組み合わせに対応する血統別成績（上位top_n件）を返す
 
-    peds_results_dataset_manager.get_total_peds_results_csvのground_state引数は
+    peds_results_dataset_manager.get_total/annual_peds_results_csvのground_state引数は
     「全体」をsentinel "全"ではなく"all"で表す（馬場別ファイルが
     Total/{race_type}_{course_len}m_{ground_state}.csvとして個別に存在し、
     全体合計分は"_all.csv"という別ファイルのため）。クラス側のsentinelは
-    他の集計と同じ"all"で共通のため変換不要。
+    他の集計と同じ"all"で共通のため変換不要。yearを指定すると年度別ファイルを
+    （集計済みであれば）参照する。
     """
     peds_ground_state = "all" if ground_state == "全" else ground_state
-    df = peds_results_dataset_manager.get_total_peds_results_csv(place_id, race_type, course_len, peds_ground_state)
+    if year is None:
+        df = peds_results_dataset_manager.get_total_peds_results_csv(place_id, race_type, course_len, peds_ground_state)
+    else:
+        df = peds_results_dataset_manager.get_annual_peds_results_csv(place_id, year, race_type, course_len, peds_ground_state)
     if df.empty or "クラス" not in df.columns:
         return None
     sub = df[df["クラス"] == class_name].copy()
@@ -609,19 +631,41 @@ def _peds_table_for_combo(place_id, race_type, course_len, ground_state, class_n
 
 
 def _cross_filter_panel_html(
-    place_id, race_type, course_len, ground_state, class_name, row,
+    place_id, race_type, course_len, ground_state, class_name, year, row,
     pop_chakudo_df, frame_chakudo_df, horse_chakudo_df,
 ):
+    """馬場状態×クラス×年度1組み合わせ分のパネルを返す
+
+    平均勝ち時計・平均人気等の概要は、表（数字の羅列）ではなくページ上部の
+    summary-statsと同じ「大きな数字+ラベル」のカードで表示し、データの羅列に
+    見えないようにする。どの組み合わせを見ているかが選択肢だけでは分かりにくいため、
+    見出しに馬場状態×クラス×年度を明示する。
+    """
+    heading = f"{ground_state} × {class_name} × {year}"
     if row is None:
         body = "<p>対象データがありません。</p>"
     else:
-        body = f"""<div class="table-wrap">
-  <table class="sortable">
-    <thead><tr><th>平均勝ち時計</th><th>平均人気</th><th>勝ち馬平均体重</th><th>平均枠番</th><th>平均馬番</th><th>平均配当(単勝)</th></tr></thead>
-    <tbody>
-      <tr><td>{row['avg_time']}</td><td>{row['avg_pop']}</td><td>{row['weight']}</td><td>{row['avg_frame']}</td><td>{row['avg_horse']}</td><td>{row['win_return']}</td></tr>
-    </tbody>
-  </table>
+        body = f"""<div class="summary-stats">
+    <div class="summary-stat">
+      <span class="value">{row['avg_time']}</span>
+      <span class="label">平均勝ち時計</span>
+    </div>
+    <div class="summary-stat">
+      <span class="value">{row['avg_pop']}</span>
+      <span class="label">平均人気</span>
+    </div>
+    <div class="summary-stat">
+      <span class="value">{row['weight']}</span>
+      <span class="label">勝ち馬平均体重</span>
+    </div>
+    <div class="summary-stat">
+      <span class="value">{row['avg_frame']} / {row['avg_horse']}</span>
+      <span class="label">平均枠番 / 平均馬番</span>
+    </div>
+    <div class="summary-stat">
+      <span class="value">{row['win_return']}</span>
+      <span class="label">平均配当（単勝）</span>
+    </div>
   </div>"""
 
     pop_chakudo_html = _chakudo_chart_html(
@@ -636,12 +680,16 @@ def _cross_filter_panel_html(
         horse_chakudo_df, race_type, course_len, "馬番", range(1, 19), "馬番別着度数",
         ground_state=ground_state, class_name=class_name, heading_level="h4",
     )
-    peds_html = _peds_table_html(
-        _peds_table_for_combo(place_id, race_type, course_len, ground_state, class_name),
+    peds_html = _peds_chart_html(
+        _peds_table_for_combo(
+            place_id, race_type, course_len, ground_state, class_name,
+            year=None if year == "全" else year,
+        ),
         "血統別成績（上位5件）", heading_level="h4",
     )
 
-    return f"""<div class="cross-filter-panel" data-ground-state="{ground_state}" data-class="{class_name}" hidden>
+    return f"""<div class="cross-filter-panel" data-ground-state="{ground_state}" data-class="{class_name}" data-year="{year}" hidden>
+    <h3>{heading}</h3>
     {body}
     <details class="breakdown">
       <summary>人気・枠順データを表示</summary>
@@ -658,25 +706,27 @@ def _cross_filter_panel_html(
 
 def _cross_filter_html(
     place_id, race_type, course_len, cross_breakdown,
-    pop_chakudo_df, frame_chakudo_df, horse_chakudo_df, class_names,
+    pop_chakudo_df, frame_chakudo_df, horse_chakudo_df, class_names, years,
 ):
-    """馬場状態×クラスを2つのセレクトボックスで選び、平均勝ち時計・人気・体重・枠番・
-    配当に加え、人気・枠順データ（着度数）・血統データもその組み合わせに絞り込んで
-    表示するインタラクティブなUIを返す
+    """馬場状態×クラス×年度を3つのセレクトボックスで選び、平均勝ち時計・人気・体重・
+    枠番・配当に加え、人気・枠順データ（着度数）・血統データもその組み合わせに
+    絞り込んで表示するインタラクティブなUIを返す
 
     ai_performance_report_generator._cross_filter_htmlと同じ「サーバー側で全組み合わせ
     ぶん事前計算し、JS（assets/js/cross-filter.js）は表示/非表示の切り替えのみ行う」
-    方針を踏襲する（同じJSファイルをそのまま再利用できる）。
+    方針を踏襲する（同じJSファイルをそのまま再利用できる。年度セレクトの有無は
+    JS側で動的に検出するため、2軸のみのページにも影響しない）。
     """
     ground_options = "".join(f'<option value="{gs}">{gs}</option>\n' for gs in GROUND_STATE_ORDER)
     class_options = "".join(f'<option value="{cls}">{cls}</option>\n' for cls in class_names)
+    year_options = "".join(f'<option value="{y}">{y}年</option>\n' for y in years)
 
     panels = [
         _cross_filter_panel_html(
-            place_id, race_type, course_len, gs, cls, row,
+            place_id, race_type, course_len, gs, cls, year, row,
             pop_chakudo_df, frame_chakudo_df, horse_chakudo_df,
         )
-        for (gs, cls), row in cross_breakdown.items()
+        for (gs, cls, year), row in cross_breakdown.items()
     ]
 
     return f"""<div class="cross-filter">
@@ -693,30 +743,64 @@ def _cross_filter_html(
           {class_options}
         </select>
       </label>
+      <label>年度:
+        <select class="cross-filter-year">
+          <option value="全">全期間</option>
+          {year_options}
+        </select>
+      </label>
     </div>
     {"".join(panels)}
     <p class="cross-filter-empty" hidden>対象データがありません。</p>
   </div>"""
 
 
-def _peds_table_html(peds_df, title, heading_level="h3", top_n=10):
+def _peds_chart_html(peds_df, title, heading_level="h3", top_n=10):
+    """血統別成績（1着/2着/3着/着外）を、着度数と同じ積み上げ横バーチャートで表示する
+
+    血統（種牡馬）ごとに総戦数が大きく異なるため、表（数字の羅列）よりも分布の
+    良し悪しが一目で分かるよう、人気/枠番/馬番と同じチャート（_chakudo_chart_html）の
+    見た目を再利用する。バーの幅は血統ごとの総戦数を100%とした内訳の割合にし、
+    末尾にn=総戦数を表示することで、割合（成績の良し悪し）と総数（サンプルの
+    信頼度）の両方を一目で確認できるようにする。
+    """
     if peds_df is None or peds_df.empty:
-        rows = "<tr><td colspan='5'>データなし</td></tr>"
-    else:
-        rows = "".join(
-            f"<tr><td>{row['血統']}</td><td>{row['1着']}</td><td>{row['2着']}</td>"
-            f"<td>{row['3着']}</td><td>{row['着外']}</td></tr>\n"
-            for _, row in peds_df.head(top_n).iterrows()
-        )
+        return f"<{heading_level}>{title}</{heading_level}>\n  <p>対象データがありません。</p>"
+
+    bar_rows = ""
+    for _, row in peds_df.head(top_n).iterrows():
+        counts = {label: int(row[label]) for label in CHAKUDO_SEGMENT_LABELS}
+        total = sum(counts.values())
+        if total == 0:
+            continue
+        segments = ""
+        cumulative = 0.0
+        for label in CHAKUDO_SEGMENT_LABELS:
+            count = counts[label]
+            width = count / total * 100
+            cumulative += width
+            if label in ("2着", "3着"):
+                tooltip = f"{label}: {width:.1f}%（累積{cumulative:.1f}%）"
+            else:
+                tooltip = f"{label}: {width:.1f}%"
+            segments += (
+                f'<span class="chakudo-segment {CHAKUDO_SEGMENT_CLASSES[label]}" '
+                f'style="width: {width:.2f}%">{count}'
+                f'<span class="chakudo-tooltip">{tooltip}</span></span>'
+            )
+        bar_rows += f"""<div class="chakudo-row">
+      <span class="chakudo-label peds-label">{row['血統']}</span>
+      <span class="chakudo-bar-track">{segments}</span>
+      <span class="chakudo-value">n={total}</span>
+    </div>\n"""
+
+    if not bar_rows:
+        return f"<{heading_level}>{title}</{heading_level}>\n  <p>対象データがありません。</p>"
+
     return f"""<{heading_level}>{title}</{heading_level}>
-  <div class="table-wrap">
-  <table class="sortable">
-    <thead><tr><th>血統(父)</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th></tr></thead>
-    <tbody>
-      {rows}
-    </tbody>
-  </table>
-  </div>"""
+  <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+  <div class="chakudo-chart">
+{bar_rows}  </div>"""
 
 
 def build_peds_class_breakdown(peds_df, top_n=5):
@@ -790,7 +874,7 @@ def _peds_breakdown_html(breakdown, label_key, title):
     if not breakdown:
         return f"<h3>{title}</h3>\n  <p>対象データがありません。</p>"
     sections = "\n  ".join(
-        _peds_table_html(item["peds_df"], f"{item[label_key]}（上位{len(item['peds_df'])}件）", heading_level="h4")
+        _peds_chart_html(item["peds_df"], f"{item[label_key]}（上位{len(item['peds_df'])}件）", heading_level="h4")
         for item in breakdown
     )
     return f"<h3>{title}</h3>\n  {sections}"
@@ -834,8 +918,9 @@ def course_report_to_html(report):
     avg_horse_html = _fmt(report["avg_frame_and_horse"], "avg_horse")
     win_return_html = _fmt(report["win_return"], "win_return", "円")
 
+    # クラス名・年度の一覧は、馬場×クラス×年度の絞り込みUI（メインタブ）の
+    # セレクトボックスの選択肢として使う（単体の内訳表は廃止し、この絞り込みUIに統合した）。
     class_breakdown = build_class_breakdown(place_id, race_type, course_len)
-    ground_state_breakdown = build_ground_state_breakdown(place_id, race_type, course_len)
     year_breakdown = build_year_breakdown(place_id, race_type, course_len)
     cross_breakdown = build_cross_breakdown(place_id, race_type, course_len)
 
@@ -877,6 +962,7 @@ def course_report_to_html(report):
         place_id, race_type, course_len, cross_breakdown,
         pop_chakudo_df, frame_chakudo_df, horse_chakudo_df,
         [item["value"] for item in class_breakdown],
+        [item["value"] for item in year_breakdown],
     )
 
     peds_df = report["peds_df"]
@@ -949,23 +1035,18 @@ def course_report_to_html(report):
 
   <div class="tabbed-section">
     <div class="section-tabs">
-      <button data-target="breakdown" aria-selected="true">クラス別・馬場別・年度別</button>
-      <button data-target="cross" aria-selected="false">馬場×クラス</button>
+      <button class="tab-main" data-target="cross" aria-selected="true">馬場×クラス×年度（メイン）</button>
+      <span class="section-tabs-sub-label">参考データ:</span>
       <button data-target="passage" aria-selected="false">通過順</button>
       <button data-target="chakudo" aria-selected="false">人気・枠順</button>
       <button data-target="peds" aria-selected="false">血統別成績</button>
     </div>
 
-    <div class="section-panel" data-section="breakdown">
-      {_breakdown_table_html(class_breakdown, "クラス", "クラス別")}
-      {_breakdown_table_html(ground_state_breakdown, "馬場状態", "馬場別")}
-      <details class="breakdown">
-        <summary>年度別を表示</summary>
-        {_breakdown_table_html(year_breakdown, "年度", "年度別")}
-      </details>
-    </div>
-
-    <div class="section-panel" data-section="cross" hidden>
+    <div class="section-panel" data-section="cross">
+      <p class="section-panel-intro">
+        馬場状態・クラス・年度を選び、必要な組み合わせの成績だけを表示します
+        （いずれも「全て」を選ぶと単体の内訳・全体の成績になります）。
+      </p>
       {cross_filter_html}
     </div>
 
@@ -1009,7 +1090,7 @@ def course_report_to_html(report):
     </div>
 
     <div class="section-panel" data-section="peds" hidden>
-      {_peds_table_html(peds_total_df, "TOTAL（上位10件）")}
+      {_peds_chart_html(peds_total_df, "TOTAL（上位10件）")}
       {_peds_breakdown_html(peds_class_breakdown, "class", "クラス別")}
       {_peds_breakdown_html(peds_ground_state_breakdown, "ground_state", "馬場別")}
       <details class="breakdown">
@@ -1114,7 +1195,7 @@ def make_track_page(place_id):
         )
 
     peds_sections = "\n  ".join(
-        _peds_table_html(
+        _peds_chart_html(
             aggregate_peds_by_race_type(place_id, race_type),
             f"{race_type_span_html(race_type)}（全距離合算・上位10件）",
         )

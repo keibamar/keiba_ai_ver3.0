@@ -533,6 +533,13 @@ td a:hover {
   font-weight: bold;
 }
 
+/* 血統別成績（種牡馬名）は人気/枠番/馬番の番号ラベルより長いため、幅を広げ
+   左揃えにする（番号ラベルと同じ.chakudo-rowの構造を流用するため） */
+.chakudo-row .peds-label {
+  width: 160px;
+  text-align: left;
+}
+
 .chakudo-row .chakudo-badge-slot {
   width: 100px;
   flex-shrink: 0;
@@ -921,6 +928,27 @@ details.breakdown summary:hover {
   color: var(--mar-primary);
   border-color: var(--mar-primary);
   border-bottom: 2px solid #fff;
+}
+
+/* メインタブ（馬場×クラス×年度）は他の参考データタブより大きくし、
+   このページの主役であることを示す。参考データの方は小さなラベルで
+   グループ分けする（辞書的に参照するサブデータという位置づけ）。 */
+.section-tabs button.tab-main {
+  font-size: 1.1em;
+  padding: 10px 22px;
+}
+
+.section-tabs-sub-label {
+  align-self: center;
+  margin: 0 2px 0 10px;
+  font-size: 0.85em;
+  color: #888;
+}
+
+.section-panel-intro {
+  margin: 0 0 14px;
+  color: #555;
+  font-size: 0.92em;
 }
 
 .section-panel {

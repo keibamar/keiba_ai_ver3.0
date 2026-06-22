@@ -68,33 +68,40 @@ def test_course_report_to_html_structure():
     assert html.index("summary-stats") < html.index('<div class="tabbed-section">')
     assert '<button data-target="overview"' not in html
 
-    # 5つのタブ（クラス別等/馬場×クラス/通過順/人気枠順/血統）に分かれている
+    # 馬場×クラス×年度がメインタブ（最初から表示）、他は参考データタブ（hidden）に分かれている
     assert '<div class="tabbed-section">' in html
     assert '<div class="section-tabs">' in html
+    assert '<button class="tab-main" data-target="cross" aria-selected="true">馬場×クラス×年度（メイン）</button>' in html
+    assert '<span class="section-tabs-sub-label">参考データ:</span>' in html
     for target, label in [
-        ("breakdown", "クラス別・馬場別・年度別"),
-        ("cross", "馬場×クラス"),
         ("passage", "通過順"),
         ("chakudo", "人気・枠順"),
         ("peds", "血統別成績"),
     ]:
-        assert f'<button data-target="{target}"' in html
-        assert f">{label}</button>" in html
-    # 最初のタブ（クラス別等）は初期表示、他はhidden属性で初期非表示
-    assert '<div class="section-panel" data-section="breakdown">' in html
-    assert '<div class="section-panel" data-section="cross" hidden>' in html
+        assert f'<button data-target="{target}" aria-selected="false">{label}</button>' in html
+    # クラス別・馬場別・年度別の単体タブは廃止し、馬場×クラス×年度に統合した
+    assert 'data-target="breakdown"' not in html
+    # メインタブ（馬場×クラス×年度）は初期表示、参考データはhidden属性で初期非表示
+    assert '<div class="section-panel" data-section="cross">' in html
     assert '<div class="section-panel" data-section="passage" hidden>' in html
     assert '<div class="section-panel" data-section="chakudo" hidden>' in html
     assert '<div class="section-panel" data-section="peds" hidden>' in html
-    # 馬場×クラスの絞り込みUI: 馬場/クラスのセレクトと、組み合わせごとの事前計算パネル
+    # 馬場×クラス×年度の絞り込みUI: 3つのセレクトと、組み合わせごとの事前計算パネル
     assert '<div class="cross-filter">' in html
     assert 'class="cross-filter-ground-state"' in html
     assert 'class="cross-filter-class"' in html
+    assert 'class="cross-filter-year"' in html
     assert '<option value="良">良</option>' in html
-    assert '<div class="cross-filter-panel" data-ground-state="全" data-class="all" hidden>' in html
-    assert '<div class="cross-filter-panel" data-ground-state="良" data-class="all" hidden>' in html
-    assert '<div class="cross-filter-panel" data-ground-state="全" data-class="未勝利" hidden>' in html
-    # 各組み合わせのパネルには、平均成績の表に加えて人気・枠順データ（着度数）と
+    assert '<option value="2026">2026年</option>' in html
+    assert '<div class="cross-filter-panel" data-ground-state="全" data-class="all" data-year="全" hidden>' in html
+    assert '<div class="cross-filter-panel" data-ground-state="良" data-class="all" data-year="全" hidden>' in html
+    assert '<div class="cross-filter-panel" data-ground-state="全" data-class="未勝利" data-year="全" hidden>' in html
+    # どの組み合わせを見ているかパネルの見出しで分かる
+    assert "<h3>全 × all × 全</h3>" in html
+    # 概要は表ではなく、ページ上部と同じ大きな数字のカード（summary-stats）で表示する
+    # （データの羅列に見えないようにする）
+    assert html.count('<div class="summary-stats">') >= 2
+    # 各組み合わせのパネルには、平均成績のカードに加えて人気・枠順データ（着度数）と
     # 血統データも折りたたみで表示される
     assert "<summary>人気・枠順データを表示</summary>" in html
     assert "<summary>血統データを表示</summary>" in html
@@ -103,13 +110,8 @@ def test_course_report_to_html_structure():
     assert "<h4>馬番別着度数</h4>" in html
     assert "<h4>血統別成績（上位5件）</h4>" in html
 
-    # クラス別・馬場別・年度別の内訳テーブルが追加されている
-    assert "<h3>クラス別</h3>" in html
-    assert "<h3>馬場別</h3>" in html
-    assert "<h3>年度別</h3>" in html
-    # 平均配当（単勝、勝ち馬のオッズ×100円）がサマリー・内訳テーブルに追加されている
+    # 平均配当（単勝、勝ち馬のオッズ×100円）がサマリー・カードに追加されている
     assert "平均配当（単勝）" in html
-    assert "平均配当(単勝)" in html
     assert "円" in html
     # 通過順データが追加されている。東京芝1400mは通過1・2のみ記録されているコースのため、
     # 存在しない通過3・4は「データなし」で埋めず、列ごと出さない
@@ -134,12 +136,14 @@ def test_course_report_to_html_structure():
     assert "<summary>馬番データ：クラス別を表示</summary>" in html
     assert "<summary>馬番データ：馬場別を表示</summary>" in html
     # 血統別成績はTOTAL（既存）に加え、クラス別・馬場別・年度別の内訳も追加されている
+    # （表ではなく着度数と同じ積み上げ横バーチャートで表示する）
     assert "<h3>TOTAL（上位10件）</h3>" in html
     assert "<h3>クラス別</h3>" in html
     assert "<h3>馬場別</h3>" in html
     assert "<h3>年度別</h3>" in html
     assert "<h4>未勝利" in html
     assert "<h4>良" in html
+    assert 'class="chakudo-label peds-label"' in html
     # 個別コースのAI成績ページへの相互リンクが追加されている
     assert '<a href="../../performance/course/05_tokyo/芝-1400.html">&larr; このコースのAI成績を見る</a>' in html
     assert '<a href="../../index.html">&larr; HOMEへ戻る</a>' in html
@@ -149,11 +153,11 @@ def test_course_report_to_html_structure():
     assert '<script src="../../assets/js/sortable-table.js"></script>' in html
     assert '<script src="../../assets/js/section-tabs.js"></script>' in html
     assert '<script src="../../assets/js/cross-filter.js"></script>' in html
-    # 3つの既存の年度別折りたたみ + 人気/枠番/馬番のクラス別・馬場別の折りたたみ6つ
-    # + 馬場×クラスの組み合わせごとに2つ（人気・枠順データ/血統データ）の折りたたみ
+    # 通過順・peds各1つの年度別折りたたみ + 人気/枠番/馬番のクラス別・馬場別の折りたたみ6つ
+    # + 馬場×クラス×年度の組み合わせごとに2つ（人気・枠順データ/血統データ）の折りたたみ
     cross_combo_count = len(c.build_cross_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN))
-    assert html.count('<details class="breakdown">') == 9 + cross_combo_count * 2
-    assert html.count("<summary>年度別を表示</summary>") == 3
+    assert html.count('<details class="breakdown">') == 8 + cross_combo_count * 2
+    assert html.count("<summary>年度別を表示</summary>") == 2
     # ブレッドクラム（現在地の階層）が追加されている
     assert '<p class="breadcrumb">' in html
     assert '<a href="../../index.html">HOME</a>' in html
@@ -519,7 +523,7 @@ def test_build_ground_state_breakdown_returns_ordered_rows():
     assert "全" not in {r["value"] for r in rows}
 
 
-def test_build_cross_breakdown_returns_rows_keyed_by_ground_state_and_class():
+def test_build_cross_breakdown_returns_rows_keyed_by_ground_state_class_and_year():
     cross = c.build_cross_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN)
 
     print(f"\n--- build_cross_breakdown(東京, 芝1400m) ---")
@@ -527,14 +531,19 @@ def test_build_cross_breakdown_returns_rows_keyed_by_ground_state_and_class():
         print(f"  {key}: {row}")
 
     assert cross  # 実データなので少なくとも1組み合わせは存在するはず
-    # 各軸の「全て」（馬場状態="全"・クラス="all"）を含む全組み合わせが入っている
-    for ground_state, class_name in cross:
+    # 各軸の「全て」（馬場状態="全"・クラス="all"・年度="全"）を含む全組み合わせが入っている
+    for ground_state, class_name, year in cross:
         assert ground_state in ["全"] + c.GROUND_STATE_ORDER
         assert class_name == "all" or class_name != ""
-    assert ("全", "all") in cross  # 全体合計
-    assert any(gs != "全" and cls == "all" for gs, cls in cross)  # 馬場のみ
-    assert any(gs == "全" and cls != "all" for gs, cls in cross)  # クラスのみ
-    assert any(gs != "全" and cls != "all" for gs, cls in cross)  # 完全な組み合わせ
+        assert year == "全" or isinstance(year, int)
+    assert ("全", "all", "全") in cross  # 全体合計
+    assert any(gs != "全" and cls == "all" and y == "全" for gs, cls, y in cross)  # 馬場のみ
+    assert any(gs == "全" and cls != "all" and y == "全" for gs, cls, y in cross)  # クラスのみ
+    assert any(gs == "全" and cls == "all" and y != "全" for gs, cls, y in cross)  # 年度のみ
+    assert any(gs != "全" and cls != "all" and y != "全" for gs, cls, y in cross)  # 完全な組み合わせ
+    # データが存在しない組み合わせ（年度別CSVの欠損プレースホルダー）は除外されている
+    for row in cross.values():
+        assert row["avg_time"] != "データなし"
     # 各行は build_class_breakdown/build_ground_state_breakdown と同じ統計フィールドを持つ
     sample_row = next(iter(cross.values()))
     assert {"avg_time", "avg_pop", "weight", "avg_frame", "avg_horse", "win_return"} <= sample_row.keys()
@@ -565,6 +574,38 @@ def test_peds_table_for_combo_translates_total_ground_state_sentinel():
 
 def test_peds_table_for_combo_returns_none_for_unknown_combination():
     assert c._peds_table_for_combo(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN, "不良", "存在しないクラス") is None
+
+
+def test_peds_table_for_combo_filters_by_year_when_given():
+    total_df = c._peds_table_for_combo(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN, "全", "all")
+    year_df = c._peds_table_for_combo(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN, "全", "all", year=2026)
+
+    print(f"\n--- _peds_table_for_combo(東京, 芝1400m, 全, all, year=2026) ---\n{year_df}")
+
+    assert year_df is not None
+    # 年度別ファイルはTotalファイルとは別物のため、内容が異なりうる（少なくとも両方取得できる）
+    assert total_df is not None
+
+
+def test_peds_chart_html_shows_stacked_bar_with_total_count():
+    df = c._peds_table_for_combo(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN, "全", "未勝利", top_n=3)
+
+    html = c._peds_chart_html(df, "血統別成績（上位3件）", heading_level="h4")
+
+    print(f"\n--- _peds_chart_html ---\n{html}")
+
+    assert "<h4>血統別成績（上位3件）</h4>" in html
+    assert '<div class="chakudo-chart">' in html
+    assert '<span class="chakudo-label peds-label">' in html
+    assert '<span class="chakudo-segment seg-1st"' in html
+    # 血統ごとに総戦数が異なるため、割合（幅）に加えてn=総数を表示する
+    assert "n=" in html
+
+
+def test_peds_chart_html_handles_empty_data():
+    html = c._peds_chart_html(None, "TOTAL（上位10件）")
+    assert "<h3>TOTAL（上位10件）</h3>" in html
+    assert "対象データがありません。" in html
 
 
 def test_build_year_breakdown_returns_years_newest_first():
