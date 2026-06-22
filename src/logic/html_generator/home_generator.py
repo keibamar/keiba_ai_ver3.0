@@ -14,6 +14,8 @@ ai_performance_calculator を直接使う）。
 
 from datetime import date, timedelta
 
+import jpholiday
+
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator import daily_index_generator
@@ -24,6 +26,28 @@ from src.managers import html_manager
 
 SITE_TITLE = "MAR(まーる）|競馬AIデータサイト"
 BET_TYPE_LABELS = {"win": "単勝", "place": "複勝", "trio_box": "三連複(5頭BOX)"}
+
+
+def _main_sub_cell_html(main, sub):
+    """1セルの中で「メイン（大きい文字）＋サブ（小さい文字）」の2行を表示するHTMLを返す
+
+    レース名（メイン）と開催場・レース番号（サブ）、開催場名（メイン）と開催回数
+    （サブ）など、主従関係のある2つの情報を1セル内で改行して表示する用途に使う。
+    """
+    return f'<div class="cell-main-sub"><span class="main">{main}</span><span class="sub">{sub}</span></div>'
+
+
+def _date_with_weekday_html(day):
+    """日付に曜日を付けて返す（土曜は青、日曜・祝日は赤で表示する）"""
+    weekday_kanji = "月火水木金土日"[day.weekday()]
+    if day.weekday() == 5:
+        css_class = "weekday-sat"
+    elif day.weekday() == 6 or jpholiday.is_holiday(day):
+        css_class = "weekday-sun"
+    else:
+        css_class = ""
+    class_attr = f' class="{css_class}"' if css_class else ""
+    return f'{day.strftime("%m/%d")}<span{class_attr}>({weekday_kanji})</span>'
 
 
 def _summary_stats_html(performance):
@@ -76,8 +100,9 @@ def _current_meetings_html(meetings, df):
         )
         performance = dataset_manager.aggregate(meeting_df)
         win = performance["win"]
+        meeting_cell = _main_sub_cell_html(place_link, f"{meeting['times']}回")
         rows += (
-            f"<tr><td>{place_link} {meeting['times']}回</td>"
+            f"<tr><td>{meeting_cell}</td>"
             f"<td>{hit_rate_gauge_html(win['hit_rate'])}</td>"
             f"<td>{return_rate_gauge_html(win['return_rate'])}</td><td>{win['n']}</td></tr>\n"
         )
@@ -106,7 +131,7 @@ def _week_main_races_html(races):
     for race in races:
         place_name = NAME_LIST[race["place_id"] - 1]
         place_key = PLACE_LIST[race["place_id"] - 1]
-        date_str = race["race_day"].strftime("%m/%d")
+        date_str = _date_with_weekday_html(race["race_day"])
         time_str = str(race["race_time"]).zfill(4)
         time_disp = f"{time_str[:2]}:{time_str[2:]}"
         if race["race_type"] and race["course_len"]:
@@ -116,8 +141,15 @@ def _week_main_races_html(races):
             )
         else:
             course_link = f'<a href="courses/{place_key}/index.html">{place_name}</a>'
+        race_day_str = race["race_day"].strftime("%Y%m%d")
+        race_card_file = f"{place_key}R11.html"
+        if html_manager.race_page_exists(race_day_str, race_card_file):
+            race_name_html = f'<a href="races/{race_day_str}/{race_card_file}">{race["race_name"]}</a>'
+        else:
+            race_name_html = race["race_name"]
+        race_cell = _main_sub_cell_html(race_name_html, f"{place_name}11R")
         rows += (
-            f"<tr><td>{date_str} {time_disp}</td><td>{place_name}11R {race['race_name']}</td>"
+            f"<tr><td>{date_str} {time_disp}</td><td>{race_cell}</td>"
             f"<td>{course_link}</td></tr>\n"
         )
 
@@ -153,10 +185,11 @@ def _weekend_results_html(races):
     rows = ""
     for race in races:
         place_name = NAME_LIST[race["place_id"] - 1]
-        date_str = race["race_day"].strftime("%m/%d")
+        date_str = _date_with_weekday_html(race["race_day"])
         pick_finish = f"{race['pick_finish']}着" if race["pick_finish"] is not None else "-"
+        race_cell = _main_sub_cell_html(race["race_name"], f"{place_name}11R")
         rows += (
-            f"<tr><td>{date_str}</td><td>{place_name}11R {race['race_name']}</td>"
+            f"<tr><td>{date_str}</td><td>{race_cell}</td>"
             f"<td>{race['winner_name'] or '-'}</td>"
             f"<td>{race['pick_name'] or '-'}</td>"
             f"<td>{pick_finish}</td>"
@@ -172,6 +205,45 @@ def _weekend_results_html(races):
     </tbody>
   </table>
   </div>"""
+
+
+def _weekly_meeting_summary_html(summaries):
+    """今週の開催情報（開催場・第○回、土曜/日曜それぞれの○日目）を一覧で返す
+
+    ai_performance_calculator.get_current_meeting_summariesの戻り値（水曜までは
+    先週まで、木曜から今週の開催を指す）を表示する。開催場名はコース詳細データ
+    （courses/{place}/index.html）へ、土曜・日曜それぞれの日付は、その日の
+    出馬表一覧ページ（races/{date_str}/index.html）が生成済みであればそこへリンクし、
+    コース別データ・出馬表データのどちらにもすぐアクセスできるようにする。
+    """
+    if not summaries:
+        return "<p>今週開催中の競馬場はありません。</p>"
+
+    items = ""
+    for summary in summaries:
+        place_name = NAME_LIST[summary["place_id"] - 1]
+        place_key = PLACE_LIST[summary["place_id"] - 1]
+        course_link = f'<a href="courses/{place_key}/index.html">{place_name}</a>'
+
+        day_links = ""
+        for day_info in summary["days"]:
+            day_date = day_info["day_date"]
+            day_str = day_date.strftime("%Y%m%d")
+            weekday_kanji = "月火水木金土日"[day_date.weekday()]
+            label = f'{day_date.strftime("%m/%d")}({weekday_kanji}) {day_info["day_number"]}日目'
+            if html_manager.race_page_exists(day_str, "index.html"):
+                day_links += f'<a href="races/{day_str}/index.html">{label}</a>'
+            else:
+                day_links += f"<span>{label}</span>"
+
+        items += (
+            f'<li class="weekly-meeting-item">'
+            f'<span class="main">{course_link} 第{summary["times"]}回</span>'
+            f'<span class="sub">{day_links}</span>'
+            f"</li>\n"
+        )
+
+    return f'<ul class="weekly-meeting-list">\n{items}</ul>'
 
 
 def _weekly_trend(df, num_weeks, end_day):
@@ -197,7 +269,11 @@ def home_template():
     df = dataset_manager.get_ai_performance_dataset()
     overall_performance = dataset_manager.aggregate(df)
     trend = _weekly_trend(df, num_weeks=8, end_day=today)
-    current_meetings = calc.get_current_meetings(today)
+    # 「開催中の競馬場」も「今週のメインレース」「先週の結果」と同じ理屈で、
+    # 今週の水曜日までは直近に終わった週末を、木曜日になった時点で今週の週末を指す
+    # （詳細はcurrent_meeting_reference_day参照）。
+    current_meetings = calc.get_current_meetings(calc.current_meeting_reference_day(today))
+    weekly_meetings = calc.get_current_meeting_summaries(today)
     week_main_races = calc.get_week_main_races_with_course(today)
 
     # 開催結果・確定配当の反映には数日かかるため、週末（土日）が終わった直後
@@ -218,6 +294,9 @@ def home_template():
     {site_nav_html(base_path="")}
     <h1>{SITE_TITLE}</h1>
     <p>このサイトでは、競馬AIの成績、レースカレンダー、コース別データを閲覧できます。</p>
+
+    <h2>今週の開催</h2>
+    {_weekly_meeting_summary_html(weekly_meetings)}
 
     <h2>レースカレンダー</h2>
     {daily_index_generator.calendar_widget_html(base_path="")}

@@ -35,9 +35,23 @@ def test_make_home_page_generates_index_html(new_roots, monkeypatch):
         "race_time": "1545",
         "race_type": "芝",
         "course_len": 1800,
-        "race_day": date(2026, 6, 21),
+        "race_day": date(2026, 6, 20),
     }
     monkeypatch.setattr(h.calc, "get_week_main_races_with_course", lambda today: [week_race])
+    monkeypatch.setattr(
+        h.calc,
+        "get_current_meeting_summaries",
+        lambda today: [
+            {
+                "place_id": 5,
+                "times": 2,
+                "days": [
+                    {"day_date": date(2026, 6, 20), "day_number": 7},
+                    {"day_date": date(2026, 6, 21), "day_number": 8},
+                ],
+            }
+        ],
+    )
     monkeypatch.setattr(
         h.calc,
         "get_weekend_main_race_details",
@@ -68,6 +82,18 @@ def test_make_home_page_generates_index_html(new_roots, monkeypatch):
     print(html_content)
 
     assert "<h1>MAR(まーる）|競馬AIデータサイト</h1>" in html_content
+
+    # Homeの最上部（レースカレンダーより上）に今週の開催情報を、土曜・日曜それぞれ表示する
+    assert "<h2>今週の開催</h2>" in html_content
+    assert '<span class="main"><a href="courses/05_tokyo/index.html">東京</a> 第2回</span>' in html_content
+    # 出馬表一覧ページが生成済みの06-20/06-21は、その日の開催一覧へのリンクになる
+    assert '<a href="races/20260620/index.html">06/20(土) 7日目</a>' in html_content
+    assert '<a href="races/20260621/index.html">06/21(日) 8日目</a>' in html_content
+    assert html_content.index("<h2>今週の開催</h2>") < html_content.index("<h2>レースカレンダー</h2>")
+
+    # 今週のメインレースは、出馬表生成済みのレース（06-20の東京11R）はレース名から出馬表へ飛べる
+    assert '<a href="races/20260620/05_tokyoR11.html">府中牝馬S</a>' in html_content
+
     assert '<a href="races/index.html">レースカレンダー</a>' in html_content
     assert '<a href="performance/index.html">AI成績</a>' in html_content
     assert '<a href="courses/index.html">コース詳細データ</a>' in html_content
@@ -152,11 +178,69 @@ def test_current_meetings_html_links_place_name_to_course_detail_data():
 
     # 開催中の競馬場名から、そのコースのコース詳細データへ直接アクセスできる
     assert '<a href="courses/05_tokyo/index.html">東京</a>' in html_content
-    assert "2回" in html_content
+    # 競馬場名がメイン、開催回数がサブの2行表示
+    assert '<span class="main"><a href="courses/05_tokyo/index.html">東京</a></span><span class="sub">2回</span>' in html_content
 
 
 def test_current_meetings_html_handles_no_current_meetings():
     assert "現在開催中の競馬場はありません。" in h._current_meetings_html([], pd.DataFrame())
+
+
+def test_date_with_weekday_html_colors_saturday_blue_and_sunday_red():
+    assert h._date_with_weekday_html(date(2026, 6, 20)) == '06/20<span class="weekday-sat">(土)</span>'
+    assert h._date_with_weekday_html(date(2026, 6, 21)) == '06/21<span class="weekday-sun">(日)</span>'
+
+
+def test_date_with_weekday_html_colors_holiday_red():
+    # 2026-07-20(月)は海の日(祝日)
+    assert h._date_with_weekday_html(date(2026, 7, 20)) == '07/20<span class="weekday-sun">(月)</span>'
+
+
+def test_date_with_weekday_html_weekday_has_no_color_class():
+    assert h._date_with_weekday_html(date(2026, 6, 22)) == "06/22<span>(月)</span>"
+
+
+def test_weekly_meeting_summary_html_shows_place_main_and_each_day_sub():
+    # 06-20(土)は出馬表一覧ページが無く、06-21(日)はある状態を想定する
+    summaries = [
+        {
+            "place_id": 5,
+            "times": 2,
+            "days": [
+                {"day_date": date(2026, 6, 20), "day_number": 7},
+                {"day_date": date(2026, 6, 21), "day_number": 8},
+            ],
+        }
+    ]
+
+    html_content = h._weekly_meeting_summary_html(summaries)
+
+    print(f"\n--- _weekly_meeting_summary_html ---\n{html_content}")
+
+    # 競馬場名はコース詳細データへ、メインで大きく表示する
+    assert '<span class="main"><a href="courses/05_tokyo/index.html">東京</a> 第2回</span>' in html_content
+    # 土曜・日曜それぞれの日付・開催日目を表示し、出馬表一覧ページが生成済みならそこへリンクする
+    assert '<a href="races/20260620/index.html">06/20(土) 7日目</a>' in html_content
+    assert '<a href="races/20260621/index.html">06/21(日) 8日目</a>' in html_content
+
+
+def test_weekly_meeting_summary_html_shows_plain_label_when_day_index_missing():
+    summaries = [
+        {
+            "place_id": 5,
+            "times": 99,
+            "days": [{"day_date": date(2020, 1, 1), "day_number": 1}],
+        }
+    ]
+
+    html_content = h._weekly_meeting_summary_html(summaries)
+
+    # 出馬表一覧ページが無い日はリンクにせず、日付・開催日目のみ表示する
+    assert "<span>01/01(水) 1日目</span>" in html_content
+
+
+def test_weekly_meeting_summary_html_handles_no_meetings():
+    assert "今週開催中の競馬場はありません。" in h._weekly_meeting_summary_html([])
 
 
 def test_week_main_races_html_shows_date_and_links_to_course():
@@ -185,12 +269,15 @@ def test_week_main_races_html_shows_date_and_links_to_course():
 
     print(f"\n--- _week_main_races_html ---\n{html_content}")
 
-    # 土・日それぞれの日付・発走時刻が表示される
-    assert "06/27 15:20" in html_content
-    assert "06/28 15:45" in html_content
+    # 土・日それぞれの日付（曜日付き）・発走時刻が表示される（土曜は青、日曜は赤）
+    assert '06/27<span class="weekday-sat">(土)</span> 15:20' in html_content
+    assert '06/28<span class="weekday-sun">(日)</span> 15:45' in html_content
     assert '<a href="courses/02_hakodate/芝-1200.html">函館 芝1200m</a>' in html_content
     # コース情報が取得できなかった場合は競馬場のコース一覧へリンクする
     assert '<a href="courses/05_tokyo/index.html">東京</a>' in html_content
+    # レース名がメイン、開催場・レース番号がサブの2行表示
+    assert '<span class="main">UHB杯</span><span class="sub">函館11R</span>' in html_content
+    assert '<span class="main">七夕賞</span><span class="sub">東京11R</span>' in html_content
 
 
 def test_week_main_races_html_handles_no_main_races():
@@ -244,14 +331,15 @@ def test_weekend_results_html_shows_winner_pick_and_payout_on_hit():
 
     print(f"\n--- _weekend_results_html ---\n{html_content}")
 
-    assert "06/13" in html_content
-    assert "東京11R ジューンS" in html_content
+    # 2026-06-13は土曜なので青色の曜日表示になる
+    assert '06/13<span class="weekday-sat">(土)</span>' in html_content
+    assert '<span class="main">ジューンS</span><span class="sub">東京11R</span>' in html_content
     assert "カネラフィーナ" in html_content
     assert "1着" in html_content
     assert "510円" in html_content
     assert "210円" in html_content
     # 不的中のレースは本命馬の着順も表示する
-    assert "阪神11R 三宮S" in html_content
+    assert '<span class="main">三宮S</span><span class="sub">阪神11R</span>' in html_content
     assert "メイショウズイウン" in html_content
     assert "9着" in html_content
     assert '<span class="hit-badge miss">不的中</span>' in html_content

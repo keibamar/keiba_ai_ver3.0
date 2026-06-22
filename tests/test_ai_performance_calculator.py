@@ -129,6 +129,43 @@ def test_current_results_weekend_end_advances_on_wednesday():
     assert ai.current_results_weekend_end(date(2026, 6, 26)) == date(2026, 6, 21)  # 金
 
 
+def test_current_meeting_reference_day_stays_on_last_completed_weekend_through_wednesday():
+    # 2026-06-22(月)が属する週の直近に終わった週末は06-20/06-21
+    assert ai.current_meeting_reference_day(date(2026, 6, 22)) == date(2026, 6, 21)  # 月
+    assert ai.current_meeting_reference_day(date(2026, 6, 23)) == date(2026, 6, 21)  # 火
+    assert ai.current_meeting_reference_day(date(2026, 6, 24)) == date(2026, 6, 21)  # 水
+
+
+def test_current_meeting_reference_day_advances_on_thursday():
+    # 木曜(06-25)になった時点で、今週の週末(06-28)に切り替わる
+    assert ai.current_meeting_reference_day(date(2026, 6, 25)) == date(2026, 6, 28)  # 木
+    assert ai.current_meeting_reference_day(date(2026, 6, 27)) == date(2026, 6, 28)  # 土
+
+
+def test_get_current_meeting_summaries_returns_place_times_and_day_number(monkeypatch):
+    # current_meeting_reference_dayが06-21(日)を指すように差し替え、
+    # 06-20(土)/06-21(日)それぞれの開催日目が実データと一致することを確認する
+    monkeypatch.setattr(ai, "current_meeting_reference_day", lambda today: date(2026, 6, 21))
+
+    summaries = ai.get_current_meeting_summaries(date(2026, 6, 22))
+
+    print(f"\n--- get_current_meeting_summaries ---\n{summaries}")
+
+    tokyo = next(s for s in summaries if s["place_id"] == 5)
+    assert tokyo["days"] == [
+        {"day_date": date(2026, 6, 20), "day_number": 5},
+        {"day_date": date(2026, 6, 21), "day_number": 6},
+    ]
+    place_ids = [s["place_id"] for s in summaries]
+    assert place_ids == sorted(place_ids)
+
+
+def test_get_current_meeting_summaries_returns_empty_when_no_meetings(monkeypatch):
+    monkeypatch.setattr(ai, "current_meeting_reference_day", lambda today: date(2026, 1, 1))
+
+    assert ai.get_current_meeting_summaries(date(2026, 1, 1)) == []
+
+
 def test_get_weekend_main_race_details_returns_winner_pick_and_hit_payout():
     # 2026-06-13(土)/06-14(日)の週末には出馬表・確定結果・配当が揃っている
     races = ai.get_weekend_main_race_details(date(2026, 6, 14))

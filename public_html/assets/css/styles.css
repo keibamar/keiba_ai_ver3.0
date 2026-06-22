@@ -320,6 +320,69 @@ td a:hover {
   color: #888;
 }
 
+/* --- セル内メイン/サブ2行表示（レース名+開催場、開催場名+開催回数） --- */
+
+.cell-main-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cell-main-sub .main {
+  font-weight: 600;
+}
+
+.cell-main-sub .sub {
+  font-size: 0.8em;
+  color: #888;
+}
+
+/* --- 日付の曜日表示（土曜=青、日曜・祝日=赤） --- */
+
+.weekday-sat {
+  color: #1565c0;
+}
+
+.weekday-sun {
+  color: #d32f2f;
+}
+
+/* --- 今週の開催（競馬場・第○回、土曜/日曜それぞれの○日目） --- */
+/* Homeの一番上、メインコンテンツより目立たせるため、カード形式で大きめに表示する */
+
+.weekly-meeting-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 0;
+  margin: 12px 0 24px;
+}
+
+.weekly-meeting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 22px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fafafa;
+  min-width: 200px;
+}
+
+.weekly-meeting-item .main {
+  font-size: 1.3em;
+  font-weight: 700;
+}
+
+.weekly-meeting-item .sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 1em;
+  color: #555;
+}
+
 /* --- 的中/不的中バッジ --- */
 
 .hit-badge {

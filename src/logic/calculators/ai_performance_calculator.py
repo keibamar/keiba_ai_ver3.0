@@ -278,6 +278,71 @@ def current_schedule_weekend_end(today=None):
     return current_results_weekend_end(today + timedelta(days=7))
 
 
+def current_meeting_reference_day(today=None):
+    """「開催場」表示（開催中の競馬場の成績・今週の開催情報）に使う基準日を返す
+
+    開催（土日）が終わった直後はまだ今週の開催回が実施されていないため、今週の
+    水曜日までは直近に終わった週末（日曜日）を基準日とし、木曜日になった時点で
+    今週の週末（日曜日。まだ開催前でもスケジュール自体は確定しているため使える）
+    に切り替える（結果の確定には数日かかるcurrent_results_weekend_endとは異なり、
+    開催そのものは終わった時点で確定しているため、追加の確認待ち期間は設けない）。
+
+    Args:
+        today (date): 基準日（初期値: 今日）。
+    Returns:
+        date: 開催場表示に使う基準日。
+    """
+    today = today or date.today()
+    monday = today - timedelta(days=today.weekday())
+    thursday = monday + timedelta(days=3)
+    if today >= thursday:
+        return monday + timedelta(days=6)
+    return monday - timedelta(days=1)
+
+
+def get_current_meeting_summaries(today=None):
+    """「今週の開催」（開催場・第○回・土曜/日曜それぞれの○日目）の一覧を返す
+
+    current_meeting_reference_dayが返す週末（水曜までは先週までの週末、木曜から
+    今週の週末）について、開催場・開催回と、その週末の土曜・日曜それぞれが開催の
+    何日目にあたるかをまとめて返す（Homeページ最上部の「今週の開催」用）。
+    土曜・日曜のうち、実際にその開催回のレース日にあたる日のみdaysに含める
+    （日曜しか開催が無い場合などは1日分のみになる）。
+
+    Args:
+        today (date): 基準日（初期値: 今日）。
+    Returns:
+        list[dict]: [{"place_id", "times", "days": [{"day_date", "day_number"}, ...]}, ...]
+            （place_id昇順、daysは日付昇順）。
+    """
+    today = today or date.today()
+    sunday = current_meeting_reference_day(today)
+    saturday = sunday - timedelta(days=1)
+
+    meetings_by_key = {}
+    for day in (saturday, sunday):
+        for meeting in get_current_meetings(day):
+            meetings_by_key[(meeting["place_id"], meeting["times"])] = meeting
+    if not meetings_by_key:
+        return []
+
+    calendar = race_schedule_dataset_manager.get_race_calendar(sunday.year)
+    summaries = []
+    for place_id, times in sorted(meetings_by_key):
+        days = []
+        for day in (saturday, sunday):
+            match = calendar[
+                (calendar["course"].astype(int) == place_id)
+                & (calendar["times"].astype(int) == times)
+                & (calendar["month"].astype(int) == day.month)
+                & (calendar["day"].astype(int) == day.day)
+            ]
+            if not match.empty:
+                days.append({"day_date": day, "day_number": int(match.iloc[0]["days"])})
+        summaries.append({"place_id": place_id, "times": times, "days": days})
+    return summaries
+
+
 def _race_detail_summary(race_day, race_id):
     """1レース分の詳細サマリー（勝ち馬・AI本命馬・本命馬の着順・単勝/複勝の的中結果）を返す
 
