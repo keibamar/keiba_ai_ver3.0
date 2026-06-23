@@ -93,9 +93,11 @@ def test_course_report_to_html_structure():
     assert 'class="cross-filter-class"' in html
     assert 'class="cross-filter-year"' in html
     assert '<option value="良">良</option>' in html
-    # 開始年は自由に選べるが終了年は常に最新年に固定する（組み合わせの爆発を防ぐ）
+    # 開始年は「全期間/直近3年/今年」の3パターンに絞る（組み合わせが増えすぎて
+    # ページサイズが肥大化する（実測で1ページ最大13MB）のを防ぐため）
     assert '<option value="2019">全期間</option>' in html
-    assert '<option value="2026">2026年〜</option>' in html
+    assert '<option value="2024">直近3年（2024年〜）</option>' in html
+    assert '<option value="2026">今年（2026年〜）</option>' in html
     assert '<div class="cross-filter-panel" data-ground-state="全" data-class="all" data-year="2019" hidden>' in html
     assert '<div class="cross-filter-panel" data-ground-state="良" data-class="all" data-year="2019" hidden>' in html
     assert '<div class="cross-filter-panel" data-ground-state="全" data-class="未勝利" data-year="2019" hidden>' in html

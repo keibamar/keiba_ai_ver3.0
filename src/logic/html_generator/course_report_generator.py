@@ -44,6 +44,28 @@ from src.managers import (
 ANNUAL_START_YEAR = 2019
 GROUND_STATE_ORDER = ["良", "稍重", "重", "不良"]
 
+# 馬場×クラス×年度パネル（cross-filter）の「開始年」は、本来は自由に選べる方が
+# 柔軟だが、開始年ごとに全パネル（人気・枠番・馬番・馬体重・血統の各チャートを含む）
+# を事前生成する構成のため、選択肢を増やすほど生成HTMLが線形に増える
+# （開始年を2019〜最新年の全パターン用意していたところ、コースページ1件が
+# 最大13MBに達していた）。「全期間・直近3年・今年」の3パターンに絞り、
+# ページサイズを抑える。
+
+
+def _cross_filter_start_years(oldest_year, current_year):
+    """馬場×クラス×年度パネルの開始年を「全期間・直近3年・今年」の3パターンに絞って返す"""
+    candidates = [oldest_year, max(oldest_year, current_year - 2), current_year]
+    return sorted(set(candidates))
+
+
+def _cross_filter_year_label(start_year, oldest_year, current_year):
+    """開始年の表示ラベルを返す（全期間/直近N年/今年）"""
+    if start_year <= oldest_year:
+        return "全期間"
+    if start_year == current_year:
+        return f"今年（{current_year}年〜）"
+    return f"直近{current_year - start_year + 1}年（{start_year}年〜）"
+
 # race_info_dataset_manager.update_chakudo（馬体重帯別着度数）と同じ刻み・範囲
 # （src/datasets/race_info/transform.pyのWEIGHT_BUCKET_SIZE/WEIGHT_BUCKET_LOW/HIGH/RANGEと揃える）
 WEIGHT_BUCKET_SIZE = 10
@@ -395,8 +417,8 @@ def build_cross_breakdown(place_id, race_type, course_len, oldest_year=ANNUAL_ST
     result = {}
     for ground_state in ["全"] + GROUND_STATE_ORDER:
         for class_name in ["all"] + classes:
-            for start_year in range(oldest_year, current_year + 1):
-                label = f"{ground_state}×{class_name}×{start_year}年〜"
+            for start_year in _cross_filter_start_years(oldest_year, current_year):
+                label = f"{ground_state}×{class_name}×{_cross_filter_year_label(start_year, oldest_year, current_year)}"
                 row = _breakdown_row_from_winners(
                     winners_df, place_returns_df, label, ground_state, class_name, start_year=start_year,
                 )
@@ -937,7 +959,7 @@ def _cross_filter_panel_html(
     詳細データは、血統データ→枠番別→馬番別→馬体重別→人気別の順に折りたたみで並べる
     （この順は人気・枠順タブ等、他の参考データの並びとは独立に決めている）。
     """
-    year_label = "全期間" if start_year <= oldest_year else f"{start_year}年〜"
+    year_label = _cross_filter_year_label(start_year, oldest_year, current_year)
     heading = f"{ground_state} × {class_name} × {year_label}"
     if row is None:
         body = "<p>対象データがありません。</p>"
@@ -1046,7 +1068,9 @@ def _cross_filter_html(
     ground_options = "".join(f'<option value="{gs}">{gs}</option>\n' for gs in GROUND_STATE_ORDER)
     class_options = "".join(f'<option value="{cls}">{cls}</option>\n' for cls in class_names)
     year_options = "".join(
-        f'<option value="{y}">{y}年〜</option>\n' for y in range(oldest_year + 1, current_year + 1)
+        f'<option value="{y}">{_cross_filter_year_label(y, oldest_year, current_year)}</option>\n'
+        for y in _cross_filter_start_years(oldest_year, current_year)
+        if y > oldest_year
     )
 
     panels = [
