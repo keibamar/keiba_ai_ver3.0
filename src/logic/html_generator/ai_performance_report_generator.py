@@ -252,6 +252,7 @@ def make_ai_performance_index_page():
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI予想成績</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
@@ -276,7 +277,7 @@ def make_ai_performance_index_page():
   </ul>
 
   <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
-  {site_footer_html()}
+  {site_footer_html(base_path="../")}
   <script src="../assets/js/sortable-table.js"></script>
 </body>
 </html>
@@ -319,6 +320,7 @@ def make_annual_performance_page(year, df=None):
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{year}年 AI予想成績</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
@@ -338,7 +340,7 @@ def make_annual_performance_page(year, df=None):
   </main>
   {sidebar}
   </div>
-  {site_footer_html()}
+  {site_footer_html(base_path="../../")}
   <script src="../../assets/js/sortable-table.js"></script>
 </body>
 </html>
@@ -358,6 +360,7 @@ def make_meeting_performance_page(year, place_id, times, df=None):
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{year}年 {place_name}{times}回 AI予想成績</title>
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
@@ -367,7 +370,7 @@ def make_meeting_performance_page(year, place_id, times, df=None):
   <h1>{year}年 {place_name}{times}回 AI予想成績</h1>
   {_performance_table_html(performance)}
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
-  {site_footer_html()}
+  {site_footer_html(base_path="../../../")}
   <script src="../../../assets/js/sortable-table.js"></script>
 </body>
 </html>
@@ -427,6 +430,7 @@ def make_course_performance_index_page(place_id, df=None):
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{place_name} AI予想成績</title>
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
@@ -472,7 +476,7 @@ def make_course_performance_index_page(place_id, df=None):
     {course_rows}
   </ul>
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
-  {site_footer_html()}
+  {site_footer_html(base_path="../../../")}
   <script src="../../../assets/js/sortable-table.js"></script>
   <script src="../../../assets/js/section-tabs.js"></script>
   <script src="../../../assets/js/cross-filter.js"></script>
@@ -528,6 +532,7 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{place_name} {race_type}{course_len}m AI予想成績</title>
   <link rel="stylesheet" href="../../../assets/css/styles.css">
 </head>
@@ -566,7 +571,7 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
 
   <p><a href="../../../courses/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; コース詳細データへ</a></p>
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
-  {site_footer_html()}
+  {site_footer_html(base_path="../../../")}
   <script src="../../../assets/js/sortable-table.js"></script>
   <script src="../../../assets/js/section-tabs.js"></script>
   <script src="../../../assets/js/cross-filter.js"></script>

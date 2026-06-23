@@ -161,6 +161,7 @@ def daily_index_template(date_display, nav_links, place_races, place_keys, table
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{date_display} レース一覧</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
   <style>
@@ -236,7 +237,7 @@ def daily_index_template(date_display, nav_links, place_races, place_keys, table
     </tbody>
   </table>
   </div>
-  {site_footer_html()}
+  {site_footer_html(base_path="../../")}
 </body>
 </html>
 """
@@ -344,6 +345,7 @@ def races_calendar_template():
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>開催日カレンダー</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
@@ -358,7 +360,7 @@ def races_calendar_template():
   {_today_meetings_html(today_races, base_path="../")}
 
   <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
-  {site_footer_html()}
+  {site_footer_html(base_path="../")}
 </body>
 </html>
 """

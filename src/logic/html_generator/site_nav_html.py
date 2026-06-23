@@ -101,20 +101,29 @@ def site_brand_html(base_path=""):
     )
 
 
-def site_footer_html():
+def site_footer_html(base_path=""):
     """サイト共通フッターのHTML断片を返す
 
     site_nav_htmlと対になる、全ページ共通のフッター。ページ生成側で個別に
     フッターを書く・書き忘れるのを防ぐため、ここに集約する。「MAR」という
     名前に加え、予想・データの利用上の注意（免責事項）と、データ最終更新日時
     （= このページの生成日。週次更新等でデータ取得後にページを再生成する運用のため、
-    生成日をそのまま「データ最終更新」の目安として使う）も表示する。
+    生成日をそのまま「データ最終更新」の目安として使う）も表示する。広告掲載に
+    必要なプライバシーポリシー・利用規約（legal_pages_generator）へのリンクも
+    どのページからでも辿れるようにここに置く。
+
+    Args:
+        base_path (str): 埋め込み先ページからpublic_html直下までの相対パス。
     """
     updated_at = date.today().strftime("%Y/%m/%d")
     return f"""<footer>
     <p class="site-footer-brand">&copy; {SITE_NAME}({SITE_NAME_READING}) {SITE_TAGLINE}</p>
     <p class="site-footer-disclaimer">本サイトの予想・データは参考情報です。的中や回収を保証するものではありません。実際の購入は自己責任でお願いします。</p>
     <p class="site-footer-updated">データ最終更新: {updated_at}</p>
+    <p class="site-footer-links">
+      <a href="{base_path}privacy.html">プライバシーポリシー</a>
+      <a href="{base_path}terms.html">利用規約</a>
+    </p>
   </footer>"""
 
 

@@ -292,6 +292,16 @@ def test_site_footer_html_renders_footer():
     # データ最終更新日時（ページ生成日をそのまま使う）
     today_str = date.today().strftime("%Y/%m/%d")
     assert f'<p class="site-footer-updated">データ最終更新: {today_str}</p>' in html
+    # プライバシーポリシー・利用規約へのリンク（広告掲載に必要）
+    assert '<a href="privacy.html">プライバシーポリシー</a>' in html
+    assert '<a href="terms.html">利用規約</a>' in html
+
+
+def test_site_footer_html_uses_base_path_for_legal_links():
+    html = n.site_footer_html(base_path="../../")
+
+    assert '<a href="../../privacy.html">プライバシーポリシー</a>' in html
+    assert '<a href="../../terms.html">利用規約</a>' in html
 
 
 def test_site_brand_html_links_to_home_and_shows_mar():

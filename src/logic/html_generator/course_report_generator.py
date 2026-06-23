@@ -1344,6 +1344,7 @@ def course_report_to_html(report):
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{place_name} {race_type}{course_len}m コース詳細</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
@@ -1446,7 +1447,7 @@ def course_report_to_html(report):
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../../index.html">&larr; HOMEへ戻る</a></p>
-  {site_footer_html()}
+  {site_footer_html(base_path="../../")}
   <script src="../../assets/js/sortable-table.js"></script>
   <script src="../../assets/js/section-tabs.js"></script>
   <script src="../../assets/js/cross-filter.js"></script>
@@ -1492,6 +1493,7 @@ def make_course_index_page():
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>コース詳細データ</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
@@ -1511,7 +1513,7 @@ def make_course_index_page():
   </div>
 
   <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
-  {site_footer_html()}
+  {site_footer_html(base_path="../")}
 </body>
 </html>
 """
@@ -1570,6 +1572,7 @@ def make_track_page(place_id):
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{place_name} コース一覧</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
@@ -1599,7 +1602,7 @@ def make_track_page(place_id):
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/index.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../index.html">&larr; コース詳細データ一覧へ</a></p>
-  {site_footer_html()}
+  {site_footer_html(base_path="../../")}
   <script src="../../assets/js/sortable-table.js"></script>
 </body>
 </html>

@@ -184,12 +184,13 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     breadcrumb_items = _race_card_breadcrumb_items(date_str, date_display, place_id, target_id, race_name)
     site_nav = site_nav_html(base_path="../../", breadcrumb_items=breadcrumb_items)
     breadcrumb = breadcrumb_html(breadcrumb_items, base_path="../../")
-    footer = site_footer_html()
+    footer = site_footer_html(base_path="../../")
     return """
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{date_display} {place_name}競馬場 第{race_num}R {race_name}</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
   <style>

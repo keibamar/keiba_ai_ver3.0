@@ -297,6 +297,7 @@ def home_template():
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{SITE_TITLE}</title>
   <link rel="stylesheet" href="assets/css/styles.css">
 </head>
@@ -330,7 +331,7 @@ def home_template():
       </div>
     </div>
   </main>
-  {site_footer_html()}
+  {site_footer_html(base_path="")}
   <script src="assets/js/sortable-table.js"></script>
 </body>
 </html>

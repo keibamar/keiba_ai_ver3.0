@@ -57,6 +57,20 @@ def save_races_calendar_html(html_content):
         f.write(html_content)
 
 
+def save_privacy_policy_html(html_content):
+    """public_html/privacy.html にHTMLを保存する"""
+    os.makedirs(paths.PUBLIC_HTML_PATH, exist_ok=True)
+    with open(os.path.join(paths.PUBLIC_HTML_PATH, "privacy.html"), "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+
+def save_terms_html(html_content):
+    """public_html/terms.html にHTMLを保存する"""
+    os.makedirs(paths.PUBLIC_HTML_PATH, exist_ok=True)
+    with open(os.path.join(paths.PUBLIC_HTML_PATH, "terms.html"), "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+
 def save_course_index_html(html_content):
     """public_html/courses/index.html にHTMLを保存する（開催場一覧ページ）"""
     os.makedirs(paths.PUBLIC_HTML_COURSES_PATH, exist_ok=True)
