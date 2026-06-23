@@ -120,13 +120,13 @@ def test_make_races_calendar_page_generates_index_html(new_roots, monkeypatch):
     assert "<footer>" in html_content
     # courses/index.html・performance/index.htmlと同様、トップレベルのページでも
     # 横並びのパンくず（HOME > レースカレンダー）を表示する
-    assert '<p class="breadcrumb"><a href="../index.html">HOME</a> &rsaquo; <span class="breadcrumb-current">レースカレンダー</span></p>' in html_content
+    assert '<p class="breadcrumb"><a href="../">HOME</a> &rsaquo; <span class="breadcrumb-current">レースカレンダー</span></p>' in html_content
     assert "<h1>開催日カレンダー</h1>" in html_content
     assert '<table id="calendar"></table>' in html_content
     assert 'window.CALENDAR_BASE_PATH = "../";' in html_content
     assert '<script src="../assets/js/raceDays.js"></script>' in html_content
     assert '<script src="../assets/js/calendar.js"></script>' in html_content
-    assert '<a href="../index.html">&larr; HOMEへ戻る</a>' in html_content
+    assert '<a href="../">&larr; HOMEへ戻る</a>' in html_content
 
     # 「本日の開催」に、コース詳細データへのリンクが含まれる
     assert "<h2>本日の開催</h2>" in html_content

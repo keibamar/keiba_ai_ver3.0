@@ -9,7 +9,9 @@ def test_site_nav_html_default_base_path():
     html = n.site_nav_html()
 
     assert '<nav class="site-nav">' in html
-    assert '<a href="index.html">HOME</a>' in html
+    # HOMEへのリンクはindex.htmlを明示せず、ディレクトリ自体（"./"）を指す
+    # （/index.htmlと/の重複URLによるSEO上の評価分散を避けるため）
+    assert '<a href="./">HOME</a>' in html
     assert '<a href="races/index.html">レースカレンダー</a>' in html
     assert '<a href="performance/index.html">AI成績</a>' in html
     assert '<a href="courses/index.html">コース詳細データ</a>' in html
@@ -62,7 +64,7 @@ def test_location_tree_highlights_active_section_with_color_class():
 def test_site_nav_html_with_nested_base_path():
     html = n.site_nav_html(base_path="../../")
 
-    assert '<a href="../../index.html">HOME</a>' in html
+    assert '<a href="../../">HOME</a>' in html
     assert '<a href="../../performance/index.html">AI成績</a>' in html
     assert '<div class="page-search" data-base-path="../../">' in html
     assert '<script src="../../assets/js/page-search-index.js"></script>' in html
@@ -78,7 +80,7 @@ def test_site_nav_html_highlights_current_path_in_calendar_tab():
     tab_html = html[html.index('<aside class="page-calendar-tab">') :]
     assert '<span class="page-calendar-tab-current">AI成績</span>' in tab_html
     assert '<a href="performance/index.html">AI成績</a>' not in tab_html
-    assert '<a href="index.html">HOME</a>' in tab_html
+    assert '<a href="./">HOME</a>' in tab_html
 
 
 def test_page_calendar_tab_html_uses_given_base_path_and_calendar_widget():
@@ -100,7 +102,7 @@ def test_page_calendar_tab_html_uses_given_base_path_and_calendar_widget():
 def test_page_calendar_tab_html_without_current_path_links_everything():
     html = n.page_calendar_tab_html(base_path="")
 
-    assert '<a href="index.html">HOME</a>' in html
+    assert '<a href="./">HOME</a>' in html
     assert '<a href="races/index.html">レースカレンダー</a>' in html
     assert '<a href="performance/index.html">AI成績</a>' in html
     assert '<a href="courses/index.html">コース詳細データ</a>' in html
@@ -120,7 +122,7 @@ def test_page_calendar_tab_html_with_breadcrumb_items_shows_full_hierarchy():
 
     # HOMEは常にリンクとして表示され、レースカレンダー/AI成績/コース詳細データは
     # HOMEの1段下に常時表示される（NAV_LINKSはどのページからも消えない）
-    assert '<a href="../../index.html">HOME</a>' in html
+    assert '<a href="../../">HOME</a>' in html
     assert '<a href="../../races/index.html">レースカレンダー</a>' in html
     assert '<a href="../../performance/index.html">AI成績</a>' in html
     # ページが属する大分類（コース詳細データ）の下に、ページ固有の階層
@@ -180,7 +182,7 @@ def test_page_calendar_tab_html_with_empty_breadcrumb_items_highlights_home():
     html = n.page_calendar_tab_html(base_path="", breadcrumb_items=[])
 
     assert '<span class="page-calendar-tab-current">HOME</span>' in html
-    assert '<a href="index.html">HOME</a>' not in html
+    assert '<a href="./">HOME</a>' not in html
     # HOMEが現在地でも、他の3項目は常にリンクとして表示される
     assert '<a href="races/index.html">レースカレンダー</a>' in html
     assert '<a href="performance/index.html">AI成績</a>' in html
@@ -219,7 +221,7 @@ def test_breadcrumb_html_includes_home_and_intermediate_links():
     print(f"\n--- breadcrumb_html ---\n{html}")
 
     assert '<p class="breadcrumb">' in html
-    assert '<a href="../../index.html">HOME</a>' in html
+    assert '<a href="../../">HOME</a>' in html
     assert '<a href="../../courses/index.html">コース詳細データ</a>' in html
     assert '<a href="../../courses/05_tokyo/index.html">東京</a>' in html
     # 最後の要素（現在地）はリンクを張らず強調表示する
@@ -315,17 +317,25 @@ def test_site_brand_html_links_to_home_and_shows_mar():
     print(f"\n--- site_brand_html(base_path='../') ---\n{html}")
 
     assert html == (
-        '<a class="site-brand" href="../index.html">'
+        '<a class="site-brand" href="../">'
         '<span class="site-brand-name">MAR</span>'
         '<span class="site-brand-sub">(まーる) 競馬AIデータサイト</span>'
         "</a>"
     )
 
 
+def test_site_brand_html_uses_dot_slash_at_root():
+    # base_pathが空（HOME自身等）の場合は、href=""（自分自身）ではなく"./"
+    # （このディレクトリ自体）を使う
+    html = n.site_brand_html(base_path="")
+
+    assert html.startswith('<a class="site-brand" href="./">')
+
+
 def test_site_nav_html_includes_site_brand():
     html = n.site_nav_html(base_path="../")
 
-    assert '<a class="site-brand" href="../index.html">' in html
+    assert '<a class="site-brand" href="../">' in html
     assert '<span class="site-brand-name">MAR</span>' in html
 
 

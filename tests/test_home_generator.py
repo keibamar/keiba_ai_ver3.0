@@ -131,6 +131,11 @@ def test_make_home_page_generates_index_html(new_roots, monkeypatch):
     assert '<nav class="site-nav">' in html_content
     assert "pagead2.googlesyndication.com" in html_content
     assert '<script src="assets/js/sortable-table.js"></script>' in html_content
+    # https://mar-keiba.com/ と https://mar-keiba.com/index.html の重複URLによる
+    # SEO上の評価分散を避けるため、正規URLを明示する
+    assert '<link rel="canonical" href="https://mar-keiba.com/">' in html_content
+    # HOMEへのリンクはindex.htmlを明示しない（同じ理由）
+    assert '<a class="site-brand" href="./">' in html_content
 
 
 def test_home_template_applies_weekend_gating_to_last_week_results(monkeypatch):

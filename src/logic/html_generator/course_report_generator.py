@@ -1471,7 +1471,7 @@ def course_report_to_html(report):
   </div>
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; このコースのAI成績を見る</a></p>
-  <p><a href="../../index.html">&larr; HOMEへ戻る</a></p>
+  <p><a href="../../">&larr; HOMEへ戻る</a></p>
   {site_footer_html(base_path="../../")}
   <script src="../../assets/js/sortable-table.js"></script>
   <script src="../../assets/js/section-tabs.js"></script>
@@ -1538,7 +1538,7 @@ def make_course_index_page():
     {inactive_tiles}
   </div>
 
-  <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
+  <p><a href="../">&larr; HOMEへ戻る</a></p>
   {site_footer_html(base_path="../")}
 </body>
 </html>

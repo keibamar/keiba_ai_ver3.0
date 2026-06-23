@@ -100,6 +100,20 @@ def site_nav_html(base_path="", current_path=None, breadcrumb_items=None, show_c
 <script src="{base_path}assets/js/calendar-tab-height.js"></script>"""
 
 
+def _home_href(base_path):
+    """HOMEへのリンクのhref値を返す（index.htmlを明示しない、ディレクトリ参照）
+
+    https://mar-keiba.com/ と https://mar-keiba.com/index.html はサーバーの
+    仕様上同じファイルを指す（index.htmlはディレクトリ要求時の既定ファイルとして
+    必須なので削除はできない）が、サイト内のリンクが常に/index.html付きの形を
+    指すと、検索エンジンに重複URLとして扱われやすくなる。サイト内リンクは
+    常にディレクトリ自体（末尾"/"）を指すようにし、base_pathが空の場合
+    （HOME自身やprivacy.html等ルート直下の他ページ）は"./"（このディレクトリ
+    自体）を使う。
+    """
+    return base_path or "./"
+
+
 def site_brand_html(base_path=""):
     """ヘッダー左側に常時表示するサイト名（ブランド表示）のHTML断片を返す
 
@@ -107,7 +121,7 @@ def site_brand_html(base_path=""):
     （ヘッダー）に組み込む。HOMEへのリンクも兼ねる。
     """
     return (
-        f'<a class="site-brand" href="{base_path}index.html">'
+        f'<a class="site-brand" href="{_home_href(base_path)}">'
         f'<span class="site-brand-name">{SITE_NAME}</span>'
         f'<span class="site-brand-sub">({SITE_NAME_READING}) {SITE_TAGLINE}</span>'
         f"</a>"
@@ -229,7 +243,11 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
     含む）を強調し、今どのページ系列にいるかを色とアイコンの両方で分かるようにする。
     """
     home_is_current = breadcrumb_items == [] or (breadcrumb_items is None and current_path == "index.html")
-    home_crumb = _crumb_item_html("HOME", None if home_is_current else "index.html", base_path)
+    home_crumb = (
+        '<span class="page-calendar-tab-current">HOME</span>'
+        if home_is_current
+        else f'<a href="{_home_href(base_path)}">HOME</a>'
+    )
 
     active_label = breadcrumb_items[0][0] if breadcrumb_items else None
     sub_rows = ""
@@ -266,7 +284,8 @@ def _hierarchy_crumbs(items, base_path="", current_class="breadcrumb-current"):
     横並びのパンくずを作る際にこのロジックを使う。
     """
     simple_items = [(label, path) for label, path, *_ in items]
-    all_items = [("HOME", None if not simple_items else "index.html")] + simple_items
+    home_path = None if not simple_items else ("" if base_path else "./")
+    all_items = [("HOME", home_path)] + simple_items
     return [_crumb_item_html(label, path, base_path, current_class) for label, path in all_items]
 
 

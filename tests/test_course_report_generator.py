@@ -180,7 +180,7 @@ def test_course_report_to_html_structure():
     assert "<summary>馬体重データ：馬場別を表示</summary>" in html
     # 個別コースのAI成績ページへの相互リンクが追加されている
     assert '<a href="../../performance/course/05_tokyo/芝-1400.html">&larr; このコースのAI成績を見る</a>' in html
-    assert '<a href="../../index.html">&larr; HOMEへ戻る</a>' in html
+    assert '<a href="../../">&larr; HOMEへ戻る</a>' in html
     # サイト共通ナビゲーション・列ソートJS・タブJS・年度別の折りたたみが追加されている
     assert '<nav class="site-nav">' in html
     assert "pagead2.googlesyndication.com" in html
@@ -198,7 +198,7 @@ def test_course_report_to_html_structure():
     assert html.count("<summary>年度別を表示</summary>") == 2
     # ブレッドクラム（現在地の階層）が追加されている
     assert '<p class="breadcrumb">' in html
-    assert '<a href="../../index.html">HOME</a>' in html
+    assert '<a href="../../">HOME</a>' in html
     assert '<a href="../../courses/index.html">コース詳細データ</a>' in html
     assert '<a href="../../courses/05_tokyo/index.html">東京</a>' in html
     assert '<span class="breadcrumb-current"><span class="race-type-turf">芝1400m</span></span>' in html

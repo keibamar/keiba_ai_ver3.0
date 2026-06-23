@@ -298,6 +298,7 @@ def home_template():
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="canonical" href="https://mar-keiba.com/">
   {adsense_script_html()}
   <title>{SITE_TITLE}</title>
   <link rel="stylesheet" href="assets/css/styles.css">

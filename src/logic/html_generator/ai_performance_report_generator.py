@@ -283,7 +283,7 @@ def make_ai_performance_index_page():
     {place_rows}
   </ul>
 
-  <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
+  <p><a href="../">&larr; HOMEへ戻る</a></p>
   {site_footer_html(base_path="../")}
   <script src="../assets/js/sortable-table.js"></script>
 </body>

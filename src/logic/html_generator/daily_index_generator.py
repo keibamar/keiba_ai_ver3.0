@@ -361,7 +361,7 @@ def races_calendar_template():
   <h2>本日の開催</h2>
   {_today_meetings_html(today_races, base_path="../")}
 
-  <p><a href="../index.html">&larr; HOMEへ戻る</a></p>
+  <p><a href="../">&larr; HOMEへ戻る</a></p>
   {site_footer_html(base_path="../")}
 </body>
 </html>

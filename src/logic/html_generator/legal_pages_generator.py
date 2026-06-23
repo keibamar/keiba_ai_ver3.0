@@ -62,7 +62,7 @@ def privacy_policy_template():
   修正された最新のプライバシーポリシーは常に本ページにて開示されます。</p>
 
   <p><a href="terms.html">利用規約はこちら</a></p>
-  <p><a href="index.html">&larr; HOMEへ戻る</a></p>
+  <p><a href="./">&larr; HOMEへ戻る</a></p>
   {site_footer_html()}
 </body>
 </html>
@@ -117,7 +117,7 @@ def terms_template():
   <p>当サイトは、必要と判断した場合には、利用者に通知することなく本規約を変更することができるものとします。</p>
 
   <p><a href="privacy.html">プライバシーポリシーはこちら</a></p>
-  <p><a href="index.html">&larr; HOMEへ戻る</a></p>
+  <p><a href="./">&larr; HOMEへ戻る</a></p>
   {site_footer_html()}
 </body>
 </html>

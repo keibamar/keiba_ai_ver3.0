@@ -32,7 +32,7 @@ def test_make_privacy_policy_page_generates_html(new_roots):
     assert '<aside class="page-calendar-tab">' in html_content
     assert "<footer>" in html_content
     assert '<a href="terms.html">利用規約はこちら</a>' in html_content
-    assert '<a href="index.html">&larr; HOMEへ戻る</a>' in html_content
+    assert '<a href="./">&larr; HOMEへ戻る</a>' in html_content
 
     # 広告配信・アクセス解析・免責事項についての記載
     assert "<h1>プライバシーポリシー</h1>" in html_content
