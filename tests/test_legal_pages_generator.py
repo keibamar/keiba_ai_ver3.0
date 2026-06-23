@@ -27,6 +27,7 @@ def test_make_privacy_policy_page_generates_html(new_roots):
 
     # サイト共通ヘッダー・フッター・右側タブ（他ページと統一）
     assert '<meta name="viewport" content="width=device-width, initial-scale=1">' in html_content
+    assert "pagead2.googlesyndication.com" in html_content
     assert '<nav class="site-nav">' in html_content
     assert '<aside class="page-calendar-tab">' in html_content
     assert "<footer>" in html_content
@@ -50,6 +51,7 @@ def test_make_terms_page_generates_html(new_roots):
     print(f"\n--- make_terms_page() ---\n{html_content[:500]}")
 
     assert '<meta name="viewport" content="width=device-width, initial-scale=1">' in html_content
+    assert "pagead2.googlesyndication.com" in html_content
     assert '<nav class="site-nav">' in html_content
     assert '<aside class="page-calendar-tab">' in html_content
     assert "<footer>" in html_content

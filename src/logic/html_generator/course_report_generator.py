@@ -32,7 +32,7 @@ from src.config.lists import COURSE_LISTS
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.calculators import average_calculator
 from src.logic.html_generator.race_type_badge_html import course_label_html, race_type_span_html
-from src.logic.html_generator.site_nav_html import breadcrumb_html, site_footer_html, site_nav_html
+from src.logic.html_generator.site_nav_html import adsense_script_html, breadcrumb_html, site_footer_html, site_nav_html
 from src.logic.html_generator.sparkline_html import single_line_trend_svg
 from src.managers import (
     html_manager,
@@ -1369,6 +1369,7 @@ def course_report_to_html(report):
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {adsense_script_html()}
   <title>{place_name} {race_type}{course_len}m コース詳細</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
@@ -1518,6 +1519,7 @@ def make_course_index_page():
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {adsense_script_html()}
   <title>コース詳細データ</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
@@ -1597,6 +1599,7 @@ def make_track_page(place_id):
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {adsense_script_html()}
   <title>{place_name} コース一覧</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>

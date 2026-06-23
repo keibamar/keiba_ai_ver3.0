@@ -129,6 +129,7 @@ def test_make_home_page_generates_index_html(new_roots, monkeypatch):
 
     # サイト共通ナビゲーション・列ソートJSが追加されている
     assert '<nav class="site-nav">' in html_content
+    assert "pagead2.googlesyndication.com" in html_content
     assert '<script src="assets/js/sortable-table.js"></script>' in html_content
 
 

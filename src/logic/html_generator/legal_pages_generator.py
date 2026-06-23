@@ -10,7 +10,13 @@
 統一を保つ。
 """
 
-from src.logic.html_generator.site_nav_html import SITE_NAME, breadcrumb_html, site_footer_html, site_nav_html
+from src.logic.html_generator.site_nav_html import (
+    SITE_NAME,
+    adsense_script_html,
+    breadcrumb_html,
+    site_footer_html,
+    site_nav_html,
+)
 from src.managers import html_manager
 
 
@@ -23,6 +29,7 @@ def privacy_policy_template():
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {adsense_script_html()}
   <title>プライバシーポリシー｜{SITE_NAME}</title>
   <link rel="stylesheet" href="assets/css/styles.css">
 </head>
@@ -71,6 +78,7 @@ def terms_template():
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {adsense_script_html()}
   <title>利用規約｜{SITE_NAME}</title>
   <link rel="stylesheet" href="assets/css/styles.css">
 </head>

@@ -12,7 +12,7 @@ import pandas as pd
 
 from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS, WAKU_COLORS
 from src.logic.html_generator import horse_report_generator
-from src.logic.html_generator.site_nav_html import breadcrumb_html, site_footer_html, site_nav_html
+from src.logic.html_generator.site_nav_html import adsense_script_html, breadcrumb_html, site_footer_html, site_nav_html
 from src.managers import (
     html_manager,
     peds_results_dataset_manager,
@@ -185,12 +185,14 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     site_nav = site_nav_html(base_path="../../", breadcrumb_items=breadcrumb_items)
     breadcrumb = breadcrumb_html(breadcrumb_items, base_path="../../")
     footer = site_footer_html(base_path="../../")
+    adsense = adsense_script_html()
     return """
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {adsense}
   <title>{date_display} {place_name}競馬場 第{race_num}R {race_name}</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
   <style>
@@ -508,6 +510,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     site_nav=site_nav,
     breadcrumb=breadcrumb,
     footer=footer,
+    adsense=adsense,
     table_rows=table_rows,
     run_time_info=run_time_info,
     weight_info=weight_info,

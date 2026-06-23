@@ -29,10 +29,18 @@ SITE_TAGLINE = "競馬AIデータサイト"
 # 使って半角に統一した表記にする。
 SITE_TITLE = f"{SITE_NAME}({SITE_NAME_READING}）|{SITE_TAGLINE}"
 
-# WordPress（Cocoon）で運営するブログ本体のURL。データサイト（このコードが生成する
-# 静的サイト）をmar-keiba.com直下に、ブログをmar-keiba.com/blog/に置く構成のため、
-# データサイトからの相対パス（base_path）では届かない別サイトとして、絶対URLでリンクする。
-BLOG_URL = "https://mar-keiba.com/blog/"
+# Google AdSenseの所有権確認・広告配信用スクリプト。Googleの推奨に従い、
+# 全ページの<head>のできるだけ上部に置く（審査前の所有権確認に必要なため、
+# 審査が完了する前から全ページに入れておく）。
+ADSENSE_CLIENT_ID = "ca-pub-5124016618612171"
+
+
+def adsense_script_html():
+    """全ページの<head>に置くAdSenseの所有権確認・広告配信用スクリプトタグを返す"""
+    return (
+        f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'
+        f'?client={ADSENSE_CLIENT_ID}" crossorigin="anonymous"></script>'
+    )
 
 NAV_LINKS = [
     ("HOME", "index.html"),
@@ -84,7 +92,6 @@ def site_nav_html(base_path="", current_path=None, breadcrumb_items=None, show_c
     """
     return f"""<nav class="site-nav">
   {site_brand_html(base_path)}
-  <a href="{BLOG_URL}" class="site-blog-link">📝 ブログ</a>
   {search_box_html(base_path)}
 </nav>
 <script src="{base_path}assets/js/page-search-index.js"></script>

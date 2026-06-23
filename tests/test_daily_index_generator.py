@@ -67,6 +67,7 @@ def test_make_daily_index_page_generates_index_html(new_roots):
     assert '<link rel="stylesheet" href="../../assets/css/styles.css">' in html_content
     # サイト共通ヘッダー・フッター・右側タブ（他ページと統一）
     assert '<nav class="site-nav">' in html_content
+    assert "pagead2.googlesyndication.com" in html_content
     assert '<aside class="page-calendar-tab">' in html_content
     assert "<footer>" in html_content
     assert '<a href="../../races/index.html">レースカレンダー</a>' in html_content

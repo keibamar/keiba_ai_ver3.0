@@ -153,7 +153,7 @@ def make_index_page(date_str, files_info_list):
 def daily_index_template(date_display, nav_links, place_races, place_keys, table_rows):
     # site_nav_html（site_nav_html.pyからdaily_index_generator.calendar_widget_htmlを
     # 参照している）との循環importを避けるため、ここで遅延importする。
-    from src.logic.html_generator.site_nav_html import breadcrumb_html, site_footer_html, site_nav_html
+    from src.logic.html_generator.site_nav_html import adsense_script_html, breadcrumb_html, site_footer_html, site_nav_html
 
     breadcrumb_items = [("レースカレンダー", "races/index.html"), (date_display, None)]
     return f"""
@@ -162,6 +162,7 @@ def daily_index_template(date_display, nav_links, place_races, place_keys, table
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {adsense_script_html()}
   <title>{date_display} レース一覧</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
   <style>
@@ -336,7 +337,7 @@ def races_calendar_template():
     """
     # site_nav_html（site_nav_html.pyからdaily_index_generator.calendar_widget_htmlを
     # 参照している）との循環importを避けるため、ここで遅延importする。
-    from src.logic.html_generator.site_nav_html import breadcrumb_html, site_footer_html, site_nav_html
+    from src.logic.html_generator.site_nav_html import adsense_script_html, breadcrumb_html, site_footer_html, site_nav_html
 
     today_races = ai_performance_calculator.get_today_main_races_with_course(date.today())
 
@@ -346,6 +347,7 @@ def races_calendar_template():
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {adsense_script_html()}
   <title>開催日カレンダー</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
 </head>
