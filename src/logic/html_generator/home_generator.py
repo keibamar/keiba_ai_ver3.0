@@ -20,11 +20,24 @@ from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator.race_type_badge_html import course_label_html
 from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
-from src.logic.html_generator.site_nav_html import SITE_TITLE, adsense_script_html, ga4_script_html, site_footer_html, site_nav_html
+from src.logic.html_generator.site_nav_html import (
+    SITE_TITLE,
+    SITE_URL,
+    adsense_script_html,
+    ga4_script_html,
+    meta_tags_html,
+    site_footer_html,
+    site_nav_html,
+)
 from src.managers import ai_performance_dataset_manager as dataset_manager
 from src.managers import html_manager
 
 BET_TYPE_LABELS = {"win": "単勝", "place": "複勝", "trio_box": "三連複(5頭BOX)"}
+
+HOME_DESCRIPTION = (
+    "競馬AIによるレース予想・コース別データ分析サイト「MAR(まーる)」。"
+    "レースカレンダー、AI予想成績、競馬場・コース別の傾向データを公開中。"
+)
 
 
 def _main_sub_cell_html(main, sub):
@@ -298,7 +311,8 @@ def home_template():
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="canonical" href="https://mar-keiba.com/">
+  <link rel="canonical" href="{SITE_URL}/">
+  {meta_tags_html(SITE_TITLE, HOME_DESCRIPTION, f"{SITE_URL}/")}
   {adsense_script_html()}
   {ga4_script_html()}
   <title>{SITE_TITLE}</title>

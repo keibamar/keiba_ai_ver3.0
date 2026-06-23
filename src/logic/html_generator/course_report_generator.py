@@ -32,7 +32,15 @@ from src.config.lists import COURSE_LISTS
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.calculators import average_calculator
 from src.logic.html_generator.race_type_badge_html import course_label_html, race_type_span_html
-from src.logic.html_generator.site_nav_html import adsense_script_html, ga4_script_html, breadcrumb_html, site_footer_html, site_nav_html
+from src.logic.html_generator.site_nav_html import (
+    SITE_URL,
+    adsense_script_html,
+    breadcrumb_html,
+    ga4_script_html,
+    meta_tags_html,
+    site_footer_html,
+    site_nav_html,
+)
 from src.logic.html_generator.sparkline_html import single_line_trend_svg
 from src.managers import (
     html_manager,
@@ -1369,6 +1377,11 @@ def course_report_to_html(report):
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {meta_tags_html(
+      f"{place_name} {race_type}{course_len}m コース詳細",
+      f"{place_name}競馬場 {race_type}{course_len}mのコース傾向・血統・枠番データ分析。",
+      f"{SITE_URL}/courses/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html",
+  )}
   {adsense_script_html()}
   {ga4_script_html()}
   <title>{place_name} {race_type}{course_len}m コース詳細</title>
@@ -1521,6 +1534,11 @@ def make_course_index_page():
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {meta_tags_html(
+      "コース詳細データ",
+      "全国10競馬場のコース別データ分析。平均勝ち時計・人気・血統傾向を競馬場・距離別に掲載。",
+      f"{SITE_URL}/courses/",
+  )}
   {adsense_script_html()}
   {ga4_script_html()}
   <title>コース詳細データ</title>
@@ -1603,6 +1621,11 @@ def make_track_page(place_id):
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {meta_tags_html(
+      f"{place_name} コース一覧",
+      f"{place_name}競馬場の全コースの平均勝ち時計・平均人気・血統傾向データ一覧。",
+      f"{SITE_URL}/courses/{PLACE_LIST[place_id - 1]}/",
+  )}
   {adsense_script_html()}
   {ga4_script_html()}
   <title>{place_name} コース一覧</title>

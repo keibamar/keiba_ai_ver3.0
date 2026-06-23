@@ -13,9 +13,11 @@ import pandas as pd
 from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS, WAKU_COLORS
 from src.logic.html_generator import horse_report_generator
 from src.logic.html_generator.site_nav_html import (
+    SITE_URL,
     adsense_script_html,
     breadcrumb_html,
     ga4_script_html,
+    meta_tags_html,
     site_footer_html,
     site_nav_html,
 )
@@ -193,12 +195,19 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     footer = site_footer_html(base_path="../../")
     adsense = adsense_script_html()
     ga4 = ga4_script_html()
+    place_key = PLACE_LIST[place_id - 1]
+    meta_tags = meta_tags_html(
+        f"{date_display} {place_name}競馬場 第{race_num}R {race_name}",
+        f"{date_display} {place_name}競馬場 第{race_num}R {race_name}の出馬表・AI予想データ。",
+        f"{SITE_URL}/races/{date_str}/{place_key}R{race_num}.html",
+    )
     return """
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {meta_tags}
   {adsense}
   {ga4}
   <title>{date_display} {place_name}競馬場 第{race_num}R {race_name}</title>
@@ -521,6 +530,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     footer=footer,
     adsense=adsense,
     ga4=ga4,
+    meta_tags=meta_tags,
     table_rows=table_rows,
     run_time_info=run_time_info,
     weight_info=weight_info,

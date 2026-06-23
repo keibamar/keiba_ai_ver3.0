@@ -380,3 +380,36 @@ def test_ga4_script_html_includes_measurement_id():
     assert f"https://www.googletagmanager.com/gtag/js?id={n.GA4_MEASUREMENT_ID}" in html
     assert f"gtag('config', '{n.GA4_MEASUREMENT_ID}');" in html
     assert "window.dataLayer = window.dataLayer || [];" in html
+
+
+def test_meta_tags_html_includes_description_and_ogp():
+    html = n.meta_tags_html(
+        title="東京 芝1400m コース詳細｜MAR",
+        description="東京競馬場 芝1400mのコース傾向・血統・枠番データ分析。",
+        url=f"{n.SITE_URL}/courses/05_tokyo/芝-1400.html",
+    )
+
+    print(f"\n--- meta_tags_html() ---\n{html}")
+
+    assert '<meta name="description" content="東京競馬場 芝1400mのコース傾向・血統・枠番データ分析。">' in html
+    assert '<meta property="og:title" content="東京 芝1400m コース詳細｜MAR">' in html
+    assert '<meta property="og:url" content="https://mar-keiba.com/courses/05_tokyo/芝-1400.html">' in html
+    assert '<meta property="og:type" content="website">' in html
+    assert '<meta name="twitter:card" content="summary">' in html
+
+
+def test_sns_links_html_includes_x_and_instagram():
+    html = n.sns_links_html()
+
+    print(f"\n--- sns_links_html() ---\n{html}")
+
+    assert '<a href="https://x.com/keiba_mar" target="_blank" rel="noopener noreferrer">' in html
+    assert '<a href="https://www.instagram.com/__mar_gram__/" target="_blank" rel="noopener noreferrer">' in html
+
+
+def test_page_calendar_tab_html_includes_sns_links():
+    html = n.page_calendar_tab_html(base_path="")
+
+    assert "page-calendar-tab-sns" in html
+    assert "x.com/keiba_mar" in html
+    assert "instagram.com/__mar_gram__" in html

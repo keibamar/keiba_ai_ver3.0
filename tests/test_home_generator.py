@@ -138,6 +138,10 @@ def test_make_home_page_generates_index_html(new_roots, monkeypatch):
     assert '<link rel="canonical" href="https://mar-keiba.com/">' in html_content
     # HOMEへのリンクはindex.htmlを明示しない（同じ理由）
     assert '<a class="site-brand" href="./">' in html_content
+    # 検索結果・SNSシェア時の表示用メタタグ（description・OGP）
+    assert '<meta name="description" content="' in html_content
+    assert '<meta property="og:title" content="MAR(まーる）|競馬AIデータサイト">' in html_content
+    assert '<meta property="og:url" content="https://mar-keiba.com/">' in html_content
 
 
 def test_home_template_applies_weekend_gating_to_last_week_results(monkeypatch):

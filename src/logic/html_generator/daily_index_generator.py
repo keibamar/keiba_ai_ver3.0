@@ -145,18 +145,20 @@ def make_index_page(date_str, files_info_list):
     nav_links += '</div></div>'
 
     # HTML生成
-    html = daily_index_template(date_display, nav_links, place_races, place_keys, table_rows)
+    html = daily_index_template(date_str, date_display, nav_links, place_races, place_keys, table_rows)
 
     html_manager.save_daily_index_html(date_str, html)
 
 
-def daily_index_template(date_display, nav_links, place_races, place_keys, table_rows):
+def daily_index_template(date_str, date_display, nav_links, place_races, place_keys, table_rows):
     # site_nav_html（site_nav_html.pyからdaily_index_generator.calendar_widget_htmlを
     # 参照している）との循環importを避けるため、ここで遅延importする。
     from src.logic.html_generator.site_nav_html import (
+        SITE_URL,
         adsense_script_html,
         breadcrumb_html,
         ga4_script_html,
+        meta_tags_html,
         site_footer_html,
         site_nav_html,
     )
@@ -168,6 +170,11 @@ def daily_index_template(date_display, nav_links, place_races, place_keys, table
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {meta_tags_html(
+      f"{date_display} レース一覧",
+      f"{date_display}に開催される競馬レースの一覧と出馬表・AI予想へのリンク。",
+      f"{SITE_URL}/races/{date_str}/",
+  )}
   {adsense_script_html()}
   {ga4_script_html()}
   <title>{date_display} レース一覧</title>
@@ -346,9 +353,11 @@ def races_calendar_template():
     # site_nav_html（site_nav_html.pyからdaily_index_generator.calendar_widget_htmlを
     # 参照している）との循環importを避けるため、ここで遅延importする。
     from src.logic.html_generator.site_nav_html import (
+        SITE_URL,
         adsense_script_html,
         breadcrumb_html,
         ga4_script_html,
+        meta_tags_html,
         site_footer_html,
         site_nav_html,
     )
@@ -361,6 +370,11 @@ def races_calendar_template():
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {meta_tags_html(
+      "開催日カレンダー",
+      "競馬の開催日カレンダー。開催日ごとのレース一覧・出馬表・AI予想へのリンクを掲載。",
+      f"{SITE_URL}/races/",
+  )}
   {adsense_script_html()}
   {ga4_script_html()}
   <title>開催日カレンダー</title>

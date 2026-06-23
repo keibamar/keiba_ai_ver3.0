@@ -29,6 +29,32 @@ SITE_TAGLINE = "競馬AIデータサイト"
 # 使って半角に統一した表記にする。
 SITE_TITLE = f"{SITE_NAME}({SITE_NAME_READING}）|{SITE_TAGLINE}"
 
+# 本番のドメイン。canonicalタグ・OGP（og:url）・sitemap.xml（seo_generator）で
+# 絶対URLを組み立てる際の基準として共通で使う。
+SITE_URL = "https://mar-keiba.com"
+
+
+def meta_tags_html(title, description, url, og_type="website"):
+    """検索結果・SNSシェア時の表示用メタタグ（description・OGP・Twitter Card）を返す
+
+    Args:
+        title (str): ページタイトル（<title>と揃える）。
+        description (str): ページの内容を要約した説明文（120字程度を目安にする）。
+        url (str): このページの絶対URL（SITE_URLを基準に組み立てる。例:
+            f"{SITE_URL}/courses/05_tokyo/芝-1400.html"）。
+        og_type (str): og:type（通常は"website"のままでよい）。
+    """
+    return f"""<meta name="description" content="{description}">
+  <meta property="og:title" content="{title}">
+  <meta property="og:description" content="{description}">
+  <meta property="og:url" content="{url}">
+  <meta property="og:type" content="{og_type}">
+  <meta property="og:site_name" content="{SITE_NAME}({SITE_NAME_READING})">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="{title}">
+  <meta name="twitter:description" content="{description}">"""
+
 # Google AdSenseの所有権確認・広告配信用スクリプト。Googleの推奨に従い、
 # 全ページの<head>のできるだけ上部に置く（審査前の所有権確認に必要なため、
 # 審査が完了する前から全ページに入れておく）。
@@ -204,7 +230,27 @@ def page_calendar_tab_html(base_path="", current_path=None, breadcrumb_items=Non
   <ul class="page-calendar-tab-location">
     {_location_tree_html(base_path, current_path, breadcrumb_items)}
   </ul>
+  {sns_links_html()}
 </aside>"""
+
+
+# SNSアカウント。Xは予想・結果の投稿とサイト更新のお知らせに使う運用のため、
+# サイトとの結びつきが強く常時表示する。Instagramは中の人の趣味の投稿で更新頻度も
+# 低いが、ユーザーの希望でこちらも表示する。
+SNS_LINKS = [
+    ("X (Twitter)", "https://x.com/keiba_mar", "𝕏"),
+    ("Instagram", "https://www.instagram.com/__mar_gram__/", "📷"),
+]
+
+
+def sns_links_html():
+    """右側タブの下部に表示するSNSリンク一覧を返す"""
+    items = "".join(
+        f'<li><a href="{url}" target="_blank" rel="noopener noreferrer">'
+        f'<span class="nav-icon">{icon}</span> {label}</a></li>\n'
+        for label, url, icon in SNS_LINKS
+    )
+    return f'<ul class="page-calendar-tab-sns">\n{items}</ul>'
 
 
 def _crumb_item_html(label, path, base_path="", current_class="page-calendar-tab-current"):

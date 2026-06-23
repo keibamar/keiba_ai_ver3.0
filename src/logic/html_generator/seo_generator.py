@@ -10,8 +10,7 @@ import os
 from datetime import date
 
 from src.config import paths
-
-SITE_URL = "https://mar-keiba.com"
+from src.logic.html_generator.site_nav_html import SITE_URL
 
 
 def robots_txt_content():
