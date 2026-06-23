@@ -158,6 +158,33 @@ def test_make_meeting_performance_page_generates_html(new_roots, fake_dataset):
     assert '<aside class="page-sidebar">' not in html_content
 
 
+def test_make_all_meeting_performance_pages_generates_for_every_meeting(new_roots, fake_dataset):
+    r.make_all_meeting_performance_pages()
+
+    meeting_dir = new_roots / "public_html" / "performance" / "meeting"
+    # SAMPLE_DFの4行は (2025,東京,1) (2026,東京,2) (2026,東京,3) (2024,阪神,1) の4開催
+    expected_files = [
+        meeting_dir / "2025" / "05_tokyo-1th.html",
+        meeting_dir / "2026" / "05_tokyo-2th.html",
+        meeting_dir / "2026" / "05_tokyo-3th.html",
+        meeting_dir / "2024" / "09_hanshin-1th.html",
+    ]
+
+    print(f"\n--- make_all_meeting_performance_pages() ---")
+    for f in expected_files:
+        print(f"  {f}: exists={f.exists()}")
+
+    for f in expected_files:
+        assert f.exists()
+
+
+def test_make_all_meeting_performance_pages_noop_on_empty_dataset(new_roots, empty_dataset):
+    r.make_all_meeting_performance_pages()
+
+    meeting_dir = new_roots / "public_html" / "performance" / "meeting"
+    assert not meeting_dir.exists()
+
+
 def test_make_course_performance_page_generates_html(new_roots, fake_dataset):
     r.make_course_performance_page(place_id=5, race_type="芝", course_len="1400")
 

@@ -20,10 +20,16 @@ from src.logic.html_generator import (  # noqa: E402
     ai_performance_report_generator,
     course_report_generator,
 )
+from src.managers import ai_performance_dataset_manager  # noqa: E402
 
 if __name__ == "__main__":
+    # 取りこぼし（payout確定が遅れた等）があれば、ここでもAI成績データセットを最新化しておく
+    added = ai_performance_dataset_manager.update_ai_performance_dataset()
+    print(f"AI Performance Dataset Updated: {added} rows added")
+
     course_report_generator.make_all_course_pages()
     ai_performance_report_generator.make_ai_performance_index_page()
     ai_performance_report_generator.make_all_annual_performance_pages()
     ai_performance_report_generator.make_all_course_performance_pages()
+    ai_performance_report_generator.make_all_meeting_performance_pages()
     print("Weekly Update Html Done")

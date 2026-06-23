@@ -22,10 +22,14 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from src.logic.html_generator import race_page_generator  # noqa: E402
+from src.managers import ai_performance_dataset_manager  # noqa: E402
 from src.output import return_report  # noqa: E402
 
 if __name__ == "__main__":
     race_day = date.today()
     return_report.post_daily_race_returns(race_day)
     race_page_generator.make_daily_race_card_html(race_day)
+    # 確定した予想結果をAI成績データセットに反映する（次回のAI成績ページ再生成（水曜）で使われる）
+    added = ai_performance_dataset_manager.update_ai_performance_dataset()
+    print(f"AI Performance Dataset Updated: {added} rows added")
     print("Today Race Returns Done")

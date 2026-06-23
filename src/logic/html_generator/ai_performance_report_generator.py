@@ -411,6 +411,20 @@ def make_meeting_performance_page(year, place_id, times, df=None):
     html_manager.save_ai_meeting_performance_html(year, place_id, times, html)
 
 
+def make_all_meeting_performance_pages(df=None):
+    """データセットに存在する全開催（年×競馬場×開催回）の開催別成績ページを一括生成する
+
+    データセットは1回だけ取得し、全開催で再利用する。
+    """
+    df = df if df is not None else m.get_ai_performance_dataset()
+    if df.empty:
+        return
+
+    combos = df[["year", "place_id", "times"]].drop_duplicates()
+    for _, row in combos.iterrows():
+        make_meeting_performance_page(int(row["year"]), int(row["place_id"]), int(row["times"]), df=df)
+
+
 def make_course_performance_index_page(place_id, df=None):
     """競馬場別成績ページ（public_html/performance/course/{place}/index.html）を生成する
 
