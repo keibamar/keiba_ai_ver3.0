@@ -96,10 +96,46 @@ def test_generate_peds_result_html_has_real_data(new_roots):
     assert "血統別成績" in html_str
 
 
-def test_build_nav_html_structure(new_roots):
-    nav_html = r.build_nav_html(SAMPLE_DATE_STR, SAMPLE_PLACE_ID, SAMPLE_RACE_ID)
-    assert '<div class="nav">' in nav_html
-    assert "この日の一覧に戻る" in nav_html
+def test_race_card_breadcrumb_items_includes_same_day_venues_and_races(new_roots):
+    """出馬表ページの右側タブ用階層: 同日の他開催場（同じレース番号へリンク）＋
+    選択中の開催場の他レースが、それぞれ兄弟として並ぶことを確認する
+    （data/race_schedule/race_time_id_list/20241020.csvの実データ:
+    04_nigata/05_tokyo/08_kyotoが開催、新潟の1R=202404040601）。
+    """
+    race_name = "2歳未勝利"
+    items = r._race_card_breadcrumb_items(SAMPLE_DATE_STR, "2024/10/20", SAMPLE_PLACE_ID, SAMPLE_RACE_ID, race_name)
+
+    assert items[0] == ("レースカレンダー", "races/index.html")
+    assert items[1] == ("2024/10/20", "races/20241020/index.html")
+
+    venue_label, venue_path, venue_siblings = items[2]
+    assert venue_label == "新潟"
+    assert venue_path == "races/20241020/04_nigataR1.html"
+    # 同日に開催している他場（東京・京都）も、同じレース番号(1R)のページへリンクする
+    assert ("新潟", "races/20241020/04_nigataR1.html") in venue_siblings
+    assert ("東京", "races/20241020/05_tokyoR1.html") in venue_siblings
+    assert ("京都", "races/20241020/08_kyotoR1.html") in venue_siblings
+
+    race_label, race_path, race_siblings = items[3]
+    assert race_label == f"1R {race_name}"
+    assert race_path is None
+    # 同じ開催場（新潟）の他レースが兄弟として並ぶ。現在のレースはリンクなし（現在地）
+    assert (f"1R {race_name}", None) in race_siblings
+    assert ("2R 2歳未勝利", "races/20241020/04_nigataR2.html") in race_siblings
+    assert ("12R 3歳以上1勝クラス", "races/20241020/04_nigataR12.html") in race_siblings
+
+
+def test_race_card_breadcrumb_items_falls_back_when_no_schedule_data(new_roots, monkeypatch):
+    """開催スケジュールデータが無い場合でも、自分自身だけの階層を返す（例外にしない）"""
+    monkeypatch.setattr(
+        r.race_card_dataset_manager, "get_race_time_id_list_df",
+        lambda race_day: pd.DataFrame(),
+    )
+
+    items = r._race_card_breadcrumb_items(SAMPLE_DATE_STR, "2024/10/20", SAMPLE_PLACE_ID, SAMPLE_RACE_ID, "テストレース")
+
+    assert items[2] == ("新潟", "races/20241020/04_nigataR1.html", [("新潟", "races/20241020/04_nigataR1.html")])
+    assert items[3] == ("1R テストレース", None, [("1R テストレース", None)])
 
 
 def test_make_race_card_html_generates_full_page(new_roots):
@@ -124,8 +160,21 @@ def test_make_race_card_html_generates_full_page(new_roots):
     assert '<a href="../../races/index.html">レースカレンダー</a>' in html_content
     assert '<a href="../../races/20241020/index.html">2024/10/20</a>' in html_content
 
-    # --- ナビゲーション・見出し ---
-    assert '<div class="nav">' in html_content
+    # 旧来の「この日の一覧に戻る」＋前後レースの簡易ナビは、右側タブの階層
+    # （同日の開催場＋同開催場の他レース）に統合したため廃止した
+    assert '<div class="nav">' not in html_content
+    assert "この日の一覧に戻る" not in html_content
+    # 右側タブに、同日の他開催場（東京・京都、同じレース番号へリンク）と
+    # 選択中の開催場（新潟）の他レースが兄弟として並ぶ
+    assert '<a href="../../races/20241020/05_tokyoR1.html">東京</a>' in html_content
+    assert '<a href="../../races/20241020/08_kyotoR1.html">京都</a>' in html_content
+    assert '<a href="../../races/20241020/04_nigataR2.html">2R 2歳未勝利</a>' in html_content
+    assert '<span class="page-calendar-tab-current">1R 2歳未勝利</span>' in html_content
+    # ページの先頭へ戻るリンク（ページが長くなったため末尾に追加）
+    assert '<a id="pageTop"></a>' in html_content
+    assert '<p class="back-to-top"><a href="#pageTop">&uarr; ページの先頭へ戻る</a></p>' in html_content
+
+    # --- 見出し ---
     assert "<h2>2024/10/20 </h2>" in html_content
     assert f"<h2>{NAME_LIST[SAMPLE_PLACE_ID - 1]}競馬場 第1R </h2>" in html_content
     assert "芝2000m 天候:晴 馬場:稍重 クラス:未勝利" in html_content
@@ -158,11 +207,10 @@ def test_make_daily_race_card_html_generates_only_available_races(new_roots):
     assert generated == ["04_nigataR1.html"]
 
 
-def test_make_daily_race_card_html_links_to_later_generated_race(new_roots, monkeypatch):
-    """1Rの生成時点では2Rのページがまだ存在しないため、1回だけの生成では
-    1R→2Rの「次のレース」リンクが付かない（build_nav_htmlがrace_page_existsで
-    判定するため）。2パス生成により、2回目には2Rも既に存在するので
-    1R→2Rのリンクが解決されることを確認する。
+def test_make_daily_race_card_html_links_resolve_in_a_single_pass(new_roots, monkeypatch):
+    """右側タブの階層は開催スケジュール（race_time_id_list）から組み立てるため、
+    生成順に関係なく1回の生成だけで他レースへのリンクが解決されることを確認する
+    （旧build_nav_htmlはrace_page_existsで判定していたため2パス生成が必要だった）。
     """
     second_race_id = "202404040602"
     race_card_dir = new_roots / "race_card" / SAMPLE_DATE_STR
@@ -187,11 +235,11 @@ def test_make_daily_race_card_html_links_to_later_generated_race(new_roots, monk
     race1_html = (out_dir / "04_nigataR1.html").read_text(encoding="utf-8")
     race2_html = (out_dir / "04_nigataR2.html").read_text(encoding="utf-8")
 
-    print(f"\n--- make_daily_race_card_html({SAMPLE_RACE_DAY}) 2レースの前後リンク ---")
-    print(f"  04_nigataR1.html に次レースへのリンク: {'04_nigataR2.html' in race1_html}")
-    print(f"  04_nigataR2.html に前レースへのリンク: {'04_nigataR1.html' in race2_html}")
+    print(f"\n--- make_daily_race_card_html({SAMPLE_RACE_DAY}) 2レースの相互リンク ---")
+    print(f"  04_nigataR1.html → 2R: {'04_nigataR2.html' in race1_html}")
+    print(f"  04_nigataR2.html → 1R: {'04_nigataR1.html' in race2_html}")
 
-    # 1R→2R（次のレース、2パス目で解決される）
-    assert '<a href="04_nigataR2.html">' in race1_html
-    # 2R→1R（前のレース、1パス目から解決されている）
-    assert '<a href="04_nigataR1.html">' in race2_html
+    # 1R→2R（次のレース、1回の生成だけで解決される）
+    assert '<a href="../../races/20241020/04_nigataR2.html">' in race1_html
+    # 2R→1R（前のレース）
+    assert '<a href="../../races/20241020/04_nigataR1.html">' in race2_html

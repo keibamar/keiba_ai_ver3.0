@@ -124,102 +124,64 @@ def build_table_race_cards(df):
     return rows
 
 
-def build_nav_html(date_str, place_id, target_id):
-    """前後レース＋同日の他場同レースリンクを作成して返す"""
-    prev_link = ""
-    next_link = ""
-    other_places_html = ""
+def _race_card_breadcrumb_items(date_str, date_display, place_id, target_id, race_name):
+    """出馬表ページの右側タブ・パンくず用の階層（同日の開催場＋選択中の開催場の他レース）を返す
+
+    レースカレンダー→開催日→開催場（同日の他場も兄弟として並べる）→レース
+    （同じ開催場の他レースも兄弟として並べる）という階層にする。他の開催場を
+    選んだ場合は、その場の同じレース番号のページへ直接遷移する（無ければ
+    その場の最初のレースへフォールバックする）。
+    """
+    race_num = int(str(target_id)[-2:])
+    place_name = NAME_LIST[place_id - 1]
+    place_key = PLACE_LIST[place_id - 1]
+    self_path = f"races/{date_str}/{place_key}R{race_num}.html"
+
     race_day = datetime.strptime(date_str, "%Y%m%d")
     df_info = race_card_dataset_manager.get_race_time_id_list_df(race_day)
 
+    venue_siblings = [(place_name, self_path)]
+    race_siblings = [(f"{race_num}R {race_name}", None)]
+
     if not df_info.empty:
-        # --- 前後レースリンク ---
-        # 同じ開催（place_id）だけ抽出
-        df_place = df_info[df_info["race_id"].astype(str).str.startswith(str(target_id)[:10])]
-        df_place = df_place.sort_values("race_id").reset_index(drop=True)
-        race_ids = df_place["race_id"].astype(str).tolist()
-        place_name = NAME_LIST[place_id - 1]
+        ids = df_info["race_id"].astype(str)
+        place_ids_today = sorted({int(rid[4:6]) for rid in ids})
 
-        if str(target_id) in race_ids:
-            idx = race_ids.index(str(target_id))
-
-            # 前レース
-            if idx > 0:
-                prev = df_place.iloc[idx - 1]
-                prev_name = str(prev["race_name"])
-                prev_num = int(str(prev["race_id"])[-2:])
-                prev_file = f"{PLACE_LIST[place_id - 1]}R{prev_num}.html"
-                if html_manager.race_page_exists(date_str, prev_file):
-                    prev_link = f'<a href="{prev_file}">← {place_name}{prev_num}R:{prev_name}</a>'
-                else:
-                    prev_link = f'<span class="disabled">← 前のレース（{prev_name}）</span>'
-
-            # 次レース
-            if idx < len(df_place) - 1:
-                nxt = df_place.iloc[idx + 1]
-                nxt_name = str(nxt["race_name"])
-                nxt_num = int(str(nxt["race_id"])[-2:])
-                next_file = f"{PLACE_LIST[place_id - 1]}R{nxt_num}.html"
-                if html_manager.race_page_exists(date_str, next_file):
-                    next_link = f'<a href="{next_file}">{place_name}{nxt_num}R:{nxt_name} →</a>'
-                else:
-                    next_link = f'<span class="disabled">次のレース（{nxt_name}） →</span>'
-
-        # --- 同日の他場同レースリンク ---
-        # 今のレース番号を抽出
-        race_num = int(str(target_id)[-2:])
-        same_rnum_df = df_info[df_info["race_id"].astype(str).str.endswith(f"{race_num:02d}")]
-        same_rnum_df = same_rnum_df.sort_values("race_id")
-
-        other_links = []
-        for _, r in same_rnum_df.iterrows():
-            rid = str(r["race_id"])
-            rname = str(r["race_name"])
-            # 開催場コードの取得
-            place_code = rid[4:6]
-            try:
-                pidx = int(place_code)
-                place_id_str = PLACE_LIST[pidx - 1]
-                place_name = NAME_LIST[pidx - 1]
-            except Exception:
+        venue_siblings = []
+        for pid in place_ids_today:
+            pid_name = NAME_LIST[pid - 1]
+            pid_key = PLACE_LIST[pid - 1]
+            if pid == place_id:
+                venue_siblings.append((pid_name, self_path))
                 continue
-            # 自分自身は除外
-            if pidx == place_id:
-                continue
-            race_file = f"{place_id_str}R{race_num}.html"
-            # ファイル存在チェック
-            if html_manager.race_page_exists(date_str, race_file):
-                link_html = f'<a href="{race_file}">{place_name}{race_num}R（{rname}）</a>'
-            else:
-                link_html = f'<span class="disabled">{place_name}{race_num}R（{rname}）</span>'
-            other_links.append(link_html)
+            pid_ids = [rid for rid in ids if int(rid[4:6]) == pid]
+            same_num = [rid for rid in pid_ids if int(rid[-2:]) == race_num]
+            target_rid = same_num[0] if same_num else min(pid_ids, key=lambda rid: int(rid[-2:]))
+            venue_siblings.append((pid_name, f"races/{date_str}/{pid_key}R{int(target_rid[-2:])}.html"))
 
-        if other_links:
-            other_places_html = "<div class='other-places'>他場：" + " ｜ ".join(other_links) + "</div>"
+        df_place = df_info[ids.str.startswith(str(target_id)[:10])].sort_values("race_id")
+        race_siblings = []
+        for _, row in df_place.iterrows():
+            rid = str(row["race_id"])
+            rnum = int(rid[-2:])
+            label = f"{rnum}R {row['race_name']}"
+            race_siblings.append((label, None if rnum == race_num else f"races/{date_str}/{place_key}R{rnum}.html"))
+        if not race_siblings:
+            race_siblings = [(f"{race_num}R {race_name}", None)]
 
-    # --- HTML全体 ---
-    nav_html = f"""
-    <div class="nav">
-      <a href="index.html">この日の一覧に戻る</a><br>
-      <div class="subnav">
-        {prev_link if prev_link else '<span class="disabled">← 前のレースなし</span>'}
-        {next_link if next_link else '<span class="disabled">次のレースなし →</span>'}
-      </div>
-      {other_places_html}
-    </div>
-    """
-    return nav_html
+    return [
+        ("レースカレンダー", "races/index.html"),
+        (date_display, f"races/{date_str}/index.html"),
+        (place_name, self_path, venue_siblings),
+        (f"{race_num}R {race_name}", None, race_siblings),
+    ]
 
 
-def build_html_content(date_str, date_display, place_id, race_num, race_name, race_time, nav_html, table_rows, run_time_info, weight_info, peds_info, pops_info, frames_info, recent_html, result_table_html, payout_table_html):
+def build_html_content(date_str, date_display, place_id, race_num, race_name, race_time, target_id, table_rows, run_time_info, weight_info, peds_info, pops_info, frames_info, recent_html, result_table_html, payout_table_html):
     """HTMLテンプレートを返す"""
     race_time_display = f"{race_time[:2]}:{race_time[2:]}" if race_time else ""
     place_name = NAME_LIST[place_id - 1]
-    breadcrumb_items = [
-        ("レースカレンダー", "races/index.html"),
-        (date_display, f"races/{date_str}/index.html"),
-        (race_name or f"{place_name}{race_num}R", None),
-    ]
+    breadcrumb_items = _race_card_breadcrumb_items(date_str, date_display, place_id, target_id, race_name)
     site_nav = site_nav_html(base_path="../../", breadcrumb_items=breadcrumb_items)
     breadcrumb = breadcrumb_html(breadcrumb_items, base_path="../../")
     footer = site_footer_html()
@@ -234,27 +196,6 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     body {{
       font-family: sans-serif;
       margin: 20px;
-    }}
-    .nav {{
-      margin: 10px 0;
-      padding: 5px;
-      background: #f9f9f9;
-    }}
-    .nav a {{
-      margin: 0 8px;
-      text-decoration: none;
-      color: blue;
-      font-weight: bold;
-    }}
-    .subnav {{
-      margin-top: 5px;
-    }}
-    .subnav a {{
-      margin-right: 10px;
-    }}
-    .disabled {{
-      color: #aaa;
-      margin-right: 10px;
     }}
     table {{
       border-collapse: collapse;
@@ -378,9 +319,9 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
   </style>
 </head>
 <body>
+  <a id="pageTop"></a>
   {site_nav}
   {breadcrumb}
-  {nav_html}
   <h2>{date_display} </h2>
   <h2>{place_name}競馬場 第{race_num}R </h2>
   <h2>{race_name}</h2>
@@ -553,6 +494,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     }});
   }});
   </script>
+  <p class="back-to-top"><a href="#pageTop">&uarr; ページの先頭へ戻る</a></p>
   {footer}
 </body>
 </html>
@@ -565,7 +507,6 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     site_nav=site_nav,
     breadcrumb=breadcrumb,
     footer=footer,
-    nav_html=nav_html,
     table_rows=table_rows,
     run_time_info=run_time_info,
     weight_info=weight_info,
@@ -1494,8 +1435,6 @@ def make_race_card_html(date_str, place_id, target_id):
     pops_info = generate_pops_info(date_str, place_id, target_id)
     # レースの枠順情報を取得
     frames_info = generate_frame_horse_info(date_str, place_id, target_id)
-    # ナビゲーション作成
-    nav_html = build_nav_html(date_str, place_id, target_id)
     # 近走の結果を取得
     recent_html = generate_recent_same_condition_html(date_str, place_id, target_id)
 
@@ -1582,7 +1521,7 @@ def make_race_card_html(date_str, place_id, target_id):
         race_num=race_num,
         race_name=race_name,
         race_time=race_time,
-        nav_html=nav_html,
+        target_id=target_id,
         table_rows=table_rows,
         run_time_info=run_time_info,
         weight_info=weight_info,
@@ -1612,11 +1551,10 @@ def make_race_card_html(date_str, place_id, target_id):
 def make_daily_race_card_html(race_day=date.today()):
     """指定された日付の全レースカード HTML を生成する
 
-    build_nav_html は前後レースへのリンクを、生成時点で対象ページが既に
-    存在するか（html_manager.race_page_exists）で判定する。1回のループだけだと
-    まだ生成されていない後続レース（次のレース）へのリンクが付かないため、
-    全レースを1回生成した後、同じ範囲をもう一度生成し直して前後リンクを
-    確定させる（2パス生成）。
+    右側タブ・パンくず（_race_card_breadcrumb_items）は、生成済みページの有無では
+    なく開催スケジュール（race_card_dataset_manager.get_race_time_id_list_df）から
+    リンク先を決めるため、生成順に依存しない。1回のループで全レースぶん生成すれば
+    すべて確定する。
     """
     date_str = race_day.strftime("%Y%m%d")
 
@@ -1629,9 +1567,8 @@ def make_daily_race_card_html(race_day=date.today()):
         for race_id in race_id_list:
             targets.append((place_id, race_id))
 
-    for _ in range(2):
-        for place_id, race_id in targets:
-            make_race_card_html(date_str, place_id, race_id)
+    for place_id, race_id in targets:
+        make_race_card_html(date_str, place_id, race_id)
 
 
 def make_up_to_date_race_card_html(start_day=date(2025, 10, 1), today=date.today()):
