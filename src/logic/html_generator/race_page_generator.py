@@ -195,6 +195,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
   {adsense}
   <title>{date_display} {place_name}競馬場 第{race_num}R {race_name}</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
   <style>
     body {{
       font-family: sans-serif;

@@ -1372,6 +1372,7 @@ def course_report_to_html(report):
   {adsense_script_html()}
   <title>{place_name} {race_type}{course_len}m コース詳細</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
 </head>
 <body class="section-courses">
   {site_nav_html(base_path="../../", breadcrumb_items=tab_hierarchy_items)}
@@ -1522,6 +1523,7 @@ def make_course_index_page():
   {adsense_script_html()}
   <title>コース詳細データ</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 </head>
 <body class="section-courses">
   {site_nav_html(base_path="../", breadcrumb_items=tab_hierarchy_items)}
@@ -1602,6 +1604,7 @@ def make_track_page(place_id):
   {adsense_script_html()}
   <title>{place_name} コース一覧</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
 </head>
 <body class="section-courses">
   {site_nav_html(base_path="../../", breadcrumb_items=tab_hierarchy_items)}

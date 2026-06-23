@@ -262,6 +262,7 @@ def make_ai_performance_index_page():
   {adsense_script_html()}
   <title>AI予想成績</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 </head>
 <body class="section-performance">
   {site_nav_html(base_path="../", breadcrumb_items=tab_hierarchy_items)}
@@ -331,6 +332,7 @@ def make_annual_performance_page(year, df=None):
   {adsense_script_html()}
   <title>{year}年 AI予想成績</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
 </head>
 <body class="section-performance">
   {site_nav_html(base_path="../../", breadcrumb_items=breadcrumb_items)}
@@ -372,6 +374,7 @@ def make_meeting_performance_page(year, place_id, times, df=None):
   {adsense_script_html()}
   <title>{year}年 {place_name}{times}回 AI予想成績</title>
   <link rel="stylesheet" href="../../../assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="../../../assets/favicon.svg">
 </head>
 <body class="section-performance">
   {site_nav_html(base_path="../../../", breadcrumb_items=breadcrumb_items)}
@@ -443,6 +446,7 @@ def make_course_performance_index_page(place_id, df=None):
   {adsense_script_html()}
   <title>{place_name} AI予想成績</title>
   <link rel="stylesheet" href="../../../assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="../../../assets/favicon.svg">
 </head>
 <body class="section-performance">
   {site_nav_html(base_path="../../../", breadcrumb_items=tab_hierarchy_items)}
@@ -546,6 +550,7 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
   {adsense_script_html()}
   <title>{place_name} {race_type}{course_len}m AI予想成績</title>
   <link rel="stylesheet" href="../../../assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="../../../assets/favicon.svg">
 </head>
 <body class="section-performance">
   {site_nav_html(base_path="../../../", breadcrumb_items=tab_hierarchy_items)}

@@ -32,6 +32,7 @@ def privacy_policy_template():
   {adsense_script_html()}
   <title>プライバシーポリシー｜{SITE_NAME}</title>
   <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 </head>
 <body>
   {site_nav_html(base_path="", current_path="privacy.html")}
@@ -81,6 +82,7 @@ def terms_template():
   {adsense_script_html()}
   <title>利用規約｜{SITE_NAME}</title>
   <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 </head>
 <body>
   {site_nav_html(base_path="", current_path="terms.html")}

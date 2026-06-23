@@ -184,6 +184,7 @@ def test_course_report_to_html_structure():
     # サイト共通ナビゲーション・列ソートJS・タブJS・年度別の折りたたみが追加されている
     assert '<nav class="site-nav">' in html
     assert "pagead2.googlesyndication.com" in html
+    assert 'rel="icon"' in html
     assert '<a href="../../performance/index.html">AI成績</a>' in html
     assert '<script src="../../assets/js/sortable-table.js"></script>' in html
     assert '<script src="../../assets/js/section-tabs.js"></script>' in html

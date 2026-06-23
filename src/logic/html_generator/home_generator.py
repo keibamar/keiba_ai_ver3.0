@@ -302,6 +302,7 @@ def home_template():
   {adsense_script_html()}
   <title>{SITE_TITLE}</title>
   <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 </head>
 <body>
   <main>

@@ -165,6 +165,7 @@ def daily_index_template(date_display, nav_links, place_races, place_keys, table
   {adsense_script_html()}
   <title>{date_display} レース一覧</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
   <style>
     body {{
       font-family: sans-serif;
@@ -350,6 +351,7 @@ def races_calendar_template():
   {adsense_script_html()}
   <title>開催日カレンダー</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
 </head>
 <body class="section-calendar">
   {site_nav_html(base_path="../", current_path="races/index.html", show_calendar=False)}
