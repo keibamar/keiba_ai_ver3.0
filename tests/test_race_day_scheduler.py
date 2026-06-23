@@ -94,6 +94,7 @@ def test_make_time_id_list_returns_expected(monkeypatch):
 
 def test_update_weekly_time_id_list_saves_next_7_days(monkeypatch):
     monkeypatch.setattr(race_day_scheduler, "make_time_id_list", lambda race_day: [["1000", "X", "Y"]])
+    monkeypatch.setattr(race_day_scheduler.home_generator, "make_home_page", lambda: None)
 
     saved = []
     monkeypatch.setattr(
@@ -115,6 +116,7 @@ def test_update_weekly_time_id_list_saves_next_7_days(monkeypatch):
 
 def test_update_weekly_time_id_list_skips_days_with_no_races(monkeypatch):
     monkeypatch.setattr(race_day_scheduler, "make_time_id_list", lambda race_day: [])
+    monkeypatch.setattr(race_day_scheduler.home_generator, "make_home_page", lambda: None)
 
     saved = []
     monkeypatch.setattr(
@@ -125,6 +127,49 @@ def test_update_weekly_time_id_list_skips_days_with_no_races(monkeypatch):
     race_day_scheduler.update_weekly_time_id_list(date(2024, 1, 1))
 
     assert saved == []
+
+
+def test_update_weekly_time_id_list_resets_home_page(monkeypatch):
+    monkeypatch.setattr(race_day_scheduler, "make_time_id_list", lambda race_day: [])
+    monkeypatch.setattr(race_day_scheduler.race_card_dataset_manager, "save_time_id_list", lambda *a: None)
+
+    calls = []
+    monkeypatch.setattr(race_day_scheduler.home_generator, "make_home_page", lambda: calls.append(True))
+
+    race_day_scheduler.update_weekly_time_id_list(date(2024, 1, 1))
+
+    assert calls == [True]
+
+
+# --- _upcoming_weekend_days / make_weekend_provisional_html -----------------------
+
+
+def test_upcoming_weekend_days_from_thursday():
+    # 2024-01-04は木曜日
+    base_day = date(2024, 1, 4)
+
+    result = race_day_scheduler._upcoming_weekend_days(base_day)
+
+    assert result == [date(2024, 1, 6), date(2024, 1, 7)]
+
+
+def test_upcoming_weekend_days_from_saturday_includes_itself():
+    # 2024-01-06は土曜日
+    base_day = date(2024, 1, 6)
+
+    result = race_day_scheduler._upcoming_weekend_days(base_day)
+
+    assert result == [date(2024, 1, 6), date(2024, 1, 7)]
+
+
+def test_make_weekend_provisional_html_calls_make_html_prev_day_for_sat_and_sun(monkeypatch):
+    calls = []
+    monkeypatch.setattr(race_day_scheduler, "make_html_prev_day", lambda race_day: calls.append(race_day))
+
+    # 2024-01-04は木曜日
+    race_day_scheduler.make_weekend_provisional_html(date(2024, 1, 4))
+
+    assert calls == [date(2024, 1, 6), date(2024, 1, 7)]
 
 
 # --- make_html_prev_day ----------------------------------------------------------

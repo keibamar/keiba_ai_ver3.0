@@ -6,6 +6,37 @@
 
 import re
 
+import pandas as pd
+
+
+def is_waku_decided(race_card_df):
+    """枠順（枠番）がまだ確定していない出馬表かどうかを判定する
+
+    レース発走の数日前は、netkeiba出馬表ページに馬名等は掲載されるが
+    枠番抽せん前のため「枠」列が存在しないか全てNaNになる。この場合は
+    AI予想（rank_prediction）の入力に使えないため、呼び出し側で
+    予想をスキップする判定に使う。
+
+    Args:
+        race_card_df (pd.DataFrame): 出馬表
+
+    Returns:
+        bool: 「枠」列が存在し、1件以上値が入っていればTrue
+    """
+    return "枠" in race_card_df.columns and bool(race_card_df["枠"].notna().any())
+
+
+def blank_rank_df(n):
+    """枠順未確定で予想をスキップする場合のscore/rank列（すべてNaN）を返す
+
+    Args:
+        n (int): 出走馬数（race_card_dfの行数と揃える）
+
+    Returns:
+        pd.DataFrame: score, rank列を持つDataFrame（全行NaN）
+    """
+    return pd.DataFrame({"score": [pd.NA] * n, "rank": [pd.NA] * n})
+
 
 def parse_race_card_info_tokens(info):
     """出馬表ページのレース情報トークン列から

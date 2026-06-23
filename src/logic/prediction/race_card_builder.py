@@ -41,11 +41,15 @@ def make_race_card(race_id):
         horse_ped = horse_peds_dataset_manager.get_horse_peds_dataset(horse_id)
         horse_peds_df = pd.concat([horse_peds_df, horse_ped], axis=1)
 
-    # 枠番、馬番を取得してAI予想
-    waku_df = pd.concat(
-        [race_card_df["枠"].reset_index(drop=True), race_card_df["馬番"].reset_index(drop=True)], axis=1
-    )
-    rank_df = race_prediction_engine.rank_prediction(race_id, horse_ids, race_info_df, waku_df)
+    # 枠番、馬番を取得してAI予想（枠順抽せん前は「枠」列が無い/全NaNのため予想をスキップする）
+    if race_card_transform.is_waku_decided(race_card_df):
+        waku_df = pd.concat(
+            [race_card_df["枠"].reset_index(drop=True), race_card_df["馬番"].reset_index(drop=True)], axis=1
+        )
+        rank_df = race_prediction_engine.rank_prediction(race_id, horse_ids, race_info_df, waku_df)
+    else:
+        print(f"ℹ️ [スキップ/エラーではありません] 枠順未確定のためAI予想をスキップ: {race_id}")
+        rank_df = race_card_transform.blank_rank_df(len(race_card_df))
 
     # 父，母，母父のみ抽出してデータセットを統合
     horse_peds_display = race_card_transform.extract_peds_for_display(horse_peds_df)

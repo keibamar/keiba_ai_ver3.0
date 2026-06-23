@@ -33,7 +33,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from src.config import constants, paths  # noqa: E402
-from src.logic.html_generator import daily_index_generator, race_page_generator  # noqa: E402
+from src.logic.html_generator import daily_index_generator, home_generator, race_page_generator  # noqa: E402
 from src.logic.prediction import race_card_builder  # noqa: E402
 from src.logic.scraping import netkeiba_scraper  # noqa: E402
 from src.managers import (  # noqa: E402
@@ -86,6 +86,9 @@ def make_time_id_list(race_day):
 def update_weekly_time_id_list(base_day=date.today()):
     """次の7日分のrace_time_id_listを作成・保存する（毎週木曜実行想定）
 
+    あわせてHOMEページを再生成し、「今週のメインレース」「先週の結果」を
+    新しい週の内容にリセットする。
+
     Args:
         base_day(date) : 基準日(初期値:今日)
     """
@@ -94,6 +97,37 @@ def update_weekly_time_id_list(base_day=date.today()):
         time_id_list = make_time_id_list(race_day)
         if time_id_list:
             race_card_dataset_manager.save_time_id_list(race_day, time_id_list)
+
+    home_generator.make_home_page()
+
+
+def _upcoming_weekend_days(base_day):
+    """base_day以降で直近の土曜・日曜の日付を返す（base_day自身が土/日ならそれを含む）
+
+    Args:
+        base_day(date) : 基準日
+
+    Returns:
+        list[date]: [直近の土曜日, 直近の日曜日]
+    """
+    saturday = base_day + timedelta(days=(5 - base_day.weekday()) % 7)
+    sunday = saturday + timedelta(days=1)
+    return [saturday, sunday]
+
+
+def make_weekend_provisional_html(base_day=date.today()):
+    """直近の週末（土・日）の出馬表HTMLを先行生成する（毎週木曜実行想定）
+
+    枠順抽せん前のため、出馬表には馬名等のみが入り、AI予想（score/rank）は
+    空欄になる（race_card_builder.make_race_card参照）。枠順確定後の金曜・土曜に
+    make_html_prev_dayを再実行することで、AI予想入りの内容に上書きされる。
+    update_weekly_time_id_list で保存済みのrace_time_id_listが前提となる。
+
+    Args:
+        base_day(date) : 基準日(初期値:今日)
+    """
+    for race_day in _upcoming_weekend_days(base_day):
+        make_html_prev_day(race_day)
 
 
 def make_html_prev_day(race_day):

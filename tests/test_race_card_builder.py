@@ -39,6 +39,36 @@ def test_parse_race_card_info_tokens_turf_and_obstacle():
     assert transform.parse_race_card_info_tokens(["障害", "3000m"])["race_type"] == "障害"
 
 
+# --- is_waku_decided / blank_rank_df -----------------------------------------------
+
+
+def test_is_waku_decided_true_when_waku_column_has_values():
+    race_card_df = pd.DataFrame({"枠": [1, 2], "馬番": [1, 2]})
+
+    assert transform.is_waku_decided(race_card_df) is True
+
+
+def test_is_waku_decided_false_when_waku_column_missing():
+    race_card_df = pd.DataFrame({"馬番": [1, 2]})
+
+    assert transform.is_waku_decided(race_card_df) is False
+
+
+def test_is_waku_decided_false_when_waku_column_all_nan():
+    race_card_df = pd.DataFrame({"枠": [None, None], "馬番": [1, 2]})
+
+    assert transform.is_waku_decided(race_card_df) is False
+
+
+def test_blank_rank_df_returns_nan_score_and_rank():
+    result = transform.blank_rank_df(3)
+
+    assert result.shape == (3, 2)
+    assert list(result.columns) == ["score", "rank"]
+    assert result["score"].isna().all()
+    assert result["rank"].isna().all()
+
+
 # --- fill_race_info_defaults ------------------------------------------------------
 
 
