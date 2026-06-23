@@ -26,10 +26,16 @@ def test_site_nav_html_default_base_path():
 def test_site_nav_html_top_nav_has_no_duplicate_links_with_sidebar():
     html = n.site_nav_html()
 
-    # 主要セクションへのリンクは右側タブに一本化し、画面上部のnav本体には
-    # 検索ボックスのみを置く（タブとの二重表示を避ける）
+    # 主要セクション（HOME・レースカレンダー等）へのリンクは右側タブに一本化し、
+    # 画面上部のnav本体にはブランド表示・ブログ（別サイト、サイドバーには無い）への
+    # リンク・検索ボックスのみを置く（サイドバーとの二重表示を避ける）
     nav_only = html[: html.index("</nav>")]
-    assert "<a href=" not in nav_only
+    # HOMEはブランド表示（ロゴ）自体が常にリンク先として持つため対象外にする
+    for label, path in n.NAV_LINKS:
+        if label == "HOME":
+            continue
+        assert f'href="{path}"' not in nav_only
+    assert f'<a href="{n.BLOG_URL}" class="site-blog-link">' in nav_only
     assert '<div class="page-search"' in nav_only
 
 

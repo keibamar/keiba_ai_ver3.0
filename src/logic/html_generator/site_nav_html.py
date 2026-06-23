@@ -29,6 +29,11 @@ SITE_TAGLINE = "競馬AIデータサイト"
 # 使って半角に統一した表記にする。
 SITE_TITLE = f"{SITE_NAME}({SITE_NAME_READING}）|{SITE_TAGLINE}"
 
+# WordPress（Cocoon）で運営するブログ本体のURL。データサイトはmar-keiba.com/data/に、
+# ブログはドメイン直下に置く構成のため、データサイトからの相対パス（base_path）では
+# 届かない別サイトとして、絶対URLでリンクする。
+BLOG_URL = "https://mar-keiba.com/"
+
 NAV_LINKS = [
     ("HOME", "index.html"),
     ("レースカレンダー", "races/index.html"),
@@ -79,6 +84,7 @@ def site_nav_html(base_path="", current_path=None, breadcrumb_items=None, show_c
     """
     return f"""<nav class="site-nav">
   {site_brand_html(base_path)}
+  <a href="{BLOG_URL}" class="site-blog-link">📝 ブログ</a>
   {search_box_html(base_path)}
 </nav>
 <script src="{base_path}assets/js/page-search-index.js"></script>
