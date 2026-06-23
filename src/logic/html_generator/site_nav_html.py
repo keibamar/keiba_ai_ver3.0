@@ -29,10 +29,10 @@ SITE_TAGLINE = "競馬AIデータサイト"
 # 使って半角に統一した表記にする。
 SITE_TITLE = f"{SITE_NAME}({SITE_NAME_READING}）|{SITE_TAGLINE}"
 
-# WordPress（Cocoon）で運営するブログ本体のURL。データサイトはmar-keiba.com/data/に、
-# ブログはドメイン直下に置く構成のため、データサイトからの相対パス（base_path）では
-# 届かない別サイトとして、絶対URLでリンクする。
-BLOG_URL = "https://mar-keiba.com/"
+# WordPress（Cocoon）で運営するブログ本体のURL。データサイト（このコードが生成する
+# 静的サイト）をmar-keiba.com直下に、ブログをmar-keiba.com/blog/に置く構成のため、
+# データサイトからの相対パス（base_path）では届かない別サイトとして、絶対URLでリンクする。
+BLOG_URL = "https://mar-keiba.com/blog/"
 
 NAV_LINKS = [
     ("HOME", "index.html"),
