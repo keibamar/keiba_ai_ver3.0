@@ -153,6 +153,7 @@ def test_make_race_card_html_generates_full_page(new_roots):
     assert '<link rel="stylesheet" href="../../assets/css/styles.css">' in html_content
     assert "pagead2.googlesyndication.com" in html_content
     assert 'rel="icon"' in html_content
+    assert "googletagmanager.com/gtag/js?id=G-DNC949064T" in html_content
     assert '<nav class="site-nav">' in html_content
     assert '<aside class="page-calendar-tab">' in html_content
     assert "<footer>" in html_content

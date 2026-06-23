@@ -12,7 +12,7 @@
 
 from src.logic.html_generator.site_nav_html import (
     SITE_NAME,
-    adsense_script_html,
+    adsense_script_html, ga4_script_html,
     breadcrumb_html,
     site_footer_html,
     site_nav_html,
@@ -30,6 +30,7 @@ def privacy_policy_template():
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {adsense_script_html()}
+  {ga4_script_html()}
   <title>プライバシーポリシー｜{SITE_NAME}</title>
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
@@ -80,6 +81,7 @@ def terms_template():
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {adsense_script_html()}
+  {ga4_script_html()}
   <title>利用規約｜{SITE_NAME}</title>
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">

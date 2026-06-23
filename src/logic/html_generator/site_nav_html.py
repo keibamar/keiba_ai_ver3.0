@@ -42,6 +42,23 @@ def adsense_script_html():
         f'?client={ADSENSE_CLIENT_ID}" crossorigin="anonymous"></script>'
     )
 
+
+# Google Analytics 4（GA4）の測定ID。アクセス解析・広告効果測定のため全ページに入れる。
+GA4_MEASUREMENT_ID = "G-DNC949064T"
+
+
+def ga4_script_html():
+    """全ページの<head>に置くGoogle Analytics（GA4）のトラッキングタグを返す"""
+    return (
+        f'<script async src="https://www.googletagmanager.com/gtag/js?id={GA4_MEASUREMENT_ID}"></script>\n'
+        "  <script>\n"
+        "    window.dataLayer = window.dataLayer || [];\n"
+        "    function gtag(){dataLayer.push(arguments);}\n"
+        "    gtag('js', new Date());\n"
+        f"    gtag('config', '{GA4_MEASUREMENT_ID}');\n"
+        "  </script>"
+    )
+
 NAV_LINKS = [
     ("HOME", "index.html"),
     ("レースカレンダー", "races/index.html"),

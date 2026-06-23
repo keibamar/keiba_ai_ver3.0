@@ -369,3 +369,14 @@ def test_adsense_script_html_includes_client_id():
         f'?client={n.ADSENSE_CLIENT_ID}" crossorigin="anonymous"></script>'
     )
     assert n.ADSENSE_CLIENT_ID == "ca-pub-5124016618612171"
+
+
+def test_ga4_script_html_includes_measurement_id():
+    html = n.ga4_script_html()
+
+    print(f"\n--- ga4_script_html() ---\n{html}")
+
+    assert n.GA4_MEASUREMENT_ID == "G-DNC949064T"
+    assert f"https://www.googletagmanager.com/gtag/js?id={n.GA4_MEASUREMENT_ID}" in html
+    assert f"gtag('config', '{n.GA4_MEASUREMENT_ID}');" in html
+    assert "window.dataLayer = window.dataLayer || [];" in html

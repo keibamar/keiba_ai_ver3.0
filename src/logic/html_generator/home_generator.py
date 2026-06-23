@@ -20,7 +20,7 @@ from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator.race_type_badge_html import course_label_html
 from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
-from src.logic.html_generator.site_nav_html import SITE_TITLE, adsense_script_html, site_footer_html, site_nav_html
+from src.logic.html_generator.site_nav_html import SITE_TITLE, adsense_script_html, ga4_script_html, site_footer_html, site_nav_html
 from src.managers import ai_performance_dataset_manager as dataset_manager
 from src.managers import html_manager
 
@@ -300,6 +300,7 @@ def home_template():
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="canonical" href="https://mar-keiba.com/">
   {adsense_script_html()}
+  {ga4_script_html()}
   <title>{SITE_TITLE}</title>
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">

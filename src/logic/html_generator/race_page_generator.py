@@ -12,7 +12,13 @@ import pandas as pd
 
 from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS, WAKU_COLORS
 from src.logic.html_generator import horse_report_generator
-from src.logic.html_generator.site_nav_html import adsense_script_html, breadcrumb_html, site_footer_html, site_nav_html
+from src.logic.html_generator.site_nav_html import (
+    adsense_script_html,
+    breadcrumb_html,
+    ga4_script_html,
+    site_footer_html,
+    site_nav_html,
+)
 from src.managers import (
     html_manager,
     peds_results_dataset_manager,
@@ -186,6 +192,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     breadcrumb = breadcrumb_html(breadcrumb_items, base_path="../../")
     footer = site_footer_html(base_path="../../")
     adsense = adsense_script_html()
+    ga4 = ga4_script_html()
     return """
 <!DOCTYPE html>
 <html lang="ja">
@@ -193,6 +200,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {adsense}
+  {ga4}
   <title>{date_display} {place_name}競馬場 第{race_num}R {race_name}</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
   <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
@@ -512,6 +520,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     breadcrumb=breadcrumb,
     footer=footer,
     adsense=adsense,
+    ga4=ga4,
     table_rows=table_rows,
     run_time_info=run_time_info,
     weight_info=weight_info,

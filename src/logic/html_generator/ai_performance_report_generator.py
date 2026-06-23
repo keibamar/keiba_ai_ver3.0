@@ -17,7 +17,7 @@ from src.config.lists import COURSE_LISTS
 from src.logic.html_generator.race_type_badge_html import course_label_html, race_type_span_html
 from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_big_html, return_rate_gauge_html
 from src.logic.html_generator.site_nav_html import (
-    adsense_script_html,
+    adsense_script_html, ga4_script_html,
     breadcrumb_html,
     sidebar_html,
     site_footer_html,
@@ -260,6 +260,7 @@ def make_ai_performance_index_page():
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {adsense_script_html()}
+  {ga4_script_html()}
   <title>AI予想成績</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
   <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
@@ -330,6 +331,7 @@ def make_annual_performance_page(year, df=None):
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {adsense_script_html()}
+  {ga4_script_html()}
   <title>{year}年 AI予想成績</title>
   <link rel="stylesheet" href="../../assets/css/styles.css">
   <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
@@ -372,6 +374,7 @@ def make_meeting_performance_page(year, place_id, times, df=None):
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {adsense_script_html()}
+  {ga4_script_html()}
   <title>{year}年 {place_name}{times}回 AI予想成績</title>
   <link rel="stylesheet" href="../../../assets/css/styles.css">
   <link rel="icon" type="image/svg+xml" href="../../../assets/favicon.svg">
@@ -444,6 +447,7 @@ def make_course_performance_index_page(place_id, df=None):
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {adsense_script_html()}
+  {ga4_script_html()}
   <title>{place_name} AI予想成績</title>
   <link rel="stylesheet" href="../../../assets/css/styles.css">
   <link rel="icon" type="image/svg+xml" href="../../../assets/favicon.svg">
@@ -548,6 +552,7 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {adsense_script_html()}
+  {ga4_script_html()}
   <title>{place_name} {race_type}{course_len}m AI予想成績</title>
   <link rel="stylesheet" href="../../../assets/css/styles.css">
   <link rel="icon" type="image/svg+xml" href="../../../assets/favicon.svg">
