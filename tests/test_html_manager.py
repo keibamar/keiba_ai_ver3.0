@@ -10,6 +10,7 @@ from datetime import date
 
 import pytest
 
+from src.config import paths
 from src.managers import html_manager as new_html_manager
 
 SAMPLE_RACE_DAY = date(2026, 6, 14)
@@ -70,3 +71,52 @@ def test_add_race_day_raises_if_array_missing(new_js_path):
 
     with pytest.raises(ValueError):
         new_html_manager.add_race_day(SAMPLE_RACE_DAY)
+
+
+@pytest.fixture
+def new_races_root(tmp_path, monkeypatch, new_js_path):
+    races_root = tmp_path / "public_html" / "races"
+    monkeypatch.setattr(paths, "PUBLIC_HTML_RACES_PATH", str(races_root))
+    return races_root
+
+
+def test_regenerate_race_days_js_only_includes_existing_dirs_from_min_year(new_races_root, new_js_path):
+    # 実体のあるディレクトリ（去年・今年・実体の無い日付混在）を用意する
+    for day_str in ["20241020", "20260104", "20260620"]:
+        (new_races_root / day_str).mkdir(parents=True)
+    # raceDays.jsには実体の無い日付（20260103）と去年の日付が残っている状態を再現する
+    new_js_path.parent.mkdir(parents=True, exist_ok=True)
+    new_js_path.write_text(
+        'window.racedays = [\n  "20241020",\n  "20260103",\n  "20260104",\n  "20260620"\n];\n',
+        encoding="utf-8",
+    )
+
+    new_html_manager.regenerate_race_days_js(min_year=2026)
+
+    content = new_js_path.read_text(encoding="utf-8")
+    print(f"\n--- regenerate_race_days_js(min_year=2026) ---\n{content}")
+
+    # 今年（2026年）かつ実体のあるディレクトリのみ残る
+    assert '"20260104"' in content
+    assert '"20260620"' in content
+    # 去年の日付・実体の無い日付（20260103）は含まれない
+    assert "20241020" not in content
+    assert "20260103" not in content
+
+
+def test_regenerate_race_days_js_defaults_to_current_year(new_races_root, new_js_path, monkeypatch):
+    (new_races_root / "20260104").mkdir(parents=True)
+    (new_races_root / "20250101").mkdir(parents=True)
+
+    class _FixedDate(date):
+        @classmethod
+        def today(cls):
+            return date(2026, 6, 23)
+
+    monkeypatch.setattr(new_html_manager, "date", _FixedDate)
+
+    new_html_manager.regenerate_race_days_js()
+
+    content = new_js_path.read_text(encoding="utf-8")
+    assert '"20260104"' in content
+    assert "20250101" not in content

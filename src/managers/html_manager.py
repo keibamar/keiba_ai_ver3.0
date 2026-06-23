@@ -10,6 +10,7 @@ public_html/assets/js/raceDays.js（カレンダーが参照するwindow.raceday
 
 import os
 import re
+from datetime import date
 
 from src.config import paths
 from src.config.constants import PLACE_LIST
@@ -175,3 +176,26 @@ def add_race_day(race_day):
 
     with open(RACE_DAYS_JS_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(new_content) + "\n")
+
+
+def regenerate_race_days_js(min_year=None):
+    """public_html/assets/js/raceDays.js をpublic_html/races/配下の実在ディレクトリから再生成する
+
+    add_race_dayはwindow.racedaysに日付を追記していくだけのため、ページ自体が
+    削除された日付（実データが無い日）や、去年以前の日付が残り続け、カレンダーに
+    実体のないリンクが表示されることがあった（実際に発見・修正した不整合）。
+    list_race_day_dirs（実在するディレクトリ一覧）から作り直すことで、
+    実体の無いリンクを出さないようにする。
+
+    Args:
+        min_year (int | None): この年以降の日付だけを含める（初期値: 今年）。
+            「去年以前の日付はカレンダーから見られなくてよい」という方針のため、
+            デフォルトでは今年より前の日付を除外する。
+    """
+    min_year = min_year if min_year is not None else date.today().year
+    day_strs = [d for d in list_race_day_dirs() if int(d[:4]) >= min_year]
+
+    os.makedirs(os.path.dirname(RACE_DAYS_JS_PATH), exist_ok=True)
+    lines = ",\n".join(f'  "{d}"' for d in day_strs)
+    with open(RACE_DAYS_JS_PATH, "w", encoding="utf-8") as f:
+        f.write(f"window.racedays = [\n{lines}\n];\n")
