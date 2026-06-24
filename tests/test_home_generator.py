@@ -11,6 +11,7 @@ import pytest
 
 from src.config import paths
 from src.logic.html_generator import home_generator as h
+from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
 from src.managers import ai_performance_dataset_manager as dataset_manager
 
 
@@ -110,10 +111,14 @@ def test_make_home_page_generates_index_html(new_roots, monkeypatch):
     assert 'window.CALENDAR_BASE_PATH = "";' in html_content
     assert '<script src="assets/js/raceDays.js"></script>' in html_content
 
-    # AI成績サマリーカード
+    # AI成績サマリーカード（単勝・複勝のみ、回収率主役/的中率脇役のカード。他ページと同じ_performance_table_html）
     assert "<h3>AI予想成績</h3>" in html_content
-    assert "単勝的中率（全期間）" in html_content
-    assert "週別推移（単勝回収率、直近8週）" in html_content
+    assert '<div class="bet-stat-label">単勝</div>' in html_content
+    assert '<div class="bet-stat-label">複勝</div>' in html_content
+    assert '<div class="bet-stat-label">三連複(5頭BOX)</div>' not in html_content
+    assert "週別推移（直近8週）" in html_content
+    # 開催中の競馬場の成績→週別推移の順（Totalの直後に開催中の成績、推移は最後）
+    assert html_content.index("開催中の競馬場の成績") < html_content.index("週別推移")
     assert "開催中の競馬場の成績" in html_content
     assert '<a class="card-link" href="performance/index.html">AI成績の詳細を見る &rarr;</a>' in html_content
 
@@ -158,32 +163,56 @@ def test_home_template_applies_weekend_gating_to_last_week_results(monkeypatch):
     assert captured == [date(2026, 6, 14)]
 
 
-def test_weekly_trend_html_uses_return_rate_gauge():
-    from datetime import date
-
-    from src.logic.html_generator.rate_gauge_html import return_rate_gauge_html
-
-    trend = [
+def test_home_template_weekly_trend_is_saturday_aligned_and_covers_win_and_place(new_roots, monkeypatch):
+    # 2026-06-06(土)・06-07(日)は同じ週（週開始日06-06）、06-13(土)は次の週（週開始日06-13）
+    df = pd.DataFrame(
         {
-            "week_start": date(2026, 6, 1),
-            "week_end": date(2026, 6, 7),
-            "performance": {"win": {"hit_rate": 13.0, "return_rate": 523.9, "n": 23}},
+            "race_day": ["2026-06-06", "2026-06-07", "2026-06-13"],
+            "year": ["2026", "2026", "2026"],
+            "place_id": ["5", "5", "5"],
+            "times": ["1", "1", "2"],
+            "race_type": ["芝", "芝", "芝"],
+            "course_len": ["1600", "1600", "1600"],
+            "ground_state": ["良", "良", "良"],
+            "class": ["未勝利", "未勝利", "未勝利"],
+            "win_hit": ["1", "0", "1"],
+            "win_return": ["200.0", "0.0", "150.0"],
+            "place_hit": ["1", "0", "1"],
+            "place_return": ["150.0", "0.0", "120.0"],
+            "trio_box_hit": ["0", "0", "0"],
+            "trio_box_return": ["0.0", "0.0", "0.0"],
         },
-        {
-            "week_start": date(2026, 6, 8),
-            "week_end": date(2026, 6, 14),
-            "performance": {"win": {"hit_rate": 0.0, "return_rate": 0.0, "n": 0}},
-        },
-    ]
+        index=["A", "B", "C"],
+    )
+    dataset_manager.save_ai_performance_dataset(df)
 
-    html_content = h._weekly_trend_html(trend)
+    monkeypatch.setattr(h.calc, "get_week_main_races_with_course", lambda today: [])
+    monkeypatch.setattr(h.calc, "get_current_meeting_summaries", lambda today: [])
+    monkeypatch.setattr(h.calc, "get_weekend_main_race_details", lambda weekend_end: [])
 
-    print(f"\n--- _weekly_trend_html(回収率523.9%/0.0%) ---")
+    html_content = h.home_template()
+
+    print(f"\n--- home_template() 週別推移（土曜始まり、単勝・複勝） ---")
     print(html_content)
 
-    # 各週の回収率ゲージ（ai_performance_report_generatorと共通の色付きゲージ）が使われる
-    assert return_rate_gauge_html(523.9) in html_content
-    assert return_rate_gauge_html(0.0) in html_content
+    # 週開始日は月曜(6/8・6/15)ではなく土曜(6/6・6/13)になる
+    assert '<div class="bar-week-label">6/6〜</div>' in html_content
+    assert '<div class="bar-week-label">6/13〜</div>' in html_content
+    # 新しい週(6/13)が上、古い週(6/6)が下になる
+    assert html_content.index("6/13") < html_content.index("6/6")
+    assert "6/8" not in html_content
+    # 単勝・複勝それぞれ、回収率（主役）・的中率（脇役）の横バーで表示される
+    assert html_content.count('<div class="bar-week-group">') == 2
+    # 単勝・複勝は横並び（2カラム）で表示する
+    assert html_content.count('<div class="bar-week-cols">') == 2
+    assert html_content.count('<div class="bar-week-col">') == 4
+    assert '<span class="bar-label">単勝 回収率</span>' in html_content
+    assert '<span class="bar-label">単勝 的中率</span>' in html_content
+    assert '<span class="bar-label">複勝 回収率</span>' in html_content
+    assert '<span class="bar-label">複勝 的中率</span>' in html_content
+    # 1週目（A・Bのみ）: win hit=1/2=50.0%, return=(200+0)/2=100.0
+    assert return_rate_gauge_html(100.0) in html_content
+    assert hit_rate_gauge_html(50.0) in html_content
 
 
 def test_current_meetings_html_links_place_name_to_course_detail_data():

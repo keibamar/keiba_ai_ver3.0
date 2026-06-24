@@ -245,6 +245,39 @@ td a:hover {
   color: #555;
 }
 
+.bar-week-group {
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #ddd;
+}
+
+.bar-week-group:last-child {
+  border-bottom: none;
+}
+
+.bar-week-label {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+/* 単勝・複勝を横並びにし、週をまたいだ比較・推移を見やすくする */
+.bar-week-cols {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.bar-week-col {
+  flex: 1;
+  min-width: 220px;
+}
+
+/* 的中率の行は回収率より控えめに見せる（回収率が主役、的中率は参考） */
+.bar-row--secondary {
+  font-size: 0.8em;
+  opacity: 0.8;
+}
+
 /* --- 的中率・回収率の色付きゲージバー --- */
 
 .rate-gauge {
@@ -696,6 +729,14 @@ td a:hover {
   margin-bottom: 16px;
 }
 
+/* 出馬表・レース結果表など「1行=1頭」で全頭を一度に見たい主要テーブルには
+   縦スクロールをかけない（横スクロールのみ残す。馬体重等が長い列で
+   幅が収まらない場合の対応のため）。 */
+.table-wrap--full {
+  max-height: none;
+  overflow-y: visible;
+}
+
 .table-wrap table {
   margin-bottom: 0;
 }
@@ -712,6 +753,10 @@ td a:hover {
 
 table tbody tr:nth-child(even) {
   background: #f7f9fb;
+}
+
+table tbody tr:hover {
+  background: #eef3f8;
 }
 
 /* --- 列ソート可能な表（sortable-table.js） --- */

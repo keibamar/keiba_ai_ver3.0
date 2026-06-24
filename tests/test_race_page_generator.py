@@ -182,11 +182,13 @@ def test_make_race_card_html_generates_full_page(new_roots):
     assert f"<h2>{NAME_LIST[SAMPLE_PLACE_ID - 1]}競馬場 第1R </h2>" in html_content
     assert "芝2000m 天候:晴 馬場:稍重 クラス:未勝利" in html_content
 
-    # --- 出馬表テーブル ---
-    assert '<table id="raceTable">' in html_content
+    # --- 出馬表テーブル（全頭を縦スクロールなしで見られるようtable-wrap--fullを付与） ---
+    assert '<div class="table-wrap table-wrap--full">\n  <table id="raceTable">' in html_content
 
     # --- レース結果・配当 ---
     assert "<h2>レース結果</h2>" in html_content
+    assert '<div class="table-wrap table-wrap--full">\n    <table id="resultTable">' in html_content
+    assert '<div class="table-wrap table-wrap--full">\n    <table id="payoutTable">' in html_content
 
     # --- コース別データセクション ---
     assert "コース別平均タイム情報" in html_content
@@ -246,3 +248,52 @@ def test_make_daily_race_card_html_links_resolve_in_a_single_pass(new_roots, mon
     assert '<a href="../../races/20241020/04_nigataR2.html">' in race1_html
     # 2R→1R（前のレース）
     assert '<a href="../../races/20241020/04_nigataR1.html">' in race2_html
+
+
+# --- build_table_race_cards（枠順・AI予想Rankの色付け） -------------------------------
+
+
+def test_build_table_race_cards_colors_waku_and_top_rank():
+    df = pd.DataFrame({
+        "枠": [1, 3],
+        "馬番": [1, 5],
+        "馬名": ["サンプルホースA", "サンプルホースB"],
+        "性齢": ["牡3", "牝4"],
+        "斤量": [56, 54],
+        "騎手": ["騎手A", "騎手B"],
+        "馬体重(増減)": ["480(+2)", "440(-4)"],
+        "score": [0.123, -0.5],
+        "rank": [1, 2],
+    })
+
+    rows = r.build_table_race_cards(df)
+
+    print("\n--- build_table_race_cards (枠・Rank色付け) ---")
+    print(rows)
+
+    # 枠1=白、枠3=赤（WAKU_COLORS）。枠・馬番の両セルに同じ背景色を適用する
+    assert rows.count('style="background-color:white; color:#000;"') == 2
+    assert rows.count('style="background-color:red; color:#fff;"') == 2
+    # AI予想Rank 1位=金色、2位=水色（RANK_COLORS）
+    assert '<td style="background-color:#FFD700;">1</td>' in rows
+    assert '<td style="background-color:#B0E0E6;">2</td>' in rows
+
+
+def test_build_table_race_cards_blank_when_waku_undecided():
+    df = pd.DataFrame({
+        "枠": [None, None],
+        "馬番": [None, None],
+        "馬名": ["サンプルホースA", "サンプルホースB"],
+        "性齢": ["牡3", "牝4"],
+        "斤量": [56, 54],
+        "騎手": ["騎手A", "騎手B"],
+        "馬体重(増減)": ["", ""],
+        "score": [pd.NA, pd.NA],
+        "rank": [pd.NA, pd.NA],
+    })
+
+    rows = r.build_table_race_cards(df)
+
+    # 枠順未確定でも色付け処理自体は落ちず、枠が無いデフォルト色（白）になる
+    assert rows.count('style="background-color:#ffffff; color:#000;"') == 4
+    assert "<td>サンプルホースA</td>" not in rows  # 馬名はリンク化されるため素のtdにはならない

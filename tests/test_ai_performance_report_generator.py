@@ -135,11 +135,11 @@ def test_make_annual_performance_page_generates_html(new_roots, fake_dataset):
     assert "<h2>開催週別の傾向・推移</h2>" in html_content
     assert html_content.count('<svg class="trend-chart"') == 2
     # グラフの横軸は年を省いた短縮表記（週開始日テーブルは元のまま完全な日付を保持する）
-    assert ">3/30</text>" in html_content
-    assert ">4/6</text>" in html_content
+    assert ">3/28</text>" in html_content
+    assert ">4/4</text>" in html_content
     assert "<h3>開催週別成績</h3>" in html_content
-    assert "<td>2026-03-30</td>" in html_content
-    assert "<td>2026-04-06</td>" in html_content
+    assert "<td>2026-03-28</td>" in html_content
+    assert "<td>2026-04-04</td>" in html_content
 
 
 def test_make_meeting_performance_page_generates_html(new_roots, fake_dataset):
@@ -269,11 +269,11 @@ def test_make_course_performance_index_page_generates_html(new_roots, fake_datas
     # （年度別タブの年次トレンドと合わせて、推移グラフは単勝/複勝×2セクション=4つになる）
     assert "<h4>直近の開催週別の傾向・推移</h4>" in html_content
     assert html_content.count('<svg class="trend-chart"') == 4
-    assert ">3/30</text>" in html_content
-    assert ">4/6</text>" in html_content
+    assert ">3/28</text>" in html_content
+    assert ">4/4</text>" in html_content
     assert "<h3>開催週別成績</h3>" in html_content
-    assert "<td>2026-03-30</td>" in html_content
-    assert "<td>2026-04-06</td>" in html_content
+    assert "<td>2026-03-28</td>" in html_content
+    assert "<td>2026-04-04</td>" in html_content
     assert "<h3>年度別成績</h3>" in html_content
     assert "<h3>クラス別成績</h3>" in html_content
     assert "<h3>芝/ダート別成績</h3>" in html_content

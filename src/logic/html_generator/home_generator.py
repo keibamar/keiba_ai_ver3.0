@@ -12,12 +12,13 @@ data/race_card/ の全件スキャンを避けて高速に生成できる
 ai_performance_calculator を直接使う）。
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import jpholiday
 
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator as calc
+from src.logic.html_generator.ai_performance_report_generator import _performance_table_html
 from src.logic.html_generator.race_type_badge_html import course_label_html
 from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
 from src.logic.html_generator.site_nav_html import (
@@ -62,33 +63,43 @@ def _date_with_weekday_html(day):
     return f'{day.strftime("%m/%d")}<span{class_attr}>({weekday_kanji})</span>'
 
 
-def _summary_stats_html(performance):
-    win = performance["win"]
-    return f"""
-<div class="summary-stats">
-  <div class="summary-stat">
-    <span class="value">{win['hit_rate']:.1f}%</span>
-    <span class="label">単勝的中率（全期間）</span>
-  </div>
-  <div class="summary-stat">
-    <span class="value">{win['return_rate']:.1f}%</span>
-    <span class="label">単勝回収率（全期間）</span>
-  </div>
-  <div class="summary-stat">
-    <span class="value">{win['n']}</span>
-    <span class="label">対象レース数</span>
-  </div>
-</div>
-"""
-
-
 def _weekly_trend_html(trend):
+    """開催週（土曜始まり）ごとに、単勝・複勝それぞれの回収率ゲージ（主役）・的中率ゲージ（脇役）を
+    横バーで並べて返す（dataset_manager.group_breakdown_by_weekの戻り値が前提）。
+
+    単勝・複勝は横並び（2カラム）にし、週をまたいだ比較・推移の可読性を上げる
+    （縦に4行重ねるより、週ごとのブロックが短くなり過去の週とも見比べやすい）。
+    """
     rows = ""
     for week in trend:
-        return_rate = week["performance"]["win"]["return_rate"]
-        rows += f"""<div class="bar-row">
-      <span class="bar-label">{week['week_start'].strftime('%m/%d')}〜</span>
-      {return_rate_gauge_html(return_rate)}
+        week_start = datetime.strptime(week["value"], "%Y-%m-%d")
+        week_label = f"{week_start.month}/{week_start.day}"
+        win = week["performance"]["win"]
+        place = week["performance"]["place"]
+        rows += f"""<div class="bar-week-group">
+      <div class="bar-week-label">{week_label}〜</div>
+      <div class="bar-week-cols">
+        <div class="bar-week-col">
+          <div class="bar-row">
+            <span class="bar-label">単勝 回収率</span>
+            {return_rate_gauge_html(win['return_rate'])}
+          </div>
+          <div class="bar-row bar-row--secondary">
+            <span class="bar-label">単勝 的中率</span>
+            {hit_rate_gauge_html(win['hit_rate'])}
+          </div>
+        </div>
+        <div class="bar-week-col">
+          <div class="bar-row">
+            <span class="bar-label">複勝 回収率</span>
+            {return_rate_gauge_html(place['return_rate'])}
+          </div>
+          <div class="bar-row bar-row--secondary">
+            <span class="bar-label">複勝 的中率</span>
+            {hit_rate_gauge_html(place['hit_rate'])}
+          </div>
+        </div>
+      </div>
     </div>\n"""
     return f'<div class="bar-chart">\n{rows}</div>'
 
@@ -270,29 +281,12 @@ def _weekly_meeting_summary_html(summaries):
     return f'<ul class="weekly-meeting-list">\n{items}</ul>'
 
 
-def _weekly_trend(df, num_weeks, end_day):
-    """直近num_weeks週について、週ごとの的中率・回収率の推移を返す
-
-    Returns:
-        list[dict]: [{"week_start", "week_end", "performance"}, ...]（古い週→新しい週の順）
-    """
-    trend = []
-    for i in range(num_weeks):
-        week_end = end_day - timedelta(days=7 * i)
-        week_start = week_end - timedelta(days=6)
-        week_df = dataset_manager.filter_by_date_range(df, week_start, week_end)
-        trend.append(
-            {"week_start": week_start, "week_end": week_end, "performance": dataset_manager.aggregate(week_df)}
-        )
-    trend.reverse()
-    return trend
-
-
 def home_template():
     today = date.today()
     df = dataset_manager.get_ai_performance_dataset()
     overall_performance = dataset_manager.aggregate(df)
-    trend = _weekly_trend(df, num_weeks=8, end_day=today)
+    # 開催週（土曜始まり）ごとの的中率・回収率の推移。直近8週分（古い→新しい順）を表示する
+    trend = dataset_manager.group_breakdown_by_week(df)[-8:]
     # 「開催中の競馬場」も「今週のメインレース」「先週の結果」と同じ理屈で、
     # 今週の水曜日までは直近に終わった週末を、木曜日になった時点で今週の週末を指す
     # （詳細はcurrent_meeting_reference_day参照）。
@@ -331,11 +325,11 @@ def home_template():
     <div class="card-grid">
       <div class="card">
         <h3>AI予想成績</h3>
-        {_summary_stats_html(overall_performance)}
-        <h4>週別推移（単勝回収率、直近8週）</h4>
-        {_weekly_trend_html(trend)}
+        {_performance_table_html(overall_performance, bet_types=("win", "place"))}
         <h4>開催中の競馬場の成績</h4>
         {_current_meetings_html(current_meetings, df)}
+        <h4>週別推移（直近8週）</h4>
+        {_weekly_trend_html(list(reversed(trend)))}
         <a class="card-link" href="performance/index.html">AI成績の詳細を見る &rarr;</a>
       </div>
 

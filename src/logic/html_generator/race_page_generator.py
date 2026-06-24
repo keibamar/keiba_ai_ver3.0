@@ -112,21 +112,29 @@ def build_table_race_cards(df):
         except Exception:
             rank_fmt = rank
 
+        # --- 枠順背景色（結果表・配当表と同じ配色で一覧性を揃える） ---
+        waku_color = WAKU_COLORS.get(str(waku), "#ffffff")
+        waku_style = f'background-color:{waku_color}; color:{"#fff" if str(waku) in ["2", "3", "4", "7"] else "#000"};'
+
+        # --- AI予想Rank上位3頭の色付け ---
+        rank_color = RANK_COLORS.get(str(rank_fmt), "#ffffff")
+        rank_style = f'background-color:{rank_color};'
+
         # 馬名をクリック可能にする（詳細レポートへのリンク）
         unique_id = f"horse_report_{idx}_{umaban}"
         name_html = f'<a href="javascript:void(0);" onclick="scrollToReport(\'{unique_id}\')" style="color: blue; text-decoration: underline; cursor: pointer;">{html.escape(str(name))}</a>'
 
         rows += f"""
         <tr>
-          <td>{waku}</td>
-          <td>{umaban}</td>
+          <td style="{waku_style}">{waku}</td>
+          <td style="{waku_style}">{umaban}</td>
           <td>{name_html}</td>
           <td>{seirei}</td>
           <td>{kinryo}</td>
           <td>{jockey}</td>
           <td>{body}</td>
           <td>{score_fmt}</td>
-          <td>{rank_fmt}</td>
+          <td style="{rank_style}">{rank_fmt}</td>
         </tr>
         """
     return rows
@@ -347,7 +355,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
   <h2>{place_name}競馬場 第{race_num}R </h2>
   <h2>{race_name}</h2>
   <p>発走時刻: {race_time_display}</p>
-  <div class="table-wrap">
+  <div class="table-wrap table-wrap--full">
   <table id="raceTable">
     <thead>
       <tr>
@@ -612,7 +620,7 @@ def generate_result_table(df):
 
     result_table = f"""
     <h2>レース結果</h2>
-    <div class="table-wrap">
+    <div class="table-wrap table-wrap--full">
     <table id="resultTable">
       <thead>
         <tr>
@@ -665,7 +673,7 @@ def generate_payout_table_html(df):
         """
     payout_html = f"""
     <h2>配当結果</h2>
-    <div class="table-wrap">
+    <div class="table-wrap table-wrap--full">
     <table id="payoutTable">
       <thead>
         <tr>

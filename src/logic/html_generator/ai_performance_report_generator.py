@@ -33,14 +33,19 @@ from src.managers import html_manager
 BET_TYPE_LABELS = {"win": "単勝", "place": "複勝", "trio_box": "三連複(5頭BOX)"}
 
 
-def _performance_table_html(performance, title=None):
+def _performance_table_html(performance, title=None, bet_types=None):
     """式別（単勝/複勝/三連複）ごとの成績をカードで表示する
 
     回収率を主役（大きな数字+大きめのゲージ）、的中率を脇役（小さなゲージ）として
     縦に並べることで、的中率より回収率を重視して見てほしいという方針を視覚的に表す。
     回収率も的中率と同様にゲージ（グラフ）で見せることで、数字だけでなく一目で
     良し悪しが分かるようにする。
+
+    Args:
+        bet_types (tuple[str] | None): 表示する式別（省略時はBET_TYPE_LABELSの全式別）。
+            例: ("win", "place")で単勝・複勝のみ表示する（HOME等、三連複を出さない場合）。
     """
+    bet_types = bet_types if bet_types is not None else tuple(BET_TYPE_LABELS)
     cards = "".join(
         f"""<div class="bet-stat-card">
       <div class="bet-stat-label">{BET_TYPE_LABELS[bet_type]}</div>
@@ -55,7 +60,7 @@ def _performance_table_html(performance, title=None):
       </div>
       <div class="bet-stat-n">対象 {performance[bet_type]['n']}件</div>
     </div>"""
-        for bet_type in BET_TYPE_LABELS
+        for bet_type in bet_types
     )
     heading = f"<h3>{title}</h3>\n  " if title else ""
     return f"""{heading}<div class="bet-stat-cards">

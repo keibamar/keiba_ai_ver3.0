@@ -271,21 +271,23 @@ def cross_breakdown(df, column_a, column_b):
 
 
 def group_breakdown_by_week(df):
-    """race_dayから算出した「週の開始日（月曜）」でグループ化し、週ごとの集計を返す
+    """race_dayから算出した「週の開始日（土曜）」でグループ化し、週ごとの集計を返す
 
-    開催（重賞・通常開催とも）は基本的に土日に行われるため、月曜始まりの週で
-    グループ化すると同じ開催に属するレースがおおむね1グループにまとまる。
-    年間ページ等で「開催週ごとの傾向・推移」を見せる用途に使う。
+    開催（重賞・通常開催とも）は基本的に土日に行われるため、土曜始まりの週で
+    グループ化すると同じ開催（土日2日分）が1グループにまとまる。
+    年間ページ・HOME等で「開催週ごとの傾向・推移」を見せる用途に使う。
 
     Returns:
-        list[dict]: [{"value": 週開始日（YYYY-MM-DD）, "performance": aggregate(...)}, ...]
+        list[dict]: [{"value": 週開始日（YYYY-MM-DD、土曜）, "performance": aggregate(...)}, ...]
             週開始日の昇順（古い→新しい）で返す。
     """
     if df.empty:
         return []
 
-    week_start = pd.to_datetime(df["race_day"])
-    week_start = week_start - pd.to_timedelta(week_start.dt.weekday, unit="D")
+    race_day = pd.to_datetime(df["race_day"])
+    # weekday(): 月=0,...,土=5,日=6。直前（当日含む）の土曜までの日数 = (weekday - 5) % 7
+    days_since_saturday = (race_day.dt.weekday - 5) % 7
+    week_start = race_day - pd.to_timedelta(days_since_saturday, unit="D")
     result = [
         {"value": value, "performance": aggregate(group_df)}
         for value, group_df in df.groupby(week_start.dt.strftime("%Y-%m-%d"))

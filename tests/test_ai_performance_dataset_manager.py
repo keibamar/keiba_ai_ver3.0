@@ -243,8 +243,8 @@ def test_cross_breakdown_returns_empty_dict_for_empty_dataframe():
 
 WEEKLY_DATASET = pd.DataFrame(
     {
-        # 2024-10-19(土)・2024-10-20(日)は同じ週（月曜始まり週開始日2024-10-14）、
-        # 2024-10-26(土)は次の週（週開始日2024-10-21）
+        # 2024-10-19(土)・2024-10-20(日)は同じ週（土曜始まり週開始日2024-10-19）、
+        # 2024-10-26(土)は次の週（週開始日2024-10-26）
         "race_day": ["2024-10-19", "2024-10-20", "2024-10-26"],
         "year": ["2024", "2024", "2024"],
         "place_id": ["4", "4", "4"],
@@ -270,7 +270,7 @@ def test_group_breakdown_by_week_groups_same_meeting_weekend_together():
     print(f"\n--- group_breakdown_by_week ---")
     print(breakdown)
 
-    assert [b["value"] for b in breakdown] == ["2024-10-14", "2024-10-21"]
+    assert [b["value"] for b in breakdown] == ["2024-10-19", "2024-10-26"]
     # 1週目（A・B）: win hit=1/2=50.0%, return=(160+0)/2=80.0
     assert breakdown[0]["performance"]["win"]["n"] == 2
     assert breakdown[0]["performance"]["win"]["hit_rate"] == pytest.approx(50.0)
