@@ -20,8 +20,11 @@ from src.logic.html_generator.ai_performance_report_generator import _performanc
 from src.logic.html_generator.race_type_badge_html import course_label_html
 from src.logic.html_generator.rate_gauge_html import bet_result_cell_html, hit_rate_gauge_html, return_rate_gauge_html
 from src.logic.html_generator.site_nav_html import (
+    AD_SLOT_IN_CONTENT_1,
+    AD_SLOT_IN_CONTENT_2,
     SITE_TITLE,
     SITE_URL,
+    ad_unit_html,
     adsense_script_html,
     ga4_script_html,
     meta_tags_html,
@@ -316,6 +319,8 @@ def home_template():
     <h2>今週の開催</h2>
     {_weekly_meeting_summary_html(weekly_meetings)}
 
+    {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
+
     <div class="card-grid">
       <div class="card">
         <h3>AI予想成績</h3>
@@ -336,6 +341,8 @@ def home_template():
         <a class="card-link" href="races/index.html">レースカレンダーを見る &rarr;</a>
       </div>
     </div>
+
+    {ad_unit_html(AD_SLOT_IN_CONTENT_2)}
   </main>
   {site_footer_html(base_path="")}
 </body>

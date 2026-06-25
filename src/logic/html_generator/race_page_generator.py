@@ -13,7 +13,11 @@ import pandas as pd
 from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS, WAKU_COLORS
 from src.logic.html_generator import horse_report_generator
 from src.logic.html_generator.site_nav_html import (
+    AD_SLOT_IN_CONTENT_1,
+    AD_SLOT_IN_CONTENT_2,
+    AD_SLOT_IN_CONTENT_3,
     SITE_URL,
+    ad_unit_html,
     adsense_script_html,
     breadcrumb_html,
     ga4_script_html,
@@ -209,6 +213,11 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
         f"{date_display} {place_name}競馬場 第{race_num}R {race_name}の出馬表・AI予想データ。",
         f"{SITE_URL}/races/{date_str}/{place_key}R{race_num}.html",
     )
+    # 広告は意味のある区切りに限定して配置する（出馬表の後・配当結果の後・
+    # コース別データの後の3箇所。ページ全体で多すぎる印象にならないようにするため）。
+    ad_unit_1 = ad_unit_html(AD_SLOT_IN_CONTENT_1)
+    ad_unit_2 = ad_unit_html(AD_SLOT_IN_CONTENT_2)
+    ad_unit_3 = ad_unit_html(AD_SLOT_IN_CONTENT_3)
     return """
 <!DOCTYPE html>
 <html lang="ja">
@@ -376,8 +385,12 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
   </table>
   </div>
 
+  {ad_unit_1}
+
   {result_table_html}
   {payout_table_html}
+
+  {ad_unit_2}
 
   <!-- ========== コース別データセクション（折りたたみ可能） ========== -->
   <div class="course-data-section">
@@ -406,6 +419,8 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
       </div>
     </div>
   </div>
+
+  {ad_unit_3}
 
   <h2 id="horseReportsSection">出走馬 詳細レポート</h2>
   <div id="horseReportsContainer"></div>
@@ -539,6 +554,9 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     adsense=adsense,
     ga4=ga4,
     meta_tags=meta_tags,
+    ad_unit_1=ad_unit_1,
+    ad_unit_2=ad_unit_2,
+    ad_unit_3=ad_unit_3,
     table_rows=table_rows,
     run_time_info=run_time_info,
     weight_info=weight_info,

@@ -25,7 +25,10 @@ from src.logic.html_generator.rate_gauge_html import (
     return_rate_gauge_html,
 )
 from src.logic.html_generator.site_nav_html import (
+    AD_SLOT_IN_CONTENT_1,
+    AD_SLOT_IN_CONTENT_2,
     SITE_URL,
+    ad_unit_html,
     adsense_script_html,
     breadcrumb_html,
     ga4_script_html,
@@ -539,8 +542,14 @@ def make_meeting_performance_page(year, place_id, times, df=None):
   {breadcrumb_html(breadcrumb_items, base_path="../../../")}
   <h1>{year}年 {place_name}{times}回 AI予想成績</h1>
   {_performance_table_html(performance)}
+
+  {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
+
   <h2>レース詳細</h2>
   {_meeting_race_detail_table_html(race_days)}
+
+  {ad_unit_html(AD_SLOT_IN_CONTENT_2)}
+
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
   {site_footer_html(base_path="../../../")}
 </body>
@@ -665,6 +674,8 @@ def make_course_performance_index_page(place_id, df=None):
       {_cross_filter_html(place_df, total_performance, by_ground_state, by_class)}
     </div>
   </div>
+
+  {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
 
   <h2>コース別成績</h2>
   <ul>

@@ -69,6 +69,43 @@ def adsense_script_html():
     )
 
 
+# 広告ユニット（手動配置・本文中/サイドバー）のスロットID。
+# AdSense審査通過後、ダッシュボードで実際の広告ユニットを作成し、
+# 下記のプレースホルダー値を実際のdata-ad-slot値に差し替える
+# （審査完了・本物のスロットIDに差し替えるまでは広告は表示されない）。
+#
+# 配置方針（ユーザーに広告が多いと感じさせないための上限）:
+#   - 本文中: ページ内の「意味のある区切り」1箇所につき1つまで、1ページ上限3〜4個
+#   - サイドバー: PCのみ1つ（モバイルでは右サイドバー自体が縦に流れるため非表示にする）
+#   - プライバシーポリシー・利用規約等の低コンテンツページには置かない
+AD_SLOT_IN_CONTENT_1 = "0000000001"
+AD_SLOT_IN_CONTENT_2 = "0000000002"
+AD_SLOT_IN_CONTENT_3 = "0000000003"
+AD_SLOT_SIDEBAR = "0000000004"
+
+
+def ad_unit_html(slot, css_class="ad-unit"):
+    """本文中に配置するレスポンシブ広告ユニットのHTMLを返す
+
+    呼び出し側は、本当に意味のある区切り（テーブルの後、セクションの切れ目等）
+    でのみ使い、1ページあたりの広告数を抑える（site_nav_html.pyのコメント参照）。
+    """
+    return f"""<div class="{css_class}">
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="{ADSENSE_CLIENT_ID}"
+       data-ad-slot="{slot}"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({{}});</script>
+</div>"""
+
+
+def sidebar_ad_unit_html():
+    """右サイドバー用の広告ユニット（PCのみ表示）を返す"""
+    return ad_unit_html(AD_SLOT_SIDEBAR, css_class="ad-unit ad-unit--sidebar")
+
+
 # Google Analytics 4（GA4）の測定ID。アクセス解析・広告効果測定のため全ページに入れる。
 GA4_MEASUREMENT_ID = "G-DNC949064T"
 
@@ -231,6 +268,7 @@ def page_calendar_tab_html(base_path="", current_path=None, breadcrumb_items=Non
     {_location_tree_html(base_path, current_path, breadcrumb_items)}
   </ul>
   {sns_links_html()}
+  {sidebar_ad_unit_html()}
 </aside>"""
 
 

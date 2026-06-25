@@ -1474,6 +1474,22 @@ footer p {
   text-decoration: underline;
 }
 
+/* --- 広告ユニット（本文中・サイドバー共通） --- */
+/* ユーザーに広告が多いと感じさせないよう、本文中は意味のある区切りにのみ置き、
+   間隔を空ける。サイドバーの広告はPCのみ表示し、モバイルでは下の@mediaで隠す
+   （モバイルではサイドバー自体が本文の下に縦に流れるため、本文の合間に広告が
+   増えすぎないようにするため）。 */
+.ad-unit {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.ad-unit--sidebar {
+  margin: 12px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed #ccc;
+}
+
 /* HOMEの1段下にレースカレンダー/AI成績/コース詳細データ、さらにその下に
    ページ固有の階層（競馬場・コース等）と、ネストするごとに字下げ+左線を入れて
    階層が深くなっていることを視覚的に示す */
@@ -1541,6 +1557,11 @@ footer p {
     float: none;
     width: auto;
     min-height: auto;
+  }
+
+  /* サイドバー広告はPCのみ（モバイルで本文中の広告と合わせて多くなりすぎないため） */
+  .ad-unit--sidebar {
+    display: none;
   }
 }
 

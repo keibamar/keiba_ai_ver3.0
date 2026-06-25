@@ -413,3 +413,32 @@ def test_page_calendar_tab_html_includes_sns_links():
     assert "page-calendar-tab-sns" in html
     assert "x.com/keiba_mar" in html
     assert "instagram.com/__mar_gram__" in html
+
+
+def test_ad_unit_html_includes_client_and_slot():
+    html = n.ad_unit_html("1234567890")
+
+    assert '<div class="ad-unit">' in html
+    assert 'data-ad-client="ca-pub-5124016618612171"' in html
+    assert 'data-ad-slot="1234567890"' in html
+    assert 'data-full-width-responsive="true"' in html
+    assert "adsbygoogle = window.adsbygoogle || []" in html
+
+
+def test_ad_unit_html_uses_custom_css_class():
+    html = n.ad_unit_html("1234567890", css_class="ad-unit ad-unit--sidebar")
+
+    assert '<div class="ad-unit ad-unit--sidebar">' in html
+
+
+def test_sidebar_ad_unit_html_uses_sidebar_slot_and_class():
+    html = n.sidebar_ad_unit_html()
+
+    assert '<div class="ad-unit ad-unit--sidebar">' in html
+    assert f'data-ad-slot="{n.AD_SLOT_SIDEBAR}"' in html
+
+
+def test_page_calendar_tab_html_includes_sidebar_ad_unit():
+    html = n.page_calendar_tab_html(base_path="")
+
+    assert "ad-unit--sidebar" in html

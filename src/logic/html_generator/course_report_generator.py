@@ -33,7 +33,9 @@ from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.calculators import average_calculator
 from src.logic.html_generator.race_type_badge_html import course_label_html, race_type_span_html
 from src.logic.html_generator.site_nav_html import (
+    AD_SLOT_IN_CONTENT_1,
     SITE_URL,
+    ad_unit_html,
     adsense_script_html,
     breadcrumb_html,
     ga4_script_html,
@@ -1484,6 +1486,8 @@ def course_report_to_html(report):
       </details>
     </div>
   </div>
+
+  {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../../">&larr; HOMEへ戻る</a></p>
