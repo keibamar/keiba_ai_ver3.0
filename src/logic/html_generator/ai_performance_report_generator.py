@@ -12,10 +12,18 @@ ver2.0でも未実装だったため、ページ構成のみを参考にした�
 
 from datetime import date, datetime
 
-from src.config.constants import NAME_LIST, PLACE_LIST
+import pandas as pd
+
+from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS
 from src.config.lists import COURSE_LISTS
+from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator.race_type_badge_html import course_label_html, race_type_span_html
-from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_big_html, return_rate_gauge_html
+from src.logic.html_generator.rate_gauge_html import (
+    bet_result_cell_html,
+    hit_rate_gauge_html,
+    return_rate_big_html,
+    return_rate_gauge_html,
+)
 from src.logic.html_generator.site_nav_html import (
     SITE_URL,
     adsense_script_html,
@@ -29,6 +37,7 @@ from src.logic.html_generator.site_nav_html import (
 from src.logic.html_generator.sparkline_html import hit_return_trend_svg
 from src.managers import ai_performance_dataset_manager as m
 from src.managers import html_manager
+from src.utils import format_data
 
 BET_TYPE_LABELS = {"win": "単勝", "place": "複勝", "trio_box": "三連複(5頭BOX)"}
 
@@ -121,6 +130,27 @@ def _colored_race_type_breakdown(by_race_type):
     芝/ダートの色分けはここで呼び出し側だけに適用し、他の内訳には影響させない。
     """
     return [{**item, "value": race_type_span_html(item["value"])} for item in by_race_type]
+
+
+def _meeting_breakdown(place_df, place_key):
+    """競馬場別ページの「開催別成績」欄向けに、開催（年×開催回）ごとの内訳を新しい順で返す
+
+    _breakdown_table_htmlに渡せる{"value", "performance"}形式で返す。valueは開催別成績
+    詳細ページ（make_meeting_performance_page）へのリンクにする。
+    """
+    cross = m.cross_breakdown(place_df, "year", "times")
+    items = [
+        {
+            "value": f'<a href="../../meeting/{year}/{place_key}-{times}th.html">{year}年 第{times}回</a>',
+            "performance": performance,
+            "_sort_key": (int(year), int(times)),
+        }
+        for (year, times), performance in cross.items()
+    ]
+    items.sort(key=lambda item: item["_sort_key"], reverse=True)
+    for item in items:
+        del item["_sort_key"]
+    return items
 
 
 def _short_trend_label(value):
@@ -378,11 +408,113 @@ def make_annual_performance_page(year, df=None):
     html_manager.save_ai_annual_performance_html(year, html)
 
 
+def _blank_safe(value):
+    """NaN/None を「-」に、それ以外はそのまま返す（着順・馬場等の欠損表示用）"""
+    return "-" if pd.isna(value) else value
+
+
+def _rank_color_style(value):
+    """1〜3位を示す人気・着順セルの背景色を返す（resultTableと同じRANK_COLORS基準）
+
+    NaN/None（欠損）の場合は通常のRANK_COLORS未該当時と同じ白背景になる。
+    """
+    color = RANK_COLORS.get(str(_blank_safe(value)), "#ffffff")
+    return f' style="background-color:{color};"'
+
+
+def _day_mini_stats_html(races):
+    """開催日1日分の、単勝・複勝それぞれの的中率・回収率を小さく1行で返す
+
+    AI本命馬が除外・取消だったレース（pick_scratched）は対象レースから除外して計算する
+    （的中/不的中ではなく払い戻しのため、率の計算に含めない）。
+    """
+    eligible = [race for race in races if not race["pick_scratched"]]
+    n = len(eligible)
+    if n == 0:
+        return '<p class="day-mini-stats">的中率・回収率を計算できるレースがありません。</p>'
+
+    def stats(hit_key, payout_key):
+        hits = sum(1 for race in eligible if race[hit_key])
+        total_return = sum(race[payout_key] for race in eligible if race[hit_key] and race[payout_key] is not None)
+        return hits / n * 100, total_return / n
+
+    win_hit_rate, win_return_rate = stats("win_hit", "win_payout")
+    place_hit_rate, place_return_rate = stats("place_hit", "place_payout")
+    return (
+        '<p class="day-mini-stats">'
+        f"単勝 的中率{win_hit_rate:.1f}% 回収率{win_return_rate:.1f}% / "
+        f"複勝 的中率{place_hit_rate:.1f}% 回収率{place_return_rate:.1f}%"
+        f" (対象{n}件)"
+        "</p>"
+    )
+
+
+def _meeting_race_detail_table_html(days):
+    """開催別成績ページの「レース詳細」欄向けに、開催日ごとのレース一覧テーブルを返す
+
+    ai_performance_calculator.get_meeting_race_detailsの戻り値（新しい開催日が先頭）を
+    そのまま受け取り、日付（曜日付き、土曜=青/日曜=赤）ごとに見出し+その日の単勝/複勝の
+    的中率・回収率（小さく1行）+テーブルを並べる。各レースは、第何Rかを含むレース名・
+    コース・馬場・クラス・勝ち馬・AI本命馬・人気・着順・単勝/複勝の的中結果を表示する
+    （単勝/複勝はhome_generatorの「先週の結果」と同じ、的中時は配当そのものを示すバッジ。
+    AI本命馬が除外・取消の場合は的中/不的中ではなく「-」にする。人気・着順は
+    レース結果ページ（resultTable）と同じ配色で上位3位を強調する）。
+    開催日ごとのテーブルは件数が少なく並び替えの必要性が薄いため、ソート機能は付けない。
+    """
+    if not days:
+        return "<p>レース詳細データがありません。</p>"
+
+    sections = ""
+    for day in days:
+        rows = "".join(
+            f"""<tr>
+          <td>{calc.parse_race_id(race['race_id'])['race_num']}R {race['race_name']}</td>
+          <td>{course_label_html(race['race_type'], race['course_len']) if pd.notna(race['race_type']) and pd.notna(race['course_len']) else '-'}</td>
+          <td>{_blank_safe(race['ground_state'])}</td>
+          <td>{_blank_safe(race['class'])}</td>
+          <td>{_blank_safe(race['winner_name'])}</td>
+          <td>{_blank_safe(race['pick_name'])}</td>
+          <td{_rank_color_style(race['pick_pop'])}>{_blank_safe(race['pick_pop'])}</td>
+          <td{_rank_color_style(race['pick_finish'])}>{_blank_safe(race['pick_finish'])}</td>
+          <td>{bet_result_cell_html(race['win_hit'], race['win_payout'], void=race['pick_scratched'])}</td>
+          <td>{bet_result_cell_html(race['place_hit'], race['place_payout'], void=race['pick_scratched'])}</td>
+        </tr>"""
+            for race in day["races"]
+        )
+        sections += f"""<h4>{format_data.weekday_label_html(day['race_day'], fmt='%Y/%m/%d')}</h4>
+  {_day_mini_stats_html(day['races'])}
+  <div class="table-wrap table-wrap--full">
+  <table>
+    <thead>
+      <tr>
+        <th>レース名</th><th>コース</th><th>馬場</th><th>クラス</th>
+        <th>勝ち馬</th><th>AI本命馬</th><th>人気</th><th>着順</th>
+        <th>単勝</th><th>複勝</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows}
+    </tbody>
+  </table>
+  </div>
+"""
+    return sections
+
+
 def make_meeting_performance_page(year, place_id, times, df=None):
-    """開催別成績ページ（public_html/performance/meeting/{year}/{place}-{times}th.html）を生成する"""
+    """開催別成績ページ（public_html/performance/meeting/{year}/{place}-{times}th.html）を生成する
+
+    開催のトータル成績の下に、開催日ごとの全レース詳細（新しい開催日が上）を表示する。
+    """
     df = df if df is not None else m.get_ai_performance_dataset()
     place_name = NAME_LIST[place_id - 1]
-    performance = m.aggregate(m.filter_by_meeting(df, year, place_id, times))
+    meeting_df = m.filter_by_meeting(df, year, place_id, times)
+    performance = m.aggregate(meeting_df)
+    race_day_ids = [
+        (datetime.strptime(row["race_day"], "%Y-%m-%d").date(), race_id)
+        for race_id, row in meeting_df.iterrows()
+    ]
+    race_days = calc.get_meeting_race_details(race_day_ids)
 
     breadcrumb_items = [("AI成績", "performance/index.html"), (f"{year}年 {place_name}{times}回", None)]
     html = f"""
@@ -407,9 +539,10 @@ def make_meeting_performance_page(year, place_id, times, df=None):
   {breadcrumb_html(breadcrumb_items, base_path="../../../")}
   <h1>{year}年 {place_name}{times}回 AI予想成績</h1>
   {_performance_table_html(performance)}
+  <h2>レース詳細</h2>
+  {_meeting_race_detail_table_html(race_days)}
   <p><a href="../../index.html">&larr; AI成績トップへ</a></p>
   {site_footer_html(base_path="../../../")}
-  <script src="../../../assets/js/sortable-table.js"></script>
 </body>
 </html>
 """
@@ -450,6 +583,7 @@ def make_course_performance_index_page(place_id, df=None):
     this_year_week_table = _breakdown_table_html(
         list(reversed(this_year_week_breakdown)), "週(開始日)", title="開催週別成績",
     )
+    meeting_breakdown = _meeting_breakdown(place_df, PLACE_LIST[place_id - 1])
     by_year = sorted(m.group_breakdown(place_df, "year"), key=lambda item: item["value"], reverse=True)
     by_class = m.group_breakdown(place_df, "class")
     by_race_type = m.group_breakdown(place_df, "race_type")
@@ -510,6 +644,7 @@ def make_course_performance_index_page(place_id, df=None):
     <div class="section-panel" data-section="overview">
       {_performance_table_html(total_performance, title="トータル成績")}
       {_performance_table_html(this_year_performance, title=f"{this_year}年の成績")}
+      {_breakdown_table_html(meeting_breakdown, "開催", title="開催別成績")}
       <h4>直近の開催週別の傾向・推移</h4>
       {this_year_week_trend}
       {this_year_week_table}

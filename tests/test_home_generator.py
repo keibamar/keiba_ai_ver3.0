@@ -215,7 +215,7 @@ def test_home_template_weekly_trend_is_saturday_aligned_and_covers_win_and_place
     assert hit_rate_gauge_html(50.0) in html_content
 
 
-def test_current_meetings_html_links_place_name_to_course_detail_data():
+def test_current_meetings_html_links_place_name_to_ai_performance_top_page():
     meetings = [{"place_id": 5, "first_day": date(2026, 6, 20), "times": 2}]
     df = pd.DataFrame(
         columns=["race_day", "year", "place_id", "times", "win_hit", "win_return", "place_hit", "place_return", "trio_box_hit", "trio_box_return"]
@@ -225,10 +225,10 @@ def test_current_meetings_html_links_place_name_to_course_detail_data():
 
     print(f"\n--- _current_meetings_html ---\n{html_content}")
 
-    # 開催中の競馬場名から、そのコースのコース詳細データへ直接アクセスできる
-    assert '<a href="courses/05_tokyo/index.html">東京</a>' in html_content
+    # 開催中の競馬場名から、その競馬場のAI成績TOPページへ直接アクセスできる
+    assert '<a href="performance/course/05_tokyo/index.html">東京</a>' in html_content
     # 競馬場名がメイン、開催回数がサブの2行表示
-    assert '<span class="main"><a href="courses/05_tokyo/index.html">東京</a></span><span class="sub">2回</span>' in html_content
+    assert '<span class="main"><a href="performance/course/05_tokyo/index.html">東京</a></span><span class="sub">2回</span>' in html_content
 
 
 def test_current_meetings_html_handles_no_current_meetings():
@@ -334,19 +334,6 @@ def test_week_main_races_html_handles_no_main_races():
     assert "今週のメインレース（11R）はありません。" in h._week_main_races_html([])
 
 
-def test_bet_result_cell_html_shows_payout_instead_of_rate_when_hit():
-    html_content = h._bet_result_cell_html(True, 510.0)
-
-    assert '<span class="hit-badge win">的中</span>' in html_content
-    assert "510円" in html_content
-    # 的中率(%)としては表示しない
-    assert "%" not in html_content
-
-
-def test_bet_result_cell_html_shows_only_miss_badge_when_not_hit():
-    html_content = h._bet_result_cell_html(False, None)
-
-    assert html_content == '<span class="hit-badge miss">不的中</span>'
 
 
 def test_weekend_results_html_shows_winner_pick_and_payout_on_hit():

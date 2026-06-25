@@ -6,13 +6,14 @@ src.output.return_report の get_win_result/get_place_result/get_trio_box_result
 """
 
 import shutil
-from datetime import date
+from datetime import date, datetime
 
 import pandas as pd
 import pytest
 
 from src.config import paths
 from src.logic.calculators import ai_performance_calculator as ai
+from src.managers import ai_performance_dataset_manager as m
 from src.managers import race_info_dataset_manager
 
 SAMPLE_DATE_STR = "20241020"
@@ -80,6 +81,18 @@ def test_calc_race_hit_returns_returns_none_when_no_rank(new_roots, monkeypatch)
 def test_calc_race_hit_returns_returns_none_when_no_returns_data(new_roots, monkeypatch):
     monkeypatch.setattr(
         ai.race_info_dataset_manager, "get_race_return_csv_for_race", lambda race_id: pd.DataFrame()
+    )
+
+    assert ai.calc_race_hit_returns(SAMPLE_RACE_DAY, SAMPLE_RACE_ID) is None
+
+
+def test_calc_race_hit_returns_returns_none_when_pick_horse_scratched(new_roots, monkeypatch):
+    # rank=1（AI本命）は馬番5。本命馬が除外（出走しなかった）の場合、的中/不的中ではなく
+    # 払い戻しになるため、的中率・回収率の対象から除外する（Noneを返す）。
+    monkeypatch.setattr(
+        ai.race_result_dataset_manager,
+        "get_race_id_result",
+        lambda race_id: pd.DataFrame({"馬番": [5], "着順": ["除外"]}),
     )
 
     assert ai.calc_race_hit_returns(SAMPLE_RACE_DAY, SAMPLE_RACE_ID) is None
@@ -179,15 +192,106 @@ def test_get_weekend_main_race_details_returns_winner_pick_and_hit_payout():
     # 東京11R(06-13 ジューンS)はAI本命馬カネラフィーナが1着で単勝・複勝とも的中する
     tokyo_race = next(r for r in races if r["race_day"] == date(2026, 6, 13) and r["place_id"] == 5)
     assert tokyo_race["pick_name"] == tokyo_race["winner_name"] == "カネラフィーナ"
+    assert tokyo_race["pick_pop"] == "3"
     assert tokyo_race["pick_finish"] == "1"
     assert tokyo_race["win_hit"] is True
     assert tokyo_race["win_payout"] == pytest.approx(510.0)
     assert tokyo_race["place_hit"] is True
     assert tokyo_race["place_payout"] == pytest.approx(210.0)
+    # コース・馬場・クラス情報も確定結果側から取得して含まれる
+    assert tokyo_race["race_type"] == "芝"
+    assert tokyo_race["course_len"] == "1800"
+    assert tokyo_race["ground_state"] == "良"
+    assert tokyo_race["class"] == "オープン"
 
 
 def test_get_weekend_main_race_details_returns_empty_list_when_no_schedule():
     assert ai.get_weekend_main_race_details(date(2020, 1, 5)) == []
+
+
+def test_race_detail_summary_marks_pick_scratched_when_finish_is_scratch(new_roots, monkeypatch):
+    # rank=1（AI本命）は馬番5。本命馬が除外（出走しなかった）の場合、pick_scratchedがTrueになる
+    monkeypatch.setattr(
+        ai.race_result_dataset_manager,
+        "get_race_id_result",
+        lambda race_id: pd.DataFrame({
+            "馬番": [5, 9],
+            "馬名": ["ホースA", "ホースB"],
+            "着順": ["除外", "1"],
+            "人気": ["1", "2"],
+        }),
+    )
+
+    detail = ai._race_detail_summary(SAMPLE_RACE_DAY, SAMPLE_RACE_ID)
+
+    print(f"\n--- _race_detail_summary（本命馬除外）---\n{detail}")
+
+    assert detail["pick_finish"] == "除外"
+    assert detail["pick_scratched"] is True
+
+
+def test_race_detail_summary_pick_scratched_false_when_finish_is_normal(new_roots):
+    detail = ai._race_detail_summary(SAMPLE_RACE_DAY, SAMPLE_RACE_ID)
+
+    assert detail["pick_scratched"] is False
+
+
+def _tokyo_2026_3rd_race_day_ids():
+    """東京2026年第3回の(race_day, race_id)一覧を、永続化済みデータセットから取得する
+
+    get_meeting_race_detailsは呼び出し側がこのペア一覧を渡す前提のため、
+    テストでも実際のai_performance_dataset_manager.filter_by_meetingを使う
+    （race_calendar側の「開催日目」とは日付の数え方がズレることがあるため、
+    再現性のためデータセット側の実際のrace_dayを使う）。
+    """
+    df = m.get_ai_performance_dataset()
+    meeting_df = m.filter_by_meeting(df, 2026, 5, 3)
+    return [
+        (datetime.strptime(row["race_day"], "%Y-%m-%d").date(), race_id)
+        for race_id, row in meeting_df.iterrows()
+    ]
+
+
+def test_get_meeting_race_details_groups_by_day_newest_first_with_race_name():
+    details = ai.get_meeting_race_details(_tokyo_2026_3rd_race_day_ids())
+
+    print(f"\n--- get_meeting_race_details(東京2026年第3回) ---")
+    for day in details:
+        print(f"  {day['race_day']}: {len(day['races'])} races")
+
+    # 開催日は新しい順
+    assert [day["race_day"] for day in details] == sorted(
+        (day["race_day"] for day in details), reverse=True
+    )
+    # データセット上の全レース数と一致する（race_calendar由来の再構築だと一部レースが
+    # 取得できなくなる既知の不具合があったため、件数が欠けていないことを確認する）
+    assert sum(len(day["races"]) for day in details) == len(_tokyo_2026_3rd_race_day_ids())
+    # 06-13(東京11R ジューンS)が含まれ、race_id・race_nameも入っている
+    day_0613 = next(day for day in details if day["race_day"] == date(2026, 6, 13))
+    race = next(r for r in day_0613["races"] if r["race_id"] == "202605030311")
+    assert race["race_name"] == "ジューンS"
+    assert race["pick_name"] == race["winner_name"] == "カネラフィーナ"
+
+
+def test_get_meeting_race_details_skips_race_when_race_result_lookup_raises(monkeypatch):
+    # data/race_result/ に一部重複行が混入しているレースがあり、get_race_id_resultが
+    # 例外を投げることがある（既知のデータ品質問題）。1件の異常データで開催全体の
+    # 表示が止まらず、そのレースだけ読み飛ばして他のレースは正常に返ることを確認する。
+    real_get_race_id_result = ai.race_result_dataset_manager.get_race_id_result
+
+    def flaky_get_race_id_result(race_id):
+        if race_id == "202605030311":
+            raise KeyError("Cannot get left slice bound for non-unique label")
+        return real_get_race_id_result(race_id)
+
+    monkeypatch.setattr(ai.race_result_dataset_manager, "get_race_id_result", flaky_get_race_id_result)
+
+    details = ai.get_meeting_race_details(_tokyo_2026_3rd_race_day_ids())
+
+    day_0613 = next(day for day in details if day["race_day"] == date(2026, 6, 13))
+    race_ids = [r["race_id"] for r in day_0613["races"]]
+    assert "202605030311" not in race_ids
+    assert len(race_ids) > 0
 
 
 def test_list_predicted_races_returns_real_dates(new_roots):

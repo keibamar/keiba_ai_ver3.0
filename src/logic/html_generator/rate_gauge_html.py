@@ -78,3 +78,27 @@ def return_rate_big_html(return_rate):
     """
     color = _return_rate_color(return_rate)
     return f'<span class="rate-big" style="color: {color};">{return_rate:.1f}%</span>'
+
+
+BET_RESULT_BIG_PAYOUT_THRESHOLD = 1000.0  # この金額（100円購入あたり）以上の配当は強調表示する
+
+
+def bet_result_cell_html(hit, payout, void=False):
+    """単勝/複勝1つ分の的中結果セルを返す
+
+    的中した場合は的中率ではなく実際の配当そのものを表示する（的中バッジ＋配当額）。
+    配当がBET_RESULT_BIG_PAYOUT_THRESHOLD以上の場合は、見た目で目立つよう強調する
+    （hit-badge-bigクラスでバッジを大きく、配当額も太字・大きめにする）。
+    不的中の場合は配当が無いため、バッジのみ表示する。
+    void=True（AI本命馬が除外・取消で出走しなかった場合）は的中/不的中ではなく
+    払い戻しとなるため、「-」のみ表示する。
+    home_generator（先週の結果）・ai_performance_report_generator（開催別成績の
+    日別レース詳細）の両方から使う。
+    """
+    if void:
+        return '<span class="hit-badge void">-</span>'
+    if hit and payout is not None:
+        if payout >= BET_RESULT_BIG_PAYOUT_THRESHOLD:
+            return f'<span class="hit-badge win hit-badge-big">的中</span> <span class="hit-payout-big">{payout:.0f}円</span>'
+        return f'<span class="hit-badge win">的中</span> {payout:.0f}円'
+    return '<span class="hit-badge miss">不的中</span>'

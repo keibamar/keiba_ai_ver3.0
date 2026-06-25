@@ -11,6 +11,8 @@ ai_performance_dataset_manager.get_ai_performance_dataset をmonkeypatchして
 今日の日付は2026年（currentDateの環境前提）のため、「今年の成績」は2026年で計算される。
 """
 
+from datetime import date
+
 import pandas as pd
 import pytest
 
@@ -156,6 +158,105 @@ def test_make_meeting_performance_page_generates_html(new_roots, fake_dataset):
     assert '<p class="breadcrumb">' in html_content
     assert '<span class="breadcrumb-current">2025年 東京1回</span>' in html_content
     assert '<aside class="page-sidebar">' not in html_content
+    assert "<h2>レース詳細</h2>" in html_content
+
+
+def test_make_meeting_performance_page_shows_real_race_details_newest_day_first(new_roots):
+    # 東京2026年第3回（6/6・6/7・6/13・6/14・6/20・6/21開催）。実データに基づく
+    # レース詳細（ai_performance_calculator.get_meeting_race_details）が表示される。
+    # （fake_datasetは使わない。レース詳細は実データセット側のrace_day・race_idを
+    # そのまま使うため、totalも実データになる）
+    r.make_meeting_performance_page(2026, place_id=5, times=3)
+
+    out_file = new_roots / "public_html" / "performance" / "meeting" / "2026" / "05_tokyo-3th.html"
+    html_content = out_file.read_text(encoding="utf-8")
+
+    print(f"\n--- make_meeting_performance_page(2026, 5, 3) レース詳細 ---")
+    print(html_content)
+
+    # トータル成績の対象レース数（68件）と、レース詳細に並ぶレース数が一致する
+    # （以前は確定結果データが欠けている開催日のレースが詳細から漏れ、68件のうち
+    # 一部しか表示されない不具合があった）
+    assert "<div class=\"bet-stat-n\">対象 68件</div>" in html_content
+    # 開催日は新しい順（6/21が最初に出てくる）。確定結果データが欠けている
+    # 6/6・6/7も、結果が無い項目は「-」表示で詳細から漏れずに表示される
+    assert html_content.index("2026/06/21") < html_content.index("2026/06/13")
+    assert "2026/06/06" in html_content
+    assert "2026/06/07" in html_content
+    # 東京11R(06-13 ジューンS)はAI本命馬カネラフィーナが1着で単勝・複勝とも的中する
+    assert "ジューンS" in html_content
+    assert html_content.count("カネラフィーナ") == 2  # 勝ち馬・AI本命馬の両方の列に表示される
+    assert '<span class="hit-badge win">的中</span> 510円' in html_content
+    assert '<span class="hit-badge win">的中</span> 210円' in html_content
+    # 人気(3番人気)・着順(1着)も、レース結果ページと同じ配色（RANK_COLORS）で強調する
+    assert '<td style="background-color:#FFA07A;">3</td>' in html_content
+    assert '<td style="background-color:#FFD700;">1</td>' in html_content
+
+
+def test_meeting_race_detail_table_html_shows_dash_when_pick_scratched():
+    days = [{
+        "race_day": date(2026, 6, 13),
+        "races": [{
+            "race_id": "202605030311", "race_name": "テストS", "race_type": "芝", "course_len": "1800",
+            "ground_state": "良", "class": "オープン",
+            "winner_name": "ホースB", "pick_name": "ホースA", "pick_pop": "1", "pick_finish": "除外",
+            "pick_scratched": True, "win_hit": False, "win_payout": None,
+            "place_hit": False, "place_payout": None,
+        }],
+    }]
+
+    html_content = r._meeting_race_detail_table_html(days)
+
+    print(f"\n--- _meeting_race_detail_table_html（本命馬除外）---\n{html_content}")
+
+    # 着順列には「除外」をそのまま表示するが、単勝/複勝は的中/不的中ではなく「-」にする
+    assert "除外" in html_content
+    assert html_content.count('<span class="hit-badge void">-</span>') == 2
+    assert "的中</span>" not in html_content
+    assert "不的中</span>" not in html_content
+    # レース名には第何Rかを含む。テーブルにソート機能（class="sortable"）は付けない
+    assert "<td>11R テストS</td>" in html_content
+    assert 'class="sortable"' not in html_content
+    # 日付には曜日（土曜=青）を付ける
+    assert '<span class="weekday-sat">(土)</span>' in html_content
+    # 除外のみの開催日は的中率・回収率を計算できない旨を表示する
+    assert "的中率・回収率を計算できるレースがありません。" in html_content
+
+
+def test_meeting_race_detail_table_html_shows_day_mini_stats_and_blank_for_missing_values():
+    days = [{
+        "race_day": date(2026, 6, 14),  # 日曜
+        "races": [
+            {
+                "race_id": "202605030401", "race_name": "テストA", "race_type": "芝", "course_len": "1800",
+                "ground_state": "良", "class": "未勝利",
+                "winner_name": "ホースA", "pick_name": "ホースA", "pick_pop": "1", "pick_finish": "1",
+                "pick_scratched": False, "win_hit": True, "win_payout": 150.0,
+                "place_hit": True, "place_payout": 110.0,
+            },
+            {
+                "race_id": "202605030402", "race_name": "テストB",
+                # race_result側のデータが欠けているレース（NaN/None混在）
+                "race_type": float("nan"), "course_len": None, "ground_state": float("nan"), "class": None,
+                "winner_name": None, "pick_name": "ホースC", "pick_pop": None, "pick_finish": None,
+                "pick_scratched": False, "win_hit": False, "win_payout": None,
+                "place_hit": False, "place_payout": None,
+            },
+        ],
+    }]
+
+    html_content = r._meeting_race_detail_table_html(days)
+
+    print(f"\n--- _meeting_race_detail_table_html（日次ミニ集計・NaN欠損）---\n{html_content}")
+
+    # 日曜は赤
+    assert '<span class="weekday-sun">(日)</span>' in html_content
+    # 1日分の単勝・複勝それぞれの的中率・回収率（小さく1行、2件中1件的中なので的中率50%）
+    assert '<p class="day-mini-stats">単勝 的中率50.0% 回収率75.0% / 複勝 的中率50.0% 回収率55.0% (対象2件)</p>' in html_content
+    # NaN/Noneの列は「nan」ではなく「-」で表示する
+    assert "nan" not in html_content
+    assert "<td>-</td>" in html_content
+    assert '<td style="background-color:#ffffff;">-</td>' in html_content
 
 
 def test_make_all_meeting_performance_pages_generates_for_every_meeting(new_roots, fake_dataset):
@@ -264,6 +365,14 @@ def test_make_course_performance_index_page_generates_html(new_roots, fake_datas
     # 東京全体（A・B・C）: win hit=2/3=66.7%, return=(200+0+100)/3=100.0
     assert return_rate_big_html(100.0) in html_content
     assert hit_rate_gauge_html(2 / 3 * 100) in html_content
+    # 今年の成績の下に「開催別成績」（新しい開催が上、詳細ページへのリンク付き）が追加されている
+    # 東京は2025年第1回(A)・2026年第2回(B)・2026年第3回(C)の3開催
+    assert "<h3>開催別成績</h3>" in html_content
+    assert html_content.index('<a href="../../meeting/2026/05_tokyo-3th.html">2026年 第3回</a>') < html_content.index(
+        '<a href="../../meeting/2026/05_tokyo-2th.html">2026年 第2回</a>'
+    )
+    assert '<a href="../../meeting/2025/05_tokyo-1th.html">2025年 第1回</a>' in html_content
+
     # 今年（2026年）の成績の下に、直近の開催週別の傾向・推移が追加されている
     # （B=2026-04-01週、C=2026-04-08週は7日違いの同じ曜日なので別の週開始日になる）
     # （年度別タブの年次トレンドと合わせて、推移グラフは単勝/複勝×2セクション=4つになる）

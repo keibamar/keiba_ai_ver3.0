@@ -14,13 +14,11 @@ ai_performance_calculator を直接使う）。
 
 from datetime import date, datetime, timedelta
 
-import jpholiday
-
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator.ai_performance_report_generator import _performance_table_html
 from src.logic.html_generator.race_type_badge_html import course_label_html
-from src.logic.html_generator.rate_gauge_html import hit_rate_gauge_html, return_rate_gauge_html
+from src.logic.html_generator.rate_gauge_html import bet_result_cell_html, hit_rate_gauge_html, return_rate_gauge_html
 from src.logic.html_generator.site_nav_html import (
     SITE_TITLE,
     SITE_URL,
@@ -32,6 +30,7 @@ from src.logic.html_generator.site_nav_html import (
 )
 from src.managers import ai_performance_dataset_manager as dataset_manager
 from src.managers import html_manager
+from src.utils import format_data
 
 BET_TYPE_LABELS = {"win": "単勝", "place": "複勝", "trio_box": "三連複(5頭BOX)"}
 
@@ -52,15 +51,7 @@ def _main_sub_cell_html(main, sub):
 
 def _date_with_weekday_html(day):
     """日付に曜日を付けて返す（土曜は青、日曜・祝日は赤で表示する）"""
-    weekday_kanji = "月火水木金土日"[day.weekday()]
-    if day.weekday() == 5:
-        css_class = "weekday-sat"
-    elif day.weekday() == 6 or jpholiday.is_holiday(day):
-        css_class = "weekday-sun"
-    else:
-        css_class = ""
-    class_attr = f' class="{css_class}"' if css_class else ""
-    return f'{day.strftime("%m/%d")}<span{class_attr}>({weekday_kanji})</span>'
+    return format_data.weekday_label_html(day)
 
 
 def _weekly_trend_html(trend):
@@ -107,8 +98,8 @@ def _weekly_trend_html(trend):
 def _current_meetings_html(meetings, df):
     """開催中の競馬場の成績テーブルを返す
 
-    競馬場名はそのコースのコース詳細データ（courses/{place}/index.html）への
-    リンクにし、Homeから開催中コースのコース別データへすぐアクセスできるようにする。
+    競馬場名はその競馬場のAI成績TOPページ（performance/course/{place}/index.html）への
+    リンクにし、Homeから開催中競馬場のAI成績詳細へすぐアクセスできるようにする。
     """
     if not meetings:
         return "<p>現在開催中の競馬場はありません。</p>"
@@ -117,7 +108,7 @@ def _current_meetings_html(meetings, df):
     for meeting in meetings:
         place_id = meeting["place_id"]
         place_name = NAME_LIST[place_id - 1]
-        place_link = f'<a href="courses/{PLACE_LIST[place_id - 1]}/index.html">{place_name}</a>'
+        place_link = f'<a href="performance/course/{PLACE_LIST[place_id - 1]}/index.html">{place_name}</a>'
         meeting_df = dataset_manager.filter_by_meeting(
             df, meeting["first_day"].year, place_id, meeting["times"]
         )
@@ -132,7 +123,7 @@ def _current_meetings_html(meetings, df):
 
     return f"""<div class="table-wrap">
   <table class="sortable">
-    <thead><tr><th>開催（コース詳細データへ）</th><th>単勝的中率</th><th>単勝回収率</th><th>対象レース数</th></tr></thead>
+    <thead><tr><th>開催（AI成績TOPへ）</th><th>単勝的中率</th><th>単勝回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       {rows}
     </tbody>
@@ -188,17 +179,6 @@ def _week_main_races_html(races):
   </div>"""
 
 
-def _bet_result_cell_html(hit, payout):
-    """単勝/複勝1つ分の的中結果セルを返す
-
-    的中した場合は的中率ではなく実際の配当そのものを表示する（的中バッジ＋配当額）。
-    不的中の場合は配当が無いため、バッジのみ表示する。
-    """
-    if hit and payout is not None:
-        return f'<span class="hit-badge win">的中</span> {payout:.0f}円'
-    return '<span class="hit-badge miss">不的中</span>'
-
-
 def _weekend_results_html(races):
     """週末のメインレース結果（勝ち馬・AI本命馬・本命馬の着順・単勝/複勝の的中結果）を返す
 
@@ -215,7 +195,12 @@ def _weekend_results_html(races):
         place_name = NAME_LIST[race["place_id"] - 1]
         place_key = PLACE_LIST[race["place_id"] - 1]
         date_str = _date_with_weekday_html(race["race_day"])
-        pick_finish = f"{race['pick_finish']}着" if race["pick_finish"] is not None else "-"
+        if race["pick_finish"] is None:
+            pick_finish = "-"
+        elif race.get("pick_scratched"):
+            pick_finish = race["pick_finish"]
+        else:
+            pick_finish = f"{race['pick_finish']}着"
         race_day_str = race["race_day"].strftime("%Y%m%d")
         race_card_file = f"{place_key}R11.html"
         if html_manager.race_page_exists(race_day_str, race_card_file):
@@ -228,8 +213,8 @@ def _weekend_results_html(races):
             f"<td>{race['winner_name'] or '-'}</td>"
             f"<td>{race['pick_name'] or '-'}</td>"
             f"<td>{pick_finish}</td>"
-            f"<td>{_bet_result_cell_html(race['win_hit'], race['win_payout'])}</td>"
-            f"<td>{_bet_result_cell_html(race['place_hit'], race['place_payout'])}</td></tr>\n"
+            f"<td>{bet_result_cell_html(race['win_hit'], race['win_payout'], void=race.get('pick_scratched', False))}</td>"
+            f"<td>{bet_result_cell_html(race['place_hit'], race['place_payout'], void=race.get('pick_scratched', False))}</td></tr>\n"
         )
 
     return f"""<div class="table-wrap">

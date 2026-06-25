@@ -70,6 +70,16 @@ def list_predicted_races():
     return pairs
 
 
+def _is_scratched_finish(finish):
+    """着順の文字列が除外・取消（出走しなかった）を表すかどうかを返す
+
+    race_prediction_engine.get_past_race_info_dataと同じ判定基準
+    （着順に"除"または"取"を含む）を使う。
+    """
+    finish_str = str(finish)
+    return "除" in finish_str or "取" in finish_str
+
+
 def calc_race_hit_returns(race_day, race_id, box_num=5):
     """1レース分の的中・回収額を、予想rank1位の馬を基準に計算する
 
@@ -80,7 +90,9 @@ def calc_race_hit_returns(race_day, race_id, box_num=5):
     Returns:
         dict | None: {"win": (hit, return), "place": (hit, return), "trio_box": (hit, return)}
             （hitは0/1、returnは100円あたりの配当額）。予想または確定配当が
-            存在しない場合はNoneを返す。
+            存在しない場合、またはAI本命馬（rank=1）が除外・取消で出走しなかった
+            場合（的中/不的中ではなく払い戻しのため、的中率・回収率の対象から
+            除外したい）はNoneを返す。
     """
     pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
     if "rank" not in pred_df.columns:
@@ -89,6 +101,14 @@ def calc_race_hit_returns(race_day, race_id, box_num=5):
     returns_df = race_info_dataset_manager.get_race_return_csv_for_race(race_id)
     if returns_df.empty:
         return None
+
+    pick_rows = pred_df[pred_df["rank"] == 1]
+    if not pick_rows.empty:
+        pick_num = int(pick_rows.iloc[0]["馬番"])
+        result_df = race_result_dataset_manager.get_race_id_result(race_id)
+        pick_result = result_df[result_df["馬番"].astype(str) == str(pick_num)] if not result_df.empty else result_df
+        if not pick_result.empty and _is_scratched_finish(pick_result.iloc[0]["着順"]):
+            return None
 
     result = {bet_type: (0, 0.0) for bet_type in BET_TYPES}
 
@@ -344,26 +364,25 @@ def get_current_meeting_summaries(today=None):
 
 
 def _race_detail_summary(race_day, race_id):
-    """1レース分の詳細サマリー（勝ち馬・AI本命馬・本命馬の着順・単勝/複勝の的中結果）を返す
+    """1レース分の詳細サマリー（コース・馬場・クラス・勝ち馬・AI本命馬・本命馬の人気/着順・
+    単勝/複勝の的中結果）を返す
 
     Args:
         race_day (date): レース開催日
         race_id (str): race_id
     Returns:
-        dict | None: 予想（rank列）または確定結果が無ければNone。
-            {"winner_name", "pick_name", "pick_finish", "win_hit", "win_payout",
-            "place_hit", "place_payout"}
+        dict | None: 予想（rank列）が無ければNone。確定結果（race_result）側の
+            データが取得できないレースでも、配当（race_return）からの的中判定は
+            可能な場合があるため、その場合は"race_type"等をNoneにした上で返す
+            （この開催に予想・配当データが存在するのに詳細ページから抜け落ちる
+            ことを避けるため。data/race_result/側に一部抜けがあるのが既知の問題）。
+            {"race_type", "course_len", "ground_state", "class",
+            "winner_name", "pick_name", "pick_pop", "pick_finish",
+            "win_hit", "win_payout", "place_hit", "place_payout"}
     """
     pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
     if "rank" not in pred_df.columns:
         return None
-
-    result_df = race_result_dataset_manager.get_race_id_result(race_id)
-    if result_df.empty:
-        return None
-
-    winner_row = result_df[result_df["着順"].astype(str) == "1"]
-    winner_name = winner_row.iloc[0]["馬名"] if not winner_row.empty else None
 
     pick_rows = pred_df[pred_df["rank"] == 1]
     if pick_rows.empty:
@@ -372,8 +391,19 @@ def _race_detail_summary(race_day, race_id):
     pick_name = pick_row["馬名"]
     pick_num = int(pick_row["馬番"])
 
-    pick_result = result_df[result_df["馬番"].astype(str) == str(pick_num)]
-    pick_finish = pick_result.iloc[0]["着順"] if not pick_result.empty else None
+    result_df = race_result_dataset_manager.get_race_id_result(race_id)
+    if result_df.empty:
+        result_info = {}
+        winner_name = None
+        pick_finish = None
+        pick_pop = None
+    else:
+        result_info = result_df.iloc[0]
+        winner_row = result_df[result_df["着順"].astype(str) == "1"]
+        winner_name = winner_row.iloc[0]["馬名"] if not winner_row.empty else None
+        pick_result = result_df[result_df["馬番"].astype(str) == str(pick_num)]
+        pick_finish = pick_result.iloc[0]["着順"] if not pick_result.empty else None
+        pick_pop = pick_result.iloc[0]["人気"] if not pick_result.empty else None
 
     win_hit, win_payout = False, None
     place_hit, place_payout = False, None
@@ -395,9 +425,17 @@ def _race_detail_summary(race_day, race_id):
                 place_payout = float(payout)
 
     return {
+        "race_type": result_info.get("race_type"),
+        "course_len": result_info.get("course_len"),
+        "ground_state": result_info.get("ground_state"),
+        "class": result_info.get("class"),
         "winner_name": winner_name,
         "pick_name": pick_name,
+        "pick_pop": pick_pop,
         "pick_finish": pick_finish,
+        # 除外・取消（出走しなかった）の場合、単勝/複勝は的中/不的中ではなく
+        # 払い戻しとなるため、表示側で「-」にできるようフラグを立てる
+        "pick_scratched": _is_scratched_finish(pick_finish) if pick_finish is not None else False,
         "win_hit": win_hit,
         "win_payout": win_payout,
         "place_hit": place_hit,
@@ -441,3 +479,57 @@ def get_weekend_main_race_details(weekend_end_day):
             )
             races.append(detail)
     return races
+
+
+def get_meeting_race_details(race_day_ids):
+    """指定したレース（開催日・race_idのペア一覧）の詳細サマリーを、開催日ごとにまとめて返す
+
+    開催別成績ページ（開催のTOTALの下に各開催日のレース詳細を並べる）用。
+    呼び出し側（ai_performance_report_generator）が、永続化済みのai_performance
+    データセット（ai_performance_dataset_manager.filter_by_meeting等）からその開催の
+    実際のrace_day・race_idを渡す想定（race_calendar側の「開催日目」とdata/race_result/
+    側の実際の日番号がズレているケースがあり、calendarから独自に日付・race_idを
+    再構築すると一部のレースが取得できなくなるため、永続化データセット側を正とする）。
+
+    日付は新しい順（直近の開催日が先頭）、各日のレースはレース番号の昇順で返す。
+    予想（rank列）または確定結果が無いレースは含まない（_race_detail_summary参照）。
+
+    Args:
+        race_day_ids (list[tuple[date, str]]): (race_day, race_id) のペア一覧。
+    Returns:
+        list[dict]: [{"race_day": date, "races": [detail, ...]}, ...]（日付降順）。
+            detail は _race_detail_summary の戻り値に "race_id"・"race_name" を加えたもの。
+    """
+    races_by_day = {}
+    for race_day, race_id in race_day_ids:
+        races_by_day.setdefault(race_day, []).append(str(race_id))
+
+    result = []
+    for race_day in sorted(races_by_day, reverse=True):
+        race_id_list = sorted(races_by_day[race_day])
+        time_id_df = race_card_dataset_manager.get_race_time_id_list_df(race_day)
+        race_names = (
+            dict(zip(time_id_df["race_id"].astype(str), time_id_df["race_name"]))
+            if not time_id_df.empty
+            else {}
+        )
+
+        races = []
+        for race_id in race_id_list:
+            try:
+                detail = _race_detail_summary(race_day, race_id)
+            except Exception:
+                # data/race_result/ 側に一部重複行が混入しているレースがあり、
+                # get_race_id_resultが例外を投げることがある（既知のデータ品質問題）。
+                # 1件の異常データで開催全体の表示が止まらないよう、そのレースだけ読み飛ばす。
+                continue
+            if detail is None:
+                continue
+            detail["race_id"] = race_id
+            detail["race_name"] = race_names.get(str(race_id), "")
+            races.append(detail)
+
+        if races:
+            result.append({"race_day": race_day, "races": races})
+
+    return result
