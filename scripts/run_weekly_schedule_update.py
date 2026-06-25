@@ -18,10 +18,16 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+from src.logic.html_generator import home_generator  # noqa: E402
 from src.logic.scheduler import race_day_scheduler  # noqa: E402
 
 if __name__ == "__main__":
     today = date.today()
     race_day_scheduler.update_weekly_time_id_list(today)
     race_day_scheduler.make_weekend_provisional_html(today)
+    # update_weekly_time_id_list内でもHOMEを再生成しているが、その時点では
+    # 週末の出馬表（make_weekend_provisional_html）がまだ存在せず、「今週のメイン
+    # レース」からのリンクが付かない。週末分の出馬表ができた後に再度HOMEを
+    # 作り直し、リンクが反映された状態にする。
+    home_generator.make_home_page()
     print("Weekly Schedule Update Done")

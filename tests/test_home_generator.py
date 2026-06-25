@@ -132,12 +132,14 @@ def test_make_home_page_generates_index_html(new_roots, monkeypatch):
     assert "カネラフィーナ" in html_content
     assert "510円" in html_content
 
-    # サイト共通ナビゲーション・列ソートJSが追加されている
+    # サイト共通ナビゲーション
     assert '<nav class="site-nav">' in html_content
     assert "pagead2.googlesyndication.com" in html_content
     assert 'rel="icon"' in html_content
     assert "googletagmanager.com/gtag/js?id=G-DNC949064T" in html_content
-    assert '<script src="assets/js/sortable-table.js"></script>' in html_content
+    # HOMEの表は手動で並びを意図しているため、列ソート機能（sortable-table.js）は付けない
+    assert 'class="sortable"' not in html_content
+    assert "assets/js/sortable-table.js" not in html_content
     # https://mar-keiba.com/ と https://mar-keiba.com/index.html の重複URLによる
     # SEO上の評価分散を避けるため、正規URLを明示する
     assert '<link rel="canonical" href="https://mar-keiba.com/">' in html_content
@@ -325,9 +327,10 @@ def test_week_main_races_html_shows_date_and_links_to_course():
     assert '<a href="courses/02_hakodate/芝-1200.html">函館<br><span class="race-type-turf">芝1200m</span></a>' in html_content
     # コース情報が取得できなかった場合は競馬場のコース一覧へリンクする
     assert '<a href="courses/05_tokyo/index.html">東京</a>' in html_content
-    # レース名がメイン、開催場・レース番号がサブの2行表示
-    assert '<span class="main">UHB杯</span><span class="sub">函館11R</span>' in html_content
-    assert '<span class="main">七夕賞</span><span class="sub">東京11R</span>' in html_content
+    # 開催場・レース番号が先（小さい文字）、レース名が後（大きい文字のまま）の2行表示
+    # （函館11Rは出馬表ページが生成済みなのでレース名がリンクになる）
+    assert '<span class="sub">函館11R</span><span class="main"><a href="races/20260627/02_hakodateR11.html">UHB杯</a></span>' in html_content
+    assert '<span class="sub">東京11R</span><span class="main">七夕賞</span>' in html_content
 
 
 def test_week_main_races_html_handles_no_main_races():
@@ -372,13 +375,16 @@ def test_weekend_results_html_shows_winner_pick_and_payout_on_hit():
     assert '06/13<span class="weekday-sat">(土)</span>' in html_content
     # レース名は、その日の出馬表ページ（races/{date}/{place}R11.html）が生成済みなら
     # そこへリンクする（結果が出た後でも出走馬・オッズ等を確認できるようにする）
-    assert '<span class="main"><a href="races/20260613/05_tokyoR11.html">ジューンS</a></span><span class="sub">東京11R</span>' in html_content
+    assert '<span class="sub">東京11R</span><span class="main"><a href="races/20260613/05_tokyoR11.html">ジューンS</a></span>' in html_content
     assert "カネラフィーナ" in html_content
     assert "1着" in html_content
     assert "510円" in html_content
     assert "210円" in html_content
-    # 不的中のレースは本命馬の着順も表示する
-    assert '<span class="main"><a href="races/20260613/09_hanshinR11.html">三宮S</a></span><span class="sub">阪神11R</span>' in html_content
+    # 1着は金色で強調される（レース結果ページと同じRANK_COLORS基準）
+    assert '<td style="background-color:#FFD700;">1着</td>' in html_content
+    # 不的中のレースは本命馬の着順も表示する（上位3位以外は通常の白背景）
+    assert '<span class="sub">阪神11R</span><span class="main"><a href="races/20260613/09_hanshinR11.html">三宮S</a></span>' in html_content
+    assert '<td style="background-color:#ffffff;">9着</td>' in html_content
     assert "メイショウズイウン" in html_content
     assert "9着" in html_content
     assert '<span class="hit-badge miss">不的中</span>' in html_content

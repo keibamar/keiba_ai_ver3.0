@@ -16,7 +16,7 @@ from datetime import date, datetime, timedelta
 
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator as calc
-from src.logic.html_generator.ai_performance_report_generator import _performance_table_html
+from src.logic.html_generator.ai_performance_report_generator import _performance_table_html, _rank_color_style
 from src.logic.html_generator.race_type_badge_html import course_label_html
 from src.logic.html_generator.rate_gauge_html import bet_result_cell_html, hit_rate_gauge_html, return_rate_gauge_html
 from src.logic.html_generator.site_nav_html import (
@@ -47,6 +47,15 @@ def _main_sub_cell_html(main, sub):
     （サブ）など、主従関係のある2つの情報を1セル内で改行して表示する用途に使う。
     """
     return f'<div class="cell-main-sub"><span class="main">{main}</span><span class="sub">{sub}</span></div>'
+
+
+def _sub_main_cell_html(sub, main):
+    """1セルの中で「サブ（小さい文字）＋メイン（大きい文字）」の順で2行を表示するHTMLを返す
+
+    開催場・レース番号を先に小さく示しつつ、主役のレース名は大きい文字のまま
+    保ちたい場合に使う（_main_sub_cell_htmlと表示順だけ逆にしたもの）。
+    """
+    return f'<div class="cell-main-sub"><span class="sub">{sub}</span><span class="main">{main}</span></div>'
 
 
 def _date_with_weekday_html(day):
@@ -122,7 +131,7 @@ def _current_meetings_html(meetings, df):
         )
 
     return f"""<div class="table-wrap">
-  <table class="sortable">
+  <table>
     <thead><tr><th>開催（AI成績TOPへ）</th><th>単勝的中率</th><th>単勝回収率</th><th>対象レース数</th></tr></thead>
     <tbody>
       {rows}
@@ -163,14 +172,14 @@ def _week_main_races_html(races):
             race_name_html = f'<a href="races/{race_day_str}/{race_card_file}">{race["race_name"]}</a>'
         else:
             race_name_html = race["race_name"]
-        race_cell = _main_sub_cell_html(race_name_html, f"{place_name}11R")
+        race_cell = _sub_main_cell_html(f"{place_name}11R", race_name_html)
         rows += (
             f"<tr><td>{date_str} {time_disp}</td><td>{race_cell}</td>"
             f"<td>{course_link}</td></tr>\n"
         )
 
     return f"""<div class="table-wrap">
-  <table class="sortable">
+  <table>
     <thead><tr><th>日付・発走時刻</th><th>レース</th><th>コース詳細データへ</th></tr></thead>
     <tbody>
       {rows}
@@ -207,18 +216,18 @@ def _weekend_results_html(races):
             race_name_html = f'<a href="races/{race_day_str}/{race_card_file}">{race["race_name"]}</a>'
         else:
             race_name_html = race["race_name"]
-        race_cell = _main_sub_cell_html(race_name_html, f"{place_name}11R")
+        race_cell = _sub_main_cell_html(f"{place_name}11R", race_name_html)
         rows += (
             f"<tr><td>{date_str}</td><td>{race_cell}</td>"
             f"<td>{race['winner_name'] or '-'}</td>"
             f"<td>{race['pick_name'] or '-'}</td>"
-            f"<td>{pick_finish}</td>"
+            f"<td{_rank_color_style(race['pick_finish'])}>{pick_finish}</td>"
             f"<td>{bet_result_cell_html(race['win_hit'], race['win_payout'], void=race.get('pick_scratched', False))}</td>"
             f"<td>{bet_result_cell_html(race['place_hit'], race['place_payout'], void=race.get('pick_scratched', False))}</td></tr>\n"
         )
 
     return f"""<div class="table-wrap">
-  <table class="sortable">
+  <table>
     <thead><tr><th>日付</th><th>レース</th><th>勝ち馬</th><th>AI本命</th><th>本命着順</th><th>単勝</th><th>複勝</th></tr></thead>
     <tbody>
       {rows}
@@ -329,7 +338,6 @@ def home_template():
     </div>
   </main>
   {site_footer_html(base_path="")}
-  <script src="assets/js/sortable-table.js"></script>
 </body>
 </html>
 """
