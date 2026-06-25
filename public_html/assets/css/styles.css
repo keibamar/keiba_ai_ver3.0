@@ -754,6 +754,9 @@ td a:hover {
   overflow-y: auto;
   max-height: 480px;
   margin-bottom: 16px;
+  /* iOSで横スクロールをなめらかに（モバイルで表の列が画面幅に収まらない場合の
+     横スクロール操作のため）。 */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 出馬表・レース結果表など「1行=1頭」で全頭を一度に見たい主要テーブルには
@@ -784,6 +787,15 @@ table tbody tr:nth-child(even) {
 
 table tbody tr:hover {
   background: #eef3f8;
+}
+
+/* スマートフォン幅では、表セルの余白・文字サイズを少し詰めて、横スクロールが
+   必要になるまでに見える列数を増やす（横スクロール自体はtable-wrapで維持する）。 */
+@media (max-width: 480px) {
+  th, td {
+    padding: 4px 6px;
+    font-size: 0.85em;
+  }
 }
 
 /* --- 列ソート可能な表（sortable-table.js） --- */
@@ -928,14 +940,22 @@ footer p {
 .page-search {
   position: relative;
   margin-left: auto;
+  /* 狭い画面では.site-brandと並んだ際に画面幅を超えないよう縮小できるようにする
+     （flex-basis 260pxを上限に、必要なら0まで縮む）。 */
+  flex: 0 1 260px;
+  min-width: 140px;
 }
 
 .page-search-input {
-  width: 260px;
+  /* 固定幅ではなく可変にし、狭い画面でも.site-nav（display:flex）の幅に収まるように
+     する（固定幅だとモバイルでサイトロゴと並んだ際に画面からはみ出すことがあった）。 */
+  width: 100%;
+  max-width: 260px;
   padding: 6px 10px;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 0.9em;
+  box-sizing: border-box;
 }
 
 .page-search-input:focus {
@@ -949,6 +969,7 @@ footer p {
   right: 0;
   z-index: 5;
   width: 280px;
+  max-width: 90vw;
   max-height: 320px;
   overflow-y: auto;
   margin: 4px 0 0;

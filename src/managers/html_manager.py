@@ -71,6 +71,13 @@ def save_terms_html(html_content):
         f.write(html_content)
 
 
+def save_404_html(html_content):
+    """public_html/404.html にHTMLを保存する"""
+    os.makedirs(paths.PUBLIC_HTML_PATH, exist_ok=True)
+    with open(os.path.join(paths.PUBLIC_HTML_PATH, "404.html"), "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+
 def save_course_index_html(html_content):
     """public_html/courses/index.html にHTMLを保存する（開催場一覧ページ）"""
     os.makedirs(paths.PUBLIC_HTML_COURSES_PATH, exist_ok=True)
