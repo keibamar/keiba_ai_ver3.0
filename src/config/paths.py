@@ -40,3 +40,6 @@ RACE_PREDICTION_TEXT_PATH = os.path.join(TEXTS_PATH, "race_prediction")  # {date
 
 # 配当結果レポート（回収率テキスト）。旧 TEXT_PATH + "race_returns/" の新しい置き場所。
 RACE_RETURN_REPORT_TEXT_PATH = os.path.join(TEXTS_PATH, "race_returns")  # {date}/{place}_pred_score.txt
+
+# 高配当的中ハイライト画像（X投稿用に生成するPNG）。{date}/{race_id}_{bet_type}.png
+HIGHLIGHT_IMAGE_PATH = os.path.join(TEXTS_PATH, "highlight_images")

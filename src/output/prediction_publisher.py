@@ -229,3 +229,55 @@ def post_text_data(text_path):
         fp.close()
     else:
         print("no text file")
+
+
+def post_text(text):
+    """文字列をそのまま投稿する
+
+    post_text_dataはファイル（事前に保存済みの予想・回収率テキスト）経由だが、
+    週末まとめ・週末プレビュー等、その場で組み立てた文章を投稿する用途では
+    ファイルを経由せずこちらを使う。
+
+    Args:
+        text (str): 投稿する本文。
+    """
+    client = tweepy.Client(
+        consumer_key=X_API_KEY,
+        consumer_secret=X_API_SECRET,
+        access_token=X_ACCESS_TOKEN,
+        access_token_secret=X_ACCESS_TOKEN_SECRET,
+    )
+    try:
+        client.create_tweet(text=text)
+    except Exception as e:
+        post_text_error(e)
+        raise Exception("post failed")
+
+
+def post_text_with_image(text, image_path):
+    """画像付きのテキストを投稿する（高配当的中ハイライト等で使う）
+
+    メディアのアップロードはX API v1.1（tweepy.API、OAuth1UserHandler）でのみ
+    対応しているため、v2のClient（テキスト投稿）と併用する
+    （tweepyの公式な画像付きツイートの実装パターン）。
+
+    Args:
+        text (str): 投稿本文。
+        image_path (str): アップロードする画像のパス。
+    """
+    auth = tweepy.OAuth1UserHandler(
+        X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET,
+    )
+    api_v1 = tweepy.API(auth)
+    client = tweepy.Client(
+        consumer_key=X_API_KEY,
+        consumer_secret=X_API_SECRET,
+        access_token=X_ACCESS_TOKEN,
+        access_token_secret=X_ACCESS_TOKEN_SECRET,
+    )
+    try:
+        media = api_v1.media_upload(image_path)
+        client.create_tweet(text=text, media_ids=[media.media_id])
+    except Exception as e:
+        post_text_error(e)
+        raise Exception("post failed")

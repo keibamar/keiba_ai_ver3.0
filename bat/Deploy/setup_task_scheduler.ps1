@@ -69,5 +69,17 @@ $triggers = @(
 Register-ScheduledTask -TaskName "update_daily_html" -TaskPath "\keiba\" -Action $action `
     -Trigger $triggers -Principal $principal -Settings (New-Settings) -Force
 
+# --- 7. post_weekend_preview: Fri 12:00 ---
+$action = New-ScheduledTaskAction -Execute "$root\bat\TodayRace\post_weekend_preview.bat"
+$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Friday -At "12:00"
+Register-ScheduledTask -TaskName "post_weekend_preview" -TaskPath "\keiba\" -Action $action `
+    -Trigger $trigger -Principal $principal -Settings (New-Settings) -Force
+
+# --- 8. post_weekend_summary: Tue 20:00 ---
+$action = New-ScheduledTaskAction -Execute "$root\bat\TodayRace\post_weekend_summary.bat"
+$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Tuesday -At "20:00"
+Register-ScheduledTask -TaskName "post_weekend_summary" -TaskPath "\keiba\" -Action $action `
+    -Trigger $trigger -Principal $principal -Settings (New-Settings) -Force
+
 Write-Output "Done. Current tasks under \keiba\:"
 Get-ScheduledTask -TaskPath "\keiba\"
