@@ -215,11 +215,13 @@ def scrape_race_card(race_id):
         df = pd.read_html(str(soup))[0]
         # 列名に半角スペースがあれば除去する
         df = df.rename(columns=lambda x: x.replace(" ", ""))
-        # 後半部分を削除
-        df = df.iloc[:, :9]
+        # 後半部分を削除（オッズ・人気列までを残す。それより後ろは本登録/グループ等で不要）
+        df = df.iloc[:, :11]
         df = df.drop(columns="印")
         # multicolumnを解除
         df.columns = df.columns.droplevel(0)
+        # オッズ列はnetkeiba側のヘッダーセルが空でpandasに認識されないため、列位置で明示的に付け直す
+        df.columns = list(df.columns[:-2]) + ["オッズ", "人気"]
 
         # レース情報を取得
         texts = (

@@ -29,13 +29,18 @@ def is_waku_decided(race_card_df):
 def blank_rank_df(n):
     """枠順未確定で予想をスキップする場合のscore/rank列（すべてNaN）を返す
 
+    race_prediction_engine.blended_rank_prediction が返す列構成
+    （バランス型score/rank、的中率重視score_hitrate/rank_hitrate、
+    回収率重視score_value/rank_value）と揃える。
+
     Args:
         n (int): 出走馬数（race_card_dfの行数と揃える）
 
     Returns:
-        pd.DataFrame: score, rank列を持つDataFrame（全行NaN）
+        pd.DataFrame: score, rank, score_hitrate, rank_hitrate, score_value, rank_value列を持つDataFrame（全行NaN）
     """
-    return pd.DataFrame({"score": [pd.NA] * n, "rank": [pd.NA] * n})
+    cols = ["score", "rank", "score_hitrate", "rank_hitrate", "score_value", "rank_value"]
+    return pd.DataFrame({col: [pd.NA] * n for col in cols})
 
 
 def parse_race_card_info_tokens(info):

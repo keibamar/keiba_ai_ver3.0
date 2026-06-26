@@ -1412,6 +1412,13 @@ footer p {
   min-height: 100vh;
 }
 
+/* PC幅では常時表示の本文埋め込みのため、開閉ボタン・背景・閉じるボタンは不要 */
+.page-calendar-tab-toggle,
+.page-calendar-tab-backdrop,
+.page-calendar-tab-close {
+  display: none;
+}
+
 .page-calendar-tab .calendar-widget #calendar {
   width: 100%;
   margin: 6px auto;
@@ -1553,10 +1560,68 @@ footer p {
 }
 
 @media (max-width: 800px) {
+  /* スマホ幅では常時の本文埋め込み（float）ではなく、ボタンで開く
+     ポップアップ（ドロワー）にする。階層リストが長いページ（兄弟レース・
+     兄弟競馬場が多い出馬表ページ等）だと、常時埋め込みのままでは縦に
+     長い文字の塊になってしまい、本文がその下に押し下げられて見にくいため。 */
   .page-calendar-tab {
     float: none;
-    width: auto;
-    min-height: auto;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 82%;
+    max-width: 320px;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    border-radius: 0;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    z-index: 1001;
+    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.25);
+  }
+
+  .page-calendar-tab.open {
+    transform: translateX(0);
+  }
+
+  .page-calendar-tab-toggle {
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+    padding: 6px 10px;
+    border: 1px solid var(--mar-primary);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--mar-primary);
+    font-weight: bold;
+    font-size: 0.9em;
+    cursor: pointer;
+  }
+
+  .page-calendar-tab-close {
+    display: block;
+    margin-left: auto;
+    border: none;
+    background: none;
+    font-size: 1.6em;
+    line-height: 1;
+    color: #666;
+    cursor: pointer;
+    padding: 0 0 8px;
+  }
+
+  .page-calendar-tab-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+  }
+
+  .page-calendar-tab-backdrop.open {
+    display: block;
   }
 
   /* サイドバー広告はPCのみ（モバイルで本文中の広告と合わせて多くなりすぎないため） */

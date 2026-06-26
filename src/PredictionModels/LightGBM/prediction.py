@@ -1,4 +1,5 @@
 import itertools
+import os
 import sys
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -6,9 +7,12 @@ warnings.filterwarnings("ignore", category=UserWarning)
 from datetime import date, timedelta
 import lightgbm as lgb
 import numpy as np
+import optuna
 import pandas as pd
 from scipy.stats import rankdata
 from tqdm import tqdm
+
+optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 # pycache を生成しない
 sys.dont_write_bytecode = True
@@ -20,6 +24,15 @@ import race_results
 
 import make_dataset
 
+# ver3.0側のモデル保存先（Webサイトのライブ予想エンジンが読みに行くパス）。
+# データセットキャッシュ（Datasets配下）は引き続きver2.0側を参照するが、
+# 学習済みモデルはver3.0側に保存しないとサイトの予想に反映されないため、
+# モデルの保存・読込先のみver3.0のsrc.config.pathsへ向ける。
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+from src.config import paths as paths_v3  # noqa: E402
+
 def prediction_error(e):
     """ エラー時動作を記載する 
         Args:
@@ -28,12 +41,13 @@ def prediction_error(e):
     print(__name__ + ":" + __file__)
     print(f"{e.__class__.__name__}: {e}")
 
-def get_lightGBM_model(place_id, type, length):
+def get_lightGBM_model(place_id, type, length, model_suffix=""):
     """ lightGBMモデルの取得
         Args:
             place_id(int) : 開催コースid
             typer(str) : レースタイプ
             length(int) : キョリ
+            model_suffix(str) : モデルファイル名サフィックス（回収率重視モデル(サブB)は"_value"）
         Returns:
             model : lightGBMモデル
     """
@@ -41,24 +55,27 @@ def get_lightGBM_model(place_id, type, length):
         type_str = "turf"
     else :
         type_str = "dirt"
-    model_path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Models/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(type_str) + str(length) + "_lambdarank_model.txt"
+    model_path = os.path.join(paths_v3.PREDICTION_MODEL_PATH, name_header.PLACE_LIST[place_id - 1], f"{type_str}{length}_lambdarank_model{model_suffix}.txt")
     model = lgb.Booster(model_file = model_path)
     return model
 
-def save_lightGBM_model(model, place_id, type, length):
+def save_lightGBM_model(model, place_id, type, length, model_suffix=""):
     """学習済モデルの保存
         Args:
             model : lightGBMモデル
             place_id(int) : 開催コースid
             type(str) : レースタイプ
             length(int) : キョリ
+            model_suffix(str) : モデルファイル名サフィックス（回収率重視モデル(サブB)は"_value"）
     """
     try:
         if type == "芝":
                 type = "turf"
         else :
             type = "dirt"
-        model_path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Models/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(type) + str(length) + "_lambdarank_model.txt"
+        model_dir = os.path.join(paths_v3.PREDICTION_MODEL_PATH, name_header.PLACE_LIST[place_id - 1])
+        os.makedirs(model_dir, exist_ok=True)
+        model_path = os.path.join(model_dir, f"{type}{length}_lambdarank_model{model_suffix}.txt")
         model.booster_.save_model(model_path)
     except Exception as e:
         prediction_error(e)
@@ -168,11 +185,59 @@ def split_dataframe(race_data, race_flag):
 
     return data_train, data_test, flag_train, flag_test
 
-def lightGBM_rank_train(place_id, year = date.today().year):
+def _fit_ranker(params, data_train, flag_train, train_group, data_test, flag_test, test_group):
+    """指定パラメータでLGBMRankerを学習する（early stoppingあり）
+        Args:
+            params(dict) : LGBMRankerに渡す追加パラメータ
+            data_train, flag_train, train_group : 訓練データ
+            data_test, flag_test, test_group : 評価データ
+        Returns:
+            model : 学習済みLGBMRanker
+    """
+    model = lgb.LGBMRanker(random_state=0, force_col_wise=True, verbosity=-1, **params)
+    model.fit(
+        data_train, flag_train, group=train_group,
+        eval_set=[(data_test, flag_test)], eval_group=[list(test_group)], eval_at=[1, 3, 5],
+        callbacks=[lgb.early_stopping(stopping_rounds=20, verbose=False), lgb.log_evaluation(period=0)],
+    )
+    return model
+
+
+def tune_hyperparameters(data_train, flag_train, train_group, data_test, flag_test, test_group, n_trials=20):
+    """OptunaでLGBMRankerのハイパーパラメータを探索する
+        本命馬（rank=1の予想）を正しく当てられているかを示すNDCG@1を最大化する。
+        Args:
+            data_train, flag_train, train_group : 訓練データ
+            data_test, flag_test, test_group : 評価データ
+            n_trials(int) : 探索回数（多いほど精度は上がるが時間がかかる）
+        Returns:
+            dict : 最良パラメータ
+    """
+    def objective(trial):
+        params = {
+            "n_estimators": trial.suggest_int("n_estimators", 50, 300),
+            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.2, log=True),
+            "num_leaves": trial.suggest_int("num_leaves", 8, 64),
+            "max_depth": trial.suggest_int("max_depth", 3, 10),
+            "min_child_samples": trial.suggest_int("min_child_samples", 5, 50),
+            "reg_alpha": trial.suggest_float("reg_alpha", 1e-3, 10.0, log=True),
+            "reg_lambda": trial.suggest_float("reg_lambda", 1e-3, 10.0, log=True),
+        }
+        model = _fit_ranker(params, data_train, flag_train, train_group, data_test, flag_test, test_group)
+        ndcg1 = model.evals_result_["valid_0"]["ndcg@1"][model.best_iteration_ - 1]
+        return ndcg1
+
+    study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=0))
+    study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
+    return study.best_params
+
+
+def lightGBM_rank_train(place_id, year = date.today().year, n_trials = 20):
     """コースごとにモデルの学習（指定した年までのデータセットを利用)
         Args:
             place_id (int) : 開催コースid
             year(int) : 年（初期値：今年）
+            n_trials(int) : Optunaのハイパーパラメータ探索回数
     """
     for type, length  in name_header.COURSE_LISTS[place_id - 1]:
         print(type, length)
@@ -199,12 +264,54 @@ def lightGBM_rank_train(place_id, year = date.today().year):
         data_train, train_group = data_group(data_train)
         data_test, test_group = data_group(data_test)
 
-        # モデルの学習
-        model = lgb.LGBMRanker(random_state=0, force_col_wise=True)
-        model.fit(data_train, flag_train, group = train_group, eval_set = [(data_test, flag_test)], eval_group = [list(test_group)])
-        
+        # ハイパーパラメータをOptunaで探索し、最良パラメータで学習
+        best_params = tune_hyperparameters(data_train, flag_train, train_group, data_test, flag_test, test_group, n_trials=n_trials)
+        model = _fit_ranker(best_params, data_train, flag_train, train_group, data_test, flag_test, test_group)
+
         # モデルの保存
         save_lightGBM_model(model, place_id, type, length)
+
+def lightGBM_rank_train_value(place_id, year = date.today().year, n_trials = 20):
+    """コースごとに回収率重視モデル（サブB）を学習する（指定した年までのデータセットを利用)
+        的中率重視モデル（lightGBM_rank_train）と学習の流れは同じだが、
+        make_dataset.make_dataset_for_train_valueが作る「自レースの人気」付き
+        データセットと、payoutを反映したvalue_gradeラベルを使う。
+        Args:
+            place_id (int) : 開催コースid
+            year(int) : 年（初期値：今年）
+            n_trials(int) : Optunaのハイパーパラメータ探索回数
+    """
+    for type, length  in name_header.COURSE_LISTS[place_id - 1]:
+        print(type, length, "(value)")
+        race_data, race_flag = pd.DataFrame(), pd.DataFrame()
+        # データの読み込み
+        for y in range(2020, int(year) + 1):
+            race_data = pd.concat([race_data, make_dataset.get_LightGBM_dataset_csv(place_id, y, type, length, suffix="_value")])
+            race_flag = pd.concat([race_flag, make_dataset.get_LightGBM_dataset_flag_csv(place_id, y, type, length, suffix="_value")])
+        # nanを-1に変換
+        race_data = race_data.fillna(-1)
+        race_data = race_data.reset_index(drop = True)
+        race_flag = race_flag.reset_index(drop = True)
+        if race_data.empty or race_flag.empty:
+            print(type, length, "no_dataset")
+            continue
+        # 訓練データとテストデータを分割
+        data_train, data_test, flag_train, flag_test = split_dataframe(race_data, race_flag)
+        # テストデータが空の場合学習をスキップ
+        if data_test.empty or flag_test.empty :
+            print(type, length, "train_skip")
+            continue
+
+        # データのグループを作成
+        data_train, train_group = data_group(data_train)
+        data_test, test_group = data_group(data_test)
+
+        # ハイパーパラメータをOptunaで探索し、最良パラメータで学習
+        best_params = tune_hyperparameters(data_train, flag_train, train_group, data_test, flag_test, test_group, n_trials=n_trials)
+        model = _fit_ranker(best_params, data_train, flag_train, train_group, data_test, flag_test, test_group)
+
+        # モデルの保存（"_value"サフィックスで的中率重視モデルと分離）
+        save_lightGBM_model(model, place_id, type, length, model_suffix="_value")
 
 def prediction_rank(place_id, year = date.today().year):
     """ランキングの推定

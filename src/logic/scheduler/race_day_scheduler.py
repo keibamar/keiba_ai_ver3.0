@@ -24,6 +24,7 @@ make_race_card_html.py の同名関数の移植。
 import datetime
 import os
 import re
+import subprocess
 import sys
 from datetime import date, timedelta
 from time import sleep
@@ -44,6 +45,27 @@ from src.managers import (  # noqa: E402
     race_schedule_dataset_manager,
 )
 from src.output import prediction_publisher  # noqa: E402
+
+
+def _commit_and_upload_race_day():
+    """レース当日のcommit + ConoHaアップロードを行う
+
+    post_daily_race_predのレースごとのループから呼ばれる。ConoHaへの転送は
+    WinSCPのsynchronize（差分のみ転送）のため、レースごとに呼んでも負荷は小さい。
+    1日の最後に1回だけアップロードする旧来の作りだと、レース中はサイトの
+    予想・人気が更新されないため、レースごとに反映されるようにする。
+    """
+    try:
+        subprocess.run(
+            [os.path.join(paths.PROJECT_ROOT, "bat", "Commit", "commit_for_race_cards.bat")],
+            shell=True, check=False,
+        )
+        subprocess.run(
+            [os.path.join(paths.PROJECT_ROOT, "bat", "Deploy", "upload_to_conoha_auto.bat")],
+            shell=True, check=False,
+        )
+    except Exception as e:
+        print(f"commit/upload error: {e}")
 
 
 def _extract_race_time(info):
@@ -290,6 +312,9 @@ def post_daily_race_pred(race_day=date.today()):
             # 今回処理した race_id を last_race_by_place に記録
             last_race_by_place[place_id] = race_id
             time_id_list.pop(0)
+
+            # レースごとにcommit+ConoHaアップロードし、当日中の予想・人気更新をサイトに反映する
+            _commit_and_upload_race_day()
 
         # 1分ごとに実行
         sleep(60)

@@ -130,4 +130,55 @@ def test_rank_prediction_returns_score_and_rank(sample_race_args):
 
     assert list(result.columns) == ["score", "rank"]
     assert len(result) == len(horse_ids)
-    assert sorted(result["rank"].tolist()) == list(range(1, len(horse_ids) + 1))
+    # rank=1はscore最大の馬に付く。モデル次第でスコアが同値になり順位が
+    # 重複することもあるため、1〜出走数のきれいな整列までは厳密に求めない
+    assert result["rank"].min() == 1
+    assert result["rank"].max() <= len(horse_ids)
+    top_rank_score = result.loc[result["rank"] == 1, "score"].iloc[0]
+    assert top_rank_score == result["score"].max()
+
+
+# --- blended_rank_prediction（的中率重視/サブA・回収率重視/サブB の合成、オフライン） -----
+
+
+def test_normalized_score_top_rank_is_one_and_last_is_zero():
+    ranks = pd.Series([3, 1, 2])
+
+    result = engine._normalized_score(ranks)
+
+    assert result.tolist() == [0.0, 1.0, 0.5]
+
+
+def test_normalized_score_single_horse_returns_one():
+    result = engine._normalized_score(pd.Series([1]))
+
+    assert result.tolist() == [1.0]
+
+
+def test_blended_rank_prediction_falls_back_to_hitrate_only_when_no_popularity(monkeypatch):
+    hitrate_df = pd.DataFrame({"score": [0.5, -0.2, 0.1], "rank": [1, 3, 2]})
+    monkeypatch.setattr(engine, "rank_prediction", lambda *a, **k: hitrate_df)
+
+    result = engine.blended_rank_prediction(SAMPLE_RACE_ID, [1, 2, 3], pd.DataFrame(), pd.DataFrame())
+
+    assert result["rank"].tolist() == hitrate_df["rank"].tolist()
+    assert result["score_value"].isna().all()
+    assert result["rank_value"].isna().all()
+
+
+def test_blended_rank_prediction_blends_hitrate_and_value_scores(monkeypatch):
+    # 的中率重視は1番(rank1)推し、回収率重視は3番(rank1)推し。重み0.5で中間の結果になる
+    hitrate_df = pd.DataFrame({"score": [1.0, 0.5, 0.0], "rank": [1, 2, 3]})
+    value_df = pd.DataFrame({"score": [0.0, 0.5, 1.0], "rank": [3, 2, 1]})
+    monkeypatch.setattr(engine, "rank_prediction", lambda *a, **k: hitrate_df)
+    monkeypatch.setattr(engine, "rank_prediction_value", lambda *a, **k: value_df)
+
+    result = engine.blended_rank_prediction(
+        SAMPLE_RACE_ID, [1, 2, 3], pd.DataFrame(), pd.DataFrame(), popularity_series=pd.Series([1, 2, 3]),
+    )
+
+    # 正規化スコアは両モデルとも[1.0, 0.5, 0.0]の組（順序が逆）になるため、
+    # 重み0.5で平均すると全頭0.5で並ぶ
+    assert result["score"].tolist() == [0.5, 0.5, 0.5]
+    assert result["score_hitrate"].tolist() == hitrate_df["score"].tolist()
+    assert result["score_value"].tolist() == value_df["score"].tolist()

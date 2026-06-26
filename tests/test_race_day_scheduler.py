@@ -25,6 +25,27 @@ from src.logic.scheduler import race_day_scheduler
 FIXED_RACE_ID = "202405010101"
 
 
+def test_commit_and_upload_race_day_calls_commit_and_upload_bats(monkeypatch):
+    calls = []
+    monkeypatch.setattr(race_day_scheduler.subprocess, "run", lambda args, **kwargs: calls.append(args[0]))
+
+    race_day_scheduler._commit_and_upload_race_day()
+
+    assert len(calls) == 2
+    assert calls[0] == os.path.join(paths.PROJECT_ROOT, "bat", "Commit", "commit_for_race_cards.bat")
+    assert calls[1] == os.path.join(paths.PROJECT_ROOT, "bat", "Deploy", "upload_to_conoha_auto.bat")
+
+
+def test_commit_and_upload_race_day_swallows_errors(monkeypatch):
+    def raise_error(args, **kwargs):
+        raise OSError("boom")
+
+    monkeypatch.setattr(race_day_scheduler.subprocess, "run", raise_error)
+
+    # 例外を外に伝播させない（レース当日ループを止めないため）
+    race_day_scheduler._commit_and_upload_race_day()
+
+
 def test_post_race_pred_posts_prediction_text(tmp_path, monkeypatch):
     monkeypatch.setattr(paths, "RACE_PREDICTION_TEXT_PATH", str(tmp_path / "race_prediction"))
 

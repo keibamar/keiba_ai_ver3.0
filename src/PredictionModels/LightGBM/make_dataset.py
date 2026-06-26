@@ -44,6 +44,9 @@ index = [
         "waku", "umaban",
         ]
 
+# 回収率重視モデル（サブB）用の列。的中率重視モデル（index）に「そのレース自身の人気」を1列追加したもの。
+index_value = index + ["self_popularity"]
+
 def make_dataset_error(e):
     """ エラー時動作を記載する 
         Args:
@@ -52,95 +55,156 @@ def make_dataset_error(e):
     print(__name__ + ":" + __file__)
     print(f"{e.__class__.__name__}: {e}")
 
-def save_LightGBM_dataset_csv(place_id, year, type, length, df_dataset):
-    """ LightGBM_datasetのDataFrameを保存 
+def save_LightGBM_dataset_csv(place_id, year, type, length, df_dataset, suffix=""):
+    """ LightGBM_datasetのDataFrameを保存
         Args:
             place_id(int) : place_id
             year (int) : 年
             type(str) : レースタイプ
             length(int) : キョリ
             df_dataset(pd.DataFrame） : lightGBM用のデータセット
+            suffix(str) : ファイル名サフィックス（回収率重視モデル(サブB)用は"_value"）
     """
     try:
         if any(df_dataset):
-            path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Datasets/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(year) + "_" + str(type) + str(length) + '_ai_dataset_for_rank.csv'
+            path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Datasets/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(year) + "_" + str(type) + str(length) + '_ai_dataset_for_rank' + suffix + '.csv'
             df_dataset = df_dataset.reset_index(drop = True)
             # ローカル保存
             df_dataset.to_csv(path)
     except Exception as e:
-            make_dataset_error(e)    
+            make_dataset_error(e)
 
-def sava_LightGBM_dataset_flag_csv(place_id, year, type, length, flag_list):
-    """ LightGBM_datasetのDataFrameを保存 
+def sava_LightGBM_dataset_flag_csv(place_id, year, type, length, flag_list, suffix=""):
+    """ LightGBM_datasetのDataFrameを保存
         Args:
             place_id(int) : place_id
             year (int) : 年
             type(str) : レースタイプ
             length(int) : キョリ
             flag_list(list） : lightGBM用のflagデータセット
+            suffix(str) : ファイル名サフィックス（回収率重視モデル(サブB)用は"_value"）
     """
     try:
         if flag_list:
             df_flag = pd.DataFrame(flag_list)
             df_flag.columns = ["result_flag"]
-            flag_path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Datasets/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(year) + "_" + str(type) + str(length)  + '_ai_dataset_flag.csv'
+            flag_path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Datasets/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(year) + "_" + str(type) + str(length)  + '_ai_dataset_flag' + suffix + '.csv'
             df_flag.to_csv(flag_path)
     except Exception as e:
             make_dataset_error(e)
 
-def get_LightGBM_dataset_csv(place_id, year, type, length):
-    """ LightGBM_datasetのDataFrameを保存 
+def get_LightGBM_dataset_csv(place_id, year, type, length, suffix=""):
+    """ LightGBM_datasetのDataFrameを保存
         Args:
             place_id(int) : place_id
             year (int) : 年
             type(str) : レースタイプ
             length(int) : キョリ
+            suffix(str) : ファイル名サフィックス（回収率重視モデル(サブB)用は"_value"）
         Returns:
             df(pd.DataFrame） : lightGBM用のデータセット
     """
-    # csvを読み込む 
-    path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Datasets/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(year) + "_" + str(type) + str(length) + '_ai_dataset_for_rank.csv'
+    # csvを読み込む
+    path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Datasets/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(year) + "_" + str(type) + str(length) + '_ai_dataset_for_rank' + suffix + '.csv'
     if os.path.isfile(path):
         df = pd.read_csv(path, index_col = 0, dtype = float)
     else :
         df = pd.DataFrame()
     return df
 
-def get_LightGBM_dataset_flag_csv(place_id, year, type, length):
-    """ LightGBM_datasetのDataFrameを保存 
+def get_LightGBM_dataset_flag_csv(place_id, year, type, length, suffix=""):
+    """ LightGBM_datasetのDataFrameを保存
         Args:
             place_id(int) : place_id
             year (int) : 年
             type(str) : レースタイプ
             length(int) : キョリ
+            suffix(str) : ファイル名サフィックス（回収率重視モデル(サブB)用は"_value"）
         Returns:
             df(pd.DataFrame） : lightGBM用のflagデータセット
     """
-    # csvを読み込む 
-    path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Datasets/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(year) + "_" + str(type) + str(length)  + '_ai_dataset_flag.csv'
+    # csvを読み込む
+    path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Datasets/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(year) + "_" + str(type) + str(length)  + '_ai_dataset_flag' + suffix + '.csv'
     if os.path.isfile(path):
         df = pd.read_csv(path, index_col = 0, dtype = int)
     else :
         df = pd.DataFrame()
     return df
 
-def is_in_show(df_result, race_id):
-    """ df_resultの結果が3着内かチェックする 
+def relevance_grade(df_result, race_id):
+    """ 着順を段階的な関連度スコア（LambdaRankの目的変数）に変換する
+        1着=4, 2着=3, 3着=2, 4〜5着=1, 6着以降・出走取消等=0。
+        旧実装（is_in_show）は「3着以内か否か」の二値だったため、
+        1着と3着の強さの差をモデルが学習できなかった。段階的なラベルにすることで、
+        LambdaRankが本来持つ「順位の強さの差」を学習する力を活かす。
         Args:
             df_result(pd.DataFrame） : lightGBM用のデータセット
             race_id(int) : race_id
         Returns:
-            Bool 
+            int : 関連度スコア（0〜4）
     """
     rank = df_result.at[race_id,"着順"]
     rank_str = str(rank)
-    if rank_str.isdigit():
-        try:
-            rank_val = int(rank_str)
-        except Exception:
-            return 0
-        return 1 if rank_val <= 3 else 0
+    if not rank_str.isdigit():
+        return 0
+    try:
+        rank_val = int(rank_str)
+    except Exception:
+        return 0
+    if rank_val == 1:
+        return 4
+    if rank_val == 2:
+        return 3
+    if rank_val == 3:
+        return 2
+    if rank_val <= 5:
+        return 1
     return 0
+
+def value_grade(df_result, race_id):
+    """ 回収率重視モデル（サブB）用の関連度スコア（LambdaRankの目的変数）
+        着順だけでなく単勝オッズ（穴度）を反映し、人気馬の好走より穴馬の好走を
+        高く評価する。「市場（人気）より強い馬」を見つけるモデルにするための目的変数。
+        着外は0。1〜3着は (着順ごとの基礎点) + (オッズに応じたボーナス、5倍ごとに+1、最大+7)。
+        例: 1番人気の1着→3点、10倍の馬が1着→3+2=5点、40倍の大穴の1着→3+7=10点（上限）。
+        ラベルはLightGBMのlambdarank既定のgainテーブル範囲に収まるよう0〜10の整数にしている。
+        Args:
+            df_result(pd.DataFrame） : lightGBM用のデータセット
+            race_id(int) : race_id
+        Returns:
+            int : 関連度スコア（0〜10）
+    """
+    rank = df_result.at[race_id,"着順"]
+    rank_str = str(rank)
+    if not rank_str.isdigit():
+        return 0
+    try:
+        rank_val = int(rank_str)
+    except Exception:
+        return 0
+    if rank_val not in (1, 2, 3):
+        return 0
+    base = {1: 3, 2: 2, 3: 1}[rank_val]
+    try:
+        odds_val = float(df_result.at[race_id, "単勝"])
+    except Exception:
+        odds_val = 1.0
+    odds_val = max(1.0, odds_val)
+    bonus = min(int(odds_val // 5), 7)
+    return base + bonus
+
+def get_self_popularity(df_result, race_id):
+    """ そのレース自身の確定人気（回収率重視モデル(サブB)の特徴量）を取得する
+        Args:
+            df_result(pd.DataFrame） : lightGBM用のデータセット
+            race_id(int) : race_id
+        Returns:
+            float : 人気（取得失敗時はnp.nan）
+    """
+    try:
+        return float(df_result.at[race_id, "人気"])
+    except Exception:
+        return np.nan
 
 def get_past_race_info_data(race_info_df):
     """ 過去レースのタイム指数、着順、人気を取得 
@@ -236,16 +300,16 @@ def make_dataset_for_train(place_id, year = date.today().year):
         
         # datasetを格納するDataFrame
         df_dataset = pd.DataFrame()
-        # 3着内か否かのflag
+        # 着順の関連度スコア（0〜4）
         flag_list = []
 
         # 各馬のデータセットを作成
         for i in tqdm(range(len(df_results_course))):
             df_result = df_results_course[i:i+1]
             race_id = int(df_result.index.values)
-            
-            # 3着内かチェック
-            flag_list.append(is_in_show(df_result, race_id))
+
+            # 着順を関連度スコアに変換
+            flag_list.append(relevance_grade(df_result, race_id))
             
             # レース情報の取得
             course_info = [place_id, df_result.at[race_id,"race_type"], df_result.at[race_id,"course_len"], df_result.at[race_id,"ground_state"],df_result.at[race_id,"class"] ]
@@ -265,6 +329,75 @@ def make_dataset_for_train(place_id, year = date.today().year):
         save_LightGBM_dataset_csv(place_id, year, type, length, df_dataset)
         # csvでフラグデータセットを出力
         sava_LightGBM_dataset_flag_csv(place_id, year, type, length, flag_list)
+
+def make_dataset_for_train_value(place_id, year = date.today().year):
+    """ 回収率重視モデル（サブB）用のLightGBM_datasetのDataFrameを作成
+        的中率重視モデル（make_dataset_for_train）と同じ特徴量に「そのレース自身の
+        確定人気」を1列追加し、目的変数も着順だけでなくオッズ（穴度）を反映した
+        value_gradeにする。学習データの人気・オッズは既存のレース結果CSVに
+        既に含まれているため、新規スクレイピングは不要。
+        Args:
+            place_id(int) : place_id
+            year (int) : 年
+    """
+    # 過去のレース結果をデータフレームで取得
+    df_results = race_results.get_race_results_csv(place_id, year)
+    if df_results.empty:
+        print("not data:", year, name_header.PLACE_LIST[place_id - 1])
+        return
+
+    # コースごとにデータセットを分割
+    for type, length in name_header.COURSE_LISTS[place_id - 1]:
+        print(type, length, "(value)")
+        df_results_course = df_results[df_results["race_type"] == type]
+        df_results_course = df_results_course[df_results_course["course_len"] == length]
+        if df_results_course.empty:
+            continue
+        # race_idの取得
+        race_id_list = pd.DataFrame(df_results_course.index, columns = ["race_id"])
+
+        # datasetを格納するDataFrame
+        df_dataset = pd.DataFrame()
+        # 回収率重視の関連度スコア（0〜10）
+        flag_list = []
+        # そのレース自身の確定人気（特徴量）
+        self_pop_list = []
+
+        # 各馬のデータセットを作成
+        for i in tqdm(range(len(df_results_course))):
+            df_result = df_results_course[i:i+1]
+            race_id = int(df_result.index.values)
+
+            # 着順・オッズを回収率重視の関連度スコアに変換
+            flag_list.append(value_grade(df_result, race_id))
+            self_pop_list.append(get_self_popularity(df_result, race_id))
+
+            # レース情報の取得
+            course_info = [place_id, df_result.at[race_id,"race_type"], df_result.at[race_id,"course_len"], df_result.at[race_id,"ground_state"],df_result.at[race_id,"class"] ]
+            horse_id = df_result.at[race_id, "horse_id"]
+
+            # データセットの作成（的中率重視モデルと同じ特徴量を再利用）
+            df_index = make_dataset_for_lightGBM(race_id, course_info, horse_id)
+            df_dataset = pd.concat([df_dataset.reset_index(drop = True), df_index.reset_index(drop = True)])
+
+        # race_idの結合
+        df_dataset = pd.concat([race_id_list, df_dataset.reset_index(drop = True)], axis = 1)
+        # 枠番・馬番・自レース人気の結合
+        df_dataset = pd.concat(
+            [
+                df_dataset,
+                df_results_course["枠番"].reset_index(drop = True),
+                df_results_course["馬番"].reset_index(drop = True),
+                pd.Series(self_pop_list, name = "self_popularity"),
+            ],
+            axis = 1,
+        ).reset_index(drop = True)
+        df_dataset.columns = index_value
+
+        # csvでデータセットを出力（"_value"サフィックスで的中率重視モデルのデータと分離）
+        save_LightGBM_dataset_csv(place_id, year, type, length, df_dataset, suffix="_value")
+        # csvでフラグデータセットを出力
+        sava_LightGBM_dataset_flag_csv(place_id, year, type, length, flag_list, suffix="_value")
 
 def make_dataset_for_lightGBM(race_id, course_info, horse_id):
     """lightGBM用のデータセットを作成
@@ -323,6 +456,18 @@ def make_annual_dataset(year = date.today().year):
         for place_id in range(1, len(name_header.PLACE_LIST) + 1):
             print("[Make Dataset]", name_header.PLACE_LIST[place_id - 1], "LightGBM Dataset")
             make_dataset_for_train(place_id, year)
+    except Exception as e:
+        make_dataset_error(e)
+
+def make_annual_dataset_value(year = date.today().year):
+    """指定年の開催場の回収率重視モデル（サブB）用データセットを更新
+        Args:
+            year(int) : 年（初期値：今年）
+    """
+    try:
+        for place_id in range(1, len(name_header.PLACE_LIST) + 1):
+            print("[Make Dataset(value)]", name_header.PLACE_LIST[place_id - 1], "LightGBM Dataset")
+            make_dataset_for_train_value(place_id, year)
     except Exception as e:
         make_dataset_error(e)
 

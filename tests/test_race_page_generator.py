@@ -279,6 +279,30 @@ def test_build_table_race_cards_colors_waku_and_top_rank():
     assert '<td style="background-color:#B0E0E6;">2</td>' in rows
 
 
+def test_build_table_race_cards_shows_popularity_when_present():
+    df = pd.DataFrame({
+        "枠": [1, 3],
+        "馬番": [1, 5],
+        "馬名": ["サンプルホースA", "サンプルホースB"],
+        "性齢": ["牡3", "牝4"],
+        "斤量": [56, 54],
+        "騎手": ["騎手A", "騎手B"],
+        "馬体重(増減)": ["480(+2)", "440(-4)"],
+        "score": [0.123, -0.5],
+        "rank": [1, 2],
+        "人気": [1, "**"],
+    })
+
+    rows = r.build_table_race_cards(df)
+
+    print("\n--- build_table_race_cards (人気表示) ---")
+    print(rows)
+
+    # オッズ確定済みは数値表示、未確定（**等）は「-」表示にする
+    assert "<td>1</td>" in rows
+    assert "<td>-</td>" in rows
+
+
 def test_build_table_race_cards_blank_when_waku_undecided():
     df = pd.DataFrame({
         "枠": [None, None],

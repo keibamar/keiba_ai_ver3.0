@@ -160,10 +160,13 @@
       placeholder="競馬場・コースを検索（例: 東京 芝1400）" autocomplete="off">
     <ul id="page-search-results" class="page-search-results" hidden></ul>
   </div>
+  <button type="button" class="page-calendar-tab-toggle" aria-label="メニューを開く">&#9776; メニュー</button>
 </nav>
 <script src="../../assets/js/page-search-index.js"></script>
 <script src="../../assets/js/page-search.js"></script>
+<div class="page-calendar-tab-backdrop"></div>
 <aside class="page-calendar-tab">
+  <button type="button" class="page-calendar-tab-close" aria-label="閉じる">&times;</button>
   <div class="page-calendar-tab-calendar">
     
 <div class="calendar-widget">
@@ -225,6 +228,7 @@
 </div>
 </aside>
 <script src="../../assets/js/calendar-tab-height.js"></script>
+<script src="../../assets/js/sidebar-toggle.js"></script>
   <p class="breadcrumb"><a href="../../">HOME</a> &rsaquo; <a href="../../races/index.html">レースカレンダー</a> &rsaquo; <a href="../../races/20260404/index.html">2026/04/04</a> &rsaquo; <a href="../../races/20260404/06_nakayamaR12.html">中山</a> &rsaquo; <span class="breadcrumb-current">12R 4歳以上2勝クラス</span></p>
   <h2>2026/04/04 </h2>
   <h2>中山競馬場 第12R </h2>
@@ -244,6 +248,7 @@
         <th>馬体重</th>
         <th>Score</th>
         <th>Rank ▼</th>
+        <th>人気</th>
       </tr>
     </thead>
     <tbody>
@@ -258,6 +263,7 @@
           <td>490(-2)</td>
           <td>-0.032</td>
           <td style="background-color:#FFA07A;">3</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -270,6 +276,7 @@
           <td>510(+4)</td>
           <td>-1.339</td>
           <td style="background-color:#ffffff;">14</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -282,6 +289,7 @@
           <td>512(-2)</td>
           <td>-0.078</td>
           <td style="background-color:#ffffff;">4</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -294,6 +302,7 @@
           <td>494(-4)</td>
           <td>-0.648</td>
           <td style="background-color:#ffffff;">9</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -306,6 +315,7 @@
           <td>498(-6)</td>
           <td>-0.857</td>
           <td style="background-color:#ffffff;">10</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -318,6 +328,7 @@
           <td>510(0)</td>
           <td>-0.268</td>
           <td style="background-color:#ffffff;">5</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -330,6 +341,7 @@
           <td>480(0)</td>
           <td>0.330</td>
           <td style="background-color:#FFD700;">1</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -342,6 +354,7 @@
           <td>446(-4)</td>
           <td>-1.936</td>
           <td style="background-color:#ffffff;">16</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -354,6 +367,7 @@
           <td>492(-6)</td>
           <td>-0.515</td>
           <td style="background-color:#ffffff;">8</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -366,6 +380,7 @@
           <td>464(-6)</td>
           <td>-0.914</td>
           <td style="background-color:#ffffff;">12</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -378,6 +393,7 @@
           <td>486(+8)</td>
           <td>-0.866</td>
           <td style="background-color:#ffffff;">11</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -390,6 +406,7 @@
           <td>566(+8)</td>
           <td>-1.455</td>
           <td style="background-color:#ffffff;">15</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -402,6 +419,7 @@
           <td>526(0)</td>
           <td>-0.273</td>
           <td style="background-color:#ffffff;">6</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -414,6 +432,7 @@
           <td>480(-2)</td>
           <td>-1.022</td>
           <td style="background-color:#ffffff;">13</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -426,6 +445,7 @@
           <td>496(0)</td>
           <td>-0.007</td>
           <td style="background-color:#B0E0E6;">2</td>
+          <td>-</td>
         </tr>
         
         <tr>
@@ -438,6 +458,7 @@
           <td>494(-8)</td>
           <td>-0.304</td>
           <td style="background-color:#ffffff;">7</td>
+          <td>-</td>
         </tr>
         
     </tbody>
@@ -4514,7 +4535,7 @@
   <footer>
     <p class="site-footer-brand">&copy; MAR(まーる) 競馬AIデータサイト</p>
     <p class="site-footer-disclaimer">本サイトの予想・データは参考情報です。的中や回収を保証するものではありません。実際の購入は自己責任でお願いします。</p>
-    <p class="site-footer-updated">データ最終更新: 2026/06/25</p>
+    <p class="site-footer-updated">データ最終更新: 2026/06/26</p>
     <p class="site-footer-links">
       <a href="../../privacy.html">プライバシーポリシー</a>
       <a href="../../terms.html">利用規約</a>

@@ -134,11 +134,15 @@ def test_scrape_race_card_returns_expected():
         {"race_type": "ダート", "course_len": 1400, "weather": "晴", "ground_state": "良", "class": "未勝利"}
     ]
 
-    assert race_card_df.shape == (16, 11)
+    assert race_card_df.shape == (16, 13)
     assert race_card_df.columns.tolist() == [
-        "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "厩舎", "馬体重(増減)", "所属", "horse_id", "jockey_id",
+        "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "厩舎", "馬体重(増減)", "オッズ", "人気",
+        "所属", "horse_id", "jockey_id",
     ]
     assert race_card_df.index.unique().tolist() == [FIXED_RACE_ID]
+    # この race_id は既に終了したレースのため、shutuba.html上の現在のオッズ・人気は
+    # 確定値ではなく未確定/失効を示すプレースホルダー（---.- / **）になる。
+    # 開催当日（発走前）にスクレイピングした場合は、ここに実際のオッズ・人気が入る。
     assert race_card_df.iloc[0].tolist() == [
-        1, 1, "アフロマン", "牡3", 57.0, "木幡育", "萱野", "410(+16)", "美浦", "2021107090", "01167",
+        1, 1, "アフロマン", "牡3", 57.0, "木幡育", "萱野", "410(+16)", "---.-", "**", "美浦", "2021107090", "01167",
     ]

@@ -43,7 +43,7 @@ def read_race_csv(date_str, target_id):
     if df.empty:
         print(f"ℹ️ [スキップ/エラーではありません] レースカード未生成: race_day={date_str}, target_id={target_id}")
         return None
-    cols = ["枠", "馬番", "馬名", "性齢", "斤量", "騎手", "馬体重(増減)", "score", "rank"]
+    cols = ["枠", "馬番", "馬名", "性齢", "斤量", "騎手", "馬体重(増減)", "score", "rank", "人気"]
     existing = [c for c in cols if c in df.columns]
     return df[existing]
 
@@ -104,6 +104,14 @@ def build_table_race_cards(df):
         body = row.get('馬体重(増減)', '')
         score = row.get('score', "")
         rank = row.get('rank', "")
+        # 人気は発走15〜20分前のレースカード再取得時にスクレイピングされる。
+        # オッズ未確定時はnetkeiba側が「**」等のプレースホルダーを返すため、
+        # 数値として読めない場合は未確定として「-」表示にする
+        popularity_raw = row.get('人気', '')
+        try:
+            popularity = str(int(float(popularity_raw)))
+        except (ValueError, TypeError):
+            popularity = "-"
 
         # score/rank 表示の整形
         try:
@@ -139,6 +147,7 @@ def build_table_race_cards(df):
           <td>{body}</td>
           <td>{score_fmt}</td>
           <td style="{rank_style}">{rank_fmt}</td>
+          <td>{popularity}</td>
         </tr>
         """
     return rows
@@ -377,6 +386,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
         <th>馬体重</th>
         <th>Score</th>
         <th>Rank ▼</th>
+        <th>人気</th>
       </tr>
     </thead>
     <tbody>

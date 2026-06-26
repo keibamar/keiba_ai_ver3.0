@@ -63,10 +63,11 @@ def test_is_waku_decided_false_when_waku_column_all_nan():
 def test_blank_rank_df_returns_nan_score_and_rank():
     result = transform.blank_rank_df(3)
 
-    assert result.shape == (3, 2)
-    assert list(result.columns) == ["score", "rank"]
-    assert result["score"].isna().all()
-    assert result["rank"].isna().all()
+    assert result.shape == (3, 6)
+    assert list(result.columns) == [
+        "score", "rank", "score_hitrate", "rank_hitrate", "score_value", "rank_value",
+    ]
+    assert result.isna().all().all()
 
 
 # --- fill_race_info_defaults ------------------------------------------------------
@@ -126,15 +127,19 @@ def test_make_race_card_returns_expected():
         {"race_type": "ダート", "course_len": 1400, "weather": "晴", "ground_state": "良", "class": "未勝利"}
     ]
 
-    assert race_card_df.shape == (16, 16)
+    assert race_card_df.shape == (16, 22)
     assert race_card_df.columns.tolist() == [
-        "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "厩舎", "馬体重(増減)", "所属",
-        "horse_id", "jockey_id", "peds_0", "peds_1", "peds_4", "score", "rank",
+        "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "厩舎", "馬体重(増減)", "オッズ", "人気", "所属",
+        "horse_id", "jockey_id", "peds_0", "peds_1", "peds_4",
+        "score", "rank", "score_hitrate", "rank_hitrate", "score_value", "rank_value",
     ]
 
     first = race_card_df.iloc[0]
     assert first[["馬名", "horse_id", "peds_0", "peds_1", "peds_4"]].tolist() == [
         "アフロマン", "2021107090", "アルアイン", "リュイールスター", "キングカメハメハ",
     ]
-    assert first["rank"] == 16
-    assert sorted(race_card_df["rank"].tolist()) == list(range(1, 17))
+    # この race_id は既に終了したレースのため人気・オッズは未確定プレースホルダー（**）になり、
+    # 回収率重視モデル(サブB)は数値化できずスキップされ的中率重視モデルのみにフォールバックする
+    assert pd.isna(first["score_value"])
+    assert first["rank_hitrate"] == 16
+    assert sorted(race_card_df["rank_hitrate"].tolist()) == list(range(1, 17))

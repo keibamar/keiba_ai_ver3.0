@@ -173,11 +173,14 @@ def site_nav_html(base_path="", current_path=None, breadcrumb_items=None, show_c
     return f"""<nav class="site-nav">
   {site_brand_html(base_path)}
   {search_box_html(base_path)}
+  <button type="button" class="page-calendar-tab-toggle" aria-label="メニューを開く">&#9776; メニュー</button>
 </nav>
 <script src="{base_path}assets/js/page-search-index.js"></script>
 <script src="{base_path}assets/js/page-search.js"></script>
+<div class="page-calendar-tab-backdrop"></div>
 {page_calendar_tab_html(base_path, current_path, breadcrumb_items, show_calendar=show_calendar)}
-<script src="{base_path}assets/js/calendar-tab-height.js"></script>"""
+<script src="{base_path}assets/js/calendar-tab-height.js"></script>
+<script src="{base_path}assets/js/sidebar-toggle.js"></script>"""
 
 
 def _home_href(base_path):
@@ -263,6 +266,7 @@ def page_calendar_tab_html(base_path="", current_path=None, breadcrumb_items=Non
         else ""
     )
     return f"""<aside class="page-calendar-tab">
+  <button type="button" class="page-calendar-tab-close" aria-label="閉じる">&times;</button>
   {calendar_html}
   <ul class="page-calendar-tab-location">
     {_location_tree_html(base_path, current_path, breadcrumb_items)}

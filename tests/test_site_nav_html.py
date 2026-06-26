@@ -23,6 +23,17 @@ def test_site_nav_html_default_base_path():
     # 右側の小さなカレンダータブ（矢印で前後月へ移動可能）が常に付随する
     assert '<aside class="page-calendar-tab">' in html
     assert '<button id="prevMonth">&larr;</button>' in html
+    # スマホ幅ではポップアップ表示にするための開閉ボタン・背景・スクリプト
+    assert 'class="page-calendar-tab-toggle"' in html
+    assert 'class="page-calendar-tab-backdrop"' in html
+    assert 'class="page-calendar-tab-close"' in html
+    assert '<script src="assets/js/sidebar-toggle.js"></script>' in html
+
+
+def test_page_calendar_tab_html_includes_close_button():
+    html = n.page_calendar_tab_html(base_path="")
+
+    assert 'class="page-calendar-tab-close"' in html
 
 
 def test_site_nav_html_top_nav_has_no_duplicate_links_with_sidebar():

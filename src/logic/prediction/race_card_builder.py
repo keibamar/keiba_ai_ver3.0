@@ -46,7 +46,16 @@ def make_race_card(race_id):
         waku_df = pd.concat(
             [race_card_df["枠"].reset_index(drop=True), race_card_df["馬番"].reset_index(drop=True)], axis=1
         )
-        rank_df = race_prediction_engine.rank_prediction(race_id, horse_ids, race_info_df, waku_df)
+        # 人気はオッズ確定前は「**」等のプレースホルダーのため数値化できない場合NaNになる
+        # （NaNが混ざる/全頭分そろっていない場合はblended_rank_prediction側で的中率重視モデルのみにフォールバックする）
+        popularity_series = (
+            pd.to_numeric(race_card_df["人気"], errors="coerce").reset_index(drop=True)
+            if "人気" in race_card_df.columns
+            else None
+        )
+        rank_df = race_prediction_engine.blended_rank_prediction(
+            race_id, horse_ids, race_info_df, waku_df, popularity_series=popularity_series
+        )
     else:
         print(f"ℹ️ [スキップ/エラーではありません] 枠順未確定のためAI予想をスキップ: {race_id}")
         rank_df = race_card_transform.blank_rank_df(len(race_card_df))

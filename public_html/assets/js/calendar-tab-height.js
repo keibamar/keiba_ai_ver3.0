@@ -11,6 +11,9 @@
 function resizeCalendarTab() {
   const tab = document.querySelector(".page-calendar-tab");
   if (!tab) return;
+  // モバイル幅（CSS側の@media (max-width: 800px)と合わせる）ではポップアップ
+  // 表示（sidebar-toggle.js）になり、本文の高さに合わせるfloat用の計算は不要
+  if (window.innerWidth <= 800) return;
 
   tab.style.minHeight = "0px";
   const height = document.body.scrollHeight;
