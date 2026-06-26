@@ -711,7 +711,7 @@ def horse_report_to_html(report):
     else:
         html.append(f"<h4>🧬 {place_num} {race_type}{course_len}m ({ground_state})</h4>")
         html.append('<div class="table-wrap">')
-        html.append("<table style='width:100%; border-collapse: collapse; text-align: center;'>")
+        html.append("<table style='border-collapse: collapse; text-align: center;'>")
         html.append(
             "<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th>"
             "<th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>"
@@ -735,7 +735,7 @@ def horse_report_to_html(report):
     html.append("<h4>📊 近5走成績</h4>")
     if report.get("recent5"):
         html.append('<div class="table-wrap">')
-        html.append("<table style='width:100%; border-collapse: collapse; text-align: center; font-size: 12px;'>")
+        html.append("<table style='border-collapse: collapse; text-align: center; font-size: 12px;'>")
         html.append(
             "<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th>"
             "<th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th>"

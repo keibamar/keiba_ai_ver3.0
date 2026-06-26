@@ -854,7 +854,7 @@ def generate_run_time_info(date_str, place_id, target_id):
     <div id="runtimeInfo" style="margin: 20px 0; padding: 10px; border: 1px solid #ccc; background: #fafafa;">
       <h3>🕐 コース別平均タイム情報 ({race_type} {course_len}m {ground_state} {race_class})</h3>
       <div class="table-wrap">
-      <table style="border-collapse: collapse; width: 100%; text-align: center;">
+      <table style="border-collapse: collapse; text-align: center;">
         <thead>
           <tr style="background: #f2f2f2;">
             <th>区分</th>
@@ -951,7 +951,7 @@ def generate_weight_info(date_str, place_id, target_id):
     <div id="weightInfo" style="margin: 20px 0; padding: 10px; border: 1px solid #ccc; background: #fefefe;">
       <h3>🐎 コース別平均馬体重情報 ({race_type} {course_len}m {ground_state} {race_class})</h3>
       <div class="table-wrap">
-      <table style="border-collapse: collapse; width: 100%; text-align: center;">
+      <table style="border-collapse: collapse; text-align: center;">
         <thead>
           <tr style="background: #f2f2f2;">
             <th>区分</th>
@@ -1136,7 +1136,7 @@ def generate_pops_info(date_str, place_id, target_id):
     <div id="popsInfo" style="margin: 20px 0; padding: 10px; border: 1px solid #ccc; background: #fefefe;">
       <h3>📊 コース別平均人気情報 ({race_type} {course_len}m {ground_state} {race_class})</h3>
       <div class="table-wrap">
-      <table style="border-collapse: collapse; width: 100%; text-align: center;">
+      <table style="border-collapse: collapse; text-align: center;">
         <thead>
           <tr style="background: #f2f2f2;">
             <th>区分</th>
@@ -1262,7 +1262,7 @@ def generate_frame_horse_info(date_str, place_id, target_id):
     <div id="frameHorseInfo" style="margin:20px 0; padding:10px; border:1px solid #ccc; background:#fefefe;">
       <h3>📊 枠番・馬番 平均情報 ({race_type} {course_len}m {ground_state} {race_class})</h3>
       <div class="table-wrap">
-      <table style="border-collapse:collapse; width:100%; text-align:center;">
+      <table style="border-collapse:collapse; text-align:center;">
         <thead>
           <tr style="background:#f2f2f2;">
             <th>区分</th>
@@ -1380,7 +1380,7 @@ def generate_recent_same_condition_html(date_str, place_id, target_id):
         <div style="margin-top:10px; padding:5px; border:1px solid #ddd;">
           <h4>{race_date_dsp}:{race_num}R {race_name} {type}{len}m {race_class_name} ({ground})</h4>
           <div class="table-wrap">
-          <table style="width:100%; border-collapse:collapse; text-align:center; font-size:14px;">
+          <table style="border-collapse:collapse; text-align:center; font-size:14px;">
             <thead>
               <tr style="background:#f2f2f2;">
                 <th>順位</th><th>馬名</th><th>タイム</th><th>人気</th><th>単勝</th><th>上り</th><th>通過</th><th>馬体重</th>

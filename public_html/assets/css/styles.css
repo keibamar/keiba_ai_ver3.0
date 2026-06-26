@@ -759,6 +759,21 @@ td a:hover {
   -webkit-overflow-scrolling: touch;
 }
 
+/* table自体がwidth:100%（親要素=table-wrapの幅に強制的に収まる）のままだと、
+   スマホ等の狭い画面で列が圧縮され、馬名等の日本語が1文字ずつ縦に折り返されて
+   読みにくくなる（table-wrapのoverflow-x:autoが効かない）。table-wrap内のtable
+   だけは内容に応じた幅を取れるようにし、セルの折り返しも止めて、収まらない分は
+   table-wrap側の横スクロールに委ねる。 */
+.table-wrap table {
+  width: auto;
+  min-width: 100%;
+}
+
+.table-wrap th,
+.table-wrap td {
+  white-space: nowrap;
+}
+
 /* 出馬表・レース結果表など「1行=1頭」で全頭を一度に見たい主要テーブルには
    縦スクロールをかけない（横スクロールのみ残す。馬体重等が長い列で
    幅が収まらない場合の対応のため）。 */
