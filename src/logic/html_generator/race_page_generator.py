@@ -98,10 +98,12 @@ def build_table_race_cards(df):
         waku = int(row['枠']) if '枠' in row and pd.notna(row['枠']) else ""
         umaban = int(row['馬番']) if '馬番' in row and pd.notna(row['馬番']) else ""
         name = row.get('馬名', '')
-        seirei = row.get('性齢', '')
-        kinryo = row.get('斤量', '')
-        jockey = row.get('騎手', '')
-        body = row.get('馬体重(増減)', '')
+        # 性齢・斤量・騎手・馬体重は確定前はNaNのことがあり、そのままf-stringに
+        # 渡すと文字どおり"nan"が表示されてしまうため、未確定時は空欄にする
+        seirei = row.get('性齢', '') if pd.notna(row.get('性齢', '')) else ''
+        kinryo = row.get('斤量', '') if pd.notna(row.get('斤量', '')) else ''
+        jockey = row.get('騎手', '') if pd.notna(row.get('騎手', '')) else ''
+        body = row.get('馬体重(増減)', '') if pd.notna(row.get('馬体重(増減)', '')) else ''
         score = row.get('score', "")
         rank = row.get('rank', "")
         # 人気は発走15〜20分前のレースカード再取得時にスクレイピングされる。
@@ -587,17 +589,20 @@ def generate_result_table(df):
     for _, row in df.iterrows():
         rank = row["着順"]
         waku = row.get("枠", row.get("枠番", None))
+        waku = waku if pd.notna(waku) else ""
         umaban = row["馬番"]
         horse = html.escape(str(row["馬名"]))
         jockey = html.escape(str(row["騎手"]))
         horse_weight = row["馬体重"] if "馬体重" in row and pd.notna(row["馬体重"]) else ""
-        time = row["タイム"]
+        # 除外・取消等の馬はタイム・オッズがNaNになる（そのままf-stringに渡すと
+        # 文字どおり"nan"が表示されてしまうため、未確定/対象外は空欄にする）
+        time = row["タイム"] if pd.notna(row["タイム"]) else ""
 
         diff = row["着差"] if pd.notna(row["着差"]) else ""
         pop = str(int(float(row["人気"]))) if pd.notna(row["人気"]) else ""
         last_3f = row["上り"] if "上り" in row and pd.notna(row["上り"]) else ""
         race_position = row["通過"] if "通過" in row and pd.notna(row["通過"]) else ""
-        odds = row["単勝"]
+        odds = row["単勝"] if pd.notna(row["単勝"]) else ""
         score = row.get("score", "")
         pred_rank = row.get("rank", "")
 
@@ -1539,8 +1544,12 @@ def make_race_card_html(date_str, place_id, target_id):
     """
 
     for idx, (_, row) in enumerate(df.iterrows()):
-        waku = str(row.get("枠", "")).strip()
-        umaban = str(row.get("馬番", "")).strip()
+        # 枠順未確定時は枠・馬番がNaNになり、str(nan)で文字どおり"nan"が表示されて
+        # しまう（開発者目線の値でユーザーには不具合に見えるため、未確定は"-"にする）
+        waku_raw = row.get("枠", "")
+        umaban_raw = row.get("馬番", "")
+        waku = str(int(float(waku_raw))) if pd.notna(waku_raw) and str(waku_raw).strip() != "" else "-"
+        umaban = str(int(float(umaban_raw))) if pd.notna(umaban_raw) and str(umaban_raw).strip() != "" else "-"
         horse_name = str(row.get("馬名", "")).strip()
         if not horse_name:
             continue

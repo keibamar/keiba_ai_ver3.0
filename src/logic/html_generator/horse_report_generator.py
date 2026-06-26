@@ -394,12 +394,15 @@ def turf_dirt_summary(horse_id, date_str):
                     r"[0-9]*(東京|中山|阪神|京都|札幌|函館|福島|新潟|中京|小倉)[0-9]*", fastest_row.get("開催", "")
                 )
                 course_name = place_match.group(1) if place_match else ""
+                # .get(key, default)はキーが存在し値がNaNの場合はdefaultを使わずNaNを
+                # そのまま返してしまう（"nan"がそのまま表示される不具合の元）ため、
+                # 値自体もNaN判定して安全な値に変換する
                 fastest_info = {
-                    "date": fastest_row.get("日付", ""),
-                    "race_name": fastest_row.get("レース名", ""),
+                    "date": safe_value(fastest_row.get("日付")),
+                    "race_name": safe_value(fastest_row.get("レース名")),
                     "course_name": course_name,
-                    "course_len": fastest_row.get("course_len", ""),
-                    "馬場": fastest_row.get("ground_state", ""),
+                    "course_len": safe_value(fastest_row.get("course_len")),
+                    "馬場": safe_value(fastest_row.get("ground_state")),
                 }
             else:
                 fastest_up = None
@@ -531,9 +534,9 @@ def same_course_best_time(horse_id, target_course_len, target_race_type, target_
     return {
         "time_ms": best_time_ms,
         "time_str": ms_to_time_str(best_time_ms),
-        "date": best_row.get("日付", ""),
-        "race_name": best_row.get("レース名", ""),
-        "ground": best_row.get("ground_state", best_row.get("ground_state", "")),
+        "date": safe_value(best_row.get("日付")),
+        "race_name": safe_value(best_row.get("レース名")),
+        "ground": safe_value(best_row.get("ground_state")),
         "place_id": place_id,
         "info_row": best_row.to_dict() if hasattr(best_row, "to_dict") else {},
     }

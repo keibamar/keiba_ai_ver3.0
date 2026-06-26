@@ -150,6 +150,11 @@ td a:hover {
 
 .card {
   flex: 1 1 280px;
+  /* flexアイテムの既定値min-width:autoのままだと、中の表（.table-wrap、
+     white-space:nowrapで内容に応じた幅を取る）の最小幅がそのままカードの
+     最小幅になり、スマホ幅でカードだけページよりはみ出して見えてしまう。
+     0にして、表側のoverflow-x:auto（横スクロール）にきちんと委ねる。 */
+  min-width: 0;
   border: 1px solid #ddd;
   border-top: 3px solid var(--mar-accent);
   border-radius: 8px;
