@@ -212,8 +212,15 @@ def peds_results_for_bloodline(place_id, race_type, course_len, ground_state, pe
 
 
 def safe_value(val):
-    """NaN判定して "-" に置き換える"""
+    """NaN判定して "-" に置き換える
+
+    pd.isna()は実体がNaN/None/NaTの場合のみTrueになり、文字列"nan"（過去のCSV
+    書き出し時にstr(NaN)がそのまま値として残ったもの）は素通りしてしまうため、
+    文字列としての"nan"も合わせて判定する。
+    """
     if val is None or val == "None":
+        return "-"
+    if isinstance(val, str) and val.strip().lower() == "nan":
         return "-"
     try:
         if isinstance(val, float) and math.isnan(val):
@@ -724,12 +731,12 @@ def horse_report_to_html(report):
             class_name = row.get("クラス", "")
             html.append(f"<td><strong>{class_name}</strong></td>")
             html.append(f"<td>{extract_peds_name(row.get('血統', '-'))}</td>")
-            html.append(f"<td>{row.get('1着', '-')}</td>")
-            html.append(f"<td>{row.get('2着', '-')}</td>")
-            html.append(f"<td>{row.get('3着', '-')}</td>")
-            html.append(f"<td>{row.get('着外', '-')}</td>")
-            html.append(f"<td>{row.get('勝率', '-')}</td>")
-            html.append(f"<td>{row.get('複勝率', '-')}</td>")
+            html.append(f"<td>{safe_value(row.get('1着'))}</td>")
+            html.append(f"<td>{safe_value(row.get('2着'))}</td>")
+            html.append(f"<td>{safe_value(row.get('3着'))}</td>")
+            html.append(f"<td>{safe_value(row.get('着外'))}</td>")
+            html.append(f"<td>{safe_value(row.get('勝率'))}</td>")
+            html.append(f"<td>{safe_value(row.get('複勝率'))}</td>")
             html.append("</tr>")
 
         html.append("</tbody></table>")

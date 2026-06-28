@@ -1031,8 +1031,10 @@ def generate_peds_result_html(date_str, place_id, target_id):
         # 上位5件（1着多い順→2着→3着）
         sub = sub.sort_values(by=["1着", "2着", "3着"], ascending=False).head(5)
         sub["総数"] = sub[["1着", "2着", "3着", "着外"]].sum(axis=1)
-        sub["勝率"] = (sub["1着"] / sub["総数"] * 100).round(1)
-        sub["複勝率"] = ((sub["1着"] + sub["2着"] + sub["3着"]) / sub["総数"] * 100).round(1)
+        # 総数が0（対象レースなし）の場合は0/0でNaNになり、そのままだと"nan%"と
+        # 表示されてしまうため、対象なしは0%にする
+        sub["勝率"] = (sub["1着"] / sub["総数"] * 100).round(1).fillna(0)
+        sub["複勝率"] = ((sub["1着"] + sub["2着"] + sub["3着"]) / sub["総数"] * 100).round(1).fillna(0)
 
         rows = ""
         for _, r in sub.iterrows():
