@@ -70,14 +70,30 @@ class FakeTweepyClient:
         self.tweets.append(text)
 
 
-def test_extract_top5_pred_returns_top5_in_rank_order():
+def test_extract_top5_pred_returns_top5_in_score_order():
     df = pd.DataFrame({
         "馬番": [1, 2, 3, 4, 5, 6],
         "馬名": ["A", "B", "C", "D", "E", "F"],
+        "score": [4, 6, 2, 5, 3, 1],
         "rank": [3, 1, 5, 2, 4, 6],
     })
     result = pub.extract_top5_pred(df)
     assert result == [[2, "B"], [4, "D"], [1, "A"], [5, "E"], [3, "C"]]
+
+
+def test_extract_top5_pred_robust_to_tied_ranks():
+    # スコアが同値の馬が複数いると、rankの値が重複・欠番になる
+    # （ここではrank=1が3頭おり、2・3・4が欠番）。score降順で必ず5頭返ることを確認する
+    df = pd.DataFrame({
+        "馬番": [1, 2, 3, 4, 5, 6],
+        "馬名": ["A", "B", "C", "D", "E", "F"],
+        "score": [0.5, 0.5, 0.5, 0.4, 0.3, 0.2],
+        "rank": [1, 1, 1, 4, 5, 6],
+    })
+    result = pub.extract_top5_pred(df)
+    assert len(result) == 5
+    assert result[3] == [4, "D"]
+    assert result[4] == [5, "E"]
 
 
 def test_make_race_text_writes_expected_content(new_roots):

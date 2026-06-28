@@ -52,7 +52,7 @@ def get_win_result(race_day, race_id_list):
     for race_id in race_id_list:
         # 予想結果の取得
         pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
-        if "rank" not in pred_df.columns:
+        if "rank" not in pred_df.columns or "score" not in pred_df.columns or pred_df.empty:
             print(f"ℹ️ [スキップ/エラーではありません] 予想スコア未生成（rank列なし）: {race_id}")
             race_num_diff += 1
             continue
@@ -63,11 +63,15 @@ def get_win_result(race_day, race_id_list):
             race_num_diff += 1
             continue
 
+        # rank==1の馬を探すと、スコアが同値の馬が複数いる場合に本命馬が1頭に
+        # 決まらず的中判定がゆるくなるため、score降順で本命馬を1頭に確定させる
+        pick_num = int(pred_df.sort_values("score", ascending=False).iloc[0]["馬番"])
+
         # 1着的中率・回収率
         win_df = returns_df[returns_df["式別"] == "単勝"].reset_index(drop=True)
         for i in range(len(win_df)):
             num = int(win_df.at[i, "馬番"])
-            if pred_df.at[num - 1, "rank"] == 1:
+            if num == pick_num:
                 win_hit_rate += 1
                 win_return_rate = win_return_rate + float(win_df.at[i, "配当"])
                 win_hit_race += str(int(str(race_id)[10] + str(race_id)[11])) + " "
@@ -96,7 +100,7 @@ def get_place_result(race_day, race_id_list):
     for race_id in race_id_list:
         # 予想結果の取得
         pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
-        if "rank" not in pred_df.columns:
+        if "rank" not in pred_df.columns or "score" not in pred_df.columns or pred_df.empty:
             print(f"ℹ️ [スキップ/エラーではありません] 予想スコア未生成（rank列なし）: {race_id}")
             race_num_diff += 1
             continue
@@ -107,11 +111,15 @@ def get_place_result(race_day, race_id_list):
             race_num_diff += 1
             continue
 
+        # rank==1の馬を探すと、スコアが同値の馬が複数いる場合に本命馬が1頭に
+        # 決まらず的中判定がゆるくなるため、score降順で本命馬を1頭に確定させる
+        pick_num = int(pred_df.sort_values("score", ascending=False).iloc[0]["馬番"])
+
         # ３着内率・複勝回収率
         place_df = returns_df[returns_df["式別"] == "複勝"].reset_index(drop=True)
         for i in range(len(place_df)):
             num = int(place_df.at[i, "馬番"])
-            if pred_df.at[num - 1, "rank"] == 1:
+            if num == pick_num:
                 place_hit_rate = place_hit_rate + 1
                 if type(place_df.at[i, "配当"]) == str:
                     place_df.at[i, "配当"] = re.sub(r"\D", "", place_df.at[i, "配当"])
@@ -143,7 +151,7 @@ def get_trio_box_result(race_day, race_id_list, box_num):
     for race_id in race_id_list:
         # 予想結果の取得
         pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
-        if "rank" not in pred_df.columns:
+        if "rank" not in pred_df.columns or "score" not in pred_df.columns or pred_df.empty:
             print(f"ℹ️ [スキップ/エラーではありません] 予想スコア未生成（rank列なし）: {race_id}")
             race_num_diff += 1
             continue
@@ -154,21 +162,20 @@ def get_trio_box_result(race_day, race_id_list, box_num):
             race_num_diff += 1
             continue
 
+        # rank列の値で上位box_num頭を決めると、スコアが同値の馬が複数いる場合に
+        # box_num頭より多くの馬がボックスに入ってしまうため、score降順で
+        # 上位box_num頭を固定する
+        box_nums = set(
+            pred_df.sort_values("score", ascending=False)["馬番"].astype(int).tolist()[:box_num]
+        )
+
         # 三連複BOX的中率・回収率
         trio_df = returns_df[returns_df["式別"] == "三連複"].reset_index(drop=True)
         for i in range(len(trio_df)):
             # 三連複の馬番の取得
             num_list = re.findall(r"\d+", trio_df.at[i, "馬番"])
-            # １着馬・２着馬・３着馬の予想順位を取得
-            rank_1 = pred_df[pred_df["馬番"] == int(num_list[0])].reset_index(drop=True).at[0, "rank"]
-            rank_2 = pred_df[pred_df["馬番"] == int(num_list[1])].reset_index(drop=True).at[0, "rank"]
-            rank_3 = pred_df[pred_df["馬番"] == int(num_list[2])].reset_index(drop=True).at[0, "rank"]
 
-            # ランキング５位以内で３頭の場合
-            eval_1 = rank_1 <= box_num
-            eval_2 = rank_2 <= box_num
-            eval_3 = rank_3 <= box_num
-            if eval_1 and eval_2 and eval_3:
+            if all(int(num) in box_nums for num in num_list):
                 trio_box_hit_rate += 1
                 if type(trio_df.at[i, "配当"]) == str:
                     trio_df.at[i, "配当"] = re.sub(r"\D", "", trio_df.at[i, "配当"])

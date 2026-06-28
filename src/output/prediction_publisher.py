@@ -46,18 +46,22 @@ def make_test_error(e):
 def extract_top5_pred(race_data_df):
     """予想結果の上位5頭のリストを返す
 
+    rank列の値と一致する行を1つずつ探す実装だと、スコアが同値で順位が
+    重複する馬がいる場合（rank=2,3,4が誰にも付かず欠番になる等）に
+    5頭未満しか抽出できなくなる。scoreの降順で並べて上位5行を取る方式にし、
+    順位の重複・欠番に関係なく必ず5頭（出走数が5未満ならその頭数）を返す。
+
     Args:
         race_data_df(pd.DataFrame) : 出馬表データセット
     Returns:
-        result_list(list) : 上位5頭の[馬番, 馬名]のリスト(昇順)
+        result_list(list) : 上位5頭の[馬番, 馬名]のリスト(score降順)
     """
+    if "score" not in race_data_df.columns:
+        return []
+    sorted_df = race_data_df.sort_values("score", ascending=False).reset_index(drop=True)
     result_list = []
-    for i in range(1, 6):
-        temp = race_data_df[race_data_df["rank"] == i].reset_index(drop=True)
-        if not temp.empty:
-            num = temp.at[0, "馬番"]
-            name = temp.at[0, "馬名"]
-            result_list.append([num, name])
+    for i in range(min(5, len(sorted_df))):
+        result_list.append([sorted_df.at[i, "馬番"], sorted_df.at[i, "馬名"]])
     return result_list
 
 

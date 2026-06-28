@@ -206,6 +206,12 @@ def _fit_ranker(params, data_train, flag_train, train_group, data_test, flag_tes
 def tune_hyperparameters(data_train, flag_train, train_group, data_test, flag_test, test_group, n_trials=20):
     """OptunaでLGBMRankerのハイパーパラメータを探索する
         本命馬（rank=1の予想）を正しく当てられているかを示すNDCG@1を最大化する。
+        小規模コースではmin_child_samples/reg_alpha/reg_lambdaの探索範囲が
+        学習データ件数に対して大きすぎると、木がほとんど分岐できず多くの馬が
+        同一の葉＝同一スコアになってしまう（「同じスコアの馬ばかりになる」原因）。
+        これを避けるため、min_child_samplesの上限を学習データ件数に応じて絞り、
+        正則化の探索範囲も狭め、さらに検証データでのスコアの一意性（ユニーク比率）
+        にもボーナスを与えて、的中精度を保ったまま差別化されたスコアを優先する。
         Args:
             data_train, flag_train, train_group : 訓練データ
             data_test, flag_test, test_group : 評価データ
@@ -213,19 +219,30 @@ def tune_hyperparameters(data_train, flag_train, train_group, data_test, flag_te
         Returns:
             dict : 最良パラメータ
     """
+    min_child_samples_low = 2
+    min_child_samples_high = max(min_child_samples_low, min(30, len(data_train) // 10))
+
     def objective(trial):
         params = {
             "n_estimators": trial.suggest_int("n_estimators", 50, 300),
             "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.2, log=True),
             "num_leaves": trial.suggest_int("num_leaves", 8, 64),
             "max_depth": trial.suggest_int("max_depth", 3, 10),
-            "min_child_samples": trial.suggest_int("min_child_samples", 5, 50),
-            "reg_alpha": trial.suggest_float("reg_alpha", 1e-3, 10.0, log=True),
-            "reg_lambda": trial.suggest_float("reg_lambda", 1e-3, 10.0, log=True),
+            "min_child_samples": trial.suggest_int(
+                "min_child_samples", min_child_samples_low, min_child_samples_high
+            ),
+            "reg_alpha": trial.suggest_float("reg_alpha", 1e-3, 3.0, log=True),
+            "reg_lambda": trial.suggest_float("reg_lambda", 1e-3, 3.0, log=True),
         }
         model = _fit_ranker(params, data_train, flag_train, train_group, data_test, flag_test, test_group)
         ndcg1 = model.evals_result_["valid_0"]["ndcg@1"][model.best_iteration_ - 1]
-        return ndcg1
+
+        val_scores = model.predict(data_test, num_iteration=model.best_iteration_)
+        unique_ratio = (
+            len(np.unique(np.round(val_scores, 6))) / len(val_scores) if len(val_scores) > 0 else 1.0
+        )
+
+        return ndcg1 + 0.15 * unique_ratio
 
     study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=0))
     study.optimize(objective, n_trials=n_trials, show_progress_bar=False)

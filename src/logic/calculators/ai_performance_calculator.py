@@ -95,16 +95,23 @@ def calc_race_hit_returns(race_day, race_id, box_num=5):
             除外したい）はNoneを返す。
     """
     pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
-    if "rank" not in pred_df.columns:
+    if "rank" not in pred_df.columns or "score" not in pred_df.columns:
         return None
 
     returns_df = race_info_dataset_manager.get_race_return_csv_for_race(race_id)
     if returns_df.empty:
         return None
 
-    pick_rows = pred_df[pred_df["rank"] == 1]
-    if not pick_rows.empty:
-        pick_num = int(pick_rows.iloc[0]["馬番"])
+    # rank列の値（1等）でAI本命馬を探すと、スコアが同値の馬が複数いる場合に
+    # 「本命馬」が1頭に決まらず、的中判定がゆるくなって的中率・回収率が
+    # 実態より高く出てしまう。score降順で並べ、常にちょうど1頭を本命馬として
+    # 確定させる（三連複BOXも同様にscore降順の上位box_num頭で固定する）。
+    sorted_df = pred_df.sort_values("score", ascending=False).reset_index(drop=True)
+    sorted_nums = sorted_df["馬番"].astype(int).tolist()
+    pick_num = sorted_nums[0] if sorted_nums else None
+    box_nums = set(sorted_nums[:box_num])
+
+    if pick_num is not None:
         result_df = race_result_dataset_manager.get_race_id_result(race_id)
         pick_result = result_df[result_df["馬番"].astype(str) == str(pick_num)] if not result_df.empty else result_df
         if not pick_result.empty and _is_scratched_finish(pick_result.iloc[0]["着順"]):
@@ -115,13 +122,13 @@ def calc_race_hit_returns(race_day, race_id, box_num=5):
     win_df = returns_df[returns_df["式別"] == "単勝"].reset_index(drop=True)
     for i in range(len(win_df)):
         num = int(win_df.at[i, "馬番"])
-        if pred_df.at[num - 1, "rank"] == 1:
+        if num == pick_num:
             result["win"] = (1, float(win_df.at[i, "配当"]))
 
     place_df = returns_df[returns_df["式別"] == "複勝"].reset_index(drop=True)
     for i in range(len(place_df)):
         num = int(place_df.at[i, "馬番"])
-        if pred_df.at[num - 1, "rank"] == 1:
+        if num == pick_num:
             payout = place_df.at[i, "配当"]
             if isinstance(payout, str):
                 payout = re.sub(r"\D", "", payout)
@@ -130,10 +137,7 @@ def calc_race_hit_returns(race_day, race_id, box_num=5):
     trio_df = returns_df[returns_df["式別"] == "三連複"].reset_index(drop=True)
     for i in range(len(trio_df)):
         num_list = re.findall(r"\d+", trio_df.at[i, "馬番"])
-        ranks = [
-            pred_df[pred_df["馬番"] == int(num)].reset_index(drop=True).at[0, "rank"] for num in num_list
-        ]
-        if all(rank <= box_num for rank in ranks):
+        if all(int(num) in box_nums for num in num_list):
             payout = trio_df.at[i, "配当"]
             if isinstance(payout, str):
                 payout = re.sub(r"\D", "", payout)
@@ -381,13 +385,12 @@ def _race_detail_summary(race_day, race_id):
             "win_hit", "win_payout", "place_hit", "place_payout"}
     """
     pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
-    if "rank" not in pred_df.columns:
+    if "rank" not in pred_df.columns or "score" not in pred_df.columns or pred_df.empty:
         return None
 
-    pick_rows = pred_df[pred_df["rank"] == 1]
-    if pick_rows.empty:
-        return None
-    pick_row = pick_rows.iloc[0]
+    # rank==1の馬を探すと、スコアが同値の馬が複数いる場合に本命馬が1頭に
+    # 決まらない（calc_race_hit_returnsと同じ理由）ため、score降順で確定させる
+    pick_row = pred_df.sort_values("score", ascending=False).iloc[0]
     pick_name = pick_row["馬名"]
     pick_num = int(pick_row["馬番"])
 

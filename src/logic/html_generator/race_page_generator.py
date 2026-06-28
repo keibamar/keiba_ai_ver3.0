@@ -104,7 +104,14 @@ def build_table_race_cards(df):
         kinryo = row.get('斤量', '') if pd.notna(row.get('斤量', '')) else ''
         jockey = row.get('騎手', '') if pd.notna(row.get('騎手', '')) else ''
         body = row.get('馬体重(増減)', '') if pd.notna(row.get('馬体重(増減)', '')) else ''
-        score = row.get('score', "")
+        # Score列は的中率重視モデル（サブA）本来の生スコアを表示する。
+        # "score"列はバランス型ブレンド用に0〜1へ正規化した値になっており、
+        # そのまま表示すると数値の意味が分かりにくいため（score_hitrateが
+        # 無い旧データではscoreにフォールバックする）。Rank列は本命候補の
+        # 決定に使うバランス型のrankのままにする（的中率重視・回収率重視の
+        # 両モデルを反映した最終的な推奨順位のため）。
+        score_hitrate = row.get('score_hitrate')
+        score = score_hitrate if score_hitrate is not None and pd.notna(score_hitrate) else row.get('score', "")
         rank = row.get('rank', "")
         # 人気は発走15〜20分前のレースカード再取得時にスクレイピングされる。
         # オッズ未確定時はnetkeiba側が「**」等のプレースホルダーを返すため、
@@ -603,7 +610,10 @@ def generate_result_table(df):
         last_3f = row["上り"] if "上り" in row and pd.notna(row["上り"]) else ""
         race_position = row["通過"] if "通過" in row and pd.notna(row["通過"]) else ""
         odds = row["単勝"] if pd.notna(row["単勝"]) else ""
-        score = row.get("score", "")
+        # build_table_race_cardsと同じ理由でScore列は的中率重視モデルの生スコアを
+        # 優先表示する（旧データ等score_hitrateが無い場合はscoreにフォールバック）
+        score_hitrate = row.get("score_hitrate")
+        score = score_hitrate if score_hitrate is not None and pd.notna(score_hitrate) else row.get("score", "")
         pred_rank = row.get("rank", "")
 
         # --- 枠順背景色 ---

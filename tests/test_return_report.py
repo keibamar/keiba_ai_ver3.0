@@ -76,6 +76,20 @@ def test_get_win_result_hits_rank1_horse(new_roots, race_id_list):
     assert hit_race == "1 "
 
 
+def test_get_win_result_uses_top_score_when_rank_is_tied(new_roots, race_id_list):
+    # 馬番5(score最大)と馬番8に同じrank=1を付け、tieが発生してもscore最大の
+    # 馬番5を本命馬として的中判定すること（rankの値だけで決めると、的中判定が
+    # ゆるくなり回収率が実態より高く出てしまう不具合の再発防止）
+    race_card_path = new_roots / "race_card" / SAMPLE_DATE_STR / f"{SAMPLE_RACE_ID}.csv"
+    df = pd.read_csv(race_card_path, index_col=0)
+    df.loc[df["馬番"] == 8, "rank"] = 1
+    df.to_csv(race_card_path)
+
+    hit_rate, return_rate, hit_race = rr.get_win_result(SAMPLE_RACE_DAY, race_id_list)
+    assert hit_rate == 1
+    assert return_rate == 160.0
+
+
 def test_get_place_result_hits_rank1_horse(new_roots, race_id_list):
     hit_rate, return_rate, hit_race = rr.get_place_result(SAMPLE_RACE_DAY, race_id_list)
     assert hit_rate == 1

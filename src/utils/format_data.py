@@ -36,9 +36,11 @@ def weekday_label_html(day, fmt="%m/%d"):
 
 
 def extract_entry_sub(df_analysis):
-    """df_analysis から 馬番, rank, score を抽出して統合する
+    """df_analysis から 馬番, rank, score（あればscore_hitrateも）を抽出して統合する
 
-    rank/score が存在しない場合は空列にする。
+    rank/score が存在しない場合は空列にする。score_hitrate（的中率重視モデルの
+    生スコア。バランス型ブレンドの正規化前の値）があれば一緒に運び、
+    表示側でScore列をそちらにフォールバックできるようにする。
     """
     df = df_analysis.copy()
 
@@ -46,7 +48,10 @@ def extract_entry_sub(df_analysis):
         df["馬番"] = None
 
     if {"rank", "score"}.issubset(df.columns):
-        entry_sub = df[["馬番", "rank", "score"]].copy()
+        cols = ["馬番", "rank", "score"]
+        if "score_hitrate" in df.columns:
+            cols.append("score_hitrate")
+        entry_sub = df[cols].copy()
         entry_sub["rank_score"] = entry_sub["rank"].astype(str) + "_" + entry_sub["score"].astype(str)
     else:
         entry_sub = df[["馬番"]].copy()
