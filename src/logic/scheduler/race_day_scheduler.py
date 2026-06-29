@@ -47,6 +47,70 @@ from src.managers import (  # noqa: E402
 from src.output import prediction_publisher  # noqa: E402
 
 
+def _scrape_with_retry(scrape_fn, race_id, attempts=3, delay_seconds=5):
+    """スクレイピング関数を、空のDataFrameが返った場合に間隔をおいて再試行する
+
+    netkeiba側の一時的な遅延・不調（特に配当結果は確定直後にまだページが
+    安定していないことがある）で空データが返ることがあるため、結果が
+    空のままならこの関数内で待って再試行する。
+
+    Args:
+        scrape_fn (callable): race_idを受け取りpd.DataFrameを返すスクレイピング関数
+        race_id (str): race_id
+        attempts (int): 最大試行回数
+        delay_seconds (int): 再試行の間隔（秒）
+
+    Returns:
+        pd.DataFrame: scrape_fnの戻り値（全試行で空だった場合は最後の空のDataFrame）
+    """
+    df = scrape_fn(race_id)
+    for _ in range(attempts - 1):
+        if not df.empty:
+            break
+        sleep(delay_seconds)
+        df = scrape_fn(race_id)
+    return df
+
+
+def _update_race_card_from_result(race_day, race_id, results_df):
+    """確定したレース結果の人気・馬体重を出馬表（race_card）に反映する
+
+    出馬表の人気・馬体重は発走15〜20分前の再スクレイピングでしか更新されないため、
+    そのタイミングでの取得に失敗すると未確定のままになってしまう
+    （オッズ未確定時の「**」等が残る）。レース結果には確定人気・確定馬体重が
+    含まれているため、結果が取得できた時点で出馬表側も上書きし、取りこぼしを
+    後から回収できるようにする。
+
+    Args:
+        race_day (date): レース開催日
+        race_id (str): race_id
+        results_df (pd.DataFrame): scrape_day_race_resultの戻り値（人気・馬体重・馬番列を含む）
+    """
+    if results_df.empty or "馬番" not in results_df.columns:
+        return
+    race_card_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
+    if race_card_df.empty or "馬番" not in race_card_df.columns:
+        return
+
+    race_card_nums = race_card_df["馬番"].astype(str)
+    changed = False
+
+    if "人気" in results_df.columns:
+        pop_map = dict(zip(results_df["馬番"].astype(str), results_df["人気"].astype(str)))
+        updated = race_card_nums.map(pop_map)
+        race_card_df["人気"] = updated.where(updated.notna(), race_card_df.get("人気"))
+        changed = True
+
+    if "馬体重" in results_df.columns:
+        weight_map = dict(zip(results_df["馬番"].astype(str), results_df["馬体重"].astype(str)))
+        updated = race_card_nums.map(weight_map)
+        race_card_df["馬体重(増減)"] = updated.where(updated.notna(), race_card_df.get("馬体重(増減)"))
+        changed = True
+
+    if changed:
+        race_card_dataset_manager.save_race_cards(race_card_df, race_day, race_id)
+
+
 def _commit_and_upload_race_day():
     """レース当日のcommit + ConoHaアップロードを行う
 
@@ -194,13 +258,18 @@ def update_daily_html(race_day=date.today()):
     time_id_list = race_card_dataset_manager.get_time_id_list(race_day)
     for _, race_id in time_id_list:
         try:
-            results_df = netkeiba_scraper.scrape_day_race_result(race_id)
+            results_df = _scrape_with_retry(netkeiba_scraper.scrape_day_race_result, race_id)
             if not results_df.empty:
                 race_result_dataset_manager.save_race_result_for_race_id(race_id, results_df)
+                _update_race_card_from_result(race_day, race_id, results_df)
         except Exception:
             print("Miss Make Results : ", race_id)
         try:
-            df_return = netkeiba_scraper.scrape_race_returns_dataframe([race_id])
+            # db.netkeiba.com（scrape_race_returns_dataframe）は当該シーズン中の
+            # レースの配当結果がまだ反映されておらず空になるため、結果と同じ
+            # 速報ページから取得するscrape_day_race_returnsを使う。netkeiba側の
+            # 一時的な不調で空が返ることがあるため再試行つきで取得する
+            df_return = _scrape_with_retry(netkeiba_scraper.scrape_day_race_returns, race_id)
             if not df_return.empty:
                 race_info_dataset_manager.save_race_return_for_race_id(race_id, df_return)
         except Exception:
@@ -295,14 +364,17 @@ def post_daily_race_pred(race_day=date.today()):
             if previous_race_id:
                 # レース結果の取得
                 try:
-                    results_df = netkeiba_scraper.scrape_day_race_result(previous_race_id)
+                    results_df = _scrape_with_retry(netkeiba_scraper.scrape_day_race_result, previous_race_id)
                     if not results_df.empty:
                         race_result_dataset_manager.save_race_result_for_race_id(previous_race_id, results_df)
+                        _update_race_card_from_result(race_day, previous_race_id, results_df)
                 except Exception:
                     print("Miss Make Results : ", previous_race_id)
-                # 配当結果の取得
+                # 配当結果の取得（db.netkeiba.comは当該シーズン中のレースが未反映のため、
+                # 結果と同じ速報ページから取得するscrape_day_race_returnsを使う。netkeiba側の
+                # 一時的な不調で空が返ることがあるため再試行つきで取得する）
                 try:
-                    df_return = netkeiba_scraper.scrape_race_returns_dataframe([previous_race_id])
+                    df_return = _scrape_with_retry(netkeiba_scraper.scrape_day_race_returns, previous_race_id)
                     if not df_return.empty:
                         race_info_dataset_manager.save_race_return_for_race_id(previous_race_id, df_return)
                 except Exception:
@@ -325,11 +397,14 @@ def post_daily_race_pred(race_day=date.today()):
         last_race_id = last_race_by_place.get(place_id)
         if last_race_id is not None:
             # レース結果の取得
-            results_df = netkeiba_scraper.scrape_day_race_result(last_race_id)
+            results_df = _scrape_with_retry(netkeiba_scraper.scrape_day_race_result, last_race_id)
             if not results_df.empty:
                 race_result_dataset_manager.save_race_result_for_race_id(last_race_id, results_df)
-            # 配当結果の取得
-            df_return = netkeiba_scraper.scrape_race_returns_dataframe([last_race_id])
+                _update_race_card_from_result(race_day, last_race_id, results_df)
+            # 配当結果の取得（db.netkeiba.comは当該シーズン中のレースが未反映のため、
+            # 結果と同じ速報ページから取得するscrape_day_race_returnsを使う。netkeiba側の
+            # 一時的な不調で空が返ることがあるため再試行つきで取得する）
+            df_return = _scrape_with_retry(netkeiba_scraper.scrape_day_race_returns, last_race_id)
             if not df_return.empty:
                 race_info_dataset_manager.save_race_return_for_race_id(last_race_id, df_return)
 

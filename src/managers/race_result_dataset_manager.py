@@ -75,6 +75,12 @@ def save_race_result_for_race_id(race_id, df_results):
 def get_race_id_result(race_id):
     """race_idのレース結果を取得
 
+    data/race_result/{place}/{year}_race_results.csv（週次バッチ更新）に
+    まだ反映されていない直近のレース（save_race_result_for_race_idが書き込む
+    data/race_result/{place}/{year}/{race_id}.csvの方が新しい）の場合は、
+    そちらにフォールバックする（出馬表ページに結果が反映されないまま週次更新を
+    待ってしまう不具合の対策）。
+
     Args:
         race_id (str): race_id
 
@@ -88,6 +94,10 @@ def get_race_id_result(race_id):
     df_results.index = df_results.index.astype(str)
     df_result = df_results[race_id:race_id]
     df_result = df_result.reset_index(drop=True)
+
+    if df_result.empty:
+        per_race_path = os.path.join(paths.RACE_RESULT_DATA_PATH, PLACE_LIST[place_id - 1], str(year), f"{race_id}.csv")
+        df_result = read_csv_or_empty(per_race_path, dtype=str, index_col=0).reset_index(drop=True)
 
     return df_result
 

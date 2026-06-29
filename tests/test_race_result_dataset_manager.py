@@ -126,6 +126,22 @@ def test_get_race_results_csv_returns_empty_for_missing_file():
     assert df.empty
 
 
+def test_get_race_id_result_falls_back_to_per_race_csv_when_not_in_combined_file(tmp_path, monkeypatch):
+    # save_race_result_for_race_id（当日のライブ取得）はper-race CSVにしか保存せず、
+    # {year}_race_results.csv（週次バッチ更新）への反映は別。週次更新前でも
+    # 出馬表ページに結果が反映されるよう、per-race CSVへフォールバックできることを確認する
+    monkeypatch.setattr(paths, "RACE_RESULT_DATA_PATH", str(tmp_path))
+    race_id = "202405019999"
+
+    new_race_result.save_race_result_for_race_id(
+        race_id, pd.DataFrame({"着順": ["1", "2"], "馬名": ["A", "B"]}, index=[race_id, race_id]),
+    )
+
+    df = new_race_result.get_race_id_result(race_id)
+
+    assert df["馬名"].tolist() == ["A", "B"]
+
+
 def test_get_race_id_result_returns_expected_race():
     df = new_race_result.get_race_id_result(FIXED_RACE_ID)
 

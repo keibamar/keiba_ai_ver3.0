@@ -14,10 +14,11 @@ scrape_race_returns_dataframeについては、旧 src/legacy_datasets/race_retu
 
 import pandas as pd
 import pytest
+from bs4 import BeautifulSoup
 
 from src.datasets.race_info import model as race_info_model
 from src.datasets.race_result import transform
-from src.logic.scraping import netkeiba_scraper
+from src.logic.scraping import common, netkeiba_scraper
 
 # 2024年1月27日 東京1回1日目1R（確定済みのレース結果ページ）
 FIXED_RACE_ID = "202405010101"
@@ -115,6 +116,67 @@ def test_scrape_race_returns_dataframe_matches_known_result():
 
     assert new_result.reset_index(drop=True).equals(expected.reset_index(drop=True))
     assert new_result.index.tolist() == expected.index.tolist()
+
+
+# db.netkeiba.com（scrape_race_returns_dataframe）は当該シーズン中のレースの配当結果が
+# まだ反映されておらず空になるため、当日〜近日中のレースを取得する場合は
+# race.netkeiba.comの速報ページ（result.html）内のPayout_Detail_Tableから取得する
+# scrape_day_race_returnsを使う。2026/6/28 函館1Rの確定済み配当結果で検証する。
+RECENT_FIXED_RACE_ID = "202602010601"
+
+
+def test_scrape_day_race_returns_strips_comma_from_large_ninki(monkeypatch):
+    # 三連単等は組み合わせ数が多く、人気が"1,579人気"のようにカンマ区切りに
+    # なることがある。カンマを取り除かずint変換すると、HTML生成側
+    # （race_page_generator.generate_payout_table_html）でクラッシュする不具合があった
+    html = """
+    <table class="Payout_Detail_Table">
+      <tr class="Tan3">
+        <th>3連単</th>
+        <td class="Result"><ul><li><span>7</span></li><li><span>1</span></li><li><span>6</span></li></ul></td>
+        <td class="Payout"><span>999,999円</span></td>
+        <td class="Ninki"><span>1,579人気</span></td>
+      </tr>
+    </table>
+    """
+    monkeypatch.setattr(common, "url_exists", lambda url: True)
+    monkeypatch.setattr(common, "fetch_soup", lambda url: BeautifulSoup(html, "html.parser"))
+    monkeypatch.setattr(common, "validate_soup", lambda *a, **k: True)
+
+    result = netkeiba_scraper.scrape_day_race_returns("999999999999")
+
+    assert result.loc["999999999999", "人気"] == "1579"
+    assert result.loc["999999999999", "配当"] == "999999"
+
+
+@pytest.mark.network
+def test_scrape_day_race_returns_matches_known_result():
+    expected = pd.DataFrame(
+        [
+            ["単勝", "7", "240", "1"],
+            ["複勝", "7", "120", "1"],
+            ["複勝", "1", "210", "5"],
+            ["複勝", "6", "1790", "8"],
+            ["馬連", "1-7", "1150", "7"],
+            ["ワイド", "1-7", "460", "8"],
+            ["ワイド", "6-7", "4850", "23"],
+            ["ワイド", "1-6", "4120", "22"],
+            ["馬単", "7→1", "1840", "9"],
+            ["三連複", "1-6-7", "19590", "37"],
+            ["三連単", "7→1→6", "61470", "122"],
+        ],
+        columns=race_info_model.RACE_RETURNS_COLUMNS,
+        index=[RECENT_FIXED_RACE_ID] * 11,
+    )
+
+    result = netkeiba_scraper.scrape_day_race_returns(RECENT_FIXED_RACE_ID)
+
+    print(f"\n--- scrape_day_race_returns({RECENT_FIXED_RACE_ID}) ---")
+    print(f"shape: {result.shape}")
+    print(result.to_string())
+
+    assert result.reset_index(drop=True).equals(expected.reset_index(drop=True))
+    assert result.index.tolist() == expected.index.tolist()
 
 
 @pytest.mark.network

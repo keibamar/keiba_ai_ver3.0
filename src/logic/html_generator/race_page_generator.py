@@ -88,6 +88,24 @@ def get_race_info(year, place_id, target_id):
         return None, None, None, None
 
 
+def _weight_change_style(body_str):
+    """馬体重(増減)の文字列（例: "472(-4)"）から、増減が大きい馬を強調する文字色styleを返す
+
+    +10kg以上の増加は赤、-10kg以上の減少は青の文字色で強調する（コンディション
+    変化が大きい馬として一覧で目立たせるため。背景は塗らない）。
+    増減が読み取れない場合は空文字列。
+    """
+    match = re.search(r"\(([+-]?\d+)\)", str(body_str))
+    if not match:
+        return ""
+    diff = int(match.group(1))
+    if diff >= 10:
+        return 'color:red; font-weight:bold;'
+    if diff <= -10:
+        return 'color:blue; font-weight:bold;'
+    return ""
+
+
 def build_table_race_cards(df):
     """メインの出走表（csv側）から HTML の行文字列を作成"""
     if df is None or df.empty:
@@ -121,6 +139,11 @@ def build_table_race_cards(df):
             popularity = str(int(float(popularity_raw)))
         except (ValueError, TypeError):
             popularity = "-"
+        # --- 人気上位3頭の色付け（結果表と同じ配色） ---
+        pop_color = RANK_COLORS.get(popularity, "#ffffff")
+        pop_style = f'background-color:{pop_color};'
+        # --- 馬体重の増減が大きい馬を強調 ---
+        weight_style = _weight_change_style(body)
 
         # score/rank 表示の整形
         try:
@@ -153,10 +176,10 @@ def build_table_race_cards(df):
           <td>{seirei}</td>
           <td>{kinryo}</td>
           <td>{jockey}</td>
-          <td>{body}</td>
+          <td style="{weight_style}">{body}</td>
           <td>{score_fmt}</td>
           <td style="{rank_style}">{rank_fmt}</td>
-          <td>{popularity}</td>
+          <td style="{pop_style}">{popularity}</td>
         </tr>
         """
     return rows
@@ -642,6 +665,9 @@ def generate_result_table(df):
         # --- score の表示文字列（None対応）---
         score_str = f"{score:.3f}" if isinstance(score, (int, float)) else ""
 
+        # --- 馬体重の増減が大きい馬を強調 ---
+        weight_style = _weight_change_style(horse_weight)
+
         result_rows += f"""
         <tr>
             <td>{rank}</td>
@@ -649,7 +675,7 @@ def generate_result_table(df):
             <td style="{waku_style}">{umaban}</td>
             <td>{horse}</td>
             <td>{jockey}</td>
-            <td>{horse_weight}</td>
+            <td style="{weight_style}">{horse_weight}</td>
             <td>{time}</td>
             <td>{diff}</td>
             <td style="{pop_style}">{pop}</td>

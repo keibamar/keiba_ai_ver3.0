@@ -279,6 +279,29 @@ def test_build_table_race_cards_colors_waku_and_top_rank():
     assert '<td style="background-color:#B0E0E6;">2</td>' in rows
 
 
+def test_build_table_race_cards_emphasizes_large_weight_change():
+    df = pd.DataFrame({
+        "枠": [1, 2, 3],
+        "馬番": [1, 2, 3],
+        "馬名": ["A", "B", "C"],
+        "性齢": ["牡3", "牝4", "牡5"],
+        "斤量": [56, 54, 57],
+        "騎手": ["騎手A", "騎手B", "騎手C"],
+        "馬体重(増減)": ["480(+12)", "440(-10)", "460(+4)"],
+        "score": [0.1, 0.2, 0.3],
+        "rank": [1, 2, 3],
+    })
+
+    rows = r.build_table_race_cards(df)
+
+    print("\n--- build_table_race_cards (馬体重の増減強調) ---")
+    print(rows)
+
+    assert '<td style="color:red; font-weight:bold;">480(+12)</td>' in rows
+    assert '<td style="color:blue; font-weight:bold;">440(-10)</td>' in rows
+    assert '<td style="">460(+4)</td>' in rows
+
+
 def test_build_table_race_cards_shows_popularity_when_present():
     df = pd.DataFrame({
         "枠": [1, 3],
@@ -298,9 +321,9 @@ def test_build_table_race_cards_shows_popularity_when_present():
     print("\n--- build_table_race_cards (人気表示) ---")
     print(rows)
 
-    # オッズ確定済みは数値表示、未確定（**等）は「-」表示にする
-    assert "<td>1</td>" in rows
-    assert "<td>-</td>" in rows
+    # オッズ確定済みは数値表示（1番人気は結果表と同じ色付け）、未確定（**等）は「-」表示にする
+    assert '<td style="background-color:#FFD700;">1</td>' in rows
+    assert '<td style="background-color:#ffffff;">-</td>' in rows
 
 
 def test_build_table_race_cards_blank_when_waku_undecided():

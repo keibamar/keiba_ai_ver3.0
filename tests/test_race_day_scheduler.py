@@ -25,6 +25,91 @@ from src.logic.scheduler import race_day_scheduler
 FIXED_RACE_ID = "202405010101"
 
 
+def test_scrape_with_retry_returns_immediately_when_not_empty(monkeypatch):
+    monkeypatch.setattr(race_day_scheduler, "sleep", lambda s: None)
+    calls = []
+
+    def scrape_fn(race_id):
+        calls.append(race_id)
+        return pd.DataFrame({"a": [1]})
+
+    result = race_day_scheduler._scrape_with_retry(scrape_fn, "X1")
+
+    assert len(result) == 1
+    assert calls == ["X1"]
+
+
+def test_scrape_with_retry_retries_on_empty_then_succeeds(monkeypatch):
+    monkeypatch.setattr(race_day_scheduler, "sleep", lambda s: None)
+    calls = []
+
+    def scrape_fn(race_id):
+        calls.append(race_id)
+        if len(calls) < 3:
+            return pd.DataFrame()
+        return pd.DataFrame({"a": [1]})
+
+    result = race_day_scheduler._scrape_with_retry(scrape_fn, "X1", attempts=3)
+
+    assert len(result) == 1
+    assert len(calls) == 3
+
+
+def test_scrape_with_retry_gives_up_after_max_attempts(monkeypatch):
+    monkeypatch.setattr(race_day_scheduler, "sleep", lambda s: None)
+    calls = []
+
+    def scrape_fn(race_id):
+        calls.append(race_id)
+        return pd.DataFrame()
+
+    result = race_day_scheduler._scrape_with_retry(scrape_fn, "X1", attempts=3)
+
+    assert result.empty
+    assert len(calls) == 3
+
+
+def test_update_race_card_from_result_overwrites_unconfirmed_popularity_and_weight(monkeypatch):
+    # 出馬表側の人気・馬体重はライブ更新の取りこぼしで未確定("**"等)のままになることが
+    # あるが、レース結果には確定人気・確定馬体重が含まれるため、結果取得時に
+    # そちらで上書きできることを確認する
+    race_day = date(2026, 6, 27)
+    race_card_df = pd.DataFrame({
+        "馬番": [1, 2, 3], "人気": ["**", "**", "**"], "馬体重(増減)": ["", "", ""],
+    })
+    results_df = pd.DataFrame({
+        "馬番": [1, 2, 3], "人気": [2, 1, 3], "馬体重": ["472(-4)", "454(0)", "492(+2)"],
+    })
+
+    monkeypatch.setattr(
+        race_day_scheduler.race_card_dataset_manager, "get_race_cards",
+        lambda day, race_id: race_card_df.copy(),
+    )
+    saved = []
+    monkeypatch.setattr(
+        race_day_scheduler.race_card_dataset_manager, "save_race_cards",
+        lambda df, day, race_id: saved.append(df),
+    )
+
+    race_day_scheduler._update_race_card_from_result(race_day, "X1", results_df)
+
+    assert len(saved) == 1
+    assert saved[0]["人気"].tolist() == ["2", "1", "3"]
+    assert saved[0]["馬体重(増減)"].tolist() == ["472(-4)", "454(0)", "492(+2)"]
+
+
+def test_update_race_card_from_result_noop_when_no_umaban_column(monkeypatch):
+    saved = []
+    monkeypatch.setattr(
+        race_day_scheduler.race_card_dataset_manager, "save_race_cards",
+        lambda df, day, race_id: saved.append(df),
+    )
+
+    race_day_scheduler._update_race_card_from_result(date(2026, 6, 27), "X1", pd.DataFrame({"着順": ["1"]}))
+
+    assert saved == []
+
+
 def test_commit_and_upload_race_day_calls_commit_and_upload_bats(monkeypatch):
     calls = []
     monkeypatch.setattr(race_day_scheduler.subprocess, "run", lambda args, **kwargs: calls.append(args[0]))
@@ -274,8 +359,8 @@ def test_update_daily_html_saves_results_and_returns(monkeypatch):
         lambda race_id: pd.DataFrame({"着順": ["1"]}),
     )
     monkeypatch.setattr(
-        race_day_scheduler.netkeiba_scraper, "scrape_race_returns_dataframe",
-        lambda race_id_list: pd.DataFrame({"式別": ["単勝"]}),
+        race_day_scheduler.netkeiba_scraper, "scrape_day_race_returns",
+        lambda race_id: pd.DataFrame({"式別": ["単勝"]}),
     )
 
     saved_results = []

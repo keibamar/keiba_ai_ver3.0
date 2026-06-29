@@ -147,6 +147,89 @@ def scrape_day_race_result(race_id):
         return pd.DataFrame()
 
 
+# race.netkeiba.comの配当テーブル(Payout_Detail_Table)の行クラス名 → 式別名
+_PAYOUT_ROW_BET_TYPE = {
+    "Tansho": "単勝",
+    "Fukusho": "複勝",
+    "Wakuren": "枠連",
+    "Umaren": "馬連",
+    "Wide": "ワイド",
+    "Umatan": "馬単",
+    "Fuku3": "三連複",
+    "Tan3": "三連単",
+}
+# 式別ごとの組み合わせの頭数（複勝/ワイドは結果が複数件あるため、この頭数ごとに区切る）
+_PAYOUT_COMBO_SIZE = {
+    "単勝": 1, "複勝": 1, "枠連": 2, "馬連": 2, "ワイド": 2, "馬単": 2, "三連複": 3, "三連単": 3,
+}
+# 着順を保つ必要がある式別（馬単・三連単）は"→"、それ以外は"-"で馬番を連結する
+_PAYOUT_ORDERED_TYPES = {"馬単", "三連単"}
+
+
+def scrape_day_race_returns(race_id):
+    """race_idから、当日の配当結果を返す（race.netkeiba.comの速報ページを使用）
+
+    db.netkeiba.com（scrape_race_returns_dataframe）は当該シーズン中のレースが
+    まだ反映されておらず、当日〜近日中の配当結果を取得できない
+    （ダミーの空ページが返ってくる）ため、レース結果と同じ速報ページ
+    （race.netkeiba.com/race/result.html）内のPayout_Detail_Tableから取得する。
+
+    Args:
+        race_id (str): スクレイピングするrace_id
+
+    Returns:
+        pd.DataFrame: race_idの配当結果（列はrace_info_model.RACE_RETURNS_COLUMNS、
+            インデックス = race_id。取得失敗時は空のDataFrame）
+    """
+    url = "https://race.netkeiba.com/race/result.html?race_id=" + str(race_id)
+    if not common.url_exists(url):
+        print("scrape_day_race_returns: URL not found, skip", url)
+        return pd.DataFrame()
+    try:
+        soup = common.fetch_soup(url)
+        if not common.validate_soup(soup, url, "scrape_day_race_returns", require_table=True):
+            return pd.DataFrame()
+
+        rows = []
+        for table in soup.select("table.Payout_Detail_Table"):
+            for tr in table.select("tr"):
+                row_classes = tr.get("class") or []
+                bet_type = next((_PAYOUT_ROW_BET_TYPE[c] for c in row_classes if c in _PAYOUT_ROW_BET_TYPE), None)
+                if bet_type is None:
+                    continue
+                result_td = tr.select_one("td.Result")
+                payout_td = tr.select_one("td.Payout")
+                ninki_td = tr.select_one("td.Ninki")
+                if result_td is None or payout_td is None or ninki_td is None:
+                    continue
+
+                numbers = [s.get_text(strip=True) for s in result_td.find_all("span") if s.get_text(strip=True)]
+                payouts = [
+                    p.strip().replace("円", "").replace(",", "")
+                    for p in payout_td.get_text("|").split("|")
+                    if p.strip()
+                ]
+                # 三連単等は組み合わせ数が多く、人気が「1,579人気」のようにカンマ区切りに
+                # なることがあるため、配当と同様にカンマを取り除く
+                ninkis = [
+                    n.get_text(strip=True).replace("人気", "").replace(",", "")
+                    for n in ninki_td.find_all("span")
+                ]
+
+                combo_size = _PAYOUT_COMBO_SIZE[bet_type]
+                sep = "→" if bet_type in _PAYOUT_ORDERED_TYPES else "-"
+                combos = [numbers[i:i + combo_size] for i in range(0, len(numbers), combo_size)]
+                for combo, payout, ninki in zip(combos, payouts, ninkis):
+                    rows.append({"式別": bet_type, "馬番": sep.join(combo), "配当": payout, "人気": ninki})
+
+        df_returns = pd.DataFrame(rows, columns=race_info_model.RACE_RETURNS_COLUMNS)
+        df_returns.index = [race_id] * len(df_returns)
+        return df_returns
+    except Exception as e:
+        common.scraping_error(e)
+        return pd.DataFrame()
+
+
 def scrape_horse_peds(horse_id):
     """horse_idから血統データを取得する
 
