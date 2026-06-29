@@ -20,6 +20,15 @@ import peds_results
 import past_performance
 import average_time
 
+# 学習データセット（peds/過去成績から作る特徴量CSV）はver3.0側に保存する。
+# 旧実装はname_header.DATA_PATH（ver2.0側）に保存していたが、git管理（バックアップ）
+# できるようにver3.0のsrc.config.pathsへ向ける。学習済みモデルの保存先を
+# ver3.0へ向けた変更（prediction.py）と同じ理由。
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+from src.config import paths as paths_v3  # noqa: E402
+
 index = [ 
         # racce_id
         "race_id",
@@ -67,7 +76,9 @@ def save_LightGBM_dataset_csv(place_id, year, type, length, df_dataset, suffix="
     """
     try:
         if any(df_dataset):
-            path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Datasets/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(year) + "_" + str(type) + str(length) + '_ai_dataset_for_rank' + suffix + '.csv'
+            out_dir = os.path.join(paths_v3.PREDICTION_DATASET_PATH, name_header.PLACE_LIST[place_id - 1])
+            os.makedirs(out_dir, exist_ok=True)
+            path = os.path.join(out_dir, f"{year}_{type}{length}_ai_dataset_for_rank{suffix}.csv")
             df_dataset = df_dataset.reset_index(drop = True)
             # ローカル保存
             df_dataset.to_csv(path)
@@ -88,7 +99,9 @@ def sava_LightGBM_dataset_flag_csv(place_id, year, type, length, flag_list, suff
         if flag_list:
             df_flag = pd.DataFrame(flag_list)
             df_flag.columns = ["result_flag"]
-            flag_path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Datasets/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(year) + "_" + str(type) + str(length)  + '_ai_dataset_flag' + suffix + '.csv'
+            out_dir = os.path.join(paths_v3.PREDICTION_DATASET_PATH, name_header.PLACE_LIST[place_id - 1])
+            os.makedirs(out_dir, exist_ok=True)
+            flag_path = os.path.join(out_dir, f"{year}_{type}{length}_ai_dataset_flag{suffix}.csv")
             df_flag.to_csv(flag_path)
     except Exception as e:
             make_dataset_error(e)
@@ -105,7 +118,7 @@ def get_LightGBM_dataset_csv(place_id, year, type, length, suffix=""):
             df(pd.DataFrame） : lightGBM用のデータセット
     """
     # csvを読み込む
-    path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Datasets/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(year) + "_" + str(type) + str(length) + '_ai_dataset_for_rank' + suffix + '.csv'
+    path = os.path.join(paths_v3.PREDICTION_DATASET_PATH, name_header.PLACE_LIST[place_id - 1], f"{year}_{type}{length}_ai_dataset_for_rank{suffix}.csv")
     if os.path.isfile(path):
         df = pd.read_csv(path, index_col = 0, dtype = float)
     else :
@@ -124,7 +137,7 @@ def get_LightGBM_dataset_flag_csv(place_id, year, type, length, suffix=""):
             df(pd.DataFrame） : lightGBM用のflagデータセット
     """
     # csvを読み込む
-    path = name_header.DATA_PATH + "/PredictionModels/LightGBM/Datasets/" + name_header.PLACE_LIST[place_id - 1] + '//' + str(year) + "_" + str(type) + str(length)  + '_ai_dataset_flag' + suffix + '.csv'
+    path = os.path.join(paths_v3.PREDICTION_DATASET_PATH, name_header.PLACE_LIST[place_id - 1], f"{year}_{type}{length}_ai_dataset_flag{suffix}.csv")
     if os.path.isfile(path):
         df = pd.read_csv(path, index_col = 0, dtype = int)
     else :
