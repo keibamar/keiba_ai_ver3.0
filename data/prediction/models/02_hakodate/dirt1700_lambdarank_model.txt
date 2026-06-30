@@ -7,34 +7,36 @@ max_feature_idx=49
 objective=lambdarank
 feature_names=f_course1 f_course2 f_course3 f_courseout mf_course1 mf_course2 mf_course3 mf_courseout f_mf_course1 f_mf_course2 f_mf_course3 f_mf_courseout f_len1 f_len2 f_len3 f_lenout mf_len1 mf_len2 mf_len3 mf_classout f_mf_len1 f_mf_len2 f_mf_len3 f_mf_classout f_class1 f_class2 f_class3 f_classout mf_class1 mf_class2 mf_class3 mf_classout.1 f_mf_class1 f_mf_class2 f_mf_class3 f_mf_classout.1 time_df_course1 time_df_class1 ninki_1 result_1 time_df_course2 time_df_class2 ninki_2 result_2 time_df_course3 time_df_class3 ninki_3 result_3 waku umaban
 feature_infos=[0:12] [0:8] [0:7] [0:57] [0:11] [0:12] [0:13] [0:69] [0:2] [0:3] [0:2] [0:7] [0:7] [0:5] [0:4] [0:40] [0:8] [0:11] [0:10] [0:48] [0:2] [0:3] [0:2] [0:6] [0:5] [0:4] [0:4] [0:21] [0:5] [0:8] [0:7] [0:33] none [0:2] none [0:5] none none [-1:170] [-1:140] none none [-1:180] [-1:140] [-1:0] [-1:0] [-1:180] [-1:160] [1:8] [1:14]
-tree_sizes=991
+tree_sizes=1287
 
 Tree=0
-num_leaves=9
+num_leaves=12
 num_cat=0
-split_feature=43 39 38 43 38 47 39 47
-split_gain=60.0335 21.883 8.4602 7.52234 11.7067 8.96377 6.89704 5.79481
-threshold=6.5000000000000009 10.500000000000002 9.5000000000000018 13.500000000000002 6.5000000000000009 7.5000000000000009 6.5000000000000009 13.500000000000002
-decision_type=2 2 2 2 2 2 2 2
-left_child=1 2 -1 4 -2 -6 -4 -7
-right_child=3 -3 6 -5 5 7 -8 -9
-leaf_value=0 -0.22256722938539419 -0.11898735221832954 0.18183616465478203 0 0 -0.16043718295471324 0.025709415751115301 0
-leaf_weight=15.812041848897932 24.085471484810114 11.103396486490963 64.538170859217644 34.309557802975178 40.524918500334024 30.372095074504614 19.866349555552006 9.1655387654900533
-leaf_count=153 314 139 381 302 366 354 158 79
-internal_value=0 0.0990059 0.128208 -0.0796437 -0.103899 -0.0615326 0.150963 -0.122621
-internal_weight=0 111.32 100.217 138.458 104.148 80.0626 84.4045 39.5376
-internal_count=2246 831 692 1415 1113 799 539 433
+split_feature=43 39 38 43 38 47 39 47 47 46 42
+split_gain=59.3435 21.313 8.36781 7.42632 10.9873 8.72287 6.67824 5.64181 3.29074 2.9631 2.66251
+threshold=6.5000000000000009 10.500000000000002 9.5000000000000018 13.500000000000002 6.5000000000000009 7.5000000000000009 6.5000000000000009 13.500000000000002 13.500000000000002 55.000000000000007 8.5000000000000018
+decision_type=2 2 2 2 2 2 2 2 2 2 2
+left_child=1 2 -1 4 8 -6 -4 10 -2 -8 -7
+right_child=3 -3 6 -5 5 7 9 -9 -10 -11 -12
+leaf_value=0 -0.014021547619847535 -0.0064907629733172503 0.010366016689263242 0 0 0 0.0047170436322522928 0 0 -0.0021282140001037428 -0.010369254900623523
+leaf_weight=15.812041848897932 21.187435191124681 11.103396486490963 64.538170859217644 34.309557802975178 40.524918500334024 4.5208754837512997 14.400018211454155 9.1655387654900533 2.8980362936854354 5.4663313440978518 25.851219590753317
+leaf_count=153 288 139 381 302 366 45 95 79 26 63 309
+internal_value=0 0.00564333 0.00731348 -0.00453996 -0.00592151 -0.00348244 0.00861067 -0.00693565 -0.0125981 0.00129532 -0.0090731
+internal_weight=0 111.32 100.217 138.458 104.148 80.0626 84.4045 39.5376 24.0855 19.8663 30.3721
+internal_count=2246 831 692 1415 1113 799 539 433 314 158 354
 is_linear=0
-shrinkage=0.18135
+shrinkage=0.0103987
 
 
 end of trees
 
 feature_importances:
+result_3=3
 ninki_1=2
 result_1=2
 result_2=2
-result_3=2
+ninki_2=1
+ninki_3=1
 
 parameters:
 [boosting: gbdt]
@@ -45,17 +47,17 @@ parameters:
 [data_sample_strategy: bagging]
 [data: ]
 [valid: ]
-[num_iterations: 55]
-[learning_rate: 0.18135]
-[num_leaves: 9]
+[num_iterations: 80]
+[learning_rate: 0.0103987]
+[num_leaves: 12]
 [num_threads: 16]
 [seed: 0]
 [deterministic: 0]
 [force_col_wise: 1]
 [force_row_wise: 0]
 [histogram_pool_size: -1]
-[max_depth: 6]
-[min_data_in_leaf: 29]
+[max_depth: 7]
+[min_data_in_leaf: 30]
 [min_sum_hessian_in_leaf: 0.001]
 [bagging_fraction: 1]
 [pos_bagging_fraction: 1]
@@ -70,8 +72,8 @@ parameters:
 [early_stopping_round: 0]
 [first_metric_only: 0]
 [max_delta_step: 0]
-[lambda_l1: 2.63852]
-[lambda_l2: 0.306879]
+[lambda_l1: 2.9812]
+[lambda_l2: 0.341479]
 [linear_lambda: 0]
 [min_gain_to_split: 0]
 [drop_rate: 0.1]

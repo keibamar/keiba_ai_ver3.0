@@ -6,31 +6,78 @@ label_index=0
 max_feature_idx=50
 objective=lambdarank
 feature_names=f_course1 f_course2 f_course3 f_courseout mf_course1 mf_course2 mf_course3 mf_courseout f_mf_course1 f_mf_course2 f_mf_course3 f_mf_courseout f_len1 f_len2 f_len3 f_lenout mf_len1 mf_len2 mf_len3 mf_classout f_mf_len1 f_mf_len2 f_mf_len3 f_mf_classout f_class1 f_class2 f_class3 f_classout mf_class1 mf_class2 mf_class3 mf_classout.1 f_mf_class1 f_mf_class2 f_mf_class3 f_mf_classout.1 time_df_course1 time_df_class1 ninki_1 result_1 time_df_course2 time_df_class2 ninki_2 result_2 time_df_course3 time_df_class3 ninki_3 result_3 waku umaban self_popularity
-feature_infos=none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none none
-tree_sizes=221
+feature_infos=[2:145] [1:121] [0:105] [9:714] [1:107] [0:85] [0:85] [2:633] [0:11] [0:11] [0:8] [0:56] [0:1] [0:2] [0:1] [0:14] [0:1] [0:1] [0:1] [0:5] none none none [0:2] [0:1] [0:2] [0:1] [0:14] [0:1] [0:1] [0:1] [0:5] none none none [0:2] none none [1:180] [1:18] none none [2:160] [1:17] none none [2:140] [1:18] [1:8] [1:16] [1:16]
+tree_sizes=737 746 728
 
 Tree=0
-num_leaves=1
+num_leaves=6
 num_cat=0
-split_feature=
-split_gain=
-threshold=
-decision_type=
-left_child=
-right_child=
-leaf_value=0
-leaf_weight=
-leaf_count=
-internal_value=
-internal_weight=
-internal_count=
+split_feature=50 43 38 16 50
+split_gain=2.25559 1.57724 0.846151 0.166149 0.162986
+threshold=10.500000000000002 1.5000000000000002 12.000000000000002 1.0000000180025095e-35 1.5000000000000002
+decision_type=2 2 2 2 2
+left_child=1 3 -2 -1 -3
+right_child=2 4 -4 -5 -6
+leaf_value=-0.0081835940253790155 -0.039569135672591252 0 0.12922310448277358 0.069015535084894442 -0.1648768358236001
+leaf_weight=0.44360875338315997 0.25806803442537818 0.14935719966888417 2.047800499945879 0.49654240533709526 1.508240360766649
+leaf_count=7 6 2 10 2 29
+internal_value=0 -0.0907297 0.0974181 0.0440633 -0.156123
+internal_weight=0 2.59775 2.30587 0.940151 1.6576
+internal_count=56 40 16 9 31
 is_linear=0
-shrinkage=1
+shrinkage=0.179372
+
+
+Tree=1
+num_leaves=6
+num_cat=0
+split_feature=39 3 49 50 50
+split_gain=11.1765 5.64954 4.47083 2.70754 1.31819
+threshold=10.500000000000002 97.500000000000014 4.5000000000000009 10.500000000000002 2.5000000000000004
+decision_type=2 2 2 2 2
+left_child=1 -1 -3 4 -4
+right_child=-2 2 3 -5 -6
+leaf_value=-0.1296886325032432 -0.22560877551397879 -0.10019484504052181 0.087595587966760383 0.25439444778089909 -0.090261255066947862
+leaf_weight=1.4535666704177845 3.2610789090394983 0.80852148681878855 1.3293749652802946 5.2228705547749996 0.76510186120867718
+leaf_count=11 18 7 4 4 12
+internal_value=0 0.0987076 0.156316 0.199791 0.00694784
+internal_weight=0 9.57944 8.12587 7.31735 2.09448
+internal_count=56 38 27 20 16
+is_linear=0
+shrinkage=0.179372
+
+
+Tree=2
+num_leaves=6
+num_cat=0
+split_feature=49 50 43 46 7
+split_gain=2.8044 2.84225 1.62989 0.233067 0.0229465
+threshold=4.5000000000000009 9.5000000000000018 1.5000000000000002 85.000000000000014 7.5000000000000009
+decision_type=2 2 2 2 2
+left_child=-1 2 -2 -3 -4
+right_child=1 3 4 -5 -6
+leaf_value=-0.14151790440953368 0.056043767668908735 0.026483574785507696 0 0.16102950846158345 -0.13381869483685024
+leaf_weight=1.6439640186727045 1.3085702955722811 1.7022146619856355 0.26873236894607533 2.4051729142665863 1.6642602384090421
+leaf_count=16 6 8 1 3 22
+internal_value=0 0.0518362 -0.0563398 0.131816 -0.127905
+internal_weight=0 7.34895 3.24156 4.10739 1.93299
+internal_count=56 40 29 11 23
+is_linear=0
+shrinkage=0.179372
 
 
 end of trees
 
 feature_importances:
+self_popularity=5
+result_2=2
+umaban=2
+f_courseout=1
+mf_courseout=1
+mf_len1=1
+ninki_1=1
+result_1=1
+ninki_3=1
 
 parameters:
 [boosting: gbdt]
@@ -51,7 +98,7 @@ parameters:
 [force_row_wise: 0]
 [histogram_pool_size: -1]
 [max_depth: 9]
-[min_data_in_leaf: 29]
+[min_data_in_leaf: 4]
 [min_sum_hessian_in_leaf: 0.001]
 [bagging_fraction: 1]
 [pos_bagging_fraction: 1]
@@ -66,8 +113,8 @@ parameters:
 [early_stopping_round: 0]
 [first_metric_only: 0]
 [max_delta_step: 0]
-[lambda_l1: 0.187145]
-[lambda_l2: 5.03949]
+[lambda_l1: 0.0944408]
+[lambda_l2: 1.65353]
 [linear_lambda: 0]
 [min_gain_to_split: 0]
 [drop_rate: 0.1]

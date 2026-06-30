@@ -6,24 +6,24 @@ label_index=0
 max_feature_idx=50
 objective=lambdarank
 feature_names=f_course1 f_course2 f_course3 f_courseout mf_course1 mf_course2 mf_course3 mf_courseout f_mf_course1 f_mf_course2 f_mf_course3 f_mf_courseout f_len1 f_len2 f_len3 f_lenout mf_len1 mf_len2 mf_len3 mf_classout f_mf_len1 f_mf_len2 f_mf_len3 f_mf_classout f_class1 f_class2 f_class3 f_classout mf_class1 mf_class2 mf_class3 mf_classout.1 f_mf_class1 f_mf_class2 f_mf_class3 f_mf_classout.1 time_df_course1 time_df_class1 ninki_1 result_1 time_df_course2 time_df_class2 ninki_2 result_2 time_df_course3 time_df_class3 ninki_3 result_3 waku umaban self_popularity
-feature_infos=[0:79] [0:58] [0:65] [0:431] [0:71] [0:55] [0:52] [0:430] [0:10] [0:8] [0:8] [0:52] [0:16] [0:10] [0:9] [0:68] [0:12] [0:10] [0:7] [0:44] [0:4] [0:3] [0:3] [0:8] [0:4] [0:5] [0:4] [0:23] [0:5] [0:4] [0:5] [0:18] none [0:2] none [0:5] none none [-1:180] [-1:110] [-1:0] [-1:0] [-1:180] [-1:150] [-1:0] [-1:0] [-1:170] [-1:170] [1:8] [1:18] [-1:18]
-tree_sizes=866
+feature_infos=[0:79] [0:58] [0:65] [0:431] [0:71] [0:55] [0:52] [0:430] [0:10] [0:8] [0:8] [0:52] [0:16] [0:10] [0:9] [0:68] [0:12] [0:10] [0:7] [0:44] [0:4] [0:3] [0:3] [0:8] [0:4] [0:5] [0:4] [0:23] [0:5] [0:4] [0:5] [0:18] none [0:2] [0:3] [0:5] none none [-1:180] [-1:110] [-1:0] [-1:0] [-1:180] [-1:150] [-1:0] [-1:0] [-1:170] [-1:170] [1:8] [1:18] [-1:18]
+tree_sizes=964
 
 Tree=0
-num_leaves=7
+num_leaves=8
 num_cat=0
-split_feature=50 43 14 1 47 42
-split_gain=42.6131 11.8059 5.5937 4.95914 3.87478 3.45403
-threshold=8.5000000000000018 8.5000000000000018 3.5000000000000004 15.500000000000002 10.500000000000002 3.5000000000000004
-decision_type=2 2 2 2 2 2
-left_child=1 4 5 -3 -1 -2
-right_child=2 3 -4 -5 -6 -7
-leaf_value=0.022815937464446809 -0.0019078337215071987 -0.019799924188359956 0.0016667142090273554 0.01165873111667446 -0.0073826400439944151 -0.045671331015439597
-leaf_weight=70.872517610900104 3.7631987277418402 16.27656304650009 5.0904410611838093 7.5052181314676991 4.6157401129603377 24.46450855769217
-leaf_count=580 41 197 50 59 55 370
-internal_value=0 0.0132206 -0.0353926 -0.00951795 0.0205595 -0.0411999
-internal_weight=0 99.27 33.3181 23.7818 75.4883 28.2277
-internal_count=1352 891 461 256 635 411
+split_feature=50 43 46 2 1 7 47
+split_gain=46.6744 12.7526 7.37103 7.02977 6.42425 5.0666 4.37196
+threshold=8.5000000000000018 8.5000000000000018 7.5000000000000009 2.5000000000000004 15.500000000000002 2.5000000000000004 10.500000000000002
+decision_type=2 2 2 2 2 2 2
+left_child=1 6 3 -2 -3 -4 -1
+right_child=2 4 5 -5 -6 -7 -8
+leaf_value=0.024095269595829368 -0.045307330563949019 -0.024240196338612793 -0.014569036925447504 0.017203764807731229 0.016705852496281124 -0.060289802788451252 -0.011991538433157395
+leaf_weight=70.872517610900104 2.5417009424418193 16.27656304650009 6.6459457632154253 6.1091116778552532 7.5052181314676991 18.021389963105321 4.6157401129603377
+leaf_count=580 46 197 80 49 59 286 55
+internal_value=0 0.013754 -0.0394914 -0.0060573 -0.0110298 -0.0499239 0.0216436
+internal_weight=0 99.27 33.3181 8.65081 23.7818 24.6673 75.4883
+internal_count=1352 891 461 95 256 366 635
 is_linear=0
 shrinkage=0.0398473
 
@@ -32,9 +32,10 @@ end of trees
 
 feature_importances:
 f_course2=1
-f_len3=1
-ninki_2=1
+f_course3=1
+mf_courseout=1
 result_2=1
+ninki_3=1
 result_3=1
 self_popularity=1
 
@@ -57,7 +58,7 @@ parameters:
 [force_row_wise: 0]
 [histogram_pool_size: -1]
 [max_depth: 3]
-[min_data_in_leaf: 34]
+[min_data_in_leaf: 20]
 [min_sum_hessian_in_leaf: 0.001]
 [bagging_fraction: 1]
 [pos_bagging_fraction: 1]
@@ -72,8 +73,8 @@ parameters:
 [early_stopping_round: 0]
 [first_metric_only: 0]
 [max_delta_step: 0]
-[lambda_l1: 0.00374467]
-[lambda_l2: 6.00725]
+[lambda_l1: 0.00315106]
+[lambda_l2: 1.92632]
 [linear_lambda: 0]
 [min_gain_to_split: 0]
 [drop_rate: 0.1]

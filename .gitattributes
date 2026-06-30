@@ -1,0 +1,5 @@
+# LightGBMの学習済みモデル（.txt）は、LightGBM自身がLF前提でパースするテキスト
+# 形式のため、Windowsのcore.autocrlf=trueによるLF→CRLF変換が入ると
+# 「Model format error, expect a tree here」でロードに失敗する（実際に発生した
+# 不具合）。checkout/commit時の改行コード変換を無効化し、常にLFで保持する。
+data/prediction/models/**/*.txt text eol=lf
