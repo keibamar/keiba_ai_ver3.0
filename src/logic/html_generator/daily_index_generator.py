@@ -6,9 +6,11 @@
 
 from datetime import date, datetime
 
+import pandas as pd
+
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator
-from src.logic.html_generator.race_type_badge_html import course_label_html
+from src.logic.html_generator.race_type_badge_html import course_label_html, grade_badge_html
 from src.managers import html_manager, race_card_dataset_manager, race_schedule_dataset_manager
 from src.utils.format_data import format_date
 
@@ -21,9 +23,11 @@ def load_race_info(date_str):
 
     if not df_info.empty:
         for _, row in df_info.iterrows():
+            grade = row.get("grade")
             info[str(row["race_id"])] = {
                 "race_time": str(row["race_time"]),
                 "race_name": str(row["race_name"]),
+                "grade": grade if pd.notna(grade) else None,
             }
     else:
         print(f"警告: レース情報ファイルが存在しません: {date_str}")
@@ -42,9 +46,11 @@ def group_place_races(files_info_list, race_info_dict):
 
         race_name = ""
         race_time = ""
+        grade = None
         if race_id in race_info_dict:
             race_name = race_info_dict[race_id]["race_name"]
             race_time = race_info_dict[race_id]["race_time"]
+            grade = race_info_dict[race_id].get("grade")
 
         if place_key not in place_races:
             place_races[place_key] = {"display": place_name, "races": []}
@@ -52,6 +58,7 @@ def group_place_races(files_info_list, race_info_dict):
             "race_num": race_num,
             "race_name": race_name,
             "race_time": race_time,
+            "grade": grade,
         })
     return place_races
 
@@ -70,6 +77,9 @@ def build_table_rows(place_races, date_str):
 
             if race_info:
                 race_name_disp = race_info['race_name'] if race_info['race_name'] else f"{race_num}R"
+                grade_html = grade_badge_html(race_info.get("grade"))
+                if grade_html:
+                    race_name_disp = f"{grade_html} {race_name_disp}"
 
                 race_time_disp = ""
                 if race_info["race_time"]:
@@ -240,7 +250,7 @@ def daily_index_template(date_str, date_display, nav_links, place_races, place_k
   {breadcrumb_html(breadcrumb_items, base_path="../../")}
   {nav_links}
   <h1>{date_display} レース一覧</h1>
-  <div class="table-wrap">
+  <div class="table-wrap table-wrap--full">
   <table>
     <thead>
       <tr>
@@ -272,7 +282,7 @@ def make_daily_index_page(race_day):
     make_index_page(day_str, files_info_list)
 
 
-def calendar_widget_html(base_path=""):
+def calendar_widget_html(base_path="", show_meetings=False):
     """カレンダーwidgetのHTML断片を返す（races/index.html・Home両方から再利用する）
 
     raceDays.js（html_manager.add_race_day が更新する window.racedays）と
@@ -280,7 +290,17 @@ def calendar_widget_html(base_path=""):
     リンクは window.CALENDAR_BASE_PATH を基準にするため、埋め込み先のページの
     階層に応じた base_path（races/index.htmlなら"../"、Home直下なら""）を渡す。
     スタイルは public_html/assets/css/styles.css の .calendar-widget 系クラスに依存する。
+
+    Args:
+        base_path (str): 埋め込み先ページからpublic_html直下までの相対パス。
+        show_meetings (bool): Trueの場合、raceMeetings.js（html_manager.
+            regenerate_race_meetings_jsが生成する、日付ごとの開催場・メインレース・
+            第○回○日目）も読み込み、各日付セルに表示する。races/index.htmlの
+            大きなカレンダーでのみTrueにし、右側タブの小さなカレンダーでは
+            渡さない（calendar.jsはwindow.raceMeetingsが無ければ何も追加表示しない
+            ため、falseの場合は今までと同じ見た目になる）。
     """
+    meetings_script = f'\n<script src="{base_path}assets/js/raceMeetings.js"></script>' if show_meetings else ""
     return f"""
 <div class="calendar-widget">
   <div class="calendar-nav">
@@ -292,19 +312,21 @@ def calendar_widget_html(base_path=""):
   <div id="todayRace"></div>
 </div>
 <script>window.CALENDAR_BASE_PATH = "{base_path}";</script>
-<script src="{base_path}assets/js/raceDays.js"></script>
+<script src="{base_path}assets/js/raceDays.js"></script>{meetings_script}
 <script src="{base_path}assets/js/calendar.js"></script>
 """
 
 
 def _today_meetings_html(races, base_path=""):
-    """本日のメインレース（11R）について、出馬表・コース詳細データへのリンクを返す
+    """本日のメインレース（11R）について、開催場・開催回・メインレース名を
+    出馬表・コース詳細データへのリンク付きで返す
 
-    レースカレンダーページの「本日のレースを見る」ボタン（calendar.js）だけでは
-    開催場ごとの出馬表・コース詳細データへもう1階層辿る必要があるため、
-    ai_performance_calculator.get_today_main_races_with_courseの結果から、
-    レース名（出馬表ページが生成済みならそこへリンク）とコース詳細データへの
-    リンクをまとめて表示する。
+    サイドバーの小さなカレンダー（calendar_widget_html、日付とリンクのみ）に対して、
+    この一覧では「開催場」「メインレース」を主役（.main）に、「第○回○日目」を
+    脇役（.sub）にして表示することで、どこで何のレースが行われるかが日付以上に
+    分かるようにする。ai_performance_calculator.get_today_main_races_with_courseの
+    結果から、レース名（出馬表ページが生成済みならそこへリンク）・コース詳細データ・
+    第○回○日目（ai_performance_calculator.get_meeting_info）をまとめて表示する。
 
     Args:
         races (list[dict]): get_today_main_races_with_courseと同じ形式のリスト。
@@ -327,15 +349,24 @@ def _today_meetings_html(races, base_path=""):
         if race["race_type"] and race["course_len"]:
             course_link = (
                 f'<a href="{base_path}courses/{place_key}/{race["race_type"]}-{race["course_len"]}.html">'
-                f'{place_name} {course_label_html(race["race_type"], race["course_len"])}</a>'
+                f'{course_label_html(race["race_type"], race["course_len"])}</a>'
             )
         else:
-            course_link = f'<a href="{base_path}courses/{place_key}/index.html">{place_name}</a>'
+            course_link = f'<a href="{base_path}courses/{place_key}/index.html">コース詳細</a>'
+
+        meeting_info = ai_performance_calculator.get_meeting_info(race["place_id"], race["race_day"])
+        meeting_label = (
+            f'第{meeting_info["times"]}回{place_name}{meeting_info["day_number"]}日目'
+            if meeting_info
+            else place_name
+        )
+        grade_html = grade_badge_html(race.get("grade"))
+        grade_prefix = f"{grade_html} " if grade_html else ""
 
         items += (
             f'<li class="today-meeting-item">'
-            f'<span class="main">{race_link}</span>'
-            f'<span class="sub">{place_name}11R ・ {course_link}</span>'
+            f'<span class="main">{place_name} {grade_prefix}{race_link}</span>'
+            f'<span class="sub">{meeting_label} ・ {course_link}</span>'
             f"</li>\n"
         )
 
@@ -386,7 +417,7 @@ def races_calendar_template():
   {breadcrumb_html([("レースカレンダー", None)], base_path="../")}
   <h1>開催日カレンダー</h1>
 
-  {calendar_widget_html(base_path="../")}
+  {calendar_widget_html(base_path="../", show_meetings=True)}
 
   <h2>本日の開催</h2>
   {_today_meetings_html(today_races, base_path="../")}

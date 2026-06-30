@@ -14,9 +14,10 @@ Home・AI成績・コース詳細データの各ページ群を横断して同�
 右側タブの小カレンダーを二重表示しないようshow_calendar=Falseを渡す。
 """
 
+import json
 from datetime import date
 
-from src.logic.html_generator import daily_index_generator
+from src.logic.html_generator import affiliate_html, daily_index_generator
 
 # サイト名（HOMEのタイトル・各ページのヘッダー・フッターで共通して使う）。
 # 「MAR」という名前自体をどのページからでも常に伝えられるよう、site_brand_html
@@ -24,14 +25,17 @@ from src.logic.html_generator import daily_index_generator
 SITE_NAME = "MAR"
 SITE_NAME_READING = "まーる"
 SITE_TAGLINE = "競馬AIデータサイト"
-# HOMEの<title>・<h1>で使ってきた既存の表記（半角(・全角）・半角|の組み合わせ）を
-# そのまま保つ。新規のヘッダー（site_brand_html）・フッターはSITE_NAME/SITE_TAGLINEを
-# 使って半角に統一した表記にする。
-SITE_TITLE = f"{SITE_NAME}({SITE_NAME_READING}）|{SITE_TAGLINE}"
+SITE_TITLE = f"{SITE_NAME}({SITE_NAME_READING})|{SITE_TAGLINE}"
 
 # 本番のドメイン。canonicalタグ・OGP（og:url）・sitemap.xml（seo_generator）で
 # 絶対URLを組み立てる際の基準として共通で使う。
 SITE_URL = "https://mar-keiba.com"
+
+
+# SNS共有時に表示するOGP画像。全ページ共通の固定画像（ページごとの個別画像は持たない）。
+OG_IMAGE_URL = f"{SITE_URL}/assets/og-image.png"
+OG_IMAGE_WIDTH = 1200
+OG_IMAGE_HEIGHT = 630
 
 
 def meta_tags_html(title, description, url, og_type="website"):
@@ -51,9 +55,13 @@ def meta_tags_html(title, description, url, og_type="website"):
   <meta property="og:type" content="{og_type}">
   <meta property="og:site_name" content="{SITE_NAME}({SITE_NAME_READING})">
   <meta property="og:locale" content="ja_JP">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="{OG_IMAGE_URL}">
+  <meta property="og:image:width" content="{OG_IMAGE_WIDTH}">
+  <meta property="og:image:height" content="{OG_IMAGE_HEIGHT}">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{title}">
-  <meta name="twitter:description" content="{description}">"""
+  <meta name="twitter:description" content="{description}">
+  <meta name="twitter:image" content="{OG_IMAGE_URL}">"""
 
 # Google AdSenseの所有権確認・広告配信用スクリプト。Googleの推奨に従い、
 # 全ページの<head>のできるだけ上部に置く（審査前の所有権確認に必要なため、
@@ -222,6 +230,11 @@ def site_footer_html(base_path=""):
     必要なプライバシーポリシー・利用規約（legal_pages_generator）へのリンクも
     どのページからでも辿れるようにここに置く。
 
+    A8.net提携プログラムの紹介（affiliate_html.a8_program_recommendation_html）も
+    ここに含める。本文中・サイドバーは既に広告等で手狭なため、フッターという
+    控えめな位置に1箇所だけ置く（提携プログラムが無い間は空文字列のため、
+    何も表示されない）。
+
     Args:
         base_path (str): 埋め込み先ページからpublic_html直下までの相対パス。
     """
@@ -230,6 +243,7 @@ def site_footer_html(base_path=""):
     <p class="site-footer-brand">&copy; {SITE_NAME}({SITE_NAME_READING}) {SITE_TAGLINE}</p>
     <p class="site-footer-disclaimer">本サイトの予想・データは参考情報です。的中や回収を保証するものではありません。実際の購入は自己責任でお願いします。</p>
     <p class="site-footer-updated">データ最終更新: {updated_at}</p>
+    {affiliate_html.a8_program_recommendation_html()}
     <p class="site-footer-links">
       <a href="{base_path}privacy.html">プライバシーポリシー</a>
       <a href="{base_path}terms.html">利用規約</a>
@@ -416,7 +430,9 @@ def breadcrumb_html(items, base_path=""):
     """現在地の階層を示すブレッドクラム（HOME &gt; ... &gt; 現在地）を返す
 
     site_nav_html（常時同じ4リンク）とは異なり、ページごとに階層が変わる
-    パスを表示する。先頭の"HOME"は常に固定で追加する。
+    パスを表示する。先頭の"HOME"は常に固定で追加する。検索結果でもパンくずが
+    表示されるよう、schema.org BreadcrumbListのJSON-LD（breadcrumb_json_ld）も
+    併せて返す（呼び出し側の変更なしに全ページへ行き渡らせるため）。
 
     Args:
         items (list[tuple[str, str | None]]): [(表示名, 相対パス), ...]。
@@ -426,7 +442,35 @@ def breadcrumb_html(items, base_path=""):
         base_path (str): 埋め込み先ページからpublic_html直下までの相対パス。
     """
     crumbs = _hierarchy_crumbs(items, base_path, current_class="breadcrumb-current")
-    return f'<p class="breadcrumb">{" &rsaquo; ".join(crumbs)}</p>'
+    visible = f'<p class="breadcrumb">{" &rsaquo; ".join(crumbs)}</p>'
+    return f"{visible}\n  {breadcrumb_json_ld_html(items)}"
+
+
+def breadcrumb_json_ld_html(items):
+    """breadcrumb_htmlと同じ階層からschema.org BreadcrumbListのJSON-LDを返す
+
+    検索結果でのパンくず表示（リッチリザルト）向け。現在地（最後の要素、
+    パスがNoneのもの）はitemプロパティを省略する（Googleのガイドラインで
+    最後の要素のitemは省略可とされているため、このページの絶対URLを
+    別途受け取る必要がない）。
+
+    Args:
+        items (list[tuple[str, str | None]]): breadcrumb_htmlと同じ形式。
+    """
+    simple_items = [(label, path) for label, path, *_ in items]
+    all_items = [("HOME", "")] + simple_items
+    list_items = []
+    for position, (label, path) in enumerate(all_items, start=1):
+        entry = {"@type": "ListItem", "position": position, "name": label}
+        if path is not None:
+            entry["item"] = f"{SITE_URL}/{path}"
+        list_items.append(entry)
+    payload = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": list_items,
+    }
+    return f'<script type="application/ld+json">{json.dumps(payload, ensure_ascii=False)}</script>'
 
 
 def sidebar_html(sections, up_link=None):

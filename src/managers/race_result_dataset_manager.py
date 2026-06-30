@@ -57,12 +57,27 @@ def save_race_result_for_race_id(race_id, df_results):
     split_race_results_by_yearの出力先と同じ構成のper-race CSV。
     旧 src/RacePrediction/daily_race_results.py の save_each_race_result_csv を移植したもの。
 
+    race.netkeiba.comの速報ページ（scrape_day_race_result）にはrace_type/course_len/
+    ground_state/classが含まれないため、これらは本来週次バッチ（年間まとめファイルへの
+    統合時）で初めて付与されていた。レースカード作成時に保存済みのレース情報
+    （race_card_dataset_manager.get_race_info_csv）があれば、ここで先に付与しておく
+    ことで、週次バッチを待たずに開催別成績ページ等にコース・馬場・クラスが反映される
+    ようにする（無ければ何もしない＝従来通り週次バッチでの統合を待つ）。
+
     Args:
         race_id (str): race_id
         df_results (pd.DataFrame): race_idのレース結果
     """
     if df_results is None or df_results.empty:
         return
+
+    from src.managers import race_card_dataset_manager
+
+    cached_info_df = race_card_dataset_manager.get_race_info_csv(race_id)
+    if not cached_info_df.empty:
+        for col in ("race_type", "course_len", "ground_state", "class"):
+            if col in cached_info_df.columns:
+                df_results[col] = cached_info_df.iloc[0][col]
 
     place_id = int(str(race_id)[4:6])
     year = int(str(race_id)[:4])

@@ -125,6 +125,19 @@ def test_get_current_meetings_returns_empty_for_offseason_date():
     assert meetings == []
 
 
+def test_get_meeting_info_returns_times_and_day_number_for_real_race_day():
+    info = ai.get_meeting_info(5, date(2024, 10, 20))
+
+    print(f"\n--- get_meeting_info(東京, 2024-10-20) ---")
+    print(f"  結果: {info}")
+
+    assert info == {"times": 4, "day_number": 6}
+
+
+def test_get_meeting_info_returns_none_when_no_race_that_day():
+    assert ai.get_meeting_info(5, date(2026, 1, 1)) is None
+
+
 def test_current_results_weekend_end_stays_on_previous_weekend_before_wednesday():
     # 2026-06-20(土)/06-21(日)の週末を基準に考える。
     # その週末が終わった直後（月〜火）は、まだその週末を「今週」とみなさず、
@@ -203,6 +216,9 @@ def test_get_weekend_main_race_details_returns_winner_pick_and_hit_payout():
     assert tokyo_race["course_len"] == "1800"
     assert tokyo_race["ground_state"] == "良"
     assert tokyo_race["class"] == "オープン"
+    # この週末のrace_time_id_listはgrade列追加前に保存されたものなので、
+    # 古い保存形式の後方互換としてgradeはNoneになる
+    assert tokyo_race["grade"] is None
 
 
 def test_get_weekend_main_race_details_returns_empty_list_when_no_schedule():
@@ -318,10 +334,13 @@ def test_get_today_main_races_with_course_scrapes_course_info(monkeypatch, tmp_p
         }
     ).to_csv(time_id_dir / "20260621.csv", index=False)
     monkeypatch.setattr(paths, "RACE_TIME_ID_LIST_PATH", str(time_id_dir))
+    # get_race_info_csv（レースカード作成時に保存済みのキャッシュ）が空の状態を再現する
+    # （本来のRACE_INFO_DATA_PATHを向くと実データを拾ってモックの分岐を検証できないため）
+    monkeypatch.setattr(paths, "RACE_INFO_DATA_PATH", str(tmp_path / "race_info_empty"))
 
     def fake_scrape_race_card(race_id):
         if str(race_id) == "202605030611":
-            return (["dummy"], pd.DataFrame([{"race_type": "芝", "course_len": 1800}]), pd.DataFrame())
+            return (["dummy"], pd.DataFrame([{"race_type": "芝", "course_len": 1800, "grade": "G1"}]), pd.DataFrame())
         return (["dummy"], pd.DataFrame(), pd.DataFrame())
 
     monkeypatch.setattr(netkeiba_scraper, "scrape_race_card", fake_scrape_race_card)
@@ -333,16 +352,59 @@ def test_get_today_main_races_with_course_scrapes_course_info(monkeypatch, tmp_p
 
     # メインレース（11R）以外は除外され、発走時刻昇順で返る
     assert [r["race_id"] for r in races] == ["202602010411", "202609030611", "202605030611"]
-    # スクレイピングに成功したレースはrace_type/course_lenが入る
+    # キャッシュが無いため当日スクレイピングにフォールバックし、成功したレースは
+    # race_type/course_len/gradeが入る
     tokyo_race = next(r for r in races if r["race_id"] == "202605030611")
     assert tokyo_race["race_type"] == "芝"
     assert tokyo_race["course_len"] == 1800
     assert tokyo_race["place_id"] == 5
+    assert tokyo_race["grade"] == "G1"
     # 失敗したレースはNoneのまま（呼び出し側でリンクなし表示に切り替えられる）
     hanshin_race = next(r for r in races if r["race_id"] == "202609030611")
     assert hanshin_race["race_type"] is None
+    assert hanshin_race["grade"] is None
     # race_dayは指定した日付がそのまま入る
     assert tokyo_race["race_day"] == today
+
+
+def test_get_today_main_races_with_course_prefers_cached_race_info_over_scraping(monkeypatch, tmp_path):
+    # shutuba.htmlはレース終了後しばらくするとnetkeiba側で参照できなくなるため、
+    # レースカード作成時に保存済みのrace_info_csv（キャッシュ）があればそちらを優先し、
+    # 当日スクレイピングは行わない（呼んだら失敗させて、呼ばれていないことを確認する）
+    today = date(2026, 6, 21)
+    time_id_dir = tmp_path / "race_time_id_list"
+    time_id_dir.mkdir(parents=True)
+    pd.DataFrame(
+        {
+            "race_time": ["1545"],
+            "race_id": ["202605030611"],
+            "race_name": ["府中牝馬S"],
+            "grade": ["G2"],
+        }
+    ).to_csv(time_id_dir / "20260621.csv", index=False)
+    monkeypatch.setattr(paths, "RACE_TIME_ID_LIST_PATH", str(time_id_dir))
+
+    race_info_dir = tmp_path / "race_info" / "05_tokyo" / "2026"
+    race_info_dir.mkdir(parents=True)
+    pd.DataFrame([{"race_type": "芝", "course_len": "1800", "weather": "晴", "ground_state": "良", "class": "オープン"}]).to_csv(
+        race_info_dir / "202605030611.csv",
+    )
+    monkeypatch.setattr(paths, "RACE_INFO_DATA_PATH", str(tmp_path / "race_info"))
+
+    def fail_if_called(race_id):
+        raise AssertionError("キャッシュがあるのにスクレイピングが呼ばれた")
+
+    monkeypatch.setattr("src.logic.scraping.netkeiba_scraper.scrape_race_card", fail_if_called)
+
+    races = ai.get_today_main_races_with_course(today)
+
+    print(f"\n--- get_today_main_races_with_course(キャッシュ優先) ---")
+    print(f"  結果: {races}")
+
+    assert races[0]["race_type"] == "芝"
+    assert races[0]["course_len"] == "1800"
+    # キャッシュ（race_info_csv）にgrade列が無くても、time_id_list側の値を引き続き使う
+    assert races[0]["grade"] == "G2"
 
 
 def test_get_today_main_races_with_course_returns_empty_when_no_schedule(tmp_path, monkeypatch):

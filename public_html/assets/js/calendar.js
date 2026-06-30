@@ -8,6 +8,40 @@ const CALENDAR_BASE_PATH = window.CALENDAR_BASE_PATH || "";
 
 let currentDate = new Date();
 
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// window.raceMeetings（html_manager.regenerate_race_meetings_jsが生成、日付ごとの
+// 開催場・メインレース・第○回○日目）が読み込まれている場合のみ、日付セルに
+// その日の開催一覧を追加表示する（races/index.htmlの大きなカレンダーのみ読み込む。
+// 右側タブの小さなカレンダーはraceMeetings.jsを読み込まないため、このまま何も
+// 表示されず今までと同じ見た目になる）。
+function dayMeetingsHtml(dateStr) {
+  const meetings = window.raceMeetings && window.raceMeetings[dateStr];
+  if (!meetings || meetings.length === 0) return "";
+  const items = meetings
+    .map((m) => {
+      const raceName = escapeHtml(m.race_name);
+      const raceNameHtml = m.race_card_url
+        ? `<a href="${CALENDAR_BASE_PATH}${m.race_card_url}">${raceName}</a>`
+        : raceName;
+      const gradeHtml = m.grade
+        ? `<span class="grade-badge grade-badge-${escapeHtml(m.grade)}">${escapeHtml(m.grade)}</span> `
+        : "";
+      return (
+        `<div class="calendar-day-meeting">` +
+        `<span class="calendar-day-meeting-main">${escapeHtml(m.place_name)} ${gradeHtml}${raceNameHtml}</span>` +
+        `<span class="calendar-day-meeting-sub">第${m.times}回${m.day_number}日目</span>` +
+        `</div>`
+      );
+    })
+    .join("");
+  return `<div class="calendar-day-meetings">${items}</div>`;
+}
+
 function renderCalendar(year, month) {
   const calendar = document.getElementById("calendar");
   const monthYear = document.getElementById("monthYear");
@@ -40,7 +74,7 @@ function renderCalendar(year, month) {
       link = d;
     }
 
-    html += `<td>${link}</td>`;
+    html += `<td>${link}${dayMeetingsHtml(dateStr)}</td>`;
 
     if ((startDay + d) % 7 === 0) {
       html += "</tr><tr>";

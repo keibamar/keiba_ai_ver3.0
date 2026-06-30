@@ -241,6 +241,47 @@ def test_save_race_result_for_race_id_writes_per_race_csv(tmp_path, monkeypatch)
     assert result.equals(df)
 
 
+def test_save_race_result_for_race_id_enriches_with_cached_race_info(tmp_path, monkeypatch):
+    # race.netkeiba.comの速報ページにはrace_type/course_len/ground_state/classが無いため、
+    # レースカード作成時に保存済みのレース情報（race_info_csv）があれば、週次バッチを
+    # 待たずにこの時点で付与する
+    monkeypatch.setattr(paths, "RACE_RESULT_DATA_PATH", str(tmp_path / "race_result"))
+    monkeypatch.setattr(paths, "RACE_INFO_DATA_PATH", str(tmp_path / "race_info"))
+
+    race_id = "202405010101"
+    race_info_dir = tmp_path / "race_info" / PLACE_LIST[4] / "2024"
+    race_info_dir.mkdir(parents=True)
+    pd.DataFrame(
+        [{"race_type": "芝", "course_len": "1800", "weather": "晴", "ground_state": "良", "class": "オープン"}],
+    ).to_csv(race_info_dir / f"{race_id}.csv")
+
+    df = pd.DataFrame({"着順": ["1", "2"], "馬番": ["7", "3"]}, index=[race_id, race_id])
+
+    new_race_result.save_race_result_for_race_id(race_id, df)
+
+    out_path = tmp_path / "race_result" / PLACE_LIST[4] / "2024" / f"{race_id}.csv"
+    result = pd.read_csv(out_path, dtype=str, index_col=0)
+
+    assert result["race_type"].tolist() == ["芝", "芝"]
+    assert result["course_len"].tolist() == ["1800", "1800"]
+    assert result["ground_state"].tolist() == ["良", "良"]
+    assert result["class"].tolist() == ["オープン", "オープン"]
+
+
+def test_save_race_result_for_race_id_skips_enrichment_when_no_cached_race_info(tmp_path, monkeypatch):
+    monkeypatch.setattr(paths, "RACE_RESULT_DATA_PATH", str(tmp_path / "race_result"))
+    monkeypatch.setattr(paths, "RACE_INFO_DATA_PATH", str(tmp_path / "race_info_empty"))
+
+    race_id = "202405010101"
+    df = pd.DataFrame({"着順": ["1", "2"], "馬番": ["7", "3"]}, index=[race_id, race_id])
+
+    new_race_result.save_race_result_for_race_id(race_id, df)
+
+    out_path = tmp_path / "race_result" / PLACE_LIST[4] / "2024" / f"{race_id}.csv"
+    result = pd.read_csv(out_path, dtype=str, index_col=0)
+    assert "race_type" not in result.columns
+
+
 def test_save_race_result_for_race_id_noop_for_empty_dataframe(tmp_path, monkeypatch):
     monkeypatch.setattr(paths, "RACE_RESULT_DATA_PATH", str(tmp_path / "race_result"))
 

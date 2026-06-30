@@ -20,6 +20,10 @@ def _sample_race_result_df(race_id):
 
 def test_update_daily_race_results_saves_per_race_csv(tmp_path, monkeypatch):
     monkeypatch.setattr(paths, "RACE_RESULT_DATA_PATH", str(tmp_path / "race_result"))
+    # save_race_result_for_race_idがレースカードの保存済み情報で結果を補完する際、
+    # 本来のRACE_INFO_DATA_PATHを向くと実データを拾ってこのテストの単純な比較が
+    # 崩れるため、空のパスに向ける（補完自体は別途専用のテストで検証している）
+    monkeypatch.setattr(paths, "RACE_INFO_DATA_PATH", str(tmp_path / "race_info_empty"))
 
     race_id = "202405010101"
     monkeypatch.setattr(

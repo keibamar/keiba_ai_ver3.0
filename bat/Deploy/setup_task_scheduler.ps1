@@ -81,5 +81,13 @@ $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Tuesday -At "20:00"
 Register-ScheduledTask -TaskName "post_weekend_summary" -TaskPath "\keiba\" -Action $action `
     -Trigger $trigger -Principal $principal -Settings (New-Settings) -Force
 
+# --- 9. update_today_content: every day 00:05 ---
+# HOME（今週/先週のレース）・開催日カレンダー（本日の開催）はdate.today()基準のため、
+# 他の自動化が動かない平日も含めて毎日再生成しないと内容が古いままになる。
+$action = New-ScheduledTaskAction -Execute "$root\bat\MakeHTML\update_today_content.bat"
+$trigger = New-ScheduledTaskTrigger -Daily -At "00:05"
+Register-ScheduledTask -TaskName "update_today_content" -TaskPath "\keiba\" -Action $action `
+    -Trigger $trigger -Principal $principal -Settings (New-Settings) -Force
+
 Write-Output "Done. Current tasks under \keiba\:"
 Get-ScheduledTask -TaskPath "\keiba\"

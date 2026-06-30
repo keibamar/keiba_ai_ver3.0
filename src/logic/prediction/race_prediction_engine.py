@@ -313,27 +313,58 @@ def rank_prediction_value(race_id, horse_ids, race_info_df, waku_df, popularity_
         return pd.DataFrame()
 
 
-def _normalized_score(rank_series):
-    """順位を0(最下位)〜1(1位)の連続値に変換する（モデル間でスコアスケールが
-    異なるため、ブレンド前に順位ベースで揃える）
+def _zscore(score_series):
+    """レース内でスコアを標準化（平均0・標準偏差1）する
+
+    的中率重視・回収率重視モデルのスコアはスケールが全く異なる（LightGBMの
+    生スコアでモデルごとに値の範囲が違う）ため、ブレンド前にそろえる。
+    以前は「レース内の順位を0〜1に変換」する方式だったが、これだと
+    元のスコアが違っていても同じ順位なら同じ値になり、さらに出走頭数で
+    決まる不自然に丸い数字（0.5, 0.8667等）になってしまっていた。
+    生スコアの差をそのまま反映する標準化に変更し、表示するScoreとRankが
+    常に対応する（Scoreの大小がそのままRankの順序になる）ようにする。
 
     Args:
-        rank_series (pd.Series): 順位（1が最上位）
+        score_series (pd.Series): 生スコア
 
     Returns:
-        pd.Series: 正規化スコア（0〜1）
+        pd.Series: 標準化スコア（全頭が同値、または1頭のみの場合は全て0）
     """
-    n = len(rank_series)
-    if n <= 1:
-        return pd.Series([1.0] * n, index=rank_series.index)
-    return (n - rank_series) / (n - 1)
+    std = score_series.std()
+    if not std or pd.isna(std):
+        return pd.Series([0.0] * len(score_series), index=score_series.index)
+    return (score_series - score_series.mean()) / std
+
+
+def score_to_index(score):
+    """標準化スコア（z-score）を、馴染みやすい0〜100の「AI指数」に変換する
+
+    偏差値と同じ計算式（50 + 10 × z）を使う。blended_rank_predictionのscore列は
+    レース内で平均0・標準偏差1に標準化されているため、score=0（平均的な馬）が
+    指数50、score=+1（平均より1標準偏差上）が指数60になる。0〜100の範囲に
+    クリップする（理論上は範囲外の値も起こり得るが、表示上のキリの良さを優先する）。
+    score_calibration.py（指数帯ごとの単勝/複勝的中率の実績テーブル）と対になる。
+
+    Args:
+        score (float): blended_rank_prediction等が返す標準化スコア（score列の値）。
+
+    Returns:
+        int: 0〜100のAI指数（10の位で意味のある区切りになるよう整数に丸める）
+    """
+    if pd.isna(score):
+        return None
+    index = 50 + 10 * score
+    return int(max(0, min(100, round(index))))
 
 
 def blended_rank_prediction(race_id, horse_ids, race_info_df, waku_df, popularity_series=None, value_weight=0.5):
     """的中率重視モデル（サブA）・回収率重視モデル（サブB）を合成したバランス型のAI予想を計算する
 
-    各モデルのスコアはレース内順位に正規化した上で重み付き平均する
+    各モデルのスコアはレース内で標準化した上で重み付き平均する
     （LightGBMのスコアはモデル間で直接比較できるスケールではないため）。
+    表示されるScore（この関数のscore列）とRank（rank列）は常にこの同じ値から
+    計算されるため、「Scoreが違うのにRankが同じ」「Scoreの大小とRankの順序が
+    合わない」という不整合は起きない。
     人気が未確定（popularity_seriesが無い、または回収率重視モデルが未学習）の場合は
     的中率重視モデルのみのスコアにフォールバックする。
 
@@ -346,8 +377,9 @@ def blended_rank_prediction(race_id, horse_ids, race_info_df, waku_df, popularit
         value_weight (float): 回収率重視モデルの重み（0〜1。的中率重視モデルの重みは1-value_weight）
 
     Returns:
-        pd.DataFrame: score, rank（バランス型）、score_hitrate, rank_hitrate（的中率重視）、
-            score_value, rank_value（回収率重視、未算出時はNaN）列を持つDataFrame
+        pd.DataFrame: score, rank（バランス型。表示用のScore/Rankはこの2列を使う）、
+            score_hitrate, rank_hitrate（的中率重視、参考用）、
+            score_value, rank_value（回収率重視、参考用。未算出時はNaN）列を持つDataFrame
     """
     hitrate_df = rank_prediction(race_id, horse_ids, race_info_df, waku_df)
     if hitrate_df.empty:
@@ -359,12 +391,12 @@ def blended_rank_prediction(race_id, horse_ids, race_info_df, waku_df, popularit
 
     n = len(hitrate_df)
     if value_df.empty or len(value_df) != n:
-        blended_score = _normalized_score(hitrate_df["rank"])
+        blended_score = _zscore(hitrate_df["score"])
         value_df = pd.DataFrame({"score": [np.nan] * n, "rank": [np.nan] * n})
     else:
         blended_score = (
-            (1 - value_weight) * _normalized_score(hitrate_df["rank"])
-            + value_weight * _normalized_score(value_df["rank"])
+            (1 - value_weight) * _zscore(hitrate_df["score"])
+            + value_weight * _zscore(value_df["score"])
         )
 
     result_df = pd.DataFrame({"score": blended_score})

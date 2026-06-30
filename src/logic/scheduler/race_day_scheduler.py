@@ -144,26 +144,29 @@ def _extract_race_name(info):
 
 
 def make_time_id_list(race_day):
-    """指定日の[race_time, race_id, race_name]リストを作成する
+    """指定日の[race_time, race_id, race_name, grade]リストを作成する
 
     全開催場の出馬表ページをスクレイピングし、発走時刻順にソートして返す。
+    grade（G1/G2/G3。対象外のレースはNone）はnetkeiba_scraper.scrape_race_cardが
+    race_info_dfに含めて返す（h1.RaceName内の重賞アイコンから判定）。
 
     Args:
         race_day(date) : レース開催日
     Returns:
-        time_id_list(list) : [race_time, race_id, race_name]のリスト(発走時刻順)
+        time_id_list(list) : [race_time, race_id, race_name, grade]のリスト(発走時刻順)
     """
     time_id_list = []
     race_id_list = race_schedule_dataset_manager.get_daily_id(0, race_day)
     for race_id in race_id_list:
         try:
-            info, _, _ = netkeiba_scraper.scrape_race_card(race_id)
+            info, race_info_df, _ = netkeiba_scraper.scrape_race_card(race_id)
         except Exception:
             print(f"ℹ️ [スキップ/エラーではありません] 出馬表未公開のため取得不可: {race_id}")
             continue
         if not info:
             continue
-        time_id_list.append([_extract_race_time(info), race_id, _extract_race_name(info)])
+        grade = race_info_df.iloc[0]["grade"] if not race_info_df.empty else None
+        time_id_list.append([_extract_race_time(info), race_id, _extract_race_name(info), grade])
 
     time_id_list.sort(key=lambda row: int(row[0]))
     return time_id_list

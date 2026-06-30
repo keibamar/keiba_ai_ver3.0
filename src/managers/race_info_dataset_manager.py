@@ -603,11 +603,20 @@ def save_race_returns_dataset(place_id, year, race_returns_df):
     後勝ち馬の複勝配当の行が消えてしまうことがあった（実データで発見）。
     reset_indexしてrace_id自体も判定列に含めることで、別レースの行を
     誤って重複排除しないようにする。
+
+    update_race_returns_dataset（週次更新）はold_df（dtype=strで読み込み）と
+    new_df（スクレイピング結果。列によってdtypeがstrでないことがある）を
+    pd.concatしてこの関数に渡すため、型が揺れた状態で重複判定すると
+    "3180"と3180のような見た目が同じでも型が違う値が別物と判定され、
+    重複が排除されないまま保存されてしまう不具合があった（実データで発見、
+    6/20・6/21の配当結果が2重に表示される原因）。重複判定の前に全列を
+    文字列化して型の揺れを無くす。
     """
     if race_returns_df.empty:
         return
 
-    race_returns_df = race_returns_df[~race_returns_df.reset_index().duplicated(keep="first").values]
+    comparable = race_returns_df.reset_index().astype(str)
+    race_returns_df = race_returns_df[~comparable.duplicated(keep="first").values]
 
     out_dir = os.path.join(RACE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1])
     os.makedirs(out_dir, exist_ok=True)
@@ -616,14 +625,26 @@ def save_race_returns_dataset(place_id, year, race_returns_df):
 
 
 def split_race_returns_csv(place_id, year):
-    """race_returnsのcsvをrace_id（インデックス）ごとに分割して保存する"""
+    """race_returnsのcsvをrace_id（インデックス）ごとに分割して保存する
+
+    race_result_dataset_manager.split_race_results_by_yearと同様、分割時に
+    重複行を取り除く（式別・馬番が同じ行は同一の的中とみなす。複勝・ワイド等は
+    1レースに複数件あるため、式別だけでなく馬番も判定に使う）。save_race_returns_dataset
+    側の重複排除をすり抜けたデータが万一あっても、ここで個別ファイルに
+    重複が伝播しないようにする。
+    """
     df = get_race_returns_csv(place_id, year)
     if df.empty:
         return
 
+    # 古い年のデータは列名が"式別"/"馬番"ではなく"0"/"1"のような連番のままのことが
+    # あるため、無ければ列の並び順（1列目=式別, 2列目=馬番）にフォールバックする
+    dedup_subset = ["式別", "馬番"] if {"式別", "馬番"}.issubset(df.columns) else list(df.columns[:2])
+
     out_dir = os.path.join(RACE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1], str(year))
     os.makedirs(out_dir, exist_ok=True)
     for race_id, group in df.groupby(df.index):
+        group = group.drop_duplicates(subset=dedup_subset, keep="first")
         group.to_csv(os.path.join(out_dir, f"{race_id}.csv"))
 
 

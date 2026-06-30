@@ -388,6 +388,49 @@ def test_chakudo_chart_html_handles_all_ranks_without_data():
     assert "対象データがありません。" in html
 
 
+def test_chakudo_chart_html_compact_omits_tooltip_and_legend_but_keeps_bars():
+    df = pd.DataFrame(
+        {
+            "race_type": ["芝", "芝", "芝"],
+            "course_len": ["1400", "1400", "1400"],
+            "ground_state": ["全", "全", "全"],
+            "class": ["all", "all", "all"],
+            "人気": [1, 2, 11],
+            "1着": [10, 3, 0],
+            "2着": [4, 5, 1],
+            "3着": [2, 2, 0],
+            "着外": [1, 6, 8],
+        }
+    )
+
+    html = c._chakudo_chart_html(df, "芝", "1400", "人気", range(1, 12), "人気データ", compact=True)
+
+    print(f"\n--- _chakudo_chart_html(compact=True) ---\n{html}")
+
+    # cross-filter（馬場×クラス×年度）のように何十パターンも並べる場面で使うため、
+    # ツールチップ・凡例文（ページサイズが膨らむ要素）は省くが、バー自体は表示する
+    assert "chakudo-tooltip" not in html
+    assert "chakudo-legend" not in html
+    assert '<span class="chakudo-bar-track">' in html
+    assert (
+        '<span class="chakudo-segment seg-1st" style="width: 58.82%">10</span>' in html
+    )
+    assert '<span class="chakudo-value">n=17</span>' in html
+
+
+def test_peds_chart_html_compact_omits_tooltip_and_legend_but_keeps_bars():
+    peds_df = pd.DataFrame(
+        {"血統": ["ディープインパクト", "キングカメハメハ"], "1着": [10, 5], "2着": [4, 3], "3着": [2, 2], "着外": [4, 10]},
+    )
+
+    html = c._peds_chart_html(peds_df, "血統別成績（上位5件）", compact=True)
+
+    assert "chakudo-tooltip" not in html
+    assert "chakudo-legend" not in html
+    assert '<span class="chakudo-bar-track">' in html
+    assert '<span class="chakudo-value">n=20</span>' in html
+
+
 def test_chakudo_class_breakdown_html_returns_per_class_charts():
     df = pd.DataFrame(
         {
@@ -561,6 +604,72 @@ def test_build_ground_state_breakdown_returns_ordered_rows():
 
     assert [r["value"] for r in rows] == ["良", "稍重", "重", "不良"]
     assert "全" not in {r["value"] for r in rows}
+
+
+def test_build_venue_comparison_breakdown_returns_one_row_per_venue_with_this_course():
+    rows = c.build_venue_comparison_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN)
+
+    print(f"\n--- build_venue_comparison_breakdown(東京, 芝1400m) ---")
+    for r in rows:
+        print(f"  {r}")
+
+    # 芝1400mは複数の競馬場に存在するはずなので、東京以外の行も含まれる
+    assert len(rows) > 1
+    # 現在の競馬場（東京）の行は強調表示（リンクではなくstrong）、他はリンクになる
+    current_rows = [r for r in rows if "venue-compare-current" in r["value"]]
+    assert len(current_rows) == 1
+    assert "東京" in current_rows[0]["value"]
+    other_rows = [r for r in rows if r is not current_rows[0]]
+    # courses/{place}/配下の兄弟ディレクトリへのリンクなので、1階層上(../)で足りる
+    # （../../だと公開ディレクトリ直下を探してしまい、courses/が抜けたリンクになる）
+    assert all('<a href="../0' in r["value"] or '<a href="../1' in r["value"] for r in other_rows)
+    assert all('<a href="../../' not in r["value"] for r in other_rows)
+    assert all(f"-{SAMPLE_COURSE_LEN}.html" in r["value"] for r in other_rows)
+
+
+def test_build_venue_comparison_breakdown_excludes_venues_without_this_course():
+    # 大井等のいないこのテストでは、対象外の極端な距離（存在する競馬場が1つしかない
+    # 想定の値）を使い、自分自身の1行だけになることを確認する
+    rows = c.build_venue_comparison_breakdown(SAMPLE_PLACE_ID, "ダート", "1300")
+
+    assert len(rows) == 1
+    assert "venue-compare-current" in rows[0]["value"]
+
+
+def test_build_venue_comparison_breakdown_narrows_to_specified_class_and_ground_state():
+    all_rows = c.build_venue_comparison_breakdown(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN)
+    class_rows = c.build_venue_comparison_breakdown(
+        SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN, ground_state="全", class_name="未勝利",
+    )
+
+    print(f"\n--- build_venue_comparison_breakdown(東京, 芝1400m, クラス=未勝利) ---")
+    for r in class_rows:
+        print(f"  {r}")
+
+    assert class_rows  # 実データなので少なくとも1競馬場は存在するはず
+    # 絞り込んだ結果は全体合計と異なる値になる（同じ集計を使い回していない）
+    assert {r["avg_time"] for r in class_rows} != {r["avg_time"] for r in all_rows}
+
+
+def test_venue_comparison_panel_html_wraps_table_in_cross_filter_panel():
+    html = c._venue_comparison_panel_html(SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN, "全", "all")
+
+    assert '<div class="cross-filter-panel" data-ground-state="全" data-class="all" hidden>' in html
+    assert "競馬場" in html
+
+
+def test_venue_comparison_cross_filter_html_includes_selects_and_all_combinations():
+    html = c._venue_comparison_cross_filter_html(
+        SAMPLE_PLACE_ID, SAMPLE_RACE_TYPE, SAMPLE_COURSE_LEN, ["良", "稍重"], ["未勝利", "1勝クラス"],
+    )
+
+    print(f"\n--- _venue_comparison_cross_filter_html ---\n{html[:500]}")
+
+    assert '<select class="cross-filter-ground-state">' in html
+    assert '<select class="cross-filter-class">' in html
+    # 全体(1) + 馬場のみ(2) + クラスのみ(2) + 馬場×クラス(2x2=4) = 9パネル
+    assert html.count("cross-filter-panel") == 9
+    assert 'data-ground-state="稍重" data-class="未勝利"' in html
 
 
 def test_build_cross_breakdown_returns_rows_keyed_by_ground_state_class_and_start_year():

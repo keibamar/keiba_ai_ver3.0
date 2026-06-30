@@ -250,6 +250,62 @@ def test_make_daily_race_card_html_links_resolve_in_a_single_pass(new_roots, mon
     assert '<a href="../../races/20241020/04_nigataR1.html">' in race2_html
 
 
+# --- build_ai_pick_summary_html（的中率重視・回収率重視モデルのTOP5、補助情報） ------------
+
+
+def test_build_ai_pick_summary_html_lists_top5_for_each_sub_model_in_score_order():
+    df = pd.DataFrame({
+        "馬番": [1, 2, 3, 4, 5, 6],
+        "馬名": ["A", "B", "C", "D", "E", "F"],
+        "score": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+        "score_hitrate": [0.6, 0.5, 0.4, 0.3, 0.2, 0.1],
+        "score_value": [1, 2, 3, 4, 5, 6],
+    })
+
+    html_out = r.build_ai_pick_summary_html(df)
+
+    print("\n--- build_ai_pick_summary_html (TOP5表示) ---")
+    print(html_out)
+
+    assert "🎯 的中率重視モデル TOP5" in html_out
+    assert "💰 回収率重視モデル TOP5" in html_out
+    # 的中率重視はscore_hitrate降順(A,B,C,D,E)で6位のFは出ない
+    hitrate_section, value_section = html_out.split("回収率重視モデル TOP5")
+    assert "<li>1番 A</li>" in hitrate_section
+    assert "<li>5番 E</li>" in hitrate_section
+    assert "6番 F" not in hitrate_section
+    # 回収率重視はscore_value降順(F,E,D,C,B)で1位のAは出ない
+    assert "<li>6番 F</li>" in value_section
+    assert "1番 A" not in value_section
+
+
+def test_build_ai_pick_summary_html_shows_empty_message_when_value_model_missing():
+    df = pd.DataFrame({
+        "馬番": [1, 2],
+        "馬名": ["A", "B"],
+        "score": [0.9, 0.1],
+        "score_hitrate": [0.9, 0.1],
+        "score_value": [None, None],
+    })
+
+    html_out = r.build_ai_pick_summary_html(df)
+
+    assert "🎯 的中率重視モデル TOP5" in html_out
+    assert "💰 回収率重視モデル TOP5" in html_out
+    assert "データなし" in html_out
+
+
+def test_build_ai_pick_summary_html_returns_empty_for_blank_df():
+    assert r.build_ai_pick_summary_html(pd.DataFrame()) == ""
+    assert r.build_ai_pick_summary_html(None) == ""
+
+
+def test_build_ai_pick_summary_html_returns_empty_when_no_sub_model_scores():
+    df = pd.DataFrame({"馬番": [1], "馬名": ["A"], "score": [0.5]})
+
+    assert r.build_ai_pick_summary_html(df) == ""
+
+
 # --- build_table_race_cards（枠順・AI予想Rankの色付け） -------------------------------
 
 
@@ -277,6 +333,29 @@ def test_build_table_race_cards_colors_waku_and_top_rank():
     # AI予想Rank 1位=金色、2位=水色（RANK_COLORS）
     assert '<td style="background-color:#FFD700;">1</td>' in rows
     assert '<td style="background-color:#B0E0E6;">2</td>' in rows
+
+
+def test_build_table_race_cards_shows_ai_index_alongside_score():
+    df = pd.DataFrame({
+        "枠": [1, 3],
+        "馬番": [1, 5],
+        "馬名": ["サンプルホースA", "サンプルホースB"],
+        "性齢": ["牡3", "牝4"],
+        "斤量": [56, 54],
+        "騎手": ["騎手A", "騎手B"],
+        "馬体重(増減)": ["480(+2)", "440(-4)"],
+        "score": [1.0, -1.0],
+        "rank": [1, 2],
+    })
+
+    rows = r.build_table_race_cards(df)
+
+    print("\n--- build_table_race_cards (AI指数) ---")
+    print(rows)
+
+    # score=1.0 -> 指数60、score=-1.0 -> 指数40（偏差値形式、50+10z）
+    assert "<td>60</td>" in rows
+    assert "<td>40</td>" in rows
 
 
 def test_build_table_race_cards_emphasizes_large_weight_change():
@@ -344,3 +423,30 @@ def test_build_table_race_cards_blank_when_waku_undecided():
     # 枠順未確定でも色付け処理自体は落ちず、枠が無いデフォルト色（白）になる
     assert rows.count('style="background-color:#ffffff; color:#000;"') == 4
     assert "<td>サンプルホースA</td>" not in rows  # 馬名はリンク化されるため素のtdにはならない
+
+
+def test_generate_result_table_shows_ai_index_alongside_score():
+    df = pd.DataFrame({
+        "着順": ["1", "2"],
+        "枠": ["1", "3"],
+        "馬番": ["1", "5"],
+        "馬名": ["サンプルホースA", "サンプルホースB"],
+        "騎手": ["騎手A", "騎手B"],
+        "馬体重": ["480(+2)", "440(-4)"],
+        "タイム": ["1:23.4", "1:23.6"],
+        "着差": ["", "クビ"],
+        "人気": ["1", "2"],
+        "単勝": ["2.5", "4.0"],
+        "score": [1.0, -1.0],
+        "rank": [1, 2],
+    })
+
+    result_html = r.generate_result_table(df)
+
+    print("\n--- generate_result_table (AI指数) ---")
+    print(result_html)
+
+    assert "<th>AI指数</th>" in result_html
+    # score=1.0 -> 指数60、score=-1.0 -> 指数40（偏差値形式、50+10z）
+    assert "<td>60</td>" in result_html
+    assert "<td>40</td>" in result_html

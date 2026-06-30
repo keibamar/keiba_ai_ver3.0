@@ -24,14 +24,38 @@ import race_results
 
 import make_dataset
 
-# ver3.0側のモデル保存先（Webサイトのライブ予想エンジンが読みに行くパス）。
-# データセットキャッシュ（Datasets配下）は引き続きver2.0側を参照するが、
-# 学習済みモデルはver3.0側に保存しないとサイトの予想に反映されないため、
-# モデルの保存・読込先のみver3.0のsrc.config.pathsへ向ける。
+# 学習済みモデルの保存先（Webサイトのライブ予想エンジンが読みに行くパス）・
+# データセットキャッシュの保存先は、いずれもver3.0のsrc.config.pathsを使う。
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 from src.config import paths as paths_v3  # noqa: E402
+
+# 距離帯（同じ帯に入る距離同士は学習データを合算する）。コース・距離ごとに
+# モデルを分けると、特に開催数の少ない競馬場では学習データが薄く、木をあまり
+# 分岐できず「特徴量が違うのに同じスコアになる馬」が増えてしまう
+# （的中率重視・回収率重視どちらのモデルでも起きていた問題）。近い距離同士は
+# レースの性質も近いため、データを合算して学習データ量を増やす
+# （学習済みモデルは引き続きコース・距離ごとに別ファイルとして保存し、
+# ライブ予想エンジン側の読み込み方法は変更しない）。
+DISTANCE_BANDS = [(0, 1400), (1400, 1800), (1800, 2200), (2200, 2800), (2800, 99999)]
+
+
+def _distance_band(length):
+    length = int(length)
+    for low, high in DISTANCE_BANDS:
+        if low <= length < high:
+            return (low, high)
+    return DISTANCE_BANDS[-1]
+
+
+def _band_lengths(place_id, type_jp, length):
+    """同じ競馬場・芝ダートで、lengthと同じ距離帯に入る距離の一覧を返す（length自身も含む）"""
+    band = _distance_band(length)
+    return [
+        course_length for course_type, course_length in name_header.COURSE_LISTS[place_id - 1]
+        if course_type == type_jp and _distance_band(course_length) == band
+    ]
 
 def prediction_error(e):
     """ エラー時動作を記載する 
@@ -242,7 +266,9 @@ def tune_hyperparameters(data_train, flag_train, train_group, data_test, flag_te
             len(np.unique(np.round(val_scores, 6))) / len(val_scores) if len(val_scores) > 0 else 1.0
         )
 
-        return ndcg1 + 0.15 * unique_ratio
+        # スコアの一意性のボーナスをndcg1（0〜1）に対してより強く効かせる
+        # （0.15では同スコアの馬がまだ多く残っていたため引き上げ）
+        return ndcg1 + 0.4 * unique_ratio
 
     study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=0))
     study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
@@ -259,10 +285,12 @@ def lightGBM_rank_train(place_id, year = date.today().year, n_trials = 20):
     for type, length  in name_header.COURSE_LISTS[place_id - 1]:
         print(type, length)
         race_data, race_flag = pd.DataFrame(), pd.DataFrame()
-        # データの読み込み
+        # データの読み込み（同じ距離帯の距離も合算して学習データ量を増やす）
+        band_lengths = _band_lengths(place_id, type, length)
         for y in range(2020, int(year) + 1):
-            race_data = pd.concat([race_data, make_dataset.get_LightGBM_dataset_csv(place_id, y, type, length)])
-            race_flag = pd.concat([race_flag, make_dataset.get_LightGBM_dataset_flag_csv(place_id, y, type, length)])
+            for band_length in band_lengths:
+                race_data = pd.concat([race_data, make_dataset.get_LightGBM_dataset_csv(place_id, y, type, band_length)])
+                race_flag = pd.concat([race_flag, make_dataset.get_LightGBM_dataset_flag_csv(place_id, y, type, band_length)])
         # nanを-1に変換
         race_data = race_data.fillna(-1)
         race_data = race_data.reset_index(drop = True)
@@ -301,10 +329,12 @@ def lightGBM_rank_train_value(place_id, year = date.today().year, n_trials = 20)
     for type, length  in name_header.COURSE_LISTS[place_id - 1]:
         print(type, length, "(value)")
         race_data, race_flag = pd.DataFrame(), pd.DataFrame()
-        # データの読み込み
+        # データの読み込み（同じ距離帯の距離も合算して学習データ量を増やす）
+        band_lengths = _band_lengths(place_id, type, length)
         for y in range(2020, int(year) + 1):
-            race_data = pd.concat([race_data, make_dataset.get_LightGBM_dataset_csv(place_id, y, type, length, suffix="_value")])
-            race_flag = pd.concat([race_flag, make_dataset.get_LightGBM_dataset_flag_csv(place_id, y, type, length, suffix="_value")])
+            for band_length in band_lengths:
+                race_data = pd.concat([race_data, make_dataset.get_LightGBM_dataset_csv(place_id, y, type, band_length, suffix="_value")])
+                race_flag = pd.concat([race_flag, make_dataset.get_LightGBM_dataset_flag_csv(place_id, y, type, band_length, suffix="_value")])
         # nanを-1に変換
         race_data = race_data.fillna(-1)
         race_data = race_data.reset_index(drop = True)

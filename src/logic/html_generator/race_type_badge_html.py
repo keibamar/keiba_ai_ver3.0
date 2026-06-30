@@ -37,3 +37,15 @@ def course_label_html(race_type, course_len):
     if not css_class:
         return label
     return f'<span class="{css_class}">{label}</span>'
+
+
+def grade_badge_html(grade):
+    """G1/G2/G3の重賞バッジ（色分けされた小さなラベル）を返す
+
+    開催日カレンダー・開催一覧・HOME等、レース名を表示する複数の場所で共通して
+    使う（.calendar-day-meeting-main内のJS版バッジ用CSSクラス名と揃えている）。
+    対象外（Noneや未対応の値）の場合は空文字列を返す。
+    """
+    if grade not in ("G1", "G2", "G3"):
+        return ""
+    return f'<span class="grade-badge grade-badge-{grade}">{grade}</span>'

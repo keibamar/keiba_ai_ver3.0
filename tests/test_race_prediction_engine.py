@@ -130,29 +130,51 @@ def test_rank_prediction_returns_score_and_rank(sample_race_args):
 
     assert list(result.columns) == ["score", "rank"]
     assert len(result) == len(horse_ids)
-    # rank=1はscore最大の馬に付く。モデル次第でスコアが同値になり順位が
-    # 重複することもあるため、1〜出走数のきれいな整列までは厳密に求めない
-    assert result["rank"].min() == 1
+    # 最小のrank（複数頭の同率タイの場合も含む）はscore最大の馬に付く。モデル次第で
+    # スコアが同値になり順位が重複・欠番になることもあるため（タイが多いと
+    # rankdataのties='average'により最小rankが1にならないこともある）、
+    # 1〜出走数のきれいな整列やrank最小値が1であることまでは厳密に求めない
     assert result["rank"].max() <= len(horse_ids)
-    top_rank_score = result.loc[result["rank"] == 1, "score"].iloc[0]
+    top_rank_score = result.loc[result["rank"] == result["rank"].min(), "score"].iloc[0]
     assert top_rank_score == result["score"].max()
 
 
 # --- blended_rank_prediction（的中率重視/サブA・回収率重視/サブB の合成、オフライン） -----
 
 
-def test_normalized_score_top_rank_is_one_and_last_is_zero():
-    ranks = pd.Series([3, 1, 2])
+def test_zscore_standardizes_to_mean_zero_std_one():
+    result = engine._zscore(pd.Series([1.0, 2.0, 3.0]))
 
-    result = engine._normalized_score(ranks)
-
-    assert result.tolist() == [0.0, 1.0, 0.5]
+    assert result.tolist() == [-1.0, 0.0, 1.0]
 
 
-def test_normalized_score_single_horse_returns_one():
-    result = engine._normalized_score(pd.Series([1]))
+def test_zscore_returns_zero_for_single_value():
+    result = engine._zscore(pd.Series([5.0]))
 
-    assert result.tolist() == [1.0]
+    assert result.tolist() == [0.0]
+
+
+def test_zscore_returns_zero_when_all_values_equal():
+    # 全頭が同スコア（標準偏差0）の場合にZeroDivisionにならず0を返すこと
+    result = engine._zscore(pd.Series([2.0, 2.0, 2.0]))
+
+    assert result.tolist() == [0.0, 0.0, 0.0]
+
+
+def test_score_to_index_converts_zscore_to_hensachi_style_scale():
+    assert engine.score_to_index(0.0) == 50
+    assert engine.score_to_index(1.0) == 60
+    assert engine.score_to_index(-1.0) == 40
+    assert engine.score_to_index(0.5) == 55
+
+
+def test_score_to_index_clips_to_0_100_range():
+    assert engine.score_to_index(10.0) == 100
+    assert engine.score_to_index(-10.0) == 0
+
+
+def test_score_to_index_returns_none_for_nan():
+    assert engine.score_to_index(float("nan")) is None
 
 
 def test_blended_rank_prediction_falls_back_to_hitrate_only_when_no_popularity(monkeypatch):
@@ -177,8 +199,25 @@ def test_blended_rank_prediction_blends_hitrate_and_value_scores(monkeypatch):
         SAMPLE_RACE_ID, [1, 2, 3], pd.DataFrame(), pd.DataFrame(), popularity_series=pd.Series([1, 2, 3]),
     )
 
-    # 正規化スコアは両モデルとも[1.0, 0.5, 0.0]の組（順序が逆）になるため、
-    # 重み0.5で平均すると全頭0.5で並ぶ
-    assert result["score"].tolist() == [0.5, 0.5, 0.5]
+    # 標準化スコアは両モデルとも[1.0, 0.0, -1.0]の組（符号が逆）になるため、
+    # 重み0.5で平均すると全頭0で並ぶ（かつ全頭でScoreとRankの整合性が保たれる）
+    assert result["score"].tolist() == [0.0, 0.0, 0.0]
     assert result["score_hitrate"].tolist() == hitrate_df["score"].tolist()
     assert result["score_value"].tolist() == value_df["score"].tolist()
+
+
+def test_blended_rank_prediction_score_and_rank_stay_consistent_when_scores_differ(monkeypatch):
+    # Scoreが違うのにRankが同じ、またはScoreの大小とRankの順序が合わない、という
+    # 不整合が起きないことを確認する（表示されるScore/Rankは常にこの2列を使う前提のため）
+    hitrate_df = pd.DataFrame({"score": [0.3, 0.1, 0.5, 0.1], "rank": [2, 3, 1, 3]})
+    value_df = pd.DataFrame({"score": [1.0, 2.0, 0.5, 3.0], "rank": [3, 2, 4, 1]})
+    monkeypatch.setattr(engine, "rank_prediction", lambda *a, **k: hitrate_df)
+    monkeypatch.setattr(engine, "rank_prediction_value", lambda *a, **k: value_df)
+
+    result = engine.blended_rank_prediction(
+        SAMPLE_RACE_ID, [1, 2, 3, 4], pd.DataFrame(), pd.DataFrame(), popularity_series=pd.Series([1, 2, 3, 4]),
+    )
+
+    # scoreの降順に並べた順序が、そのままrankの昇順と一致すること
+    by_score = result.sort_values("score", ascending=False)["rank"].tolist()
+    assert by_score == sorted(by_score)

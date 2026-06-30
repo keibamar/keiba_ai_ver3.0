@@ -263,6 +263,30 @@ def scrape_horse_peds(horse_id):
         return pd.DataFrame()
 
 
+# netkeibaのh1.RaceName内、重賞アイコンのCSSクラス（Icon_GradeType{N}）のNから
+# G1/G2/G3を判定するマッピング。実際の出馬表ページで安田記念・大阪杯・NHKマイルC
+# （いずれもN=1）、京都記念・中山記念・チューリップ賞（いずれもN=2）、函館記念
+# （N=3）で確認済み。N=13は「国際」マークで重賞の有無を問わず付くため対象外。
+# Listed（N=15）・OP特別（N=17）等、G1/G2/G3以外のNは対象外（gradeはNoneのまま）。
+_GRADE_TYPE_MAP = {"1": "G1", "2": "G2", "3": "G3"}
+
+
+def _extract_race_grade(soup):
+    """h1.RaceName内の重賞アイコン（Icon_GradeType{N}）からG1/G2/G3を判定する
+
+    G1/G2/G3以外（Listed・OP特別等）や重賞アイコンが無いレースはNoneを返す。
+    """
+    h1 = soup.find("h1", attrs={"class": "RaceName"})
+    if h1 is None:
+        return None
+    for span in h1.find_all("span", attrs={"class": "Icon_GradeType"}):
+        for class_name in span.get("class", []):
+            match = re.fullmatch(r"Icon_GradeType(\d+)", class_name)
+            if match and match.group(1) in _GRADE_TYPE_MAP:
+                return _GRADE_TYPE_MAP[match.group(1)]
+    return None
+
+
 def scrape_race_card(race_id):
     """race_idから、出馬表情報をスクレイピングする
 
@@ -328,6 +352,7 @@ def scrape_race_card(race_id):
         horse_numbers = int(re.findall(r"\d+", info[-1])[0])
 
         race_info_df = pd.DataFrame([race_card_transform.parse_race_card_info_tokens(info)])
+        race_info_df["grade"] = _extract_race_grade(soup)
 
         # 厩舎名と所属を分離
         local = []

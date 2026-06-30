@@ -752,6 +752,47 @@ td a:hover {
   font-size: 0.9em;
 }
 
+/* --- 的中率重視・回収率重視モデルのTOP5（補助情報） ---
+   メインの出走表（Score/Rank列）はバランス型のスコアのため、それが主役。
+   ここは「参考までに」という位置づけが伝わるよう、小さめ・控えめな見た目にする。 */
+
+.ai-sub-model-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 10px 0 16px;
+  font-size: 0.82em;
+  color: #666;
+}
+
+.ai-sub-model-picks-col {
+  flex: 1 1 220px;
+  padding: 8px 12px;
+  border: 1px dashed #ddd;
+  border-radius: 6px;
+  background: #fcfcfc;
+}
+
+.ai-sub-model-picks-label {
+  margin: 0 0 4px;
+  font-weight: bold;
+  color: #888;
+}
+
+.ai-sub-model-picks-list {
+  margin: 0;
+  padding-left: 1.4em;
+}
+
+.ai-sub-model-picks-list li {
+  margin: 1px 0;
+}
+
+.ai-sub-model-picks-empty {
+  margin: 0;
+  color: #aaa;
+}
+
 /* --- 表の視認性向上（横スクロール対応・ヘッダー固定・縞模様） --- */
 
 .table-wrap {
@@ -1041,6 +1082,10 @@ footer p {
 
 .breadcrumb-current {
   font-weight: bold;
+  color: var(--mar-primary);
+}
+
+.venue-compare-current {
   color: var(--mar-primary);
 }
 
@@ -1372,6 +1417,61 @@ footer p {
   font-weight: bold;
 }
 
+/* races/index.htmlの大きなカレンダーのみ表示する、日付ごとの開催場・メインレース一覧
+   （calendar.js dayMeetingsHtml、window.raceMeetings由来）。複数開催がある日は
+   セルの高さが自動的に伸びる（tdのheightは最小値として扱われるため）。 */
+.calendar-day-meetings {
+  margin-top: 4px;
+  text-align: left;
+}
+
+.calendar-day-meeting {
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+.calendar-day-meeting-main {
+  display: block;
+  font-size: 0.78em;
+  font-weight: bold;
+  color: var(--mar-primary);
+}
+
+.calendar-day-meeting-main a {
+  color: var(--mar-primary);
+  text-decoration: underline;
+}
+
+.calendar-day-meeting-sub {
+  display: block;
+  font-size: 0.68em;
+  color: #777;
+}
+
+/* 重賞（G1/G2/G3）バッジ。カレンダー・開催一覧・HOME等、レース名を表示する
+   複数の場所で共通して使う小さな色付きラベル。G1=青、G2=赤、G3=緑の配色。 */
+.grade-badge {
+  display: inline-block;
+  font-size: 0.85em;
+  font-weight: bold;
+  color: white;
+  border-radius: 3px;
+  padding: 1px 4px;
+  line-height: 1.4;
+}
+
+.grade-badge-G1 {
+  background-color: #1f4fd6;
+}
+
+.grade-badge-G2 {
+  background-color: #c62828;
+}
+
+.grade-badge-G3 {
+  background-color: #2e7d32;
+}
+
 .calendar-widget #calendar th.sat {
   color: #1f4fd6;
 }
@@ -1515,6 +1615,66 @@ footer p {
   margin: 12px 0 0;
   padding-top: 8px;
   border-top: 1px dashed #ccc;
+}
+
+/* --- 書籍アフィリエイト（Amazon/楽天）の紹介ウィジェット --- */
+
+.book-recommendation {
+  margin: 16px 0;
+  padding: 10px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.book-recommendation-title {
+  margin: 0 0 4px;
+  font-weight: bold;
+}
+
+.book-recommendation-note {
+  margin: 0 0 6px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.book-recommendation-links {
+  margin: 0;
+}
+
+.affiliate-link {
+  text-decoration: none;
+  color: var(--mar-primary);
+  font-weight: bold;
+}
+
+.affiliate-link:hover {
+  color: var(--mar-accent);
+  text-decoration: underline;
+}
+
+/* --- A8.net提携プログラムの紹介ウィジェット（お名前.com等、競馬関連に限らない） --- */
+
+.a8-program-recommendation {
+  margin: 16px 0;
+  padding: 10px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.a8-program-title {
+  margin: 0 0 6px;
+  font-weight: bold;
+}
+
+.a8-program-item {
+  margin: 0 0 4px;
+}
+
+.a8-program-note {
+  font-size: 0.9em;
+  color: #666;
 }
 
 /* HOMEの1段下にレースカレンダー/AI成績/コース詳細データ、さらにその下に

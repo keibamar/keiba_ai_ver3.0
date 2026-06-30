@@ -11,7 +11,8 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 
 from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS, WAKU_COLORS
-from src.logic.html_generator import horse_report_generator
+from src.logic.html_generator import affiliate_html, horse_report_generator
+from src.logic.prediction.race_prediction_engine import score_to_index
 from src.logic.html_generator.site_nav_html import (
     AD_SLOT_IN_CONTENT_1,
     AD_SLOT_IN_CONTENT_2,
@@ -43,7 +44,10 @@ def read_race_csv(date_str, target_id):
     if df.empty:
         print(f"ℹ️ [スキップ/エラーではありません] レースカード未生成: race_day={date_str}, target_id={target_id}")
         return None
-    cols = ["枠", "馬番", "馬名", "性齢", "斤量", "騎手", "馬体重(増減)", "score", "rank", "人気"]
+    cols = [
+        "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "馬体重(増減)", "score", "rank", "人気",
+        "score_hitrate", "rank_hitrate", "score_value", "rank_value",
+    ]
     existing = [c for c in cols if c in df.columns]
     return df[existing]
 
@@ -88,6 +92,52 @@ def get_race_info(year, place_id, target_id):
         return None, None, None, None
 
 
+def _top_n_by_score(df, score_col, n=5):
+    """指定したscore列の上位n頭の(馬番, 馬名)リストを返す（降順。データが無ければ空リスト）"""
+    if score_col not in df.columns or "馬番" not in df.columns or "馬名" not in df.columns:
+        return []
+    scores = pd.to_numeric(df[score_col], errors="coerce")
+    sub = df.assign(_score=scores).dropna(subset=["_score"]).sort_values("_score", ascending=False)
+    return [(int(row["馬番"]), row["馬名"]) for _, row in sub.head(n).iterrows()]
+
+
+def _sub_model_picks_column_html(label, emoji, picks):
+    if not picks:
+        return f"""<div class="ai-sub-model-picks-col">
+        <p class="ai-sub-model-picks-label">{emoji} {label}</p>
+        <p class="ai-sub-model-picks-empty">データなし</p>
+      </div>"""
+    items = "".join(f"<li>{num}番 {html.escape(str(name))}</li>" for num, name in picks)
+    return f"""<div class="ai-sub-model-picks-col">
+        <p class="ai-sub-model-picks-label">{emoji} {label}</p>
+        <ol class="ai-sub-model-picks-list">{items}</ol>
+      </div>"""
+
+
+def build_ai_pick_summary_html(df):
+    """的中率重視・回収率重視モデルのTOP5（score降順）を補助情報として返す
+
+    メインの出走表（Score/Rank列）はバランス型のスコアで、1位の馬が表からそのまま
+    分かるため、ここでは個別の本命は書かず、サブモデル2つのTOP5だけを小さく出す
+    （バランス型がメイン、的中率重視・回収率重視はあくまで補助という位置づけを
+    視覚的にも示すため）。
+    """
+    if df is None or df.empty:
+        return ""
+
+    hitrate_picks = _top_n_by_score(df, "score_hitrate")
+    value_picks = _top_n_by_score(df, "score_value")
+    if not hitrate_picks and not value_picks:
+        return ""
+
+    hitrate_col = _sub_model_picks_column_html("的中率重視モデル TOP5", "🎯", hitrate_picks)
+    value_col = _sub_model_picks_column_html("回収率重視モデル TOP5", "💰", value_picks)
+    return f"""<div class="ai-sub-model-picks">
+      {hitrate_col}
+      {value_col}
+    </div>"""
+
+
 def _weight_change_style(body_str):
     """馬体重(増減)の文字列（例: "472(-4)"）から、増減が大きい馬を強調する文字色styleを返す
 
@@ -122,14 +172,12 @@ def build_table_race_cards(df):
         kinryo = row.get('斤量', '') if pd.notna(row.get('斤量', '')) else ''
         jockey = row.get('騎手', '') if pd.notna(row.get('騎手', '')) else ''
         body = row.get('馬体重(増減)', '') if pd.notna(row.get('馬体重(増減)', '')) else ''
-        # Score列は的中率重視モデル（サブA）本来の生スコアを表示する。
-        # "score"列はバランス型ブレンド用に0〜1へ正規化した値になっており、
-        # そのまま表示すると数値の意味が分かりにくいため（score_hitrateが
-        # 無い旧データではscoreにフォールバックする）。Rank列は本命候補の
-        # 決定に使うバランス型のrankのままにする（的中率重視・回収率重視の
-        # 両モデルを反映した最終的な推奨順位のため）。
-        score_hitrate = row.get('score_hitrate')
-        score = score_hitrate if score_hitrate is not None and pd.notna(score_hitrate) else row.get('score', "")
+        # Score・Rankは常にバランス型（score/rank列）を表示する。的中率重視モデルの
+        # 生スコア（score_hitrate）等、別の計算結果を混ぜて表示すると、
+        # 「Scoreが違うのにRankが同じ」のような不整合になるため、Score/Rankは必ず
+        # 同じ計算結果（バランス型）のペアにする。的中率重視・回収率重視モデルの
+        # 予想は別途TOP5（build_ai_pick_summary_html）で補助的に示す。
+        score = row.get('score', "")
         rank = row.get('rank', "")
         # 人気は発走15〜20分前のレースカード再取得時にスクレイピングされる。
         # オッズ未確定時はnetkeiba側が「**」等のプレースホルダーを返すため、
@@ -156,6 +204,14 @@ def build_table_race_cards(df):
         except Exception:
             rank_fmt = rank
 
+        # AI指数（0〜100の偏差値形式）。Scoreの符号・大小が分かりにくいという声から
+        # 追加した、馴染みやすい指数表示（race_prediction_engine.score_to_index）。
+        try:
+            ai_index = score_to_index(float(score)) if score != "" and pd.notna(score) else None
+        except Exception:
+            ai_index = None
+        ai_index_fmt = ai_index if ai_index is not None else ""
+
         # --- 枠順背景色（結果表・配当表と同じ配色で一覧性を揃える） ---
         waku_color = WAKU_COLORS.get(str(waku), "#ffffff")
         waku_style = f'background-color:{waku_color}; color:{"#fff" if str(waku) in ["2", "3", "4", "7"] else "#000"};'
@@ -178,6 +234,7 @@ def build_table_race_cards(df):
           <td>{jockey}</td>
           <td style="{weight_style}">{body}</td>
           <td>{score_fmt}</td>
+          <td>{ai_index_fmt}</td>
           <td style="{rank_style}">{rank_fmt}</td>
           <td style="{pop_style}">{popularity}</td>
         </tr>
@@ -238,7 +295,7 @@ def _race_card_breadcrumb_items(date_str, date_display, place_id, target_id, rac
     ]
 
 
-def build_html_content(date_str, date_display, place_id, race_num, race_name, race_time, target_id, table_rows, run_time_info, weight_info, peds_info, pops_info, frames_info, recent_html, result_table_html, payout_table_html):
+def build_html_content(date_str, date_display, place_id, race_num, race_name, race_time, target_id, table_rows, run_time_info, weight_info, peds_info, pops_info, frames_info, recent_html, result_table_html, payout_table_html, pick_summary_html=""):
     """HTMLテンプレートを返す"""
     race_time_display = f"{race_time[:2]}:{race_time[2:]}" if race_time else ""
     place_name = NAME_LIST[place_id - 1]
@@ -259,6 +316,9 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     ad_unit_1 = ad_unit_html(AD_SLOT_IN_CONTENT_1)
     ad_unit_2 = ad_unit_html(AD_SLOT_IN_CONTENT_2)
     ad_unit_3 = ad_unit_html(AD_SLOT_IN_CONTENT_3)
+    # 配当結果を見終えたタイミングで、補足コンテンツとして書籍紹介を1つだけ置く
+    # （広告の手前に挟むことで、広告色を強めずに済む）。
+    book_html = affiliate_html.daily_book_recommendation_html()
     return """
 <!DOCTYPE html>
 <html lang="ja">
@@ -417,6 +477,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
         <th>騎手</th>
         <th>馬体重</th>
         <th>Score</th>
+        <th>AI指数</th>
         <th>Rank ▼</th>
         <th>人気</th>
       </tr>
@@ -426,11 +487,13 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     </tbody>
   </table>
   </div>
+  {pick_summary_html}
 
   {ad_unit_1}
 
   {result_table_html}
   {payout_table_html}
+  {book_html}
 
   {ad_unit_2}
 
@@ -599,6 +662,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     ad_unit_1=ad_unit_1,
     ad_unit_2=ad_unit_2,
     ad_unit_3=ad_unit_3,
+    pick_summary_html=pick_summary_html,
     table_rows=table_rows,
     run_time_info=run_time_info,
     weight_info=weight_info,
@@ -608,6 +672,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     recent_html=recent_html,
     result_table_html=result_table_html,
     payout_table_html=payout_table_html,
+    book_html=book_html,
 )
 
 
@@ -633,10 +698,9 @@ def generate_result_table(df):
         last_3f = row["上り"] if "上り" in row and pd.notna(row["上り"]) else ""
         race_position = row["通過"] if "通過" in row and pd.notna(row["通過"]) else ""
         odds = row["単勝"] if pd.notna(row["単勝"]) else ""
-        # build_table_race_cardsと同じ理由でScore列は的中率重視モデルの生スコアを
-        # 優先表示する（旧データ等score_hitrateが無い場合はscoreにフォールバック）
-        score_hitrate = row.get("score_hitrate")
-        score = score_hitrate if score_hitrate is not None and pd.notna(score_hitrate) else row.get("score", "")
+        # build_table_race_cardsと同じ理由でScore/Rankは常にバランス型（score/rank列）
+        # を表示する（別の計算結果を混ぜるとScoreとRankの不整合が起きるため）
+        score = row.get("score", "")
         pred_rank = row.get("rank", "")
 
         # --- 枠順背景色 ---
@@ -665,6 +729,10 @@ def generate_result_table(df):
         # --- score の表示文字列（None対応）---
         score_str = f"{score:.3f}" if isinstance(score, (int, float)) else ""
 
+        # --- AI指数（build_table_race_cardsと同じ偏差値形式の指数）---
+        ai_index = score_to_index(score) if isinstance(score, (int, float)) and pd.notna(score) else None
+        ai_index_fmt = ai_index if ai_index is not None else ""
+
         # --- 馬体重の増減が大きい馬を強調 ---
         weight_style = _weight_change_style(horse_weight)
 
@@ -683,6 +751,7 @@ def generate_result_table(df):
             <td>{race_position}</td>
             <td>{odds}</td>
             <td style="{score_style}">{score_str}</td>
+            <td>{ai_index_fmt}</td>
             <td style="{pred_rank_style}">{pred_rank}</td>
         </tr>
         """
@@ -696,7 +765,7 @@ def generate_result_table(df):
           <th>着順</th><th>枠</th><th>馬番</th><th>馬名</th>
           <th>騎手</th><th>馬体重</th><th>タイム</th><th>着差</th>
           <th>人気</th><th>上り</th><th>通過</th>
-          <th>単勝オッズ</th><th>score</th><th>Rank</th>
+          <th>単勝オッズ</th><th>score</th><th>AI指数</th><th>Rank</th>
         </tr>
       </thead>
       <tbody>
@@ -1638,6 +1707,7 @@ def make_race_card_html(date_str, place_id, target_id):
         recent_html=recent_html,
         result_table_html=result_table_html,
         payout_table_html=payout_table_html,
+        pick_summary_html=build_ai_pick_summary_html(df),
     )
 
     # 🆕 コース情報をHTMLに挿入

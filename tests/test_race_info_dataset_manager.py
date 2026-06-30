@@ -427,6 +427,44 @@ def test_save_race_returns_dataset_writes_csv_and_pickle(new_race_info_root):
     assert saved.iloc[-1].tolist() == ["三連単", "12→5→7", "6620", "29"]
 
 
+def test_save_race_returns_dataset_drops_duplicate_rows_even_with_mixed_dtypes(new_race_info_root):
+    # update_race_returns_dataset（週次更新）はold_df(dtype=str)とnew_df(スクレイピング結果。
+    # 列によってdtypeが揃っていないことがある)をpd.concatして渡すため、型が揺れた状態で
+    # 重複判定すると見た目が同じでも別物と判定され、重複が排除されないまま保存されてしまう
+    # 不具合があった（6/20・6/21の配当結果が2重表示された原因）。型を揺らした重複行が
+    # 正しく1行に減ることを確認する。
+    df = pd.DataFrame(
+        {"式別": ["単勝", "単勝"], "馬番": [13, "13"], "配当": ["3180", 3180], "人気": [8, "8"]},
+        index=["202999999999", "202999999999"],
+    )
+
+    new_race_info.save_race_returns_dataset(SAMPLE_PLACE_ID, 2098, df)
+
+    out_dir = new_race_info_root / "race_returns" / SAMPLE_PLACE
+    saved = pd.read_csv(out_dir / "2098_race_returns.csv", dtype=str, index_col=0)
+    assert saved.shape == (1, 4)
+
+
+def test_split_race_returns_csv_drops_duplicate_rows_per_race(new_race_info_root):
+    out_dir = new_race_info_root / "race_returns" / SAMPLE_PLACE
+    out_dir.mkdir(parents=True)
+    df = pd.DataFrame(
+        {
+            "式別": ["単勝", "複勝", "複勝", "単勝", "複勝", "複勝"],
+            "馬番": [13, 13, 8, 13, 13, 8],
+            "配当": ["3180", "1220", "510", "3180", "1220", "510"],
+            "人気": ["8", "11", "5", "8", "11", "5"],
+        },
+        index=["202999999999"] * 6,
+    )
+    df.to_csv(out_dir / "2097_race_returns.csv")
+
+    new_race_info.split_race_returns_csv(SAMPLE_PLACE_ID, 2097)
+
+    saved = pd.read_csv(out_dir / "2097" / "202999999999.csv", dtype=str, index_col=0)
+    assert saved.shape == (3, 4)
+
+
 def test_split_race_returns_csv_writes_per_race_files(new_race_info_root):
     src = os.path.join(paths.DATA_PATH, "RaceReturns", SAMPLE_PLACE, "2019_race_returns.csv")
     dest_dir = new_race_info_root / "race_returns" / SAMPLE_PLACE

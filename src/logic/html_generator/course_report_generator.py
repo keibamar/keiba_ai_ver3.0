@@ -245,6 +245,82 @@ def _breakdown_row(place_id, race_type, course_len, value_label, ground_state, c
     }
 
 
+def build_venue_comparison_breakdown(place_id, race_type, course_len, ground_state="全", class_name="all"):
+    """同じrace_type×course_lenを持つ他競馬場との比較を内訳行として返す
+
+    平均勝ち時計・人気・体重・枠番・配当は競馬場ごとに傾向が異なるため、同条件
+    （同じ芝/ダート・同じ距離）の競馬場を横に並べることで「このコースらしさ」を
+    相対的に把握できるようにする。対象は実際にその距離のコースを持つ競馬場のみ
+    （無理に全10場を並べない）。現在表示中の競馬場は強調表示、他競馬場はその
+    競馬場自身の同条件ページへのリンクにする（_breakdown_rowのvalue_labelに
+    そのままHTMLを渡せるため、表自体は既存の_breakdown_table_htmlを再利用できる）。
+    ground_state/class_nameを指定すると、その条件のみに絞り込んだ比較になる
+    （_venue_comparison_cross_filter_htmlの組み合わせ絞り込みUIから使う）。
+    """
+    rows = []
+    for pid in range(1, len(PLACE_LIST) + 1):
+        if [race_type, str(course_len)] not in COURSE_LISTS[pid - 1]:
+            continue
+        place_name = NAME_LIST[pid - 1]
+        if pid == place_id:
+            value_label = f'<strong class="venue-compare-current">{place_name}（現在）</strong>'
+        else:
+            value_label = f'<a href="../{PLACE_LIST[pid - 1]}/{race_type}-{course_len}.html">{place_name}</a>'
+        row = _breakdown_row(pid, race_type, course_len, value_label, ground_state, class_name)
+        if row is not None:
+            rows.append(row)
+    return rows
+
+
+def _venue_comparison_panel_html(place_id, race_type, course_len, ground_state, class_name):
+    """他競馬場比較の馬場状態×クラス1組み合わせ分のパネルを返す"""
+    rows = build_venue_comparison_breakdown(place_id, race_type, course_len, ground_state, class_name)
+    table_html = _breakdown_table_html(rows, "競馬場", title="")
+    return f"""<div class="cross-filter-panel" data-ground-state="{ground_state}" data-class="{class_name}" hidden>
+    {table_html}
+  </div>"""
+
+
+def _venue_comparison_cross_filter_html(place_id, race_type, course_len, ground_states, classes):
+    """他競馬場比較を、馬場状態×クラスで絞り込めるインタラクティブUIとして返す
+
+    同一コース内の馬場×クラス×年度の絞り込み（_cross_filter_html）と同じ
+    「サーバー側で全組み合わせぶん事前計算し、JS（assets/js/cross-filter.js）は
+    表示/非表示の切り替えのみ行う」方式を、ここでは「クラス・馬場の各組み合わせに
+    ついて他競馬場と比較する」という軸で再利用する。
+    """
+    ground_options = "".join(f'<option value="{gs}">{gs}</option>\n' for gs in ground_states)
+    class_options = "".join(f'<option value="{cls}">{cls}</option>\n' for cls in classes)
+
+    panels = [_venue_comparison_panel_html(place_id, race_type, course_len, "全", "all")]
+    panels += [_venue_comparison_panel_html(place_id, race_type, course_len, gs, "all") for gs in ground_states]
+    panels += [_venue_comparison_panel_html(place_id, race_type, course_len, "全", cls) for cls in classes]
+    panels += [
+        _venue_comparison_panel_html(place_id, race_type, course_len, gs, cls)
+        for gs in ground_states
+        for cls in classes
+    ]
+
+    return f"""<div class="cross-filter">
+    <div class="cross-filter-controls">
+      <label>馬場状態:
+        <select class="cross-filter-ground-state">
+          <option value="全">全て</option>
+          {ground_options}
+        </select>
+      </label>
+      <label>クラス:
+        <select class="cross-filter-class">
+          <option value="all">全て</option>
+          {class_options}
+        </select>
+      </label>
+    </div>
+    {"".join(panels)}
+    <p class="cross-filter-empty" hidden>対象データがありません。</p>
+  </div>"""
+
+
 def _load_course_winners(place_id, race_type, course_len, start_year=ANNUAL_START_YEAR, current_year=None):
     """このコース（race_type×course_len）の勝ち馬の行を、生のrace_resultsから年をまたいで一括ロードする
 
@@ -722,7 +798,7 @@ def _waku_label_class(waku):
     return f"waku-{waku}"
 
 
-def _chakudo_chart_html(df, race_type, course_len, rank_column, rank_range, title, exclude_ranks=(), high_label="◎ 有利", low_label="▲ 不利", show_advantage=True, ground_state="全", class_name="all", heading_level="h3", label_formatter=None, label_class_formatter=None):
+def _chakudo_chart_html(df, race_type, course_len, rank_column, rank_range, title, exclude_ranks=(), high_label="◎ 有利", low_label="▲ 不利", show_advantage=True, ground_state="全", class_name="all", heading_level="h3", label_formatter=None, label_class_formatter=None, compact=False):
     """人気別・枠番別・馬番別の着度数を、1着/2着/3着/着外の積み上げ横バーチャートで表示する
 
     各ランクの全出走数を100%として、1着/2着/3着/着外の内訳を色分けした帯で示す
@@ -740,6 +816,11 @@ def _chakudo_chart_html(df, race_type, course_len, rank_column, rank_range, titl
     一致判定自体は元のrank値（rank_range）で行うため、表示の変換は結果に影響しない。
     label_class_formatterを指定すると、rank値からCSSクラス名を生成しchakudo-labelに
     付与する（枠番別チャートで出馬表ページと同じ枠色を付ける_waku_label_class用）。
+
+    compact=Trueにすると、ツールチップ・凡例文を省いた軽量版になる（同じ内容の
+    バーチャートを馬場×クラス×年度の組み合わせぶん何十回も並べるcross-filter
+    パネルで使う。組み合わせ数に比例してページサイズが膨らむのを抑えつつ、
+    見た目はバーチャートのまま保つ）。
     """
     if df.empty:
         return f"<{heading_level}>{title}</{heading_level}>\n  <p>対象データがありません。</p>"
@@ -765,14 +846,15 @@ def _chakudo_chart_html(df, race_type, course_len, rank_column, rank_range, titl
             count = r[label]
             width = count / r["total"] * 100
             cumulative += width
-            if label in ("2着", "3着"):
-                tooltip = f"{label}: {width:.1f}%（累積{cumulative:.1f}%）"
+            if compact:
+                tooltip_html = ""
+            elif label in ("2着", "3着"):
+                tooltip_html = f'<span class="chakudo-tooltip">{label}: {width:.1f}%（累積{cumulative:.1f}%）</span>'
             else:
-                tooltip = f"{label}: {width:.1f}%"
+                tooltip_html = f'<span class="chakudo-tooltip">{label}: {width:.1f}%</span>'
             segments += (
                 f'<span class="chakudo-segment {CHAKUDO_SEGMENT_CLASSES[label]}" '
-                f'style="width: {width:.2f}%">{count}'
-                f'<span class="chakudo-tooltip">{tooltip}</span></span>'
+                f'style="width: {width:.2f}%">{count}{tooltip_html}</span>'
             )
         badge = _advantage_badge_html(r["note_text"], r["note_kind"])
         label = label_formatter(r["rank"]) if label_formatter else r["rank"]
@@ -784,9 +866,14 @@ def _chakudo_chart_html(df, race_type, course_len, rank_column, rank_range, titl
       <span class="chakudo-value">n={r['total']}</span>
     </div>\n"""
 
+    legend_html = (
+        ""
+        if compact
+        else '<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ '
+        "バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>\n  "
+    )
     return f"""<{heading_level}>{title}</{heading_level}>
-  <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
-  <div class="chakudo-chart">
+  {legend_html}<div class="chakudo-chart">
 {bar_rows}  </div>"""
 
 
@@ -1006,29 +1093,34 @@ def _cross_filter_panel_html(
     </div>
   </div>"""
 
+    # cross-filterは組み合わせ数（馬場×クラス×年度）が多いため、常に見える「全体」の
+    # 表とは別に、ツールチップ・凡例文を省いた軽量版（compact=True）のバーチャートを
+    # 使う。バー自体は通常表示と同じ見た目を保ちつつ、組み合わせ数に比例した
+    # ページサイズの肥大化はある程度抑える。
     pop_chakudo_html = _chakudo_chart_html(
         pop_chakudo_df, race_type, course_len, "人気", range(1, 19), "人気別着度数",
-        show_advantage=False, ground_state=ground_state, class_name=class_name, heading_level="h4",
+        show_advantage=False, ground_state=ground_state, class_name=class_name, heading_level="h4", compact=True,
     )
     frame_chakudo_html = _chakudo_chart_html(
         frame_chakudo_df, race_type, course_len, "枠番", range(1, 9), "枠番別着度数",
         ground_state=ground_state, class_name=class_name, heading_level="h4",
-        label_class_formatter=_waku_label_class,
+        label_class_formatter=_waku_label_class, compact=True,
     )
     horse_chakudo_html = _chakudo_chart_html(
         horse_chakudo_df, race_type, course_len, "馬番", range(1, 19), "馬番別着度数",
-        ground_state=ground_state, class_name=class_name, heading_level="h4",
+        ground_state=ground_state, class_name=class_name, heading_level="h4", compact=True,
     )
     weight_chakudo_html = _chakudo_chart_html(
         weight_chakudo_df, race_type, course_len, "体重帯", WEIGHT_BUCKET_RANGE, "馬体重帯別着度数",
         ground_state=ground_state, class_name=class_name, heading_level="h4", label_formatter=_weight_bucket_label,
+        compact=True,
     )
     peds_html = _peds_chart_html(
         _peds_table_for_combo(
             place_id, race_type, course_len, ground_state, class_name,
             year=None if start_year <= oldest_year else start_year, current_year=current_year,
         ),
-        "血統別成績（上位5件）", heading_level="h4",
+        "血統別成績（上位5件）", heading_level="h4", compact=True,
     )
     feature_html = _feature_callout_html(race_type, course_len, ground_state, class_name, frame_chakudo_df)
 
@@ -1117,7 +1209,7 @@ def _cross_filter_html(
   </div>"""
 
 
-def _peds_chart_html(peds_df, title, heading_level="h3", top_n=10):
+def _peds_chart_html(peds_df, title, heading_level="h3", top_n=10, compact=False):
     """血統別成績（1着/2着/3着/着外）を、着度数と同じ積み上げ横バーチャートで表示する
 
     血統（種牡馬）ごとに総戦数が大きく異なるため、表（数字の羅列）よりも分布の
@@ -1125,6 +1217,9 @@ def _peds_chart_html(peds_df, title, heading_level="h3", top_n=10):
     見た目を再利用する。バーの幅は血統ごとの総戦数を100%とした内訳の割合にし、
     末尾にn=総戦数を表示することで、割合（成績の良し悪し）と総数（サンプルの
     信頼度）の両方を一目で確認できるようにする。
+
+    compact=Trueの場合は_chakudo_chart_htmlと同様、ツールチップ・凡例文を省いた
+    軽量版になる（cross-filterパネル用）。
     """
     if peds_df is None or peds_df.empty:
         return f"<{heading_level}>{title}</{heading_level}>\n  <p>対象データがありません。</p>"
@@ -1141,14 +1236,15 @@ def _peds_chart_html(peds_df, title, heading_level="h3", top_n=10):
             count = counts[label]
             width = count / total * 100
             cumulative += width
-            if label in ("2着", "3着"):
-                tooltip = f"{label}: {width:.1f}%（累積{cumulative:.1f}%）"
+            if compact:
+                tooltip_html = ""
+            elif label in ("2着", "3着"):
+                tooltip_html = f'<span class="chakudo-tooltip">{label}: {width:.1f}%（累積{cumulative:.1f}%）</span>'
             else:
-                tooltip = f"{label}: {width:.1f}%"
+                tooltip_html = f'<span class="chakudo-tooltip">{label}: {width:.1f}%</span>'
             segments += (
                 f'<span class="chakudo-segment {CHAKUDO_SEGMENT_CLASSES[label]}" '
-                f'style="width: {width:.2f}%">{count}'
-                f'<span class="chakudo-tooltip">{tooltip}</span></span>'
+                f'style="width: {width:.2f}%">{count}{tooltip_html}</span>'
             )
         bar_rows += f"""<div class="chakudo-row">
       <span class="chakudo-label peds-label">{row['血統']}</span>
@@ -1159,9 +1255,14 @@ def _peds_chart_html(peds_df, title, heading_level="h3", top_n=10):
     if not bar_rows:
         return f"<{heading_level}>{title}</{heading_level}>\n  <p>対象データがありません。</p>"
 
+    legend_html = (
+        ""
+        if compact
+        else '<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ '
+        "バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>\n  "
+    )
     return f"""<{heading_level}>{title}</{heading_level}>
-  <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
-  <div class="chakudo-chart">
+  {legend_html}<div class="chakudo-chart">
 {bar_rows}  </div>"""
 
 
@@ -1291,6 +1392,12 @@ def course_report_to_html(report):
     horse_chakudo_df = race_info_dataset_manager.get_total_horse_chakudo_csv(place_id)
     weight_chakudo_df = race_info_dataset_manager.get_total_weight_chakudo_csv(place_id)
 
+    venue_comparison_ground_states = _available_chakudo_ground_states(frame_chakudo_df, race_type, course_len)
+    venue_comparison_classes = [r["value"] for r in class_breakdown]
+    venue_comparison_html = _venue_comparison_cross_filter_html(
+        place_id, race_type, course_len, venue_comparison_ground_states, venue_comparison_classes,
+    )
+
     # 人気は「ねらい目」がだいたい3〜6番人気あたりに集中し、あまり意味のある
     # 情報にならないため、有利/不利のバッジ付けは行わない（クラス別・馬場別も同様）
     pop_chakudo_chart = _chakudo_chart_html(
@@ -1408,6 +1515,7 @@ def course_report_to_html(report):
       <button data-target="chakudo" aria-selected="false">人気・枠順</button>
       <button data-target="weight" aria-selected="false">馬体重別成績</button>
       <button data-target="peds" aria-selected="false">血統別成績</button>
+      <button data-target="venue-compare" aria-selected="false">他競馬場比較</button>
     </div>
 
     <div class="section-panel" data-section="cross">
@@ -1484,6 +1592,16 @@ def course_report_to_html(report):
         <summary>年度別を表示</summary>
         {_peds_breakdown_html(peds_year_breakdown, "year", "年度別")}
       </details>
+    </div>
+
+    <div class="section-panel" data-section="venue-compare" hidden>
+      <p class="section-panel-intro">
+        同じ{race_type}{course_len}mを持つ他競馬場との比較です。馬場状態・クラスを
+        選ぶと、その条件に絞り込んだ比較になります（いずれも「全て」を選ぶと全期間
+        トータルの比較になります）。競馬場名をクリックすると、その競馬場の同条件
+        ページに移動します。
+      </p>
+      {venue_comparison_html}
     </div>
   </div>
 

@@ -149,6 +149,54 @@ def test_scrape_day_race_returns_strips_comma_from_large_ninki(monkeypatch):
     assert result.loc["999999999999", "配当"] == "999999"
 
 
+@pytest.mark.parametrize(
+    "grade_classes, expected",
+    [
+        (["Icon_GradeType", "Icon_GradeType1"], "G1"),
+        (["Icon_GradeType", "Icon_GradeType2"], "G2"),
+        (["Icon_GradeType", "Icon_GradeType3"], "G3"),
+        # Icon_GradeType13は重賞の有無を問わず付く「国際」マークのため対象外
+        (["Icon_GradeType", "Icon_GradeType13", "Icon_GradePos01"], None),
+        # Listed(15)・OP特別(17)等、G1/G2/G3以外は対象外
+        (["Icon_GradeType", "Icon_GradeType15"], None),
+        (["Icon_GradeType", "Icon_GradeType17", "Icon_GradePos01"], None),
+    ],
+)
+def test_extract_race_grade_maps_icon_class_to_grade(grade_classes, expected):
+    class_attr = " ".join(grade_classes)
+    soup = BeautifulSoup(f'<h1 class="RaceName">レース名<span class="{class_attr}"></span></h1>', "html.parser")
+
+    assert netkeiba_scraper._extract_race_grade(soup) == expected
+
+
+def test_extract_race_grade_returns_none_when_no_grade_icon():
+    soup = BeautifulSoup('<h1 class="RaceName">3歳未勝利</h1>', "html.parser")
+
+    assert netkeiba_scraper._extract_race_grade(soup) is None
+
+
+def test_extract_race_grade_returns_g1_when_international_icon_also_present():
+    # 函館記念のように複数のIcon_GradeType系spanが並ぶ場合、国際マーク（13）より先に
+    # 重賞アイコンが見つかってもどちらの順でも正しくG1/G2/G3を判定できる
+    soup = BeautifulSoup(
+        '<h1 class="RaceName">安田記念'
+        '<span class="Icon_GradeType Icon_GradeType1"></span>'
+        '<span class="Icon_GradeType Icon_GradeType13 Icon_GradePos01"></span>'
+        "</h1>",
+        "html.parser",
+    )
+
+    assert netkeiba_scraper._extract_race_grade(soup) == "G1"
+
+
+@pytest.mark.network
+def test_scrape_race_card_extracts_grade_for_graded_race():
+    # 函館記念（G3）
+    _, race_info_df, _ = netkeiba_scraper.scrape_race_card("202602010611")
+
+    assert race_info_df.iloc[0]["grade"] == "G3"
+
+
 @pytest.mark.network
 def test_scrape_day_race_returns_matches_known_result():
     expected = pd.DataFrame(
@@ -193,7 +241,10 @@ def test_scrape_race_card_returns_expected():
         "サラ系３歳", "未勝利", "混", "指", "馬齢", "16頭",
     ]
     assert race_info_df.to_dict("records") == [
-        {"race_type": "ダート", "course_len": 1400, "weather": "晴", "ground_state": "良", "class": "未勝利"}
+        {
+            "race_type": "ダート", "course_len": 1400, "weather": "晴", "ground_state": "良", "class": "未勝利",
+            "grade": None,
+        }
     ]
 
     assert race_card_df.shape == (16, 13)

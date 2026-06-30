@@ -1,5 +1,6 @@
 """src/logic/html_generator/site_nav_html.py のテスト（オフライン）。"""
 
+import json
 from datetime import date
 
 from src.logic.html_generator import site_nav_html as n
@@ -247,6 +248,34 @@ def test_breadcrumb_html_default_base_path():
     assert '<span class="breadcrumb-current">2026年</span>' in html
 
 
+def test_breadcrumb_html_includes_breadcrumb_list_json_ld():
+    html = n.breadcrumb_html(
+        [("コース詳細データ", "courses/index.html"), ("東京", "courses/05_tokyo/index.html"), ("芝1400m", None)],
+        base_path="../../",
+    )
+
+    assert '<script type="application/ld+json">' in html
+    assert '"@type": "BreadcrumbList"' in html
+
+
+def test_breadcrumb_json_ld_html_omits_item_for_current_page():
+    html = n.breadcrumb_json_ld_html(
+        [("コース詳細データ", "courses/index.html"), ("東京", "courses/05_tokyo/index.html"), ("芝1400m", None)],
+    )
+    payload = json.loads(html.removeprefix('<script type="application/ld+json">').removesuffix("</script>"))
+
+    assert payload["@context"] == "https://schema.org"
+    assert payload["@type"] == "BreadcrumbList"
+    items = payload["itemListElement"]
+    assert [item["name"] for item in items] == ["HOME", "コース詳細データ", "東京", "芝1400m"]
+    assert items[0]["item"] == f"{n.SITE_URL}/"
+    assert items[1]["item"] == f"{n.SITE_URL}/courses/index.html"
+    assert items[2]["item"] == f"{n.SITE_URL}/courses/05_tokyo/index.html"
+    # 現在地（最後の要素）はitemを持たない
+    assert "item" not in items[3]
+    assert [item["position"] for item in items] == [1, 2, 3, 4]
+
+
 def test_sidebar_html_renders_single_section_and_highlights_current():
     html = n.sidebar_html(
         [("東京のコース", [("芝1400m", "芝-1400.html"), ("芝1600m", "芝-1600.html")], "芝1400m")],
@@ -320,6 +349,30 @@ def test_site_footer_html_uses_base_path_for_legal_links():
 
     assert '<a href="../../privacy.html">プライバシーポリシー</a>' in html
     assert '<a href="../../terms.html">利用規約</a>' in html
+
+
+def test_site_footer_html_includes_a8_program_recommendation_when_configured(monkeypatch):
+    from src.logic.html_generator import affiliate_html
+
+    monkeypatch.setattr(
+        affiliate_html, "A8_PROGRAM_CANDIDATES",
+        [{"name": "お名前.com", "url": "https://px.a8.net/svt/ejp?a8mat=TEST", "note": "テスト用"}],
+    )
+
+    html = n.site_footer_html()
+
+    assert "お名前.com" in html
+    assert "https://px.a8.net/svt/ejp?a8mat=TEST" in html
+
+
+def test_site_footer_html_omits_a8_program_recommendation_when_not_configured(monkeypatch):
+    from src.logic.html_generator import affiliate_html
+
+    monkeypatch.setattr(affiliate_html, "A8_PROGRAM_CANDIDATES", [{"name": "お名前.com", "url": None}])
+
+    html = n.site_footer_html()
+
+    assert "a8-program-recommendation" not in html
 
 
 def test_site_brand_html_links_to_home_and_shows_mar():
@@ -406,7 +459,9 @@ def test_meta_tags_html_includes_description_and_ogp():
     assert '<meta property="og:title" content="東京 芝1400m コース詳細｜MAR">' in html
     assert '<meta property="og:url" content="https://mar-keiba.com/courses/05_tokyo/芝-1400.html">' in html
     assert '<meta property="og:type" content="website">' in html
-    assert '<meta name="twitter:card" content="summary">' in html
+    assert f'<meta property="og:image" content="{n.OG_IMAGE_URL}">' in html
+    assert '<meta name="twitter:card" content="summary_large_image">' in html
+    assert f'<meta name="twitter:image" content="{n.OG_IMAGE_URL}">' in html
 
 
 def test_sns_links_html_includes_x_and_instagram():

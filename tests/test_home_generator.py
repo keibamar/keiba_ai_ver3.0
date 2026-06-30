@@ -82,7 +82,7 @@ def test_make_home_page_generates_index_html(new_roots, monkeypatch):
     print(f"  出力先: {out_file}")
     print(html_content)
 
-    assert "<h1>MAR(まーる）|競馬AIデータサイト</h1>" in html_content
+    assert "<h1>MAR(まーる)|競馬AIデータサイト</h1>" in html_content
 
     # Homeにも、site_nav_html経由で右側の小さなカレンダータブ（矢印で前後月へ移動可能）
     # ＋現在地（HOME）の強調表示が常に表示される
@@ -147,7 +147,7 @@ def test_make_home_page_generates_index_html(new_roots, monkeypatch):
     assert '<a class="site-brand" href="./">' in html_content
     # 検索結果・SNSシェア時の表示用メタタグ（description・OGP）
     assert '<meta name="description" content="' in html_content
-    assert '<meta property="og:title" content="MAR(まーる）|競馬AIデータサイト">' in html_content
+    assert '<meta property="og:title" content="MAR(まーる)|競馬AIデータサイト">' in html_content
     assert '<meta property="og:url" content="https://mar-keiba.com/">' in html_content
 
 
@@ -333,6 +333,25 @@ def test_week_main_races_html_shows_date_and_links_to_course():
     assert '<span class="sub">東京11R</span><span class="main">七夕賞</span>' in html_content
 
 
+def test_week_main_races_html_shows_grade_badge_when_present():
+    races = [
+        {
+            "race_id": "202605030711",
+            "place_id": 5,
+            "race_name": "七夕賞",
+            "race_time": "1545",
+            "race_type": "芝",
+            "course_len": 2000,
+            "grade": "G3",
+            "race_day": date(2026, 6, 28),
+        },
+    ]
+
+    html_content = h._week_main_races_html(races)
+
+    assert '<span class="main"><span class="grade-badge grade-badge-G3">G3</span> 七夕賞</span>' in html_content
+
+
 def test_week_main_races_html_handles_no_main_races():
     assert "今週のメインレース（11R）はありません。" in h._week_main_races_html([])
 
@@ -388,6 +407,28 @@ def test_weekend_results_html_shows_winner_pick_and_payout_on_hit():
     assert "メイショウズイウン" in html_content
     assert "9着" in html_content
     assert '<span class="hit-badge miss">不的中</span>' in html_content
+
+
+def test_weekend_results_html_shows_grade_badge_when_present():
+    races = [
+        {
+            "race_day": date(2026, 6, 13),
+            "place_id": 5,
+            "race_name": "ジューンS",
+            "grade": "G2",
+            "winner_name": "カネラフィーナ",
+            "pick_name": "カネラフィーナ",
+            "pick_finish": "1",
+            "win_hit": True,
+            "win_payout": 510.0,
+            "place_hit": True,
+            "place_payout": 210.0,
+        },
+    ]
+
+    html_content = h._weekend_results_html(races)
+
+    assert '<span class="main"><span class="grade-badge grade-badge-G2">G2</span> ' in html_content
 
 
 def test_weekend_results_html_handles_no_races():

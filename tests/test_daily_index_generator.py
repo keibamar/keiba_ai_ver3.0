@@ -50,6 +50,19 @@ def test_group_place_races_and_build_table_rows(new_roots):
     assert "<a href=" not in table_rows
 
 
+def test_build_table_rows_shows_grade_badge_for_graded_race(new_roots):
+    place_races = {
+        "05_tokyo": {
+            "display": "東京",
+            "races": [{"race_num": 1, "race_name": "安田記念", "race_time": "1540", "grade": "G1"}],
+        },
+    }
+
+    table_rows, _ = d.build_table_rows(place_races, SAMPLE_DATE_STR)
+
+    assert '<span class="grade-badge grade-badge-G1">G1</span> 安田記念' in table_rows
+
+
 def test_make_daily_index_page_generates_index_html(new_roots):
     d.make_daily_index_page(SAMPLE_RACE_DAY)
 
@@ -77,6 +90,9 @@ def test_make_daily_index_page_generates_index_html(new_roots):
     assert "<th>東京競馬場</th>" in html_content
     assert "<th>京都競馬場</th>" in html_content
     assert "<th>1R</th>" in html_content
+    # 1日最大12レース程度であれば全部見えるよう、表に縦スクロールをかけない
+    # （table-wrap--full、出馬表・レース結果表と同じ方針）
+    assert '<div class="table-wrap table-wrap--full">' in html_content
 
     # 前後日のレースページディレクトリが存在しないため、両方disabled
     assert '<span class="disabled">← 前の日</span>' in html_content
@@ -130,9 +146,10 @@ def test_make_races_calendar_page_generates_index_html(new_roots, monkeypatch):
     assert '<script src="../assets/js/calendar.js"></script>' in html_content
     assert '<a href="../">&larr; HOMEへ戻る</a>' in html_content
 
-    # 「本日の開催」に、コース詳細データへのリンクが含まれる
+    # 「本日の開催」に、開催場・コース詳細データへのリンクが含まれる
     assert "<h2>本日の開催</h2>" in html_content
-    assert '<a href="../courses/05_tokyo/芝-1800.html">東京 <span class="race-type-turf">芝1800m</span></a>' in html_content
+    assert '<span class="main">東京 ' in html_content
+    assert '<a href="../courses/05_tokyo/芝-1800.html"><span class="race-type-turf">芝1800m</span></a>' in html_content
 
 
 def test_calendar_widget_html_uses_given_base_path():
@@ -142,6 +159,14 @@ def test_calendar_widget_html_uses_given_base_path():
     assert '<script src="assets/js/raceDays.js"></script>' in widget
     assert '<script src="assets/js/calendar.js"></script>' in widget
     assert '<table id="calendar"></table>' in widget
+    # show_meetings未指定時（右側タブの小さなカレンダー等）はraceMeetings.jsを読み込まない
+    assert "raceMeetings.js" not in widget
+
+
+def test_calendar_widget_html_loads_meetings_js_when_show_meetings_true():
+    widget = d.calendar_widget_html(base_path="../", show_meetings=True)
+
+    assert '<script src="../assets/js/raceMeetings.js"></script>' in widget
 
 
 
@@ -163,8 +188,33 @@ def test_today_meetings_html_links_to_race_card_and_course_data(monkeypatch):
 
     print(f"\n--- _today_meetings_html ---\n{html_content}")
 
-    assert '<a href="../races/20241020/05_tokyoR11.html">府中牝馬S</a>' in html_content
-    assert '<a href="../courses/05_tokyo/芝-1800.html">東京 <span class="race-type-turf">芝1800m</span></a>' in html_content
+    # 開催場・メインレースが主役（.main）、第○回○日目・コース詳細データが脇役（.sub）
+    assert '<span class="main">東京 <a href="../races/20241020/05_tokyoR11.html">府中牝馬S</a></span>' in html_content
+    assert '<span class="sub">第4回東京6日目 ・ <a href="../courses/05_tokyo/芝-1800.html">' in html_content
+    assert '<span class="race-type-turf">芝1800m</span></a></span>' in html_content
+
+
+def test_today_meetings_html_shows_grade_badge_when_present(monkeypatch):
+    races = [
+        {
+            "race_id": "202605030611",
+            "place_id": 5,
+            "race_name": "安田記念",
+            "race_time": "1545",
+            "race_type": "芝",
+            "course_len": 1600,
+            "grade": "G1",
+            "race_day": SAMPLE_RACE_DAY,
+        }
+    ]
+    monkeypatch.setattr(d.html_manager, "race_page_exists", lambda day_str, filename: True)
+
+    html_content = d._today_meetings_html(races, base_path="../")
+
+    assert (
+        '<span class="main">東京 <span class="grade-badge grade-badge-G1">G1</span> '
+        '<a href="../races/20241020/05_tokyoR11.html">安田記念</a></span>'
+    ) in html_content
 
 
 def test_today_meetings_html_falls_back_when_race_card_missing(monkeypatch):
@@ -184,8 +234,8 @@ def test_today_meetings_html_falls_back_when_race_card_missing(monkeypatch):
     html_content = d._today_meetings_html(races, base_path="../")
 
     # 出馬表が無い場合はリンクなしのレース名のみ、コース詳細データは競馬場一覧へリンクする
-    assert "<span class=\"main\">府中牝馬S</span>" in html_content
-    assert '<a href="../courses/05_tokyo/index.html">東京</a>' in html_content
+    assert '<span class="main">東京 府中牝馬S</span>' in html_content
+    assert '<span class="sub">第4回東京6日目 ・ <a href="../courses/05_tokyo/index.html">コース詳細</a></span>' in html_content
 
 
 def test_today_meetings_html_handles_no_races():

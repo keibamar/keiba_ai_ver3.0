@@ -8,16 +8,20 @@ public_html/assets/js/raceDays.js（カレンダーが参照するwindow.raceday
 日付追加も提供する。
 """
 
+import json
 import os
 import re
-from datetime import date
+from datetime import date, datetime
+
+import pandas as pd
 
 from src.config import paths
-from src.config.constants import PLACE_LIST
+from src.config.constants import NAME_LIST, PLACE_LIST
 
 DAY_DIR_PATTERN = re.compile(r"^\d{8}$")
 
 RACE_DAYS_JS_PATH = os.path.join(paths.PUBLIC_HTML_ASSETS_PATH, "js", "raceDays.js")
+RACE_MEETINGS_JS_PATH = os.path.join(paths.PUBLIC_HTML_ASSETS_PATH, "js", "raceMeetings.js")
 
 
 def get_race_page_dir(date_str):
@@ -220,3 +224,65 @@ def regenerate_race_days_js(min_year=None):
     lines = ",\n".join(f'  "{d}"' for d in day_strs)
     with open(RACE_DAYS_JS_PATH, "w", encoding="utf-8") as f:
         f.write(f"window.racedays = [\n{lines}\n];\n")
+
+
+def regenerate_race_meetings_js(min_year=None):
+    """public_html/assets/js/raceMeetings.js を再生成する
+
+    レースカレンダーページ（races/index.html）の月表示カレンダーで、日付だけでなく
+    「その日どこで開催があり、メインレース（11R）は何か」を一覧できるようにするための
+    データ。regenerate_race_days_jsと同じ対象日（list_race_day_dirs、min_year以降）に
+    ついて、race_card_dataset_manager.get_race_time_id_list_dfから11Rのレース名を、
+    race_id（YYYYCCTTDDNN形式）自体から開催回・開催日目を取り出す（カレンダーCSVを
+    別途引く必要が無く、当日スクレイピングも不要なため過去日も含めて軽量に作れる）。
+    出馬表ページ（races/{day_str}/{place_key}R11.html）が生成済みならrace_card_url
+    （public_html直下からの相対パス）も含め、レース名から出馬表ページへ直接
+    リンクできるようにする（未生成ならnullにし、呼び出し側でリンクなし表示にする）。
+    calendar.jsはwindow.raceMeetingsが無ければ何も表示しないため、サイドバーの
+    小さなカレンダー（このデータを読み込まないページ）は今までと同じ見た目のままになる。
+
+    Args:
+        min_year (int | None): regenerate_race_days_js参照。
+    """
+    from src.config.constants import PLACE_LIST
+    from src.managers import race_card_dataset_manager
+
+    min_year = min_year if min_year is not None else date.today().year
+    day_strs = [d for d in list_race_day_dirs() if int(d[:4]) >= min_year]
+
+    meetings_by_day = {}
+    for day_str in day_strs:
+        race_day = datetime.strptime(day_str, "%Y%m%d").date()
+        time_id_df = race_card_dataset_manager.get_race_time_id_list_df(race_day)
+        if time_id_df.empty:
+            continue
+        main_df = time_id_df[
+            time_id_df["race_id"].apply(lambda rid: int(str(rid)[10:12]) == 11)
+        ].sort_values("race_time")
+        if main_df.empty:
+            continue
+        meetings = []
+        for _, row in main_df.iterrows():
+            race_id = str(row["race_id"])
+            place_id = int(race_id[4:6])
+            place_key = PLACE_LIST[place_id - 1]
+            race_card_file = f"{place_key}R11.html"
+            race_card_url = (
+                f"races/{day_str}/{race_card_file}" if race_page_exists(day_str, race_card_file) else None
+            )
+            grade = row.get("grade")
+            meetings.append(
+                {
+                    "place_name": NAME_LIST[place_id - 1],
+                    "race_name": row["race_name"],
+                    "times": int(race_id[6:8]),
+                    "day_number": int(race_id[8:10]),
+                    "race_card_url": race_card_url,
+                    "grade": grade if pd.notna(grade) else None,
+                }
+            )
+        meetings_by_day[day_str] = meetings
+
+    os.makedirs(os.path.dirname(RACE_MEETINGS_JS_PATH), exist_ok=True)
+    with open(RACE_MEETINGS_JS_PATH, "w", encoding="utf-8") as f:
+        f.write(f"window.raceMeetings = {json.dumps(meetings_by_day, ensure_ascii=False, indent=2)};\n")

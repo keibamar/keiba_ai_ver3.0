@@ -49,12 +49,18 @@ def get_race_info_csv(race_id):
 
 
 def save_time_id_list(race_day, time_id_list):
-    """race_time_id_list（race_time, race_id, race_name）を保存する"""
+    """race_time_id_list（race_time, race_id, race_name, grade）を保存する
+
+    grade（G1/G2/G3。対象外はNone）はmake_time_id_listが追加した列。古い保存済み
+    CSV（gradeが無い時期のもの）と区別する必要はなく、get_race_time_id_list_dfは
+    read_csv_or_emptyでそのまま読むため、grade列が無い古いCSVはgradeを持たない
+    DataFrameとして読まれる（呼び出し側はdf.get("grade")相当の存在確認をする）。
+    """
     if not any(time_id_list):
         return
     str_day = race_day.strftime("%Y%m%d")
     os.makedirs(paths.RACE_TIME_ID_LIST_PATH, exist_ok=True)
-    time_id_list_df = pd.DataFrame(time_id_list, columns=["race_time", "race_id", "race_name"])
+    time_id_list_df = pd.DataFrame(time_id_list, columns=["race_time", "race_id", "race_name", "grade"])
     time_id_list_df.to_csv(os.path.join(paths.RACE_TIME_ID_LIST_PATH, f"{str_day}.csv"))
 
 

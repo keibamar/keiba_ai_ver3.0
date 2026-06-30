@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator.ai_performance_report_generator import _performance_table_html, _rank_color_style
-from src.logic.html_generator.race_type_badge_html import course_label_html
+from src.logic.html_generator.race_type_badge_html import course_label_html, grade_badge_html
 from src.logic.html_generator.rate_gauge_html import bet_result_cell_html, hit_rate_gauge_html, return_rate_gauge_html
 from src.logic.html_generator.site_nav_html import (
     AD_SLOT_IN_CONTENT_1,
@@ -175,6 +175,9 @@ def _week_main_races_html(races):
             race_name_html = f'<a href="races/{race_day_str}/{race_card_file}">{race["race_name"]}</a>'
         else:
             race_name_html = race["race_name"]
+        grade_html = grade_badge_html(race.get("grade"))
+        if grade_html:
+            race_name_html = f"{grade_html} {race_name_html}"
         race_cell = _sub_main_cell_html(f"{place_name}11R", race_name_html)
         rows += (
             f"<tr><td>{date_str} {time_disp}</td><td>{race_cell}</td>"
@@ -219,6 +222,9 @@ def _weekend_results_html(races):
             race_name_html = f'<a href="races/{race_day_str}/{race_card_file}">{race["race_name"]}</a>'
         else:
             race_name_html = race["race_name"]
+        grade_html = grade_badge_html(race.get("grade"))
+        if grade_html:
+            race_name_html = f"{grade_html} {race_name_html}"
         race_cell = _sub_main_cell_html(f"{place_name}11R", race_name_html)
         rows += (
             f"<tr><td>{date_str}</td><td>{race_cell}</td>"

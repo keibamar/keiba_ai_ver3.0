@@ -23,6 +23,8 @@ import os
 import re
 from datetime import date, datetime, timedelta
 
+import pandas as pd
+
 from src.config import paths
 from src.managers import (
     race_card_dataset_manager,
@@ -185,15 +187,45 @@ def get_current_meetings(today=None):
     return current_meetings
 
 
+def get_meeting_info(place_id, race_day):
+    """指定した開催場・日付が、開催の第何回・何日目にあたるかを返す
+
+    race_schedule_dataset_manager.get_race_calendar(year)の"days"列（開催開始からの
+    レース日数、get_current_meeting_summariesと同じ列）をそのまま使う。該当する
+    開催日程が見つからない場合（出馬表のみ先行公開されている等）はNoneを返す。
+
+    Args:
+        place_id (int): 開催場のplace_id
+        race_day (date): 対象日
+    Returns:
+        dict | None: {"times": 第何回, "day_number": 何日目}
+    """
+    calendar = race_schedule_dataset_manager.get_race_calendar(race_day.year)
+    if calendar.empty:
+        return None
+    match = calendar[
+        (calendar["course"].astype(int) == place_id)
+        & (calendar["month"].astype(int) == race_day.month)
+        & (calendar["day"].astype(int) == race_day.day)
+    ]
+    if match.empty:
+        return None
+    return {"times": int(match.iloc[0]["times"]), "day_number": int(match.iloc[0]["days"])}
+
+
 def get_today_main_races_with_course(today=None):
     """今日のメインレース（11R）を、レース名・発走時刻・コース情報付きで返す
 
     今日のレースはまだ確定結果も予想データも無いため、calc_race_hit_returns
-    （的中判定）は使えない。代わりに出走馬一覧ページ（shutuba.html、
-    netkeiba_scraper.scrape_race_card）を当日スクレイピングし、コース詳細データへの
-    リンクに使うrace_type/course_lenだけを取得する（出走馬一覧自体は使わない）。
-    取得に失敗したレースはrace_type/course_lenをNoneにして残す
-    （呼び出し側でコースへのリンクなしの表示に切り替えられるようにする）。
+    （的中判定）は使えない。コース詳細データへのリンクに使うrace_type/course_lenは、
+    まずレースカード作成時に保存済みのレース情報（race_card_dataset_manager.
+    get_race_info_csv）を見る。まだ保存されていない場合のみ出走馬一覧ページ
+    （shutuba.html、netkeiba_scraper.scrape_race_card）を当日スクレイピングする
+    （shutuba.htmlはレース終了後しばらくするとnetkeiba側で参照できなくなるため、
+    レース終了から数日経った「今週のメインレース」表示でライブスクレイピングのみに
+    依存するとコース情報が取得できなくなる不具合があった）。取得に失敗したレースは
+    race_type/course_lenをNoneにして残す（呼び出し側でコースへのリンクなしの表示に
+    切り替えられるようにする）。
 
     Args:
         today (date): 基準日（初期値: 今日）。
@@ -217,13 +249,28 @@ def get_today_main_races_with_course(today=None):
     for _, row in main_df.iterrows():
         race_id = str(row["race_id"])
         race_type, course_len = None, None
-        try:
-            _, race_info_df, _ = netkeiba_scraper.scrape_race_card(race_id)
-            if not race_info_df.empty:
-                race_type = race_info_df.iloc[0]["race_type"]
-                course_len = race_info_df.iloc[0]["course_len"]
-        except Exception:
-            pass
+        # grade（G1/G2/G3）はtime_id_df保存時点の値をまず使い、後段の取得で
+        # 上書きできればその値を使う（race_time_id_listが古い保存形式（grade列が
+        # 無い時期のもの）の場合のフォールバックとして、保存済みの値を先に見ておく）。
+        grade = row.get("grade")
+        grade = grade if pd.notna(grade) else None
+
+        cached_info_df = race_card_dataset_manager.get_race_info_csv(race_id)
+        if not cached_info_df.empty:
+            race_type = cached_info_df.iloc[0]["race_type"]
+            course_len = cached_info_df.iloc[0]["course_len"]
+            cached_grade = cached_info_df.iloc[0].get("grade")
+            if pd.notna(cached_grade):
+                grade = cached_grade
+        else:
+            try:
+                _, race_info_df, _ = netkeiba_scraper.scrape_race_card(race_id)
+                if not race_info_df.empty:
+                    race_type = race_info_df.iloc[0]["race_type"]
+                    course_len = race_info_df.iloc[0]["course_len"]
+                    grade = race_info_df.iloc[0].get("grade", grade)
+            except Exception:
+                pass
 
         races.append(
             {
@@ -233,6 +280,7 @@ def get_today_main_races_with_course(today=None):
                 "race_time": row["race_time"],
                 "race_type": race_type,
                 "course_len": course_len,
+                "grade": grade,
                 "race_day": today,
             }
         )
@@ -473,11 +521,13 @@ def get_weekend_main_race_details(weekend_end_day):
             detail = _race_detail_summary(race_day, race_id)
             if detail is None:
                 continue
+            grade = row.get("grade")
             detail.update(
                 {
                     "race_day": race_day,
                     "place_id": parse_race_id(race_id)["place_id"],
                     "race_name": row["race_name"],
+                    "grade": grade if pd.notna(grade) else None,
                 }
             )
             races.append(detail)

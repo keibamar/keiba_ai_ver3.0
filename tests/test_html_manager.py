@@ -6,6 +6,7 @@ public_html/assets/js/raceDays.js（window.racedays）に日付を追加する�
 新実装単体で検証する（オフライン）。
 """
 
+import json
 from datetime import date
 
 import pytest
@@ -120,3 +121,103 @@ def test_regenerate_race_days_js_defaults_to_current_year(new_races_root, new_js
     content = new_js_path.read_text(encoding="utf-8")
     assert '"20260104"' in content
     assert "20250101" not in content
+
+
+@pytest.fixture
+def new_meetings_js_path(tmp_path, monkeypatch):
+    js_path = tmp_path / "public_html" / "assets" / "js" / "raceMeetings.js"
+    monkeypatch.setattr(new_html_manager, "RACE_MEETINGS_JS_PATH", str(js_path))
+    return js_path
+
+
+def test_regenerate_race_meetings_js_builds_meetings_from_race_ids(
+    new_races_root, new_meetings_js_path, monkeypatch,
+):
+    import pandas as pd
+
+    day_dir = new_races_root / "20260628"
+    day_dir.mkdir(parents=True)
+    # 小倉は出馬表ページが生成済み、函館は未生成という状態を再現する
+    (day_dir / "10_kokuraR11.html").write_text("dummy", encoding="utf-8")
+
+    def fake_time_id_list_df(race_day):
+        assert race_day == date(2026, 6, 28)
+        return pd.DataFrame(
+            {
+                "race_id": ["202602010611", "202610010211"],
+                "race_time": ["1540", "1530"],
+                "race_name": ["函館記念", "紫川S"],
+            }
+        )
+
+    monkeypatch.setattr(
+        "src.managers.race_card_dataset_manager.get_race_time_id_list_df", fake_time_id_list_df,
+    )
+
+    new_html_manager.regenerate_race_meetings_js(min_year=2026)
+
+    content = new_meetings_js_path.read_text(encoding="utf-8")
+    print(f"\n--- regenerate_race_meetings_js ---\n{content}")
+
+    assert "window.raceMeetings = " in content
+    data = json.loads(content.removeprefix("window.raceMeetings = ").removesuffix(";\n"))
+    # race_time昇順（小倉15:30 → 函館15:40）。小倉は出馬表ページが生成済みのため
+    # race_card_urlが入り、函館は未生成のためnullになる
+    assert data == {
+        "20260628": [
+            {
+                "place_name": "小倉", "race_name": "紫川S", "times": 1, "day_number": 2,
+                "race_card_url": "races/20260628/10_kokuraR11.html", "grade": None,
+            },
+            {
+                "place_name": "函館", "race_name": "函館記念", "times": 1, "day_number": 6,
+                "race_card_url": None, "grade": None,
+            },
+        ]
+    }
+
+
+def test_regenerate_race_meetings_js_includes_grade_when_present(
+    new_races_root, new_meetings_js_path, monkeypatch,
+):
+    import pandas as pd
+
+    (new_races_root / "20260628").mkdir(parents=True)
+
+    def fake_time_id_list_df(race_day):
+        return pd.DataFrame(
+            {
+                "race_id": ["202602010611", "202610010211"],
+                "race_time": ["1540", "1530"],
+                "race_name": ["函館記念", "紫川S"],
+                "grade": ["G3", None],
+            }
+        )
+
+    monkeypatch.setattr(
+        "src.managers.race_card_dataset_manager.get_race_time_id_list_df", fake_time_id_list_df,
+    )
+
+    new_html_manager.regenerate_race_meetings_js(min_year=2026)
+
+    content = new_meetings_js_path.read_text(encoding="utf-8")
+    data = json.loads(content.removeprefix("window.raceMeetings = ").removesuffix(";\n"))
+
+    graded = {m["race_name"]: m["grade"] for m in data["20260628"]}
+    assert graded == {"紫川S": None, "函館記念": "G3"}
+
+
+def test_regenerate_race_meetings_js_skips_days_without_time_id_list(
+    new_races_root, new_meetings_js_path, monkeypatch,
+):
+    import pandas as pd
+
+    (new_races_root / "20260629").mkdir(parents=True)
+    monkeypatch.setattr(
+        "src.managers.race_card_dataset_manager.get_race_time_id_list_df", lambda race_day: pd.DataFrame(),
+    )
+
+    new_html_manager.regenerate_race_meetings_js(min_year=2026)
+
+    content = new_meetings_js_path.read_text(encoding="utf-8")
+    assert json.loads(content.removeprefix("window.raceMeetings = ").removesuffix(";\n")) == {}

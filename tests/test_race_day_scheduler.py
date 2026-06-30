@@ -195,7 +195,8 @@ def test_make_time_id_list_returns_expected(monkeypatch):
     print(f"\n--- make_time_id_list(2024-01-27) ---")
     print(f"  結果: {result}")
 
-    assert result == [["1005", FIXED_RACE_ID, "3歳未勝利"]]
+    # FIXED_RACE_IDは未勝利戦（重賞ではない）のためgradeはNone
+    assert result == [["1005", FIXED_RACE_ID, "3歳未勝利", None]]
 
 
 def test_update_weekly_time_id_list_saves_next_7_days(monkeypatch):

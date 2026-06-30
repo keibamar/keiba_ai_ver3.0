@@ -56,14 +56,27 @@ def test_get_race_info_csv_empty_when_missing(new_roots):
 
 def test_save_and_get_time_id_list_roundtrip(new_roots):
     time_id_list = [
-        ["1010", "202404040601", "２歳未勝利"],
-        ["1530", "202404040612", "３歳上１勝クラス"],
+        ["1010", "202404040601", "２歳未勝利", None],
+        ["1530", "202404040612", "３歳上１勝クラス", None],
     ]
 
     race_card_dataset_manager.save_time_id_list(SAMPLE_RACE_DAY, time_id_list)
     result = race_card_dataset_manager.get_time_id_list(SAMPLE_RACE_DAY)
 
     assert result == [[t[0], t[1]] for t in time_id_list]
+
+
+def test_save_and_get_time_id_list_roundtrip_includes_grade(new_roots):
+    time_id_list = [
+        ["1545", "202602010611", "函館記念", "G3"],
+        ["1010", "202404040601", "２歳未勝利", None],
+    ]
+
+    race_card_dataset_manager.save_time_id_list(SAMPLE_RACE_DAY, time_id_list)
+    df = race_card_dataset_manager.get_race_time_id_list_df(SAMPLE_RACE_DAY)
+
+    assert df.set_index("race_id").loc["202602010611", "grade"] == "G3"
+    assert pd.isna(df.set_index("race_id").loc["202404040601", "grade"])
 
 
 def test_get_time_id_list_empty_when_missing(new_roots):

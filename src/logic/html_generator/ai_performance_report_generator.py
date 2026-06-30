@@ -17,6 +17,7 @@ import pandas as pd
 from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS
 from src.config.lists import COURSE_LISTS
 from src.logic.calculators import ai_performance_calculator as calc
+from src.logic.html_generator import affiliate_html
 from src.logic.html_generator.race_type_badge_html import course_label_html, race_type_span_html
 from src.logic.html_generator.rate_gauge_html import (
     bet_result_cell_html,
@@ -330,6 +331,8 @@ def make_ai_performance_index_page():
   <ul>
     {place_rows}
   </ul>
+
+  {affiliate_html.daily_book_recommendation_html()}
 
   <p><a href="../">&larr; HOMEへ戻る</a></p>
   {site_footer_html(base_path="../")}
