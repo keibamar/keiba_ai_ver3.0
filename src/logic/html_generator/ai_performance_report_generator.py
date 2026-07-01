@@ -58,85 +58,94 @@ def _horse_band_chart_svg(breakdown):
     if not breakdown or all(b["n"] == 0 for b in breakdown):
         return ""
 
-    ROW_H = 44
-    BAR_H = 28
-    LABEL_W = 68
-    BAR_W = 260
+    ROW_H = 72
+    BAR_H = 50
+    LABEL_W = 80
+    BAR_W = 460
     STAT_W = 140
-    PADDING = 8
+    PADDING_TOP = 16
+    LEGEND_H = 36
     SVG_W = LABEL_W + BAR_W + STAT_W
-    LEGEND_H = 28
-    SVG_H = len(breakdown) * ROW_H + LEGEND_H + PADDING
+    SVG_H = len(breakdown) * ROW_H + PADDING_TOP + LEGEND_H
 
-    COLOR_1ST = "#e8a000"
-    COLOR_2ND = "#78a8c8"
-    COLOR_3RD = "#7caa6c"
-    COLOR_OUT = "#d8d8d8"
+    COLOR_1ST = "#d4921a"
+    COLOR_2ND = "#5a8fb0"
+    COLOR_3RD = "#5a9e52"
+    COLOR_OUT = "#c8c8c8"
 
     rows_svg = []
     for i, b in enumerate(breakdown):
         n = b["n"]
         if n == 0:
             continue
-        y = i * ROW_H + PADDING
+        y = PADDING_TOP + i * ROW_H
         bar_y = y + (ROW_H - BAR_H) // 2
+        mid_y = bar_y + BAR_H // 2
 
-        p1 = b["first"] / n
-        p2 = b["second"] / n
-        p3 = b["third"] / n
-        po = b["out"] / n
+        segs = [
+            (b["first"],  COLOR_1ST, "1着", "#fff"),
+            (b["second"], COLOR_2ND, "2着", "#fff"),
+            (b["third"],  COLOR_3RD, "3着", "#fff"),
+            (b["out"],    COLOR_OUT, "着外", "#555"),
+        ]
 
-        x1 = 0
-        w1 = round(p1 * BAR_W)
-        x2 = x1 + w1
-        w2 = round(p2 * BAR_W)
-        x3 = x2 + w2
-        w3 = round(p3 * BAR_W)
-        xo = x3 + w3
-        wo = BAR_W - xo
-
-        bx = LABEL_W
-
+        # Band label
         rows_svg.append(
-            f'<text x="{LABEL_W - 6}" y="{y + ROW_H//2 + 4}" text-anchor="end" '
-            f'font-size="12" fill="#444">{b["band_label"]}</text>'
-        )
-        if w1 > 0:
-            rows_svg.append(f'<rect x="{bx + x1}" y="{bar_y}" width="{w1}" height="{BAR_H}" fill="{COLOR_1ST}"/>')
-        if w2 > 0:
-            rows_svg.append(f'<rect x="{bx + x2}" y="{bar_y}" width="{w2}" height="{BAR_H}" fill="{COLOR_2ND}"/>')
-        if w3 > 0:
-            rows_svg.append(f'<rect x="{bx + x3}" y="{bar_y}" width="{w3}" height="{BAR_H}" fill="{COLOR_3RD}"/>')
-        if wo > 0:
-            rows_svg.append(f'<rect x="{bx + xo}" y="{bar_y}" width="{wo}" height="{BAR_H}" fill="{COLOR_OUT}"/>')
-
-        stat_x = LABEL_W + BAR_W + 8
-        rows_svg.append(
-            f'<text x="{stat_x}" y="{y + ROW_H//2 - 4}" font-size="11" fill="#333">'
-            f'単 {b["win_rate"]:.1f}% / 複 {b["place_rate"]:.1f}%</text>'
-        )
-        rows_svg.append(
-            f'<text x="{stat_x}" y="{y + ROW_H//2 + 10}" font-size="11" fill="#888">'
-            f'{n:,}頭</text>'
+            f'<text x="{LABEL_W - 8}" y="{mid_y + 5}" text-anchor="end" '
+            f'font-size="14" font-weight="700" fill="#222">{b["band_label"]}</text>'
         )
 
-    legend_y = len(breakdown) * ROW_H + PADDING + 6
-    legend_items = [
-        (COLOR_1ST, "1着"), (COLOR_2ND, "2着"), (COLOR_3RD, "3着"), (COLOR_OUT, "着外"),
-    ]
-    legend_svg = []
+        cx = LABEL_W
+        for count, color, label_text, txt_color in segs:
+            pct = count / n
+            w = round(pct * BAR_W)
+            if w <= 0:
+                continue
+            tip = f"{label_text}: {count:,}頭 ({pct*100:.1f}%)"
+            rows_svg.append(
+                f'<rect x="{cx}" y="{bar_y}" width="{w}" height="{BAR_H}" fill="{color}">'
+                f'<title>{tip}</title></rect>'
+            )
+            # Count text inside segment
+            if w >= 48:
+                rows_svg.append(
+                    f'<text x="{cx + w // 2}" y="{mid_y + 4}" text-anchor="middle" '
+                    f'font-size="12" font-weight="600" fill="{txt_color}" pointer-events="none">'
+                    f'{count:,}</text>'
+                )
+            cx += w
+
+        # Fill rounding gap
+        gap = LABEL_W + BAR_W - cx
+        if gap > 0:
+            rows_svg.append(f'<rect x="{cx}" y="{bar_y}" width="{gap}" height="{BAR_H}" fill="{COLOR_OUT}"/>')
+
+        # Rate labels on right
+        sx = LABEL_W + BAR_W + 12
+        rows_svg.append(
+            f'<text x="{sx}" y="{mid_y - 6}" font-size="13" font-weight="700" fill="#c62828">'
+            f'単勝 {b["win_rate"]:.1f}%</text>'
+        )
+        rows_svg.append(
+            f'<text x="{sx}" y="{mid_y + 12}" font-size="12" fill="#555">'
+            f'複勝 {b["place_rate"]:.1f}%</text>'
+        )
+
+    # Legend
+    legend_y = PADDING_TOP + len(breakdown) * ROW_H + 10
+    legend_items = [(COLOR_1ST, "1着"), (COLOR_2ND, "2着"), (COLOR_3RD, "3着"), (COLOR_OUT, "着外")]
     lx = LABEL_W
-    for color, label in legend_items:
-        legend_svg.append(f'<rect x="{lx}" y="{legend_y}" width="14" height="14" fill="{color}"/>')
-        legend_svg.append(
-            f'<text x="{lx + 17}" y="{legend_y + 11}" font-size="11" fill="#555">{label}</text>'
+    for color, lbl in legend_items:
+        rows_svg.append(f'<rect x="{lx}" y="{legend_y}" width="18" height="18" fill="{color}"/>')
+        rows_svg.append(
+            f'<text x="{lx + 22}" y="{legend_y + 13}" font-size="12" fill="#555">{lbl}</text>'
         )
-        lx += 52
+        lx += 68
 
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{SVG_W}" height="{SVG_H}" '
         f'style="max-width:100%; display:block;">'
-        + "\n".join(rows_svg + legend_svg)
+        + "\n".join(rows_svg)
         + "</svg>"
     )
 
@@ -153,42 +162,16 @@ def _index_band_section_html(df):
         return ""
 
     chart_svg = _horse_band_chart_svg(breakdown)
-
-    rows = "".join(
-        f"""<tr>
-          <td>{b["band_label"]}</td>
-          <td class="text-right">{b["n"]:,}</td>
-          <td class="text-right">{b["first"]:,}</td>
-          <td class="text-right">{b["second"]:,}</td>
-          <td class="text-right">{b["third"]:,}</td>
-          <td class="text-right">{b["out"]:,}</td>
-          <td class="text-right">{b["win_rate"]:.1f}%</td>
-          <td class="text-right">{b["place_rate"]:.1f}%</td>
-        </tr>"""
-        for b in breakdown
-    )
+    total_n = sum(b["n"] for b in breakdown)
 
     return f"""<h2>AI指数別 着度数・成績</h2>
   <p class="section-intro">
     AI指数は各馬のコース・距離別の絶対的な能力スコアを0〜100の偏差値形式に変換した値です。
-    以下は全出走馬の指数帯ごとに実際の着順を集計したものです（本命馬のみでなく全頭対象）。
+    グラフは全出走馬 {total_n:,}頭の実績で、指数帯ごとに1着〜着外の頭数を積み上げ表示しています。
+    各バーにマウスを当てると割合が表示されます。
   </p>
   <div class="band-chart-wrap">
     {chart_svg}
-  </div>
-  <div class="table-wrap table-wrap--full">
-  <table class="sortable">
-    <thead>
-      <tr>
-        <th>AI指数帯</th><th>総頭数</th>
-        <th>1着</th><th>2着</th><th>3着</th><th>着外</th>
-        <th>単勝率</th><th>複勝率</th>
-      </tr>
-    </thead>
-    <tbody>
-      {rows}
-    </tbody>
-  </table>
   </div>
   <p class="section-note">※ 単勝率＝1着数÷総頭数、複勝率＝(1〜3着数)÷総頭数。指数が高いほど実際の好走率が高いことを確認できます。</p>"""
 

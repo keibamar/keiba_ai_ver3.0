@@ -183,13 +183,15 @@ def _ai_index_cell_html(ai_index):
     # ツールチップ
     band = scm.find_band(ai_index)
     if band:
+        n = int(band["n"]) if band.get("n") else 0
+        n_str = f"{n:,}頭の実績 " if n else ""
         tooltip = (
-            f"AI指数 {band['band_min']}〜{band['band_max']}点帯の実績"
-            f"（単勝{band['win_rate']:.1f}% / 複勝{band['place_rate']:.1f}%）"
-            f" — 同じレースの出走馬の中での評価（平均50点）"
+            f"AI指数 {int(band['band_min'])}〜{int(band['band_max'])}点帯"
+            f"（{n_str}単勝率{float(band['win_rate']):.1f}% / 複勝率{float(band['place_rate']):.1f}%）"
+            f" ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）"
         )
     else:
-        tooltip = "AI指数: 同じレースの出走馬の中での評価（偏差値形式。平均50点）"
+        tooltip = "AI指数: コース・距離別の絶対的な能力スコア（0〜100点、高いほど高評価）"
 
     td_attrs = f'title="{html.escape(tooltip)}"'
     if style:
