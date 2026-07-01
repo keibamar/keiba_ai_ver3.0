@@ -5,8 +5,8 @@
 web/src/scripts/make_race_card_html.py（結果反映HTML再生成）のver3.0移植。
 実体は src.output.return_report.post_daily_race_returns（Herald）と
 src.logic.html_generator.race_page_generator.make_daily_race_card_html（Forge）。
-高配当的中（単勝/複勝1000円以上）は src.output.highlight_report.post_big_hit_highlights
-が画像付きでXに別途投稿する。
+高配当的中（単勝/複勝1000円以上・三連複10000円以上）は
+src.output.highlight_report.post_daily_high_payout_summaryが全場まとめてXに投稿する。
 
 post_today_race.bat（当日のライブループ）が全レース終了・最終結果確定まで
 完了した後に実行する想定。
@@ -34,6 +34,5 @@ if __name__ == "__main__":
     # 確定した予想結果をAI成績データセットに反映する（次回のAI成績ページ再生成（水曜）で使われる）
     added = ai_performance_dataset_manager.update_ai_performance_dataset()
     print(f"AI Performance Dataset Updated: {added} rows added")
-    highlight_report.post_big_hit_highlights(race_day)
     highlight_report.post_daily_high_payout_summary(race_day)
     print("Today Race Returns Done")

@@ -20,6 +20,7 @@ if PROJECT_ROOT not in sys.path:
 
 from src.logic.html_generator import home_generator  # noqa: E402
 from src.logic.scheduler import race_day_scheduler  # noqa: E402
+from src.output import weekly_social_report  # noqa: E402
 
 if __name__ == "__main__":
     today = date.today()
@@ -30,4 +31,5 @@ if __name__ == "__main__":
     # レース」からのリンクが付かない。週末分の出馬表ができた後に再度HOMEを
     # 作り直し、リンクが反映された状態にする。
     home_generator.make_home_page()
+    weekly_social_report.post_weekend_preview(today)
     print("Weekly Schedule Update Done")
