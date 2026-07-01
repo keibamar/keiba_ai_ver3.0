@@ -34,12 +34,12 @@ def test_build_course_report_returns_real_data():
     print(f"  avg_frame/horse: {report['avg_frame_and_horse']['avg_frame']} / {report['avg_frame_and_horse']['avg_horse']}")
     print(f"  peds_df shape: {report['peds_df'].shape}")
 
-    # 2026/6/20-21分のレース結果が追加されたため、値は以前の集計から更新されている
+    # 6/27-28分のレース結果が追加されたため、値は以前の集計から更新されている
     assert report["avg_time"] is not None
-    assert report["avg_time"]["avg_time"] == "81662"
-    assert report["avg_pop"]["avg_pop"] == "4.2"
-    assert report["winner_weight"]["馬体重"] == "467.2"
-    assert report["avg_frame_and_horse"]["avg_frame"] == "4.93"
+    assert report["avg_time"]["avg_time"] == "81659"
+    assert report["avg_pop"]["avg_pop"] == "4.22"
+    assert report["winner_weight"]["馬体重"] == "467.3"
+    assert report["avg_frame_and_horse"]["avg_frame"] == "4.91"
     assert not report["peds_df"].empty
     assert report["peds_df"].iloc[0]["血統"] == "ロードカナロア"
 

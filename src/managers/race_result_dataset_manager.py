@@ -107,8 +107,10 @@ def get_race_id_result(race_id):
 
     df_results = get_race_results_csv(place_id, year)
     df_results.index = df_results.index.astype(str)
-    df_result = df_results[race_id:race_id]
-    df_result = df_result.reset_index(drop=True)
+    # ラベルスライス[race_id:race_id]はインデックスが未ソートの場合にKeyErrorを
+    # 引き起こす（非monotonic indexでのラベルスライスはpandasが禁止）ため、
+    # インデックスの並び順に依存しないブールフィルタに変更する。
+    df_result = df_results[df_results.index == race_id].reset_index(drop=True)
 
     if df_result.empty:
         per_race_path = os.path.join(paths.RACE_RESULT_DATA_PATH, PLACE_LIST[place_id - 1], str(year), f"{race_id}.csv")

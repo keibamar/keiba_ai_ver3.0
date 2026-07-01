@@ -13,6 +13,7 @@ import pandas as pd
 from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS, WAKU_COLORS
 from src.logic.html_generator import affiliate_html, horse_report_generator
 from src.logic.prediction.race_prediction_engine import score_to_index
+from src.managers import score_calibration_manager as scm
 from src.logic.html_generator.site_nav_html import (
     AD_SLOT_IN_CONTENT_1,
     AD_SLOT_IN_CONTENT_2,
@@ -156,6 +157,47 @@ def _weight_change_style(body_str):
     return ""
 
 
+def _ai_index_cell_html(ai_index):
+    """AI指数の表示用TD HTMLを返す（色付け・ツールチップ付き）
+
+    ≤39: 青（低評価）、40-59: 黒（標準）、60-69: 赤（高評価）、70以上: 赤+背景色（最高評価）。
+    ツールチップはブラウザ標準のtitle属性で実装し、指数帯の実績を一行で示す。
+    """
+    if ai_index is None or ai_index == "":
+        return "<td></td>"
+
+    # 色付け（4段階）
+    if ai_index >= 70:
+        # 70以上: 赤色 + 薄い赤背景でさらに強調
+        style = "color:#c62828; font-weight:bold; background-color:#ffebee;"
+    elif ai_index >= 60:
+        # 60-69: 赤色・太字
+        style = "color:#c62828; font-weight:bold;"
+    elif ai_index <= 39:
+        # 39以下: 青色・太字
+        style = "color:#1f4fd6; font-weight:bold;"
+    else:
+        # 40-59: 黒（デフォルト色を明示）
+        style = "color:#333;"
+
+    # ツールチップ
+    band = scm.find_band(ai_index)
+    if band:
+        tooltip = (
+            f"AI指数 {band['band_min']}〜{band['band_max']}点帯の実績"
+            f"（単勝{band['win_rate']:.1f}% / 複勝{band['place_rate']:.1f}%）"
+            f" — 同じレースの出走馬の中での評価（平均50点）"
+        )
+    else:
+        tooltip = "AI指数: 同じレースの出走馬の中での評価（偏差値形式。平均50点）"
+
+    td_attrs = f'title="{html.escape(tooltip)}"'
+    if style:
+        td_attrs += f' style="{style}"'
+
+    return f"<td {td_attrs}>{ai_index}</td>"
+
+
 def build_table_race_cards(df):
     """メインの出走表（csv側）から HTML の行文字列を作成"""
     if df is None or df.empty:
@@ -193,24 +235,17 @@ def build_table_race_cards(df):
         # --- 馬体重の増減が大きい馬を強調 ---
         weight_style = _weight_change_style(body)
 
-        # score/rank 表示の整形
-        try:
-            score_fmt = f"{float(score):.3f}" if score != "" and pd.notna(score) else ""
-        except Exception:
-            score_fmt = str(score)
-
+        # rank 表示の整形（score列は廃止してAI指数のみ表示）
         try:
             rank_fmt = int(rank) if rank != "" and pd.notna(rank) else ""
         except Exception:
             rank_fmt = rank
 
-        # AI指数（0〜100の偏差値形式）。Scoreの符号・大小が分かりにくいという声から
-        # 追加した、馴染みやすい指数表示（race_prediction_engine.score_to_index）。
+        # AI指数（0〜100の偏差値形式 / 小数点1桁）
         try:
             ai_index = score_to_index(float(score)) if score != "" and pd.notna(score) else None
         except Exception:
             ai_index = None
-        ai_index_fmt = ai_index if ai_index is not None else ""
 
         # --- 枠順背景色（結果表・配当表と同じ配色で一覧性を揃える） ---
         waku_color = WAKU_COLORS.get(str(waku), "#ffffff")
@@ -233,8 +268,7 @@ def build_table_race_cards(df):
           <td>{kinryo}</td>
           <td>{jockey}</td>
           <td style="{weight_style}">{body}</td>
-          <td>{score_fmt}</td>
-          <td>{ai_index_fmt}</td>
+          {_ai_index_cell_html(ai_index)}
           <td style="{rank_style}">{rank_fmt}</td>
           <td style="{pop_style}">{popularity}</td>
         </tr>
@@ -476,7 +510,6 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
         <th>斤量</th>
         <th>騎手</th>
         <th>馬体重</th>
-        <th>Score</th>
         <th>AI指数</th>
         <th>Rank ▼</th>
         <th>人気</th>
@@ -715,23 +748,8 @@ def generate_result_table(df):
         pred_rank_color = RANK_COLORS.get(str(pred_rank), "#ffffff")
         pred_rank_style = f'background-color:{pred_rank_color};'
 
-        # --- score色付け ---
-        score_color = "black"
-        if score is not None:
-            if (score >= 0.1):
-                score_color = "red"
-            if (score < 0 and score >= -1):
-                score_color = "blue"
-            if (score < -1):
-                score_color = "dark_blue"
-        score_style = f'color:{score_color};'
-
-        # --- score の表示文字列（None対応）---
-        score_str = f"{score:.3f}" if isinstance(score, (int, float)) else ""
-
-        # --- AI指数（build_table_race_cardsと同じ偏差値形式の指数）---
+        # --- AI指数（score列は廃止、AI指数に統一）---
         ai_index = score_to_index(score) if isinstance(score, (int, float)) and pd.notna(score) else None
-        ai_index_fmt = ai_index if ai_index is not None else ""
 
         # --- 馬体重の増減が大きい馬を強調 ---
         weight_style = _weight_change_style(horse_weight)
@@ -750,8 +768,7 @@ def generate_result_table(df):
             <td>{last_3f}</td>
             <td>{race_position}</td>
             <td>{odds}</td>
-            <td style="{score_style}">{score_str}</td>
-            <td>{ai_index_fmt}</td>
+            {_ai_index_cell_html(ai_index)}
             <td style="{pred_rank_style}">{pred_rank}</td>
         </tr>
         """
@@ -765,7 +782,7 @@ def generate_result_table(df):
           <th>着順</th><th>枠</th><th>馬番</th><th>馬名</th>
           <th>騎手</th><th>馬体重</th><th>タイム</th><th>着差</th>
           <th>人気</th><th>上り</th><th>通過</th>
-          <th>単勝オッズ</th><th>score</th><th>AI指数</th><th>Rank</th>
+          <th>単勝オッズ</th><th>AI指数</th><th>Rank</th>
         </tr>
       </thead>
       <tbody>
@@ -1582,6 +1599,18 @@ def make_race_card_html(date_str, place_id, target_id):
 
     returns_df = get_returns_table(date_str, place_id, target_id)
     payout_table_html = generate_payout_table_html(returns_df)
+
+    # 過去レース（確定結果あり）で race_card の「人気」が未取得（"-"や空欄）の場合、
+    # 確定結果（result_df）から最終人気を補完する。馬番で突き合わせる。
+    if not result_df.empty and "人気" in result_df.columns and "馬番" in df.columns:
+        pop_map = result_df.set_index(result_df["馬番"].astype(str))["人気"].to_dict()
+        current_pop = df["人気"] if "人気" in df.columns else pd.Series([""] * len(df), index=df.index)
+        needs_pop = current_pop.apply(lambda v: str(v) not in [str(i) for i in range(1, 19)])
+        if needs_pop.any():
+            df = df.copy()
+            if "人気" not in df.columns:
+                df["人気"] = ""
+            df.loc[needs_pop, "人気"] = df.loc[needs_pop, "馬番"].astype(str).map(pop_map)
 
     # テーブル行作成
     table_rows = build_table_race_cards(df)

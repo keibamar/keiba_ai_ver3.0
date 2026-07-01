@@ -50,7 +50,7 @@ def test_get_time_diff_returns_expected(avg_time_root, monkeypatch):
     print(f"\n--- get_time_diff(race_time={race_time}, course_info={SAMPLE_COURSE_INFO}) ---")
     print(f"  結果（[平均タイムとの差, 標準偏差換算]）: {result}")
 
-    assert result == [0.001184310032390166, 0.004366563784544924]
+    assert result == [0.0004569339730408956, 0.004366563784544924]
 
 
 def test_get_time_diff_returns_zero_when_no_data(tmp_path, monkeypatch):
@@ -162,15 +162,18 @@ def test_zscore_returns_zero_when_all_values_equal():
 
 
 def test_score_to_index_converts_zscore_to_hensachi_style_scale():
-    assert engine.score_to_index(0.0) == 50
-    assert engine.score_to_index(1.0) == 60
-    assert engine.score_to_index(-1.0) == 40
-    assert engine.score_to_index(0.5) == 55
+    assert engine.score_to_index(0.0) == 50.0
+    assert engine.score_to_index(1.0) == 60.0
+    assert engine.score_to_index(-1.0) == 40.0
+    assert engine.score_to_index(0.5) == 55.0
+    # 小数点1桁精度の確認: 整数化では区別できなかった近似スコアが分かれる
+    assert engine.score_to_index(0.004) == 50.0
+    assert engine.score_to_index(-0.027) == 49.7
 
 
 def test_score_to_index_clips_to_0_100_range():
-    assert engine.score_to_index(10.0) == 100
-    assert engine.score_to_index(-10.0) == 0
+    assert engine.score_to_index(10.0) == 100.0
+    assert engine.score_to_index(-10.0) == 0.0
 
 
 def test_score_to_index_returns_none_for_nan():

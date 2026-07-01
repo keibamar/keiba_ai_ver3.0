@@ -28,8 +28,18 @@ from src.config import paths
 from src.config.constants import PLACE_LIST
 from src.logic.calculators import ai_performance_calculator
 from src.logic.calculators.ai_performance_calculator import BET_TYPES
-from src.managers import race_result_dataset_manager
+from src.logic.prediction.race_prediction_engine import score_to_index
+from src.managers import race_card_dataset_manager, race_result_dataset_manager
 from src.utils.file_utils import read_csv_or_empty
+
+# AI指数帯の定義（0〜100を5段階に分ける）
+INDEX_BANDS = [
+    (0,  39, "39以下"),
+    (40, 49, "40-49"),
+    (50, 59, "50-59"),
+    (60, 69, "60-69"),
+    (70, 100, "70以上"),
+]
 
 AI_PERFORMANCE_DATASET_PATH = os.path.join(paths.AI_PERFORMANCE_DATA_PATH, "ai_performance.csv")
 
@@ -74,24 +84,55 @@ def _build_race_conditions(race_ids_by_place_year):
     race_result_dataset_manager.get_race_id_result(race_id) を予想済み全件に
     そのまま呼ぶと、同じ年間結果CSVを何百回も読み直して遅いため、
     (place_id, year)単位でまとめて1回ずつ読み込む。
+
+    合算済みCSV（{year}_race_results.csv）に無いレース（週次バッチがまだ反映して
+    いない直近レース）は、per-race CSV（save_race_result_for_race_idが保存する
+    個別ファイル、race_type等を含む）にフォールバックして取得する。
     """
+    from src.config import paths as _paths
+
     conditions = {}
     for (place_id, year), race_ids in race_ids_by_place_year.items():
         if not (1 <= place_id <= len(PLACE_LIST)):
             continue
         df = race_result_dataset_manager.get_race_results_csv(place_id, year)
-        if df.empty:
-            continue
-        df.index = df.index.astype(str)
-        matched = df[df.index.isin(set(race_ids))]
-        for race_id in matched.index.unique():
-            row = matched.loc[[race_id]].iloc[0]
-            conditions[race_id] = {
-                "race_type": row.get("race_type", ""),
-                "course_len": row.get("course_len", ""),
-                "ground_state": row.get("ground_state", ""),
-                "class": row.get("class", ""),
-            }
+        if not df.empty:
+            df.index = df.index.astype(str)
+            for race_id in set(race_ids):
+                matched = df[df.index == race_id]
+                if matched.empty:
+                    continue
+                row = matched.iloc[0]
+                conditions[race_id] = {
+                    "race_type": row.get("race_type", ""),
+                    "course_len": row.get("course_len", ""),
+                    "ground_state": row.get("ground_state", ""),
+                    "class": row.get("class", ""),
+                }
+
+        # 合算済みCSVで見つからなかったレースはper-race CSVを確認する
+        # （週次バッチ前でも save_race_result_for_race_id が race_type 等を保存済み）
+        missing = [rid for rid in race_ids if rid not in conditions]
+        for race_id in missing:
+            per_race_path = os.path.join(
+                _paths.RACE_RESULT_DATA_PATH,
+                PLACE_LIST[place_id - 1],
+                str(year),
+                f"{race_id}.csv",
+            )
+            per_df = read_csv_or_empty(per_race_path, dtype=str)
+            if per_df.empty:
+                continue
+            row = per_df.iloc[0]
+            race_type = row.get("race_type", "")
+            if race_type:  # per-race CSVにrace_typeが含まれている場合のみ採用
+                conditions[race_id] = {
+                    "race_type": race_type,
+                    "course_len": row.get("course_len", ""),
+                    "ground_state": row.get("ground_state", ""),
+                    "class": row.get("class", ""),
+                }
+
     return conditions
 
 
@@ -293,4 +334,78 @@ def group_breakdown_by_week(df):
         for value, group_df in df.groupby(week_start.dt.strftime("%Y-%m-%d"))
     ]
     result.sort(key=lambda item: item["value"])
+    return result
+
+
+def get_index_band_breakdown(df):
+    """AI指数帯（INDEX_BANDS）ごとのAI予想成績（的中率・回収率）を返す
+
+    dfの各レースについて、当時の出馬表ファイル（race_card_dataset_manager）から
+    トップピック馬のスコアを取得してAI指数（0〜100）に変換し、指数帯ごとに
+    win/place のhit率・回収額を集計する。AIが「高評価」したレースほど成績が
+    良いかを検証するための指標。
+
+    Args:
+        df (pd.DataFrame): get_ai_performance_dataset()の戻り値（またはその一部）。
+
+    Returns:
+        list[dict]: [{"band_label", "band_min", "band_max", "n",
+            "win_hit_rate", "win_return_rate",
+            "place_hit_rate", "place_return_rate"}, ...]
+            INDEX_BANDSの定義順（低→高）で返す。
+    """
+    from datetime import datetime as _dt
+
+    band_accum = {
+        label: {"n": 0, "win_hit": 0, "win_return": 0.0, "place_hit": 0, "place_return": 0.0}
+        for _, _, label in INDEX_BANDS
+    }
+
+    for race_id, row in df.iterrows():
+        race_id = str(race_id)
+        try:
+            race_day = _dt.strptime(str(row.get("race_day", ""))[:10], "%Y-%m-%d").date()
+            pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
+            if pred_df.empty or "score" not in pred_df.columns:
+                continue
+            top_score = pd.to_numeric(pred_df["score"], errors="coerce").max()
+            if pd.isna(top_score):
+                continue
+            ai_idx = score_to_index(float(top_score))
+            if ai_idx is None:
+                continue
+        except Exception:
+            continue
+
+        label = None
+        for bmin, bmax, blabel in INDEX_BANDS:
+            if bmin <= ai_idx <= bmax:
+                label = blabel
+                break
+        if label is None:
+            continue
+
+        acc = band_accum[label]
+        acc["n"] += 1
+        # get_ai_performance_datasetはdtype=strで読み込むため、win_hitが'0.0'等の
+        # 文字列になる。float()を経由してからint()に変換する。
+        acc["win_hit"] += int(float(row.get("win_hit") or 0))
+        acc["win_return"] += float(row.get("win_return") or 0)
+        acc["place_hit"] += int(float(row.get("place_hit") or 0))
+        acc["place_return"] += float(row.get("place_return") or 0)
+
+    result = []
+    for bmin, bmax, label in INDEX_BANDS:
+        acc = band_accum[label]
+        n = acc["n"]
+        result.append({
+            "band_label": label,
+            "band_min": bmin,
+            "band_max": bmax,
+            "n": n,
+            "win_hit_rate": round(acc["win_hit"] / n * 100, 1) if n else 0.0,
+            "win_return_rate": round(acc["win_return"] / n, 1) if n else 0.0,
+            "place_hit_rate": round(acc["place_hit"] / n * 100, 1) if n else 0.0,
+            "place_return_rate": round(acc["place_return"] / n, 1) if n else 0.0,
+        })
     return result

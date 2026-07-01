@@ -354,7 +354,11 @@ def score_to_index(score):
     if pd.isna(score):
         return None
     index = 50 + 10 * score
-    return int(max(0, min(100, round(index))))
+    # 整数に丸めると z-score の差が 0.05 未満の馬が同じ指数になって識別不能になる
+    # （例: score=+0.004 と -0.027 は両方 int→50）ため、小数点1桁に変更する。
+    # これにより 0.1 点差で区別でき、16頭 ÷ 40点幅（±2σ = 20〜80 点の範囲）≈
+    # 平均2.5頭/点 → ほぼ全馬が個別の指数値を持てる解像度になる。
+    return round(max(0.0, min(100.0, index)), 1)
 
 
 def blended_rank_prediction(race_id, horse_ids, race_info_df, waku_df, popularity_series=None, value_weight=0.5):

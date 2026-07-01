@@ -18,6 +18,7 @@ from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS
 from src.config.lists import COURSE_LISTS
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator import affiliate_html
+from src.managers import score_calibration_manager as scm
 from src.logic.html_generator.race_type_badge_html import course_label_html, race_type_span_html
 from src.logic.html_generator.rate_gauge_html import (
     bet_result_cell_html,
@@ -44,6 +45,95 @@ from src.managers import html_manager
 from src.utils import format_data
 
 BET_TYPE_LABELS = {"win": "単勝", "place": "複勝", "trio_box": "三連複(5頭BOX)"}
+
+
+def _score_calibration_html():
+    """AI指数の説明と、指数帯ごとの単勝/複勝的中率の実績テーブルを返す
+
+    出馬表ページに表示されるAI指数（0〜100の偏差値形式の点数）が、
+    実際にどれほどの的中率に対応しているかを示す参考テーブル。
+    キャリブレーションデータが未生成の場合は空文字列を返す。
+    """
+    calib_df = scm.get_score_calibration()
+    if calib_df.empty:
+        return ""
+
+    rows = "".join(
+        f"""<tr>
+          <td>{int(row["band_min"])}〜{int(row["band_max"])}点</td>
+          <td>{row.get("label", "")}</td>
+          <td class="text-right">{int(row["n"])}</td>
+          <td class="text-right">{float(row["win_rate"]):.1f}%</td>
+          <td class="text-right">{float(row["place_rate"]):.1f}%</td>
+        </tr>"""
+        for _, row in calib_df.iterrows()
+    )
+
+    return f"""<h2>AI指数について</h2>
+  <p class="section-intro">
+    出馬表の「AI指数」は、レース内のスコア（偏差値形式、平均50・標準偏差10）です。
+    同じ出走メンバーの中で相対的にどれだけ高く評価されているかを示します。
+    以下の表は過去400レース・5640頭分の実績から算出した参考値です。
+  </p>
+  <div class="table-wrap table-wrap--full">
+  <table>
+    <thead>
+      <tr>
+        <th>AI指数</th><th>評価</th><th>対象頭数</th><th>単勝的中率</th><th>複勝的中率</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows}
+    </tbody>
+  </table>
+  </div>
+  <p class="section-note">※ 的中率はAIが最上位評価した馬が実際に1着/3着内に来た割合（単勝は単一の予想馬、複勝は同一馬での比較）。
+  指数60以上で単勝的中率が明確に高まる傾向が確認されています。</p>"""
+
+
+def _index_band_performance_html(df):
+    """AI指数帯ごとのAI予想成績（的中率・回収率）のテーブルを返す
+
+    AIが「何点の馬」をトップ本命に選んだとき、実際に的中率・回収率がどう
+    変わるかを示す。_score_calibration_htmlとの違い：あちらは全出走馬の
+    分布に基づく参考値、こちらは「AIが実際に本命馬として選んだ馬」の成績のみ。
+    """
+    breakdown = m.get_index_band_breakdown(df)
+    if not breakdown or all(b["n"] == 0 for b in breakdown):
+        return ""
+
+    rows = "".join(
+        f"""<tr>
+          <td>{b["band_label"]}</td>
+          <td>{b["n"]}</td>
+          <td>{b["win_hit_rate"]:.1f}%</td>
+          <td {'style="color:var(--mar-accent); font-weight:bold;"' if b["win_return_rate"] >= 100 else ""}>{b["win_return_rate"]:.1f}円</td>
+          <td>{b["place_hit_rate"]:.1f}%</td>
+          <td>{b["place_return_rate"]:.1f}円</td>
+        </tr>"""
+        for b in breakdown
+    )
+
+    return f"""<h2>AI指数別 予想成績</h2>
+  <p class="section-intro">
+    AIが本命馬に選んだ馬の指数（出馬表の「AI指数」列）ごとに、実際の的中率・
+    回収率をまとめました。回収率100円以上（太字・赤）のとき、理論上プラス収支です。
+  </p>
+  <div class="table-wrap table-wrap--full">
+  <table class="sortable">
+    <thead>
+      <tr>
+        <th>AI指数帯</th><th>レース数</th>
+        <th>単勝的中率</th><th>単勝回収率</th>
+        <th>複勝的中率</th><th>複勝回収率</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows}
+    </tbody>
+  </table>
+  </div>
+  <p class="section-note">※ 回収率は100円投資あたりの平均回収額。100円超えがプラス収支の目安。</p>"""
 
 
 def _performance_table_html(performance, title=None, bet_types=None):
@@ -331,6 +421,10 @@ def make_ai_performance_index_page():
   <ul>
     {place_rows}
   </ul>
+
+  {_index_band_performance_html(df)}
+
+  {_score_calibration_html()}
 
   {affiliate_html.daily_book_recommendation_html()}
 

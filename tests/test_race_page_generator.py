@@ -354,8 +354,9 @@ def test_build_table_race_cards_shows_ai_index_alongside_score():
     print(rows)
 
     # score=1.0 -> 指数60、score=-1.0 -> 指数40（偏差値形式、50+10z）
-    assert "<td>60</td>" in rows
-    assert "<td>40</td>" in rows
+    assert ">60.0</td>" in rows
+    assert 'color:#c62828' in rows
+    assert ">40.0</td>" in rows
 
 
 def test_build_table_race_cards_emphasizes_large_weight_change():
@@ -447,6 +448,7 @@ def test_generate_result_table_shows_ai_index_alongside_score():
     print(result_html)
 
     assert "<th>AI指数</th>" in result_html
-    # score=1.0 -> 指数60、score=-1.0 -> 指数40（偏差値形式、50+10z）
-    assert "<td>60</td>" in result_html
-    assert "<td>40</td>" in result_html
+    # score=1.0 -> 指数60.0、score=-1.0 -> 指数40.0（小数点1桁）
+    assert ">60.0</td>" in result_html
+    assert 'color:#c62828' in result_html
+    assert ">40.0</td>" in result_html
