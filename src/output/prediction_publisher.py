@@ -15,8 +15,9 @@ import tweepy
 from dotenv import find_dotenv, load_dotenv
 
 from src.config import paths
-from src.config.constants import NAME_LIST
+from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import SYMBOL_LIST
+from src.logic.html_generator.site_nav_html import SITE_URL
 from src.managers import race_card_dataset_manager
 
 load_dotenv(find_dotenv())
@@ -109,7 +110,10 @@ def make_race_text(race_day, race_id):
         for rank in range(5):
             if rank < len(pred_list):
                 f.write(" " + SYMBOL_LIST[rank] + " " + str(pred_list[rank][0]) + " " + pred_list[rank][1] + "\n")
-        f.write("\n\n")
+        # 出馬表ページURL
+        place_key = PLACE_LIST[place_id - 1]
+        race_card_url = f"{SITE_URL}/races/{race_day.strftime('%Y%m%d')}/{place_key}R{race_num}.html"
+        f.write(f"{race_card_url}\n\n")
 
         # タグの出力
         f.write("#MAR競馬予想\n")

@@ -35,4 +35,5 @@ if __name__ == "__main__":
     added = ai_performance_dataset_manager.update_ai_performance_dataset()
     print(f"AI Performance Dataset Updated: {added} rows added")
     highlight_report.post_big_hit_highlights(race_day)
+    highlight_report.post_daily_high_payout_summary(race_day)
     print("Today Race Returns Done")
