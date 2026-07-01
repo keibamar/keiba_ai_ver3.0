@@ -58,15 +58,21 @@ def _horse_band_chart_svg(breakdown):
     if not breakdown or all(b["n"] == 0 for b in breakdown):
         return ""
 
-    ROW_H = 72
-    BAR_H = 50
+    n_bands = sum(1 for b in breakdown if b["n"] > 0)
+    ROW_H       = 44 if n_bands > 8 else 72
+    BAR_H       = 30 if n_bands > 8 else 50
+    LBL_FS      = 12 if n_bands > 8 else 14
+    STAT_FS_PRI = 11 if n_bands > 8 else 13
+    STAT_FS_SEC = 10 if n_bands > 8 else 12
+    TXT_MIN_W   = 36 if n_bands > 8 else 48
+
     LABEL_W = 80
     BAR_W = 460
     STAT_W = 140
     PADDING_TOP = 16
     LEGEND_H = 36
     SVG_W = LABEL_W + BAR_W + STAT_W
-    SVG_H = len(breakdown) * ROW_H + PADDING_TOP + LEGEND_H
+    SVG_H = n_bands * ROW_H + PADDING_TOP + LEGEND_H
 
     COLOR_1ST = "#d4921a"
     COLOR_2ND = "#5a8fb0"
@@ -74,13 +80,15 @@ def _horse_band_chart_svg(breakdown):
     COLOR_OUT = "#c8c8c8"
 
     rows_svg = []
-    for i, b in enumerate(breakdown):
+    row_i = 0
+    for b in breakdown:
         n = b["n"]
         if n == 0:
             continue
-        y = PADDING_TOP + i * ROW_H
+        y = PADDING_TOP + row_i * ROW_H
         bar_y = y + (ROW_H - BAR_H) // 2
         mid_y = bar_y + BAR_H // 2
+        row_i += 1
 
         segs = [
             (b["first"],  COLOR_1ST, "1着", "#fff"),
@@ -89,10 +97,9 @@ def _horse_band_chart_svg(breakdown):
             (b["out"],    COLOR_OUT, "着外", "#555"),
         ]
 
-        # Band label
         rows_svg.append(
             f'<text x="{LABEL_W - 8}" y="{mid_y + 5}" text-anchor="end" '
-            f'font-size="14" font-weight="700" fill="#222">{b["band_label"]}</text>'
+            f'font-size="{LBL_FS}" font-weight="700" fill="#222">{b["band_label"]}</text>'
         )
 
         cx = LABEL_W
@@ -106,33 +113,29 @@ def _horse_band_chart_svg(breakdown):
                 f'<rect x="{cx}" y="{bar_y}" width="{w}" height="{BAR_H}" fill="{color}">'
                 f'<title>{tip}</title></rect>'
             )
-            # Count text inside segment
-            if w >= 48:
+            if w >= TXT_MIN_W:
                 rows_svg.append(
                     f'<text x="{cx + w // 2}" y="{mid_y + 4}" text-anchor="middle" '
-                    f'font-size="12" font-weight="600" fill="{txt_color}" pointer-events="none">'
+                    f'font-size="11" font-weight="600" fill="{txt_color}" pointer-events="none">'
                     f'{count:,}</text>'
                 )
             cx += w
 
-        # Fill rounding gap
         gap = LABEL_W + BAR_W - cx
         if gap > 0:
             rows_svg.append(f'<rect x="{cx}" y="{bar_y}" width="{gap}" height="{BAR_H}" fill="{COLOR_OUT}"/>')
 
-        # Rate labels on right
         sx = LABEL_W + BAR_W + 12
         rows_svg.append(
-            f'<text x="{sx}" y="{mid_y - 6}" font-size="13" font-weight="700" fill="#c62828">'
+            f'<text x="{sx}" y="{mid_y - 4}" font-size="{STAT_FS_PRI}" font-weight="700" fill="#c62828">'
             f'単勝 {b["win_rate"]:.1f}%</text>'
         )
         rows_svg.append(
-            f'<text x="{sx}" y="{mid_y + 12}" font-size="12" fill="#555">'
+            f'<text x="{sx}" y="{mid_y + 10}" font-size="{STAT_FS_SEC}" fill="#555">'
             f'複勝 {b["place_rate"]:.1f}%</text>'
         )
 
-    # Legend
-    legend_y = PADDING_TOP + len(breakdown) * ROW_H + 10
+    legend_y = PADDING_TOP + n_bands * ROW_H + 10
     legend_items = [(COLOR_1ST, "1着"), (COLOR_2ND, "2着"), (COLOR_3RD, "3着"), (COLOR_OUT, "着外")]
     lx = LABEL_W
     for color, lbl in legend_items:

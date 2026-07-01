@@ -5,6 +5,7 @@
 """
 
 import html
+import os
 import re
 from datetime import date, datetime, timedelta
 
@@ -46,7 +47,7 @@ def read_race_csv(date_str, target_id):
         print(f"ℹ️ [スキップ/エラーではありません] レースカード未生成: race_day={date_str}, target_id={target_id}")
         return None
     cols = [
-        "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "馬体重(増減)", "score", "rank", "人気",
+        "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "馬体重(増減)", "score", "rank", "オッズ", "人気",
         "score_hitrate", "rank_hitrate", "score_value", "rank_value",
     ]
     existing = [c for c in cols if c in df.columns]
@@ -157,6 +158,44 @@ def _weight_change_style(body_str):
     return ""
 
 
+def _odds_cell_html(odds_raw, tag="td"):
+    """単勝オッズの表示用HTMLを返す（色付け付き）
+
+    10倍未満: 赤（人気馬）、100倍以上: 青（大穴）、その他: 黒。
+    出馬表・結果表で共通して使用する。
+    """
+    odds_str = str(odds_raw).strip() if odds_raw is not None else ""
+    try:
+        val = float(odds_str)
+        if val < 10:
+            style = "color:#c62828; font-weight:bold;"
+        elif val >= 100:
+            style = "color:#1f4fd6; font-weight:bold;"
+        else:
+            style = "color:#333;"
+    except (ValueError, TypeError):
+        style = "color:#333;"
+    return f'<{tag} style="{style}">{odds_str}</{tag}>'
+
+
+def _odds_update_label_html(date_str, target_id, is_confirmed):
+    """オッズ・人気の更新時刻ラベルHTMLを返す
+
+    is_confirmed=True（レース結果確定済み）のとき「確定オッズ」表示。
+    未確定のときはrace_card CSVのファイル更新時刻を表示する。
+    """
+    from src.config import paths
+    if is_confirmed:
+        return '<p class="odds-update-label odds-update-label--confirmed">確定オッズ</p>'
+    card_path = os.path.join(paths.RACE_CARD_DATA_PATH, date_str, f"{target_id}.csv")
+    try:
+        mtime = datetime.fromtimestamp(os.path.getmtime(card_path))
+        label = mtime.strftime("%m/%d %H:%M").lstrip("0")
+        return f'<p class="odds-update-label">オッズ・人気 {label} 時点</p>'
+    except Exception:
+        return ""
+
+
 def _ai_index_cell_html(ai_index):
     """AI指数の表示用TD HTMLを返す（色付け・ツールチップ付き）
 
@@ -223,6 +262,9 @@ def build_table_race_cards(df):
         # 予想は別途TOP5（build_ai_pick_summary_html）で補助的に示す。
         score = row.get('score', "")
         rank = row.get('rank', "")
+        # 単勝オッズ（発走前に確定。未確定時は「---.-」等）
+        odds_raw = row.get('オッズ', '')
+
         # 人気は発走15〜20分前のレースカード再取得時にスクレイピングされる。
         # オッズ未確定時はnetkeiba側が「**」等のプレースホルダーを返すため、
         # 数値として読めない場合は未確定として「-」表示にする
@@ -272,6 +314,7 @@ def build_table_race_cards(df):
           <td style="{weight_style}">{body}</td>
           {_ai_index_cell_html(ai_index)}
           <td style="{rank_style}">{rank_fmt}</td>
+          {_odds_cell_html(odds_raw)}
           <td style="{pop_style}">{popularity}</td>
         </tr>
         """
@@ -331,7 +374,7 @@ def _race_card_breadcrumb_items(date_str, date_display, place_id, target_id, rac
     ]
 
 
-def build_html_content(date_str, date_display, place_id, race_num, race_name, race_time, target_id, table_rows, run_time_info, weight_info, peds_info, pops_info, frames_info, recent_html, result_table_html, payout_table_html, pick_summary_html=""):
+def build_html_content(date_str, date_display, place_id, race_num, race_name, race_time, target_id, table_rows, run_time_info, weight_info, peds_info, pops_info, frames_info, recent_html, result_table_html, payout_table_html, pick_summary_html="", odds_update_label=""):
     """HTMLテンプレートを返す"""
     race_time_display = f"{race_time[:2]}:{race_time[2:]}" if race_time else ""
     place_name = NAME_LIST[place_id - 1]
@@ -501,6 +544,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
   <h2>{place_name}競馬場 第{race_num}R </h2>
   <h2>{race_name}</h2>
   <p>発走時刻: {race_time_display}</p>
+  {odds_update_label}
   <div class="table-wrap table-wrap--full">
   <table id="raceTable">
     <thead>
@@ -514,6 +558,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
         <th>馬体重</th>
         <th>AI指数</th>
         <th>Rank ▼</th>
+        <th>単勝オッズ</th>
         <th>人気</th>
       </tr>
     </thead>
@@ -698,6 +743,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     ad_unit_2=ad_unit_2,
     ad_unit_3=ad_unit_3,
     pick_summary_html=pick_summary_html,
+    odds_update_label=odds_update_label,
     table_rows=table_rows,
     run_time_info=run_time_info,
     weight_info=weight_info,
@@ -1538,21 +1584,7 @@ def generate_recent_same_condition_html(date_str, place_id, target_id):
                 pop_text_color = "black"
             pop_html = f'<td style="background-color: {pop_color}; color: {pop_text_color}; font-weight: bold;">{popularity}</td>'
 
-            # 単勝オッズの色付け
-            odds_str = str(row["単勝"]).strip()
-            try:
-                odds_val = float(odds_str)
-                if odds_val >= 50:
-                    odds_color = "red"
-                elif odds_val >= 30:
-                    odds_color = "orange"
-                elif odds_val < 5:
-                    odds_color = "blue"
-                else:
-                    odds_color = "black"
-            except:
-                odds_color = "black"
-            odds_html = f'<td style="color: {odds_color}; font-weight: bold;">{odds_str}</td>'
+            odds_html = _odds_cell_html(row["単勝"])
             # 時間表記を修正
             time_raw = row["タイム"]
             try:
@@ -1602,17 +1634,28 @@ def make_race_card_html(date_str, place_id, target_id):
     returns_df = get_returns_table(date_str, place_id, target_id)
     payout_table_html = generate_payout_table_html(returns_df)
 
-    # 過去レース（確定結果あり）で race_card の「人気」が未取得（"-"や空欄）の場合、
-    # 確定結果（result_df）から最終人気を補完する。馬番で突き合わせる。
-    if not result_df.empty and "人気" in result_df.columns and "馬番" in df.columns:
-        pop_map = result_df.set_index(result_df["馬番"].astype(str))["人気"].to_dict()
-        current_pop = df["人気"] if "人気" in df.columns else pd.Series([""] * len(df), index=df.index)
-        needs_pop = current_pop.apply(lambda v: str(v) not in [str(i) for i in range(1, 19)])
-        if needs_pop.any():
-            df = df.copy()
-            if "人気" not in df.columns:
-                df["人気"] = ""
-            df.loc[needs_pop, "人気"] = df.loc[needs_pop, "馬番"].astype(str).map(pop_map)
+    is_confirmed = not result_df.empty
+
+    # 確定結果がある場合、race_card の人気・オッズが未取得なら result_df から補完する
+    if is_confirmed and "馬番" in df.columns:
+        if "人気" in result_df.columns:
+            pop_map = result_df.set_index(result_df["馬番"].astype(str))["人気"].to_dict()
+            current_pop = df["人気"] if "人気" in df.columns else pd.Series([""] * len(df), index=df.index)
+            needs_pop = current_pop.apply(lambda v: str(v) not in [str(i) for i in range(1, 19)])
+            if needs_pop.any():
+                df = df.copy()
+                if "人気" not in df.columns:
+                    df["人気"] = ""
+                df.loc[needs_pop, "人気"] = df.loc[needs_pop, "馬番"].astype(str).map(pop_map)
+        if "単勝" in result_df.columns:
+            odds_map = result_df.set_index(result_df["馬番"].astype(str))["単勝"].to_dict()
+            current_odds = df["オッズ"] if "オッズ" in df.columns else pd.Series([""] * len(df), index=df.index)
+            needs_odds = current_odds.apply(lambda v: str(v).strip() in ["", "---.-", "nan"])
+            if needs_odds.any():
+                df = df.copy()
+                if "オッズ" not in df.columns:
+                    df["オッズ"] = ""
+                df.loc[needs_odds, "オッズ"] = df.loc[needs_odds, "馬番"].astype(str).map(odds_map)
 
     # テーブル行作成
     table_rows = build_table_race_cards(df)
@@ -1739,6 +1782,7 @@ def make_race_card_html(date_str, place_id, target_id):
         result_table_html=result_table_html,
         payout_table_html=payout_table_html,
         pick_summary_html=build_ai_pick_summary_html(df),
+        odds_update_label=_odds_update_label_html(date_str, target_id, is_confirmed),
     )
 
     # 🆕 コース情報をHTMLに挿入
