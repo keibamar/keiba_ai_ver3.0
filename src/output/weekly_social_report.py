@@ -71,12 +71,12 @@ def post_weekend_summary(today=None):
         return
 
     text = (
-        f"📊 {saturday.strftime('%m/%d')}〜{sunday.strftime('%m/%d')}のAI成績\n\n"
+        f"📊 {saturday.strftime('%m/%d')}〜{sunday.strftime('%m/%d')}のMARの予想結果\n\n"
         f"単勝 的中率{win['hit_rate']:.1f}% 回収率{win['return_rate']:.1f}%\n"
         f"複勝 的中率{place['hit_rate']:.1f}% 回収率{place['return_rate']:.1f}%\n"
         f"(対象{win['n']}件)\n\n"
         "詳しいデータはこちら👇\n"
-        f"{SITE_URL}/performance/\n"
+        f"{SITE_URL}/\n"
         "#MAR競馬予想 #競馬AI"
     )
     prediction_publisher.post_text(text)
