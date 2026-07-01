@@ -314,15 +314,10 @@ def rank_prediction_value(race_id, horse_ids, race_info_df, waku_df, popularity_
 
 
 def _zscore(score_series):
-    """レース内でスコアを標準化（平均0・標準偏差1）する
+    """レース内でスコアを標準化（平均0・標準偏差1）する（フォールバック用）
 
     的中率重視・回収率重視モデルのスコアはスケールが全く異なる（LightGBMの
     生スコアでモデルごとに値の範囲が違う）ため、ブレンド前にそろえる。
-    以前は「レース内の順位を0〜1に変換」する方式だったが、これだと
-    元のスコアが違っていても同じ順位なら同じ値になり、さらに出走頭数で
-    決まる不自然に丸い数字（0.5, 0.8667等）になってしまっていた。
-    生スコアの差をそのまま反映する標準化に変更し、表示するScoreとRankが
-    常に対応する（Scoreの大小がそのままRankの順序になる）ようにする。
 
     Args:
         score_series (pd.Series): 生スコア
@@ -334,6 +329,74 @@ def _zscore(score_series):
     if not std or pd.isna(std):
         return pd.Series([0.0] * len(score_series), index=score_series.index)
     return (score_series - score_series.mean()) / std
+
+
+# コース別生スコア分布テーブルのメモリキャッシュ（モジュール初回ロード時に1回だけ読む）
+_raw_score_dist_cache = None
+
+# 絶対スコア正規化の有効フラグ。raw_score_distribution.csvが現在のモデルバージョンの
+# スコア分布で構築されたら True に切り替える。
+# それまでは従来のper-race z-scoreにフォールバックする。
+USE_GLOBAL_ZSCORE = True
+
+
+def _load_raw_score_distribution():
+    """コース別の生スコア（LightGBM raw output）分布テーブルを読み込んでキャッシュする
+
+    data/prediction/performance/raw_score_distribution.csv から読み込み、
+    {(place_id, race_type, course_len): {"mean_hitrate", "std_hitrate", ...}} の
+    辞書形式で返す。ファイルが無い場合は空辞書。
+    """
+    global _raw_score_dist_cache
+    if _raw_score_dist_cache is None:
+        path = paths.RAW_SCORE_DISTRIBUTION_PATH
+        if os.path.isfile(path):
+            df = pd.read_csv(path, dtype=str)
+            _raw_score_dist_cache = {}
+            for _, row in df.iterrows():
+                try:
+                    key = (int(row["place_id"]), str(row["race_type"]), str(row["course_len"]))
+                    _raw_score_dist_cache[key] = {
+                        "mean_hitrate": float(row["mean_hitrate"]),
+                        "std_hitrate": max(float(row["std_hitrate"]), 1e-6),
+                        "mean_value": float(row["mean_value"]) if pd.notna(row.get("mean_value", "")) and row.get("mean_value", "") != "nan" else None,
+                        "std_value": max(float(row["std_value"]), 1e-6) if pd.notna(row.get("std_value", "")) and row.get("std_value", "") != "nan" else None,
+                    }
+                except (ValueError, KeyError):
+                    continue
+        else:
+            _raw_score_dist_cache = {}
+    return _raw_score_dist_cache
+
+
+def _global_zscore(score_series, place_id, race_type, course_len, model_type="hitrate"):
+    """コース別のグローバル分布でスコアを絶対スコアとして標準化する
+
+    raw_score_distribution.csvに当該コースのデータがある場合、
+    「コース全体を通じた平均・標準偏差」で正規化する（絶対スコア）。
+    これにより、異なるレース・異なるメンバーでも同じコース種別の馬同士で
+    スコアを比較できる（「この馬はこのコースで歴史的に上位X%」という意味になる）。
+    データ不足（コースの組み合わせがテーブルに無い）場合はper-race _zscore にフォールバック。
+
+    Args:
+        score_series (pd.Series): LightGBMの生スコア列
+        place_id (int): 開催場ID
+        race_type (str): 芝/ダート
+        course_len (str): 距離
+        model_type (str): "hitrate"（サブA）または "value"（サブB）
+
+    Returns:
+        pd.Series: 絶対z-score（またはフォールバック時はper-race z-score）
+    """
+    dist = _load_raw_score_distribution()
+    key = (int(place_id), str(race_type), str(course_len))
+    if key in dist:
+        entry = dist[key]
+        mean_val = entry.get(f"mean_{model_type}")
+        std_val = entry.get(f"std_{model_type}")
+        if mean_val is not None and std_val is not None and std_val > 0:
+            return (score_series - mean_val) / std_val
+    return _zscore(score_series)
 
 
 def score_to_index(score):
@@ -393,14 +456,23 @@ def blended_rank_prediction(race_id, horse_ids, race_info_df, waku_df, popularit
     if popularity_series is not None:
         value_df = rank_prediction_value(race_id, horse_ids, race_info_df, waku_df, popularity_series)
 
+    # コース情報を取得（グローバル正規化に使う）
+    place_id = int(str(race_id)[4:6])
+    race_type = race_info_df.at[0, "race_type"] if not race_info_df.empty and "race_type" in race_info_df.columns else ""
+    course_len = str(race_info_df.at[0, "course_len"]) if not race_info_df.empty and "course_len" in race_info_df.columns else ""
+
     n = len(hitrate_df)
+    # 絶対スコア正規化（USE_GLOBAL_ZSCORE=Trueの場合、コース別グローバル分布で正規化）
+    # USE_GLOBAL_ZSCORE=Falseの場合は従来のper-race z-scoreを使う。
+    # raw_score_distribution.csvが現在のv3モデルのスコアで再構築されたら Trueに切り替える。
+    normalize = _global_zscore if USE_GLOBAL_ZSCORE else lambda s, *a, **k: _zscore(s)
     if value_df.empty or len(value_df) != n:
-        blended_score = _zscore(hitrate_df["score"])
+        blended_score = normalize(hitrate_df["score"], place_id, race_type, course_len, "hitrate")
         value_df = pd.DataFrame({"score": [np.nan] * n, "rank": [np.nan] * n})
     else:
         blended_score = (
-            (1 - value_weight) * _zscore(hitrate_df["score"])
-            + value_weight * _zscore(value_df["score"])
+            (1 - value_weight) * normalize(hitrate_df["score"], place_id, race_type, course_len, "hitrate")
+            + value_weight * normalize(value_df["score"], place_id, race_type, course_len, "value")
         )
 
     result_df = pd.DataFrame({"score": blended_score})

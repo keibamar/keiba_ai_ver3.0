@@ -23,6 +23,8 @@ PREDICTION_DATASET_PATH = os.path.join(PREDICTION_DATA_PATH, "datasets")
 PREDICTION_PERFORMANCE_PATH = os.path.join(PREDICTION_DATA_PATH, "performance")
 # AI指数（score_to_index）の指数帯ごとの単勝/複勝的中率キャリブレーションテーブル
 SCORE_CALIBRATION_PATH = os.path.join(PREDICTION_PERFORMANCE_PATH, "score_calibration.csv")
+# コース別の生スコア（LightGBM raw output）分布テーブル（絶対スコア正規化用）
+RAW_SCORE_DISTRIBUTION_PATH = os.path.join(PREDICTION_PERFORMANCE_PATH, "raw_score_distribution.csv")
 
 # race_card（出馬表+score/rank）日次出力。旧 RACE_CARDS_PATH の新しい置き場所。
 RACE_CARD_DATA_PATH = os.path.join(DATA_PATH, "race_card")

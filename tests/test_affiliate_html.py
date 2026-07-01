@@ -17,7 +17,7 @@ def test_amazon_book_link_html_builds_link_when_configured(monkeypatch):
     html_out = a.amazon_book_link_html("B000000000", "サンプル書籍")
 
     assert 'href="https://www.amazon.co.jp/dp/B000000000?tag=mar-keiba-22"' in html_out
-    assert 'rel="noopener noreferrer sponsored"' in html_out
+    assert 'rel="nofollow noopener sponsored"' in html_out
     assert "サンプル書籍（Amazon）" in html_out
 
 
@@ -110,7 +110,7 @@ def test_a8_service_link_html_builds_link_from_given_url():
     html_out = a.a8_service_link_html(url, "お名前.com")
 
     assert f'href="{url}"' in html_out
-    assert 'rel="noopener noreferrer sponsored"' in html_out
+    assert 'rel="nofollow noopener sponsored"' in html_out
     assert "お名前.com" in html_out
 
 

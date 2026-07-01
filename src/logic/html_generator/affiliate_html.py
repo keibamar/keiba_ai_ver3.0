@@ -135,7 +135,7 @@ def amazon_book_link_html(asin, title):
     url = f"https://www.amazon.co.jp/dp/{asin}?tag={AMAZON_ASSOCIATE_TAG}"
     title_esc = html.escape(str(title))
     return (
-        f'<a href="{url}" target="_blank" rel="noopener noreferrer sponsored" '
+        f'<a href="{url}" target="_blank" rel="nofollow noopener sponsored" '
         f'class="affiliate-link affiliate-link--amazon">{title_esc}（Amazon）</a>'
     )
 
@@ -156,7 +156,7 @@ def rakuten_book_link_html(rakuten_url, title):
     url_esc = html.escape(str(rakuten_url))
     title_esc = html.escape(str(title))
     return (
-        f'<a href="{url_esc}" target="_blank" rel="noopener noreferrer sponsored" '
+        f'<a href="{url_esc}" target="_blank" rel="nofollow noopener sponsored" '
         f'class="affiliate-link affiliate-link--rakuten">{title_esc}（楽天市場）</a>'
     )
 
@@ -249,7 +249,7 @@ def a8_service_link_html(url, name):
     url_esc = html.escape(str(url))
     name_esc = html.escape(str(name))
     return (
-        f'<a href="{url_esc}" target="_blank" rel="noopener noreferrer sponsored" '
+        f'<a href="{url_esc}" target="_blank" rel="nofollow noopener sponsored" '
         f'class="affiliate-link affiliate-link--a8">{name_esc}</a>'
     )
 
