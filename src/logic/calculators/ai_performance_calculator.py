@@ -354,10 +354,9 @@ def current_meeting_reference_day(today=None):
     """「開催場」表示（開催中の競馬場の成績・今週の開催情報）に使う基準日を返す
 
     開催（土日）が終わった直後はまだ今週の開催回が実施されていないため、今週の
-    水曜日までは直近に終わった週末（日曜日）を基準日とし、木曜日になった時点で
-    今週の週末（日曜日。まだ開催前でもスケジュール自体は確定しているため使える）
-    に切り替える（結果の確定には数日かかるcurrent_results_weekend_endとは異なり、
-    開催そのものは終わった時点で確定しているため、追加の確認待ち期間は設けない）。
+    火曜日までは直近に終わった週末（日曜日）を基準日とし、水曜日になった時点で
+    今週の週末（日曜日）に切り替える。これにより「今週の開催」が「先週の結果」と
+    同じタイミング（水曜）で来週末の開催情報に更新される。
 
     Args:
         today (date): 基準日（初期値: 今日）。
@@ -366,8 +365,8 @@ def current_meeting_reference_day(today=None):
     """
     today = today or date.today()
     monday = today - timedelta(days=today.weekday())
-    thursday = monday + timedelta(days=3)
-    if today >= thursday:
+    wednesday = monday + timedelta(days=2)
+    if today >= wednesday:
         return monday + timedelta(days=6)
     return monday - timedelta(days=1)
 
