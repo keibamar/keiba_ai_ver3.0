@@ -18,7 +18,6 @@ from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS
 from src.config.lists import COURSE_LISTS
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator import affiliate_html
-from src.managers import score_calibration_manager as scm
 from src.logic.html_generator.race_type_badge_html import course_label_html, race_type_span_html
 from src.logic.html_generator.rate_gauge_html import (
     bet_result_cell_html,
@@ -47,85 +46,143 @@ from src.utils import format_data
 BET_TYPE_LABELS = {"win": "単勝", "place": "複勝", "trio_box": "三連複(5頭BOX)"}
 
 
-def _score_calibration_html():
-    """AI指数の説明と、指数帯ごとの単勝/複勝的中率の実績テーブルを返す
+def _horse_band_chart_svg(breakdown):
+    """全出走馬ベースのAI指数帯別着度数を横積み上げ棒グラフのSVGで返す
 
-    出馬表ページに表示されるAI指数（0〜100の偏差値形式の点数）が、
-    実際にどれほどの的中率に対応しているかを示す参考テーブル。
-    キャリブレーションデータが未生成の場合は空文字列を返す。
+    Args:
+        breakdown (list[dict]): get_horse_index_band_breakdown() の戻り値
+
+    Returns:
+        str: SVG文字列（空データのときは空文字列）
     """
-    calib_df = scm.get_score_calibration()
-    if calib_df.empty:
-        return ""
-
-    rows = "".join(
-        f"""<tr>
-          <td>{int(row["band_min"])}〜{int(row["band_max"])}点</td>
-          <td>{row.get("label", "")}</td>
-          <td class="text-right">{int(row["n"])}</td>
-          <td class="text-right">{float(row["win_rate"]):.1f}%</td>
-          <td class="text-right">{float(row["place_rate"]):.1f}%</td>
-        </tr>"""
-        for _, row in calib_df.iterrows()
-    )
-
-    return f"""<h2>AI指数について</h2>
-  <p class="section-intro">
-    出馬表の「AI指数」は、レース内のスコア（偏差値形式、平均50・標準偏差10）です。
-    同じ出走メンバーの中で相対的にどれだけ高く評価されているかを示します。
-    以下の表は過去400レース・5640頭分の実績から算出した参考値です。
-  </p>
-  <div class="table-wrap table-wrap--full">
-  <table>
-    <thead>
-      <tr>
-        <th>AI指数</th><th>評価</th><th>対象頭数</th><th>単勝的中率</th><th>複勝的中率</th>
-      </tr>
-    </thead>
-    <tbody>
-      {rows}
-    </tbody>
-  </table>
-  </div>
-  <p class="section-note">※ 的中率はAIが最上位評価した馬が実際に1着/3着内に来た割合（単勝は単一の予想馬、複勝は同一馬での比較）。
-  指数60以上で単勝的中率が明確に高まる傾向が確認されています。</p>"""
-
-
-def _index_band_performance_html(df):
-    """AI指数帯ごとのAI予想成績（的中率・回収率）のテーブルを返す
-
-    AIが「何点の馬」をトップ本命に選んだとき、実際に的中率・回収率がどう
-    変わるかを示す。_score_calibration_htmlとの違い：あちらは全出走馬の
-    分布に基づく参考値、こちらは「AIが実際に本命馬として選んだ馬」の成績のみ。
-    """
-    breakdown = m.get_index_band_breakdown(df)
     if not breakdown or all(b["n"] == 0 for b in breakdown):
         return ""
+
+    ROW_H = 44
+    BAR_H = 28
+    LABEL_W = 68
+    BAR_W = 260
+    STAT_W = 140
+    PADDING = 8
+    SVG_W = LABEL_W + BAR_W + STAT_W
+    LEGEND_H = 28
+    SVG_H = len(breakdown) * ROW_H + LEGEND_H + PADDING
+
+    COLOR_1ST = "#e8a000"
+    COLOR_2ND = "#78a8c8"
+    COLOR_3RD = "#7caa6c"
+    COLOR_OUT = "#d8d8d8"
+
+    rows_svg = []
+    for i, b in enumerate(breakdown):
+        n = b["n"]
+        if n == 0:
+            continue
+        y = i * ROW_H + PADDING
+        bar_y = y + (ROW_H - BAR_H) // 2
+
+        p1 = b["first"] / n
+        p2 = b["second"] / n
+        p3 = b["third"] / n
+        po = b["out"] / n
+
+        x1 = 0
+        w1 = round(p1 * BAR_W)
+        x2 = x1 + w1
+        w2 = round(p2 * BAR_W)
+        x3 = x2 + w2
+        w3 = round(p3 * BAR_W)
+        xo = x3 + w3
+        wo = BAR_W - xo
+
+        bx = LABEL_W
+
+        rows_svg.append(
+            f'<text x="{LABEL_W - 6}" y="{y + ROW_H//2 + 4}" text-anchor="end" '
+            f'font-size="12" fill="#444">{b["band_label"]}</text>'
+        )
+        if w1 > 0:
+            rows_svg.append(f'<rect x="{bx + x1}" y="{bar_y}" width="{w1}" height="{BAR_H}" fill="{COLOR_1ST}"/>')
+        if w2 > 0:
+            rows_svg.append(f'<rect x="{bx + x2}" y="{bar_y}" width="{w2}" height="{BAR_H}" fill="{COLOR_2ND}"/>')
+        if w3 > 0:
+            rows_svg.append(f'<rect x="{bx + x3}" y="{bar_y}" width="{w3}" height="{BAR_H}" fill="{COLOR_3RD}"/>')
+        if wo > 0:
+            rows_svg.append(f'<rect x="{bx + xo}" y="{bar_y}" width="{wo}" height="{BAR_H}" fill="{COLOR_OUT}"/>')
+
+        stat_x = LABEL_W + BAR_W + 8
+        rows_svg.append(
+            f'<text x="{stat_x}" y="{y + ROW_H//2 - 4}" font-size="11" fill="#333">'
+            f'単 {b["win_rate"]:.1f}% / 複 {b["place_rate"]:.1f}%</text>'
+        )
+        rows_svg.append(
+            f'<text x="{stat_x}" y="{y + ROW_H//2 + 10}" font-size="11" fill="#888">'
+            f'{n:,}頭</text>'
+        )
+
+    legend_y = len(breakdown) * ROW_H + PADDING + 6
+    legend_items = [
+        (COLOR_1ST, "1着"), (COLOR_2ND, "2着"), (COLOR_3RD, "3着"), (COLOR_OUT, "着外"),
+    ]
+    legend_svg = []
+    lx = LABEL_W
+    for color, label in legend_items:
+        legend_svg.append(f'<rect x="{lx}" y="{legend_y}" width="14" height="14" fill="{color}"/>')
+        legend_svg.append(
+            f'<text x="{lx + 17}" y="{legend_y + 11}" font-size="11" fill="#555">{label}</text>'
+        )
+        lx += 52
+
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{SVG_W}" height="{SVG_H}" '
+        f'style="max-width:100%; display:block;">'
+        + "\n".join(rows_svg + legend_svg)
+        + "</svg>"
+    )
+
+
+def _index_band_section_html(df):
+    """AI指数別 着度数・成績（全出走馬頭数ベース）セクションのHTMLを返す
+
+    旧 _score_calibration_html / _index_band_performance_html を統合し、
+    全出走馬ベースの着度数グラフ＋成績テーブルを1セクションで表示する。
+    絶対スコアへの切り替えに伴い、指数帯の分布・的中率を全馬ベースで評価する。
+    """
+    breakdown = m.get_horse_index_band_breakdown(df)
+    if not breakdown or all(b["n"] == 0 for b in breakdown):
+        return ""
+
+    chart_svg = _horse_band_chart_svg(breakdown)
 
     rows = "".join(
         f"""<tr>
           <td>{b["band_label"]}</td>
-          <td>{b["n"]}</td>
-          <td>{b["win_hit_rate"]:.1f}%</td>
-          <td {'style="color:var(--mar-accent); font-weight:bold;"' if b["win_return_rate"] >= 100 else ""}>{b["win_return_rate"]:.1f}円</td>
-          <td>{b["place_hit_rate"]:.1f}%</td>
-          <td>{b["place_return_rate"]:.1f}円</td>
+          <td class="text-right">{b["n"]:,}</td>
+          <td class="text-right">{b["first"]:,}</td>
+          <td class="text-right">{b["second"]:,}</td>
+          <td class="text-right">{b["third"]:,}</td>
+          <td class="text-right">{b["out"]:,}</td>
+          <td class="text-right">{b["win_rate"]:.1f}%</td>
+          <td class="text-right">{b["place_rate"]:.1f}%</td>
         </tr>"""
         for b in breakdown
     )
 
-    return f"""<h2>AI指数別 予想成績</h2>
+    return f"""<h2>AI指数別 着度数・成績</h2>
   <p class="section-intro">
-    AIが本命馬に選んだ馬の指数（出馬表の「AI指数」列）ごとに、実際の的中率・
-    回収率をまとめました。回収率100円以上（太字・赤）のとき、理論上プラス収支です。
+    AI指数は各馬のコース・距離別の絶対的な能力スコアを0〜100の偏差値形式に変換した値です。
+    以下は全出走馬の指数帯ごとに実際の着順を集計したものです（本命馬のみでなく全頭対象）。
   </p>
+  <div class="band-chart-wrap">
+    {chart_svg}
+  </div>
   <div class="table-wrap table-wrap--full">
   <table class="sortable">
     <thead>
       <tr>
-        <th>AI指数帯</th><th>レース数</th>
-        <th>単勝的中率</th><th>単勝回収率</th>
-        <th>複勝的中率</th><th>複勝回収率</th>
+        <th>AI指数帯</th><th>総頭数</th>
+        <th>1着</th><th>2着</th><th>3着</th><th>着外</th>
+        <th>単勝率</th><th>複勝率</th>
       </tr>
     </thead>
     <tbody>
@@ -133,7 +190,7 @@ def _index_band_performance_html(df):
     </tbody>
   </table>
   </div>
-  <p class="section-note">※ 回収率は100円投資あたりの平均回収額。100円超えがプラス収支の目安。</p>"""
+  <p class="section-note">※ 単勝率＝1着数÷総頭数、複勝率＝(1〜3着数)÷総頭数。指数が高いほど実際の好走率が高いことを確認できます。</p>"""
 
 
 def _performance_table_html(performance, title=None, bet_types=None):
@@ -422,9 +479,7 @@ def make_ai_performance_index_page():
     {place_rows}
   </ul>
 
-  {_index_band_performance_html(df)}
-
-  {_score_calibration_html()}
+  {_index_band_section_html(df)}
 
   {affiliate_html.daily_book_recommendation_html()}
 

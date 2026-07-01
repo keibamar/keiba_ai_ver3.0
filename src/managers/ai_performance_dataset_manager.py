@@ -409,3 +409,94 @@ def get_index_band_breakdown(df):
             "place_return_rate": round(acc["place_return"] / n, 1) if n else 0.0,
         })
     return result
+
+
+def get_horse_index_band_breakdown(df):
+    """全出走馬頭数ベースでAI指数帯ごとの着度数・的中率を返す
+
+    ai_performance.csv の各レースについて全出走馬のスコアと実際の着順を
+    突き合わせ、AI指数帯ごとに 1着/2着/3着/着外 の頭数と割合を集計する。
+    get_index_band_breakdown（本命馬のみ）と異なり、全馬のデータを使うため
+    サンプルが十分に確保でき、指数と着順の相関を統計的に評価できる。
+
+    Args:
+        df (pd.DataFrame): get_ai_performance_dataset()の戻り値。
+
+    Returns:
+        list[dict]: [{"band_label", "band_min", "band_max", "n",
+            "first", "second", "third", "out",
+            "win_rate", "place_rate"}, ...]
+            INDEX_BANDSの定義順（低→高）で返す。
+    """
+    from datetime import datetime as _dt
+    import pandas as _pd
+
+    band_accum = {
+        label: {"n": 0, "first": 0, "second": 0, "third": 0, "out": 0}
+        for _, _, label in INDEX_BANDS
+    }
+
+    for race_id, row in df.iterrows():
+        race_id = str(race_id)
+        try:
+            race_day = _dt.strptime(str(row.get("race_day", ""))[:10], "%Y-%m-%d").date()
+            pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
+            if pred_df.empty or "score" not in pred_df.columns or "horse_id" not in pred_df.columns:
+                continue
+            result_df = race_result_dataset_manager.get_race_id_result(race_id)
+            if result_df.empty or "着順" not in result_df.columns or "horse_id" not in result_df.columns:
+                continue
+            pred_sub = pred_df[["horse_id", "score"]].copy()
+            pred_sub["horse_id"] = pred_sub["horse_id"].astype(str)
+            res_sub = result_df[["horse_id", "着順"]].copy()
+            res_sub["horse_id"] = res_sub["horse_id"].astype(str)
+            merged = pred_sub.merge(res_sub, on="horse_id", how="inner")
+        except Exception:
+            continue
+
+        for _, hrow in merged.iterrows():
+            score_val = _pd.to_numeric(hrow["score"], errors="coerce")
+            if _pd.isna(score_val):
+                continue
+            ai_idx = score_to_index(float(score_val))
+            if ai_idx is None:
+                continue
+            finish_str = str(hrow["着順"])
+            if "除" in finish_str or "取" in finish_str:
+                continue
+            try:
+                finish = int(finish_str)
+            except (ValueError, TypeError):
+                continue
+
+            for bmin, bmax, label in INDEX_BANDS:
+                if bmin <= ai_idx <= bmax:
+                    acc = band_accum[label]
+                    acc["n"] += 1
+                    if finish == 1:
+                        acc["first"] += 1
+                    elif finish == 2:
+                        acc["second"] += 1
+                    elif finish == 3:
+                        acc["third"] += 1
+                    else:
+                        acc["out"] += 1
+                    break
+
+    result = []
+    for bmin, bmax, label in INDEX_BANDS:
+        acc = band_accum[label]
+        n = acc["n"]
+        result.append({
+            "band_label": label,
+            "band_min": bmin,
+            "band_max": bmax,
+            "n": n,
+            "first": acc["first"],
+            "second": acc["second"],
+            "third": acc["third"],
+            "out": acc["out"],
+            "win_rate": round(acc["first"] / n * 100, 1) if n else 0.0,
+            "place_rate": round((acc["first"] + acc["second"] + acc["third"]) / n * 100, 1) if n else 0.0,
+        })
+    return result
