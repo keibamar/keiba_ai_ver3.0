@@ -24,10 +24,26 @@ def load_race_info(date_str):
     if not df_info.empty:
         for _, row in df_info.iterrows():
             grade = row.get("grade")
-            info[str(row["race_id"])] = {
+            race_id = str(row["race_id"])
+            # コース情報（race_type/course_len）を race_info CSV から補完
+            race_type = ""
+            course_len = ""
+            ri_df = race_card_dataset_manager.get_race_info_csv(race_id)
+            if not ri_df.empty:
+                ri = ri_df.iloc[0]
+                race_type = str(ri.get("race_type", "") or "")
+                raw_len = ri.get("course_len", "")
+                if pd.notna(raw_len):
+                    try:
+                        course_len = str(int(float(str(raw_len).strip())))
+                    except Exception:
+                        pass
+            info[race_id] = {
                 "race_time": str(row["race_time"]),
                 "race_name": str(row["race_name"]),
                 "grade": grade if pd.notna(grade) else None,
+                "race_type": race_type,
+                "course_len": course_len,
             }
     else:
         print(f"警告: レース情報ファイルが存在しません: {date_str}")
@@ -47,10 +63,14 @@ def group_place_races(files_info_list, race_info_dict):
         race_name = ""
         race_time = ""
         grade = None
+        race_type = ""
+        course_len = ""
         if race_id in race_info_dict:
             race_name = race_info_dict[race_id]["race_name"]
             race_time = race_info_dict[race_id]["race_time"]
             grade = race_info_dict[race_id].get("grade")
+            race_type = race_info_dict[race_id].get("race_type", "")
+            course_len = race_info_dict[race_id].get("course_len", "")
 
         if place_key not in place_races:
             place_races[place_key] = {"display": place_name, "races": []}
@@ -59,6 +79,8 @@ def group_place_races(files_info_list, race_info_dict):
             "race_name": race_name,
             "race_time": race_time,
             "grade": grade,
+            "race_type": race_type,
+            "course_len": course_len,
         })
     return place_races
 
@@ -86,19 +108,27 @@ def build_table_rows(place_races, date_str):
                     t = race_info["race_time"].zfill(4)
                     race_time_disp = f"発走時刻: {t[:2]}:{t[2:]}"
 
+                # コース情報（芝=緑、ダート=茶）
+                course_disp = ""
+                rt = race_info.get("race_type", "")
+                cl = race_info.get("course_len", "")
+                if rt and cl:
+                    color = "#2e7d32" if rt in ("芝", "障害") else "#8d6e3a"
+                    course_disp = f'<br><span style="color:{color}; font-size:0.85em;">{rt}{cl}m</span>'
+
                 race_file = f"{place_key}R{race_num}.html"
                 if html_manager.race_page_exists(date_str, race_file):
                     row_cells += (
                         f'<td>'
                         f'<a href="{race_file}">'
-                        f'{race_name_disp}</a><br>'
+                        f'{race_name_disp}</a>{course_disp}<br>'
                         f'{race_time_disp}'
                         f'</td>'
                     )
                 else:
                     row_cells += (
                         f'<td>'
-                        f'{race_name_disp}<br>'
+                        f'{race_name_disp}{course_disp}<br>'
                         f'{race_time_disp}'
                         f'</td>'
                     )

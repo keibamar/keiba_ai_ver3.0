@@ -82,13 +82,13 @@ def test_post_weekend_summary_reports_win_and_place_for_recent_saturday_sunday(m
     text = captured_post[0]
     print(f"\n--- post_weekend_summary ---\n{text}")
 
-    assert "06/20〜06/21のAI成績" in text
+    assert "06/20〜06/21" in text
     # win: hit=1/2=50.0%, return=(200+0)/2=100.0
     assert "単勝 的中率50.0% 回収率100.0%" in text
     # place: hit=2/2=100.0%, return=(150+120)/2=135.0
     assert "複勝 的中率100.0% 回収率135.0%" in text
     assert "(対象2件)" in text
-    assert "https://mar-keiba.com/performance/" in text
+    assert "https://mar-keiba.com" in text
 
 
 def test_post_weekend_summary_skips_when_no_data(monkeypatch, captured_post, tmp_path):

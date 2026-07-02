@@ -177,10 +177,15 @@ def test_make_race_card_html_generates_full_page(new_roots):
     assert '<a id="pageTop"></a>' in html_content
     assert '<p class="back-to-top"><a href="#pageTop">&uarr; ページの先頭へ戻る</a></p>' in html_content
 
-    # --- 見出し ---
-    assert "<h2>2024/10/20 </h2>" in html_content
-    assert f"<h2>{NAME_LIST[SAMPLE_PLACE_ID - 1]}競馬場 第1R </h2>" in html_content
-    assert "芝2000m 天候:晴 馬場:稍重 クラス:未勝利" in html_content
+    # --- 見出し（1行にまとめた形式）---
+    assert 'class="race-page-title"' in html_content
+    assert "2024/10/20" in html_content
+    assert f"{NAME_LIST[SAMPLE_PLACE_ID - 1]}競馬場　第1R" in html_content
+    # コース: レース名h2横にリンク付きバッジで表示（芝は .turf クラス）
+    assert 'href="../../courses/04_nigata/芝-2000.html"' in html_content
+    assert 'class="course-link turf"' in html_content
+    # 天候・馬場・クラスは別行に表示
+    assert "天候:晴 馬場:稍重 クラス:未勝利" in html_content
 
     # --- 出馬表テーブル（全頭を縦スクロールなしで見られるようtable-wrap--fullを付与） ---
     assert '<div class="table-wrap table-wrap--full">\n  <table id="raceTable">' in html_content
@@ -254,6 +259,7 @@ def test_make_daily_race_card_html_links_resolve_in_a_single_pass(new_roots, mon
 
 
 def test_build_ai_pick_summary_html_lists_top5_for_each_sub_model_in_score_order():
+    """サブモデルは現在非表示のため、常に空文字列を返す"""
     df = pd.DataFrame({
         "馬番": [1, 2, 3, 4, 5, 6],
         "馬名": ["A", "B", "C", "D", "E", "F"],
@@ -261,25 +267,11 @@ def test_build_ai_pick_summary_html_lists_top5_for_each_sub_model_in_score_order
         "score_hitrate": [0.6, 0.5, 0.4, 0.3, 0.2, 0.1],
         "score_value": [1, 2, 3, 4, 5, 6],
     })
-
-    html_out = r.build_ai_pick_summary_html(df)
-
-    print("\n--- build_ai_pick_summary_html (TOP5表示) ---")
-    print(html_out)
-
-    assert "🎯 的中率重視モデル TOP5" in html_out
-    assert "💰 回収率重視モデル TOP5" in html_out
-    # 的中率重視はscore_hitrate降順(A,B,C,D,E)で6位のFは出ない
-    hitrate_section, value_section = html_out.split("回収率重視モデル TOP5")
-    assert "<li>1番 A</li>" in hitrate_section
-    assert "<li>5番 E</li>" in hitrate_section
-    assert "6番 F" not in hitrate_section
-    # 回収率重視はscore_value降順(F,E,D,C,B)で1位のAは出ない
-    assert "<li>6番 F</li>" in value_section
-    assert "1番 A" not in value_section
+    assert r.build_ai_pick_summary_html(df) == ""
 
 
 def test_build_ai_pick_summary_html_shows_empty_message_when_value_model_missing():
+    """サブモデルは現在非表示のため、常に空文字列を返す"""
     df = pd.DataFrame({
         "馬番": [1, 2],
         "馬名": ["A", "B"],
@@ -287,12 +279,7 @@ def test_build_ai_pick_summary_html_shows_empty_message_when_value_model_missing
         "score_hitrate": [0.9, 0.1],
         "score_value": [None, None],
     })
-
-    html_out = r.build_ai_pick_summary_html(df)
-
-    assert "🎯 的中率重視モデル TOP5" in html_out
-    assert "💰 回収率重視モデル TOP5" in html_out
-    assert "データなし" in html_out
+    assert r.build_ai_pick_summary_html(df) == ""
 
 
 def test_build_ai_pick_summary_html_returns_empty_for_blank_df():
@@ -330,9 +317,9 @@ def test_build_table_race_cards_colors_waku_and_top_rank():
     # 枠1=白、枠3=赤（WAKU_COLORS）。枠・馬番の両セルに同じ背景色を適用する
     assert rows.count('style="background-color:white; color:#000;"') == 2
     assert rows.count('style="background-color:red; color:#fff;"') == 2
-    # AI予想Rank 1位=金色、2位=水色（RANK_COLORS）
-    assert '<td style="background-color:#FFD700;">1</td>' in rows
-    assert '<td style="background-color:#B0E0E6;">2</td>' in rows
+    # AI予想Rank: PRED_RANK_COLORS（人気と同系色だが薄いパステル）+ ai-rank-col クラス付き
+    assert '<td class="ai-rank-col" style="background-color:#FFF9C4;">1</td>' in rows
+    assert '<td class="ai-rank-col" style="background-color:#B2EBF2;">2</td>' in rows
 
 
 def test_build_table_race_cards_shows_ai_index_alongside_score():
@@ -447,7 +434,7 @@ def test_generate_result_table_shows_ai_index_alongside_score():
     print("\n--- generate_result_table (AI指数) ---")
     print(result_html)
 
-    assert "<th>AI指数</th>" in result_html
+    assert '<th class="ai-score-col">AI指数</th>' in result_html
     # score=1.0 -> 指数60.0、score=-1.0 -> 指数40.0（小数点1桁）
     assert ">60.0</td>" in result_html
     assert 'color:#c62828' in result_html

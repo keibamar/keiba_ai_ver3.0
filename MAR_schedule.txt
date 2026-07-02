@@ -1,0 +1,247 @@
+========================================
+MAR競馬予想 自動化スケジュール
+========================================
+最終更新: 2026-07-01
+
+凡例
+  [データ] data/ 以下のCSV・モデルファイル
+  [HTML]   public_html/ 以下のHTMLファイル
+  [投稿]   X(Twitter)投稿 / メール送信
+
+----------------------------------------
+毎日 00:05  update_today_content.bat
+----------------------------------------
+[HTML]
+  - public_html/index.html（Homeページ）
+  - public_html/races/index.html（レースカレンダー）
+  - public_html/assets/js/raceMeetings.js
+→ git commit + ConoHaアップロード
+
+----------------------------------------
+火曜 20:00  post_weekend_summary.bat
+----------------------------------------
+[投稿]
+  - X: 先週末（土日）のMARの予想結果
+      「📊 MM/DD〜MM/DDのMARの予想結果
+       単勝 的中率x.x% 回収率xxx.x%
+       複勝 的中率x.x% 回収率xxx.x%
+       (対象xx件)
+       https://mar-keiba.com/
+       #MAR競馬予想 #競馬AI」
+
+----------------------------------------
+水曜 00:30  update_weekly.bat
+----------------------------------------
+[データ]
+  - data/race_result/         週次取得（直近開催分）
+  - data/race_info/returns/   週次取得（直近開催分）
+  - data/horse/peds/          週次取得
+  - data/horse/peds_results/  週次取得
+  - data/horse/past_performance/ 週次取得
+  - data/race_info/horse_name_id_map.csv  更新
+  - data/race_info/average_pops.csv       更新
+  - data/race_info/winners_weight.csv     更新
+  - data/race_info/average_frame_and_horse.csv 更新
+  - data/race_info/winner_time.csv        更新
+  - data/race_info/average_time.csv       更新
+  - data/prediction/performance/ai_performance.csv  取りこぼし分を追記
+[HTML]
+  - public_html/courses/ 以下 全コース別データページ
+  - public_html/performance/ 以下 AI成績ページ全ページ
+      ・AI指数別成績（SVGグラフ）
+      ・開催別成績
+      ・年別成績
+      ・コース別AI成績
+→ git commit + ConoHaアップロード
+
+----------------------------------------
+木曜 20:00  update_weekly_schedule.bat
+----------------------------------------
+[データ]
+  - data/race_card/time_id_list/ 次7日分のレース時刻リスト作成
+[HTML]
+  - public_html/races/{土曜日付}/index.html  出馬表一覧（仮）
+  - public_html/races/{日曜日付}/index.html  出馬表一覧（仮）
+  - public_html/races/{土曜日付}/{会場}R{n}.html  全レース仮版
+      ※枠順確定前・予想スコア空欄
+  - public_html/index.html（Homeページ）
+[投稿]
+  - X: 今週末のメインレース予告
+      「📅 今週末の注目レース
+       ・土 {会場}11R {レース名}
+       ・日 {会場}11R {レース名}
+       AI予想・出馬表はこちら👇
+       https://mar-keiba.com/
+       #MAR競馬予想 #競馬AI」
+→ git commit + ConoHaアップロード
+
+----------------------------------------
+金曜 12:00  post_weekend_preview.bat
+----------------------------------------
+[投稿]
+  - X: 今週末のメインレース予告（木曜と同内容）
+
+----------------------------------------
+金曜 18:00  make_html_prev_day.bat
+----------------------------------------
+[HTML]
+  - public_html/races/{土曜日付}/{会場}R{n}.html  全レース確定版
+      ※枠順・予想スコア・ランク反映済み
+  - public_html/races/{土曜日付}/index.html  更新
+  - public_html/index.html（Homeページ）
+→ git commit + ConoHaアップロード
+
+========================================
+【土曜・日曜 共通】
+========================================
+
+----------------------------------------
+土日 09:00  post_today_race.bat（終日実行）
+     ※最終レースの30分後に自動終了
+----------------------------------------
+[各レース 発走20分前に繰り返し実行]
+
+  [データ]
+    - data/race_card/{日付}/{race_id}.csv  予想スコア・ランク更新
+    - data/race_card/{日付}/{race_id}_info.csv  レース情報更新
+    - data/race_info/horse_name_id_map.csv  馬名IDマップ更新
+    - texts/race_prediction/{日付}/{race_id}.txt  予想テキスト生成
+
+  [HTML]
+    - public_html/races/{日付}/{会場}R{n}.html  出馬表更新
+    - public_html/races/{日付}/index.html  日次インデックス更新
+    - public_html/races/（過去7日分）index.html  リンク更新
+
+  [投稿]
+    - X: レース予想投稿
+        「{年}/{月}/{日}
+         {会場}{n}R {レース名} {発走時刻}
+
+          ◎ {馬番} {馬名}
+          ○ {馬番} {馬名}
+          ▲ {馬番} {馬名}
+          △ {馬番} {馬名}
+          ☆ {馬番} {馬名}
+
+         https://mar-keiba.com/races/{日付}/{会場}R{n}.html
+
+         #MAR競馬予想
+         #競馬予想AI
+         #競馬 #競馬予想
+         #{会場}競馬場」
+    - メール: 同内容をGmail送信
+
+  [前レースの処理（発走20分前のタイミングで前走の結果を取得）]
+    [データ]
+      - data/race_result/{race_id}.csv  前レース結果保存
+      - data/race_info/returns/{race_id}.csv  前レース配当保存
+    [HTML]
+      - 前レースの出馬表HTML  結果・配当を反映して更新
+
+  → レースごとに git commit + ConoHaアップロード
+
+----------------------------------------
+土日 16:00（土曜のみ）  make_html_prev_day.bat
+----------------------------------------
+[HTML]
+  - public_html/races/{日曜日付}/{会場}R{n}.html  全レース確定版
+  - public_html/races/{日曜日付}/index.html  更新
+  - public_html/index.html（Homeページ）
+→ git commit + ConoHaアップロード
+
+----------------------------------------
+土日 18:00  today_race_rerturns.bat
+----------------------------------------
+[データ]
+  - data/prediction/performance/ai_performance.csv  当日分追記
+  - texts/race_returns/{日付}/{会場}_pred_score.txt  成績テキスト生成
+
+[HTML]
+  - public_html/races/{日付}/{会場}R{n}.html  全レース最終版（結果確定版）
+
+[投稿]
+  - X: 開催場別 成績投稿（開催場ごとに1投稿）
+      「{年}/{月}/{日} {会場}競馬場
+       MAR競馬予想 回収率
+       ◎単勝回収率:xxx.x%  (的中レース:x R)
+       ◎複勝回収率:xxx.x%  (的中レース:x x R)
+       三連複(5頭BOX)回収率:xxx.x%  (的中レース:x R)
+       #MAR競馬予想
+       #競馬予想AI
+       #競馬 #競馬予想
+       #{会場}競馬場」
+
+  - X: 高配当的中があれば全場まとめ投稿（1投稿）
+      ※単勝/複勝 1000円以上 または 三連複5頭BOX 10000円以上
+      「🏆 本日の高配当的中
+
+       {会場}　{n}R　{レース名}
+       ◎{馬名}　{人気}人気　馬番{馬番}　単勝{配当}円/複勝{配当}円
+
+       {会場}　{n}R　{レース名}
+       3連複{◎○▲など}　{配当}円
+
+       https://mar-keiba.com/
+       #MAR競馬予想 #競馬AI」
+      ※高配当的中がない場合は投稿しない
+
+→ git commit + ConoHaアップロード
+
+----------------------------------------
+土日 20:00  update_daily_html.bat
+----------------------------------------
+[HTML]
+  - public_html/races/{日付}/{会場}R{n}.html  全レース再生成
+      ※18:00の処理で取りこぼしがあった場合の補完
+→ git commit + ConoHaアップロード
+
+========================================
+【手動実行】
+========================================
+
+make_time_id_list.bat
+  用途: race_time_id_listを手動更新
+        （木曜の update_weekly_schedule.bat が失敗した時など）
+  [データ]
+    - data/race_card/time_id_list/{日付}.csv  更新
+
+update_daily_html.bat
+  用途: 出馬表HTMLを任意のタイミングで全再生成したい時
+  [HTML]
+    - public_html/races/{日付}/{会場}R{n}.html  全レース再生成
+  → git commit + ConoHaアップロード
+
+update_monthly.bat（月初に手動実行）
+  用途: 過去月分のデータを遡って取得・補完
+  [データ]
+    - data/race_result/         月次取得
+    - data/race_info/returns/   月次取得
+    - data/horse/peds/          月次取得
+    - data/horse/peds_results/  月次取得
+    - data/horse/past_performance/ 月次取得
+    - data/race_info/average_time.csv  更新
+
+========================================
+【補足: HTMLファイルの更新頻度まとめ】
+========================================
+
+public_html/index.html（Home）
+  毎日00:05 / 木曜20:00 / 金曜18:00 / 土日16:00 / 随時
+
+public_html/races/index.html（カレンダー）
+  毎日00:05
+
+public_html/races/{日付}/index.html（日次インデックス）
+  土日09:00〜（逐次）
+
+public_html/races/{日付}/{会場}R{n}.html（出馬表）
+  木曜20:00（仮）→ 金曜18:00 / 土曜16:00（確定版）
+  → 土日09:00〜（予想反映・逐次）
+  → 土日18:00（結果確定版）
+  → 土日20:00（補完）
+
+public_html/courses/（コース別データ）
+  水曜00:30
+
+public_html/performance/（AI成績）
+  水曜00:30

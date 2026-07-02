@@ -12,6 +12,9 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 
 from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS, WAKU_COLORS
+
+# AI予想Rank用の配色（人気と同系色だが薄め、視覚的に区別しやすくする）
+PRED_RANK_COLORS = {"1": "#FFF9C4", "2": "#B2EBF2", "3": "#FFE0B2"}
 from src.logic.html_generator import affiliate_html, horse_report_generator
 from src.logic.prediction.race_prediction_engine import score_to_index
 from src.managers import score_calibration_manager as scm
@@ -117,27 +120,8 @@ def _sub_model_picks_column_html(label, emoji, picks):
 
 
 def build_ai_pick_summary_html(df):
-    """的中率重視・回収率重視モデルのTOP5（score降順）を補助情報として返す
-
-    メインの出走表（Score/Rank列）はバランス型のスコアで、1位の馬が表からそのまま
-    分かるため、ここでは個別の本命は書かず、サブモデル2つのTOP5だけを小さく出す
-    （バランス型がメイン、的中率重視・回収率重視はあくまで補助という位置づけを
-    視覚的にも示すため）。
-    """
-    if df is None or df.empty:
-        return ""
-
-    hitrate_picks = _top_n_by_score(df, "score_hitrate")
-    value_picks = _top_n_by_score(df, "score_value")
-    if not hitrate_picks and not value_picks:
-        return ""
-
-    hitrate_col = _sub_model_picks_column_html("的中率重視モデル TOP5", "🎯", hitrate_picks)
-    value_col = _sub_model_picks_column_html("回収率重視モデル TOP5", "💰", value_picks)
-    return f"""<div class="ai-sub-model-picks">
-      {hitrate_col}
-      {value_col}
-    </div>"""
+    """的中率重視・回収率重視モデルのTOP5（現在は非表示）"""
+    return ""
 
 
 def _weight_change_style(body_str):
@@ -155,6 +139,16 @@ def _weight_change_style(body_str):
         return 'color:red; font-weight:bold;'
     if diff <= -10:
         return 'color:blue; font-weight:bold;'
+    return ""
+
+
+def _seirei_style(seirei):
+    """性齢文字列から文字色styleを返す（牝→赤、セン→青、牡→デフォルト黒）"""
+    s = str(seirei)
+    if s.startswith("牝"):
+        return "color:#c62828; font-weight:bold;"
+    if s.startswith("セン"):
+        return "color:#1565c0; font-weight:bold;"
     return ""
 
 
@@ -199,24 +193,20 @@ def _odds_update_label_html(date_str, target_id, is_confirmed):
 def _ai_index_cell_html(ai_index):
     """AI指数の表示用TD HTMLを返す（色付け・ツールチップ付き）
 
-    ≤39: 青（低評価）、40-59: 黒（標準）、60-69: 赤（高評価）、70以上: 赤+背景色（最高評価）。
-    ツールチップはブラウザ標準のtitle属性で実装し、指数帯の実績を一行で示す。
+    ≤39: 青（低評価）、40-59: 標準、60-69: 赤（高評価）、70以上: 赤+強調背景。
+    ai-score-col クラスで列全体に薄い背景と左ボーダーを付ける（CSSで定義）。
     """
     if ai_index is None or ai_index == "":
-        return "<td></td>"
+        return '<td class="ai-score-col"></td>'
 
-    # 色付け（4段階）
+    # 色付け（4段階）。70以上は背景色もインラインで上書き（クラス背景より優先）
     if ai_index >= 70:
-        # 70以上: 赤色 + 薄い赤背景でさらに強調
         style = "color:#c62828; font-weight:bold; background-color:#ffebee;"
     elif ai_index >= 60:
-        # 60-69: 赤色・太字
         style = "color:#c62828; font-weight:bold;"
     elif ai_index <= 39:
-        # 39以下: 青色・太字
         style = "color:#1f4fd6; font-weight:bold;"
     else:
-        # 40-59: 黒（デフォルト色を明示）
         style = "color:#333;"
 
     # ツールチップ
@@ -232,9 +222,7 @@ def _ai_index_cell_html(ai_index):
     else:
         tooltip = "AI指数: コース・距離別の絶対的な能力スコア（0〜100点、高いほど高評価）"
 
-    td_attrs = f'title="{html.escape(tooltip)}"'
-    if style:
-        td_attrs += f' style="{style}"'
+    td_attrs = f'class="ai-score-col" title="{html.escape(tooltip)}" style="{style}"'
 
     return f"<td {td_attrs}>{ai_index}</td>"
 
@@ -273,11 +261,13 @@ def build_table_race_cards(df):
             popularity = str(int(float(popularity_raw)))
         except (ValueError, TypeError):
             popularity = "-"
-        # --- 人気上位3頭の色付け（結果表と同じ配色） ---
+        # --- 人気上位3頭の色付け（金・水色・サーモン = 鮮やか系） ---
         pop_color = RANK_COLORS.get(popularity, "#ffffff")
         pop_style = f'background-color:{pop_color};'
         # --- 馬体重の増減が大きい馬を強調 ---
         weight_style = _weight_change_style(body)
+        # --- 性齢の色付け（牝→赤、セン→青、牡→デフォルト） ---
+        seirei_style = _seirei_style(seirei)
 
         # rank 表示の整形（score列は廃止してAI指数のみ表示）
         try:
@@ -295,9 +285,9 @@ def build_table_race_cards(df):
         waku_color = WAKU_COLORS.get(str(waku), "#ffffff")
         waku_style = f'background-color:{waku_color}; color:{"#fff" if str(waku) in ["2", "3", "4", "7"] else "#000"};'
 
-        # --- AI予想Rank上位3頭の色付け ---
-        rank_color = RANK_COLORS.get(str(rank_fmt), "#ffffff")
-        rank_style = f'background-color:{rank_color};'
+        # --- AI予想Rank上位3頭: 人気と同系色だが薄いパステル系で区別 ---
+        rank_color = PRED_RANK_COLORS.get(str(rank_fmt), "")
+        rank_style = f'background-color:{rank_color};' if rank_color else ""
 
         # 馬名をクリック可能にする（詳細レポートへのリンク）
         unique_id = f"horse_report_{idx}_{umaban}"
@@ -308,14 +298,14 @@ def build_table_race_cards(df):
           <td style="{waku_style}">{waku}</td>
           <td style="{waku_style}">{umaban}</td>
           <td>{name_html}</td>
-          <td>{seirei}</td>
+          <td style="{seirei_style}">{seirei}</td>
           <td>{kinryo}</td>
           <td>{jockey}</td>
           <td style="{weight_style}">{body}</td>
-          {_ai_index_cell_html(ai_index)}
-          <td style="{rank_style}">{rank_fmt}</td>
-          {_odds_cell_html(odds_raw)}
           <td style="{pop_style}">{popularity}</td>
+          {_odds_cell_html(odds_raw)}
+          {_ai_index_cell_html(ai_index)}
+          <td class="ai-rank-col" style="{rank_style}">{rank_fmt}</td>
         </tr>
         """
     return rows
@@ -374,7 +364,7 @@ def _race_card_breadcrumb_items(date_str, date_display, place_id, target_id, rac
     ]
 
 
-def build_html_content(date_str, date_display, place_id, race_num, race_name, race_time, target_id, table_rows, run_time_info, weight_info, peds_info, pops_info, frames_info, recent_html, result_table_html, payout_table_html, pick_summary_html="", odds_update_label=""):
+def build_html_content(date_str, date_display, place_id, race_num, race_name, race_time, target_id, table_rows, run_time_info, weight_info, peds_info, pops_info, frames_info, recent_html, result_table_html, payout_table_html, pick_summary_html="", odds_update_label="", course_link_html="", weather_info_html=""):
     """HTMLテンプレートを返す"""
     race_time_display = f"{race_time[:2]}:{race_time[2:]}" if race_time else ""
     place_name = NAME_LIST[place_id - 1]
@@ -442,6 +432,77 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     .score-high {{ color: red; }}
     .score-low {{ color: blue; }}
     .score-verylow {{ color: darkblue; }}
+
+    /* AI指数・Rank列（MARオリジナル予想情報）をボルドー系で区別 */
+    .ai-score-col {{
+      border-left: 3px solid #7a2438;
+    }}
+    .ai-rank-col {{
+      border-right: 3px solid #7a2438;
+    }}
+    td.ai-score-col, td.ai-rank-col {{
+      font-size: 1.1em;
+      font-weight: bold;
+    }}
+    tbody tr td.ai-score-col,
+    tbody tr td.ai-rank-col {{
+      background-color: #fbeef0;
+    }}
+    tbody tr:nth-child(even) td {{
+      background-color: #f5f5f5;
+    }}
+    tbody tr:nth-child(even) td.ai-score-col,
+    tbody tr:nth-child(even) td.ai-rank-col {{
+      background-color: #f3d9de;
+    }}
+    th.ai-score-col, th.ai-rank-col {{
+      background-color: #7a2438;
+      color: white;
+    }}
+
+    /* コースリンク（レース名横）- 芝は緑、ダートは茶 */
+    .course-link {{
+      font-size: 0.75em;
+      font-weight: bold;
+      text-decoration: none;
+      margin-left: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      vertical-align: middle;
+    }}
+    .course-link.turf {{
+      color: #2e7d32;
+      border: 1px solid #81c784;
+      background-color: #e8f5e9;
+    }}
+    .course-link.turf:hover {{
+      background-color: #c8e6c9;
+    }}
+    .course-link.dirt {{
+      color: #8d6e3a;
+      border: 1px solid #bcaaa4;
+      background-color: #efebe9;
+    }}
+    .course-link.dirt:hover {{
+      background-color: #d7ccc8;
+    }}
+
+    /* レースヘッダー */
+    .race-page-title {{
+      font-size: 1.2em;
+      margin-bottom: 6px;
+    }}
+    .race-page-time {{
+      font-size: 1.15em;
+      font-weight: bold;
+      margin: 4px 0;
+      color: #333;
+    }}
+    .race-page-info {{
+      font-size: 1.05em;
+      color: #555;
+      margin: 4px 0 12px;
+    }}
     #payoutTable td.num {{
       text-align: right;
       padding-right: 10px;
@@ -540,10 +601,9 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
   <a id="pageTop"></a>
   {site_nav}
   {breadcrumb}
-  <h2>{date_display} </h2>
-  <h2>{place_name}競馬場 第{race_num}R </h2>
-  <h2>{race_name}</h2>
-  <p>発走時刻: {race_time_display}</p>
+  <h2 class="race-page-title">{date_display}　{place_name}競馬場　第{race_num}R　{race_name}{course_link_html}</h2>
+  <p class="race-page-time">発走時刻: {race_time_display}</p>
+  {weather_info_html}
   {odds_update_label}
   <div class="table-wrap table-wrap--full">
   <table id="raceTable">
@@ -556,10 +616,10 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
         <th>斤量</th>
         <th>騎手</th>
         <th>馬体重</th>
-        <th>AI指数</th>
-        <th>Rank ▼</th>
+        <th>人気 ▼</th>
         <th>単勝オッズ</th>
-        <th>人気</th>
+        <th class="ai-score-col">AI指数</th>
+        <th class="ai-rank-col">Rank ▼</th>
       </tr>
     </thead>
     <tbody>
@@ -639,19 +699,17 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
 
   document.addEventListener("DOMContentLoaded", () => {{
     // ======== スタイル設定部分 ========
+    // 列順: 枠[0] 馬番[1] 馬名[2] 性齢[3] 斤量[4] 騎手[5] 馬体重[6]
+    //       人気[7] 単勝オッズ[8] AI指数[9] Rank[10]
     const rows = document.querySelectorAll("#raceTable tbody tr");
     rows.forEach(row => {{
       const waku = parseInt(row.children[0].innerText);
       row.children[0].classList.add(`waku-${{waku}}`);
       row.children[1].classList.add(`waku-${{waku}}`);
-      const rank = parseInt(row.children[8].innerText);
-      if (rank === 1) row.children[8].classList.add("rank-1");
-      if (rank === 2) row.children[8].classList.add("rank-2");
-      if (rank === 3) row.children[8].classList.add("rank-3");
-      const score = parseFloat(row.children[7].innerText);
-      if (score >= 0.1) row.children[7].classList.add("score-high");
-      if (score < 0 && score >= -1) row.children[7].classList.add("score-low");
-      if (score < -1) row.children[7].classList.add("score-verylow");
+      const rank = parseInt(row.children[10].innerText);
+      if (rank === 1) row.children[10].classList.add("rank-1");
+      if (rank === 2) row.children[10].classList.add("rank-2");
+      if (rank === 3) row.children[10].classList.add("rank-3");
     }});
     // ======== ソート機能部分 ========
     const table = document.getElementById("raceTable");
@@ -710,7 +768,8 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     }}
 
     // ======== 対象列にクリックイベントを追加 ========
-    [1, 8].forEach(idx => {{
+    // 馬番[1]、人気[7]、Rank[10] をソート可能に
+    [1, 7, 10].forEach(idx => {{
       const th = headers[idx];
       if (th) {{
         th.style.cursor = "pointer";
@@ -744,6 +803,8 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     ad_unit_3=ad_unit_3,
     pick_summary_html=pick_summary_html,
     odds_update_label=odds_update_label,
+    course_link_html=course_link_html,
+    weather_info_html=weather_info_html,
     table_rows=table_rows,
     run_time_info=run_time_info,
     weight_info=weight_info,
@@ -792,9 +853,9 @@ def generate_result_table(df):
         pop_color = RANK_COLORS.get(pop, "#ffffff")
         pop_style = f'background-color:{pop_color};'
 
-        # --- Rank上位3頭色付け ---
-        pred_rank_color = RANK_COLORS.get(str(pred_rank), "#ffffff")
-        pred_rank_style = f'background-color:{pred_rank_color};'
+        # --- Rank上位3頭色付け（人気と同系色だが薄いパステル系） ---
+        pred_rank_color = PRED_RANK_COLORS.get(str(pred_rank), "")
+        pred_rank_style = f'background-color:{pred_rank_color};' if pred_rank_color else ""
 
         # --- AI指数（score列は廃止、AI指数に統一）---
         ai_index = score_to_index(score) if isinstance(score, (int, float)) and pd.notna(score) else None
@@ -817,7 +878,7 @@ def generate_result_table(df):
             <td>{race_position}</td>
             <td>{odds}</td>
             {_ai_index_cell_html(ai_index)}
-            <td style="{pred_rank_style}">{pred_rank}</td>
+            <td class="ai-rank-col" style="{pred_rank_style}">{pred_rank}</td>
         </tr>
         """
 
@@ -830,7 +891,7 @@ def generate_result_table(df):
           <th>着順</th><th>枠</th><th>馬番</th><th>馬名</th>
           <th>騎手</th><th>馬体重</th><th>タイム</th><th>着差</th>
           <th>人気</th><th>上り</th><th>通過</th>
-          <th>単勝オッズ</th><th>AI指数</th><th>Rank</th>
+          <th>単勝オッズ</th><th class="ai-score-col">AI指数</th><th class="ai-rank-col">Rank</th>
         </tr>
       </thead>
       <tbody>
@@ -896,18 +957,37 @@ def generate_payout_table_html(df):
     return payout_html
 
 
-def generate_race_info(date_str, place_id, target_id):
-    """レース情報をcsvファイルから取得する"""
+def _get_race_info_dict(target_id):
+    """レース情報CSVから構造化データをdictで返す内部ヘルパー"""
     df_info = race_card_dataset_manager.get_race_info_csv(target_id)
-    if not df_info.empty:
-        race_type = str(df_info.iloc[0].get("race_type", ""))
-        course_len = str(df_info.iloc[0].get("course_len", ""))
-        weather = str(df_info.iloc[0].get("weather", ""))
-        ground_state = str(df_info.iloc[0].get("ground_state", ""))
-        race_class = str(df_info.iloc[0].get("class", ""))
-        course_info_text = f"{race_type}{course_len}m 天候:{weather} 馬場:{ground_state} クラス:{race_class}"
-        return course_info_text
-    return None
+    if df_info.empty:
+        return None
+    row = df_info.iloc[0]
+    race_type = str(row.get("race_type", "") or "")
+    course_len_raw = row.get("course_len", "")
+    course_len = None
+    if pd.notna(course_len_raw):
+        try:
+            course_len = int(float(str(course_len_raw).strip()))
+        except Exception:
+            pass
+    weather = str(row.get("weather", "") or "")
+    ground_state = str(row.get("ground_state", "") or "")
+    race_class = str(row.get("class", "") or "")
+    race_class = race_class.translate(str.maketrans("０１２３４５６７８９", "0123456789"))
+    return dict(race_type=race_type, course_len=course_len, weather=weather,
+                ground_state=ground_state, race_class=race_class)
+
+
+def generate_race_info(date_str, place_id, target_id):
+    """レース情報をcsvファイルから取得する（後方互換: 文字列を返す）"""
+    info = _get_race_info_dict(target_id)
+    if info is None:
+        print(f"ℹ️ [スキップ/エラーではありません] レース情報未蓄積: {target_id}")
+        return None
+    cl = str(info["course_len"]) if info["course_len"] is not None else ""
+    return (f"{info['race_type']}{cl}m "
+            f"天候:{info['weather']} 馬場:{info['ground_state']} クラス:{info['race_class']}")
 
 
 def generate_run_time_info(date_str, place_id, target_id):
@@ -1623,7 +1703,7 @@ def make_race_card_html(date_str, place_id, target_id):
         return
 
     # --- レース情報（コース・距離・馬場・クラス）を取得 ---
-    course_info_text = generate_race_info(date_str, place_id, target_id)
+    race_info_dict = _get_race_info_dict(target_id)
 
     # --- レース結果、配当取得 ---
     result_df = get_result_table(date_str, place_id, target_id)
@@ -1763,6 +1843,25 @@ def make_race_card_html(date_str, place_id, target_id):
             print(f"❌ [要確認/エラー] {horse_name} のレポート作成に失敗: {e}")
             continue
 
+    # コース情報とヘッダー用HTMLを事前に組み立てる
+    course_link_html = ""
+    weather_info_html = ""
+    if race_info_dict and race_info_dict["race_type"] and race_info_dict["course_len"]:
+        rt = race_info_dict["race_type"]
+        cl = race_info_dict["course_len"]
+        place_key_c = PLACE_LIST[place_id - 1]
+        course_href = f"../../courses/{place_key_c}/{rt}-{cl}.html"
+        type_class = "turf" if rt in ("芝", "障害") else "dirt"
+        course_link_html = f'<a href="{course_href}" class="course-link {type_class}">{rt}{cl}m</a>'
+    if race_info_dict:
+        weather_info_html = (
+            f'<p class="race-page-info">'
+            f'天候:{race_info_dict["weather"]} '
+            f'馬場:{race_info_dict["ground_state"]} '
+            f'クラス:{race_info_dict["race_class"]}'
+            f'</p>'
+        )
+
     # --- HTML生成・書き込み ---
     html_content = build_html_content(
         date_str=date_str,
@@ -1783,12 +1882,8 @@ def make_race_card_html(date_str, place_id, target_id):
         payout_table_html=payout_table_html,
         pick_summary_html=build_ai_pick_summary_html(df),
         odds_update_label=_odds_update_label_html(date_str, target_id, is_confirmed),
-    )
-
-    # 🆕 コース情報をHTMLに挿入
-    html_content = html_content.replace(
-        "<p>発走時刻:",
-        f"<p>{course_info_text}</p>\n  <p>発走時刻:"
+        course_link_html=course_link_html,
+        weather_info_html=weather_info_html,
     )
 
     # 🧩 各馬の詳細レポートを race_page に追加（折りたたみ機能付き）
