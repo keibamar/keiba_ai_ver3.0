@@ -18,14 +18,20 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from src.logic.html_generator import home_generator  # noqa: E402
+from src.logic.html_generator import daily_index_generator, home_generator  # noqa: E402
 from src.logic.scheduler import race_day_scheduler  # noqa: E402
+from src.managers import html_manager  # noqa: E402
 from src.output import weekly_social_report  # noqa: E402
 
 if __name__ == "__main__":
     today = date.today()
     race_day_scheduler.update_weekly_time_id_list(today)
     race_day_scheduler.make_weekend_provisional_html(today)
+    # raceMeetings.js を再生成して今週末の開催情報をカレンダーに反映する
+    # （週次バットで新しい出馬表HTMLが生成された後に実行するため、race_card_urlも正しく入る）
+    html_manager.regenerate_race_meetings_js()
+    # races/index.html を再生成してキャッシュバスティング用バージョンパラメータを更新する
+    daily_index_generator.make_races_calendar_page()
     # update_weekly_time_id_list内でもHOMEを再生成しているが、その時点では
     # 週末の出馬表（make_weekend_provisional_html）がまだ存在せず、「今週のメイン
     # レース」からのリンクが付かない。週末分の出馬表ができた後に再度HOMEを

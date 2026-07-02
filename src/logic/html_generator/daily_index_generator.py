@@ -4,6 +4,7 @@
 変更せず、データ取得のみ新アーキテクチャのManager層に切り替えている。
 """
 
+import os
 from datetime import date, datetime
 
 import pandas as pd
@@ -330,7 +331,23 @@ def calendar_widget_html(base_path="", show_meetings=False):
             渡さない（calendar.jsはwindow.raceMeetingsが無ければ何も追加表示しない
             ため、falseの場合は今までと同じ見た目になる）。
     """
-    meetings_script = f'\n<script src="{base_path}assets/js/raceMeetings.js"></script>' if show_meetings else ""
+    from src.managers.html_manager import RACE_DAYS_JS_PATH, RACE_MEETINGS_JS_PATH
+
+    def _js_ver(path):
+        try:
+            return int(os.path.getmtime(path))
+        except OSError:
+            return 0
+
+    racedays_ver = _js_ver(RACE_DAYS_JS_PATH)
+    calendar_ver = _js_ver(
+        os.path.join(os.path.dirname(RACE_DAYS_JS_PATH), "calendar.js")
+    )
+    meetings_script = (
+        f'\n<script src="{base_path}assets/js/raceMeetings.js?v={_js_ver(RACE_MEETINGS_JS_PATH)}"></script>'
+        if show_meetings
+        else ""
+    )
     return f"""
 <div class="calendar-widget">
   <div class="calendar-nav">
@@ -342,8 +359,8 @@ def calendar_widget_html(base_path="", show_meetings=False):
   <div id="todayRace"></div>
 </div>
 <script>window.CALENDAR_BASE_PATH = "{base_path}";</script>
-<script src="{base_path}assets/js/raceDays.js"></script>{meetings_script}
-<script src="{base_path}assets/js/calendar.js"></script>
+<script src="{base_path}assets/js/raceDays.js?v={racedays_ver}"></script>{meetings_script}
+<script src="{base_path}assets/js/calendar.js?v={calendar_ver}"></script>
 """
 
 
