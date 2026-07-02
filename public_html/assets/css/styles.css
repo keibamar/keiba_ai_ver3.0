@@ -1417,6 +1417,14 @@ footer p {
   text-align: center;
 }
 
+/* PC幅でサイドバー（page-calendar-tab）がfloat:rightになるとき、カレンダーwidgetが
+   floatの下に落ちないようBFCを作る。iPad横向き（801px以上）でも正しく横並びになる。 */
+body.section-calendar .calendar-widget {
+  display: flow-root;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 .calendar-widget #calendar {
   border-collapse: collapse;
   margin: 20px auto;

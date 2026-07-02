@@ -32,3 +32,10 @@ RANK_COLORS = {
     "2": "#B0E0E6",  # 水色
     "3": "#FFA07A",  # オレンジ
 }
+
+# LightGBMモデル学習時にGPUを使用するか
+# True にすると LIGHTGBM_DEVICE が device= パラメータとして渡される
+# GPU非搭載PCや環境未整備の場合は False のままにする
+USE_GPU_TRAINING = False
+# 使用するデバイス種別: 'gpu'（OpenCL）または 'cuda'（NVIDIA CUDA、より高速）
+LIGHTGBM_DEVICE = "cuda"

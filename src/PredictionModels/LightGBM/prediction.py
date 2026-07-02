@@ -38,7 +38,11 @@ from src.config import paths as paths_v3  # noqa: E402
 # レースの性質も近いため、データを合算して学習データ量を増やす
 # （学習済みモデルは引き続きコース・距離ごとに別ファイルとして保存し、
 # ライブ予想エンジン側の読み込み方法は変更しない）。
-DISTANCE_BANDS = [(0, 1400), (1400, 1800), (1800, 2200), (2200, 2800), (2800, 99999)]
+# 旧: [(0,1400),(1400,1800),(1800,2200),...] → 1800mと1900mが同じ帯に入り、
+# 両方全く同じ学習データ(1800+1900合算)で訓練されて同一モデルになっていた。
+# 境界を1900mに移動することで 1800m→(1400,1900)帯(1400+1800合算)、
+# 1900m→(1900,2200)帯(単独)に分けて別モデルにする。
+DISTANCE_BANDS = [(0, 1400), (1400, 1900), (1900, 2200), (2200, 2800), (2800, 99999)]
 
 
 def _distance_band(length):
@@ -210,7 +214,7 @@ def split_dataframe(race_data, race_flag):
     return data_train, data_test, flag_train, flag_test
 
 def _fit_ranker(params, data_train, flag_train, train_group, data_test, flag_test, test_group):
-    """指定パラメータでLGBMRankerを学習する（early stoppingあり）
+    """指定パラメータでLGBMRankerを学習する（early stoppingあり・Optuna探索用）
         Args:
             params(dict) : LGBMRankerに渡す追加パラメータ
             data_train, flag_train, train_group : 訓練データ
@@ -218,11 +222,36 @@ def _fit_ranker(params, data_train, flag_train, train_group, data_test, flag_tes
         Returns:
             model : 学習済みLGBMRanker
     """
-    model = lgb.LGBMRanker(random_state=0, force_col_wise=True, verbosity=-1, **params)
+    from src.config.constants import USE_GPU_TRAINING, LIGHTGBM_DEVICE
+    device_kwargs = {"device": LIGHTGBM_DEVICE} if USE_GPU_TRAINING else {"force_col_wise": True}
+    model = lgb.LGBMRanker(random_state=0, verbosity=-1, **device_kwargs, **params)
     model.fit(
         data_train, flag_train, group=train_group,
         eval_set=[(data_test, flag_test)], eval_group=[list(test_group)], eval_at=[1, 3, 5],
-        callbacks=[lgb.early_stopping(stopping_rounds=20, verbose=False), lgb.log_evaluation(period=0)],
+        callbacks=[lgb.early_stopping(stopping_rounds=50, verbose=False), lgb.log_evaluation(period=0)],
+    )
+    return model
+
+
+def _fit_ranker_final(params, data_train, flag_train, train_group):
+    """指定パラメータでLGBMRankerを学習する（early stopping なし・最終モデル保存用）
+
+    Optunaで探索したパラメータ（特にn_estimators）を使い、early stoppingなしで
+    必ずn_estimators本の木を学習する。NDCG@1はNDCG@1が木1本でピークになりやすく、
+    early stoppingにより常にnum_trees=1になる問題を避けるための関数。
+
+        Args:
+            params(dict) : LGBMRankerに渡す追加パラメータ（n_estimatorsを含む）
+            data_train, flag_train, train_group : 訓練データ（テストデータは使わない）
+        Returns:
+            model : 学習済みLGBMRanker
+    """
+    from src.config.constants import USE_GPU_TRAINING, LIGHTGBM_DEVICE
+    device_kwargs = {"device": LIGHTGBM_DEVICE} if USE_GPU_TRAINING else {"force_col_wise": True}
+    model = lgb.LGBMRanker(random_state=0, verbosity=-1, **device_kwargs, **params)
+    model.fit(
+        data_train, flag_train, group=train_group,
+        callbacks=[lgb.log_evaluation(period=0)],
     )
     return model
 
@@ -248,9 +277,9 @@ def tune_hyperparameters(data_train, flag_train, train_group, data_test, flag_te
 
     def objective(trial):
         params = {
-            "n_estimators": trial.suggest_int("n_estimators", 50, 300),
-            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.2, log=True),
-            "num_leaves": trial.suggest_int("num_leaves", 8, 64),
+            "n_estimators": trial.suggest_int("n_estimators", 100, 500),
+            "learning_rate": trial.suggest_float("learning_rate", 0.005, 0.05, log=True),
+            "num_leaves": trial.suggest_int("num_leaves", 16, 64),
             "max_depth": trial.suggest_int("max_depth", 3, 10),
             "min_child_samples": trial.suggest_int(
                 "min_child_samples", min_child_samples_low, min_child_samples_high
@@ -310,8 +339,10 @@ def lightGBM_rank_train(place_id, year = date.today().year, n_trials = 20):
         data_test, test_group = data_group(data_test)
 
         # ハイパーパラメータをOptunaで探索し、最良パラメータで学習
+        # Optuna探索はearly stoppingありで効率的に行い、
+        # 最終モデルはearly stoppingなしでn_estimators本を確実に学習する
         best_params = tune_hyperparameters(data_train, flag_train, train_group, data_test, flag_test, test_group, n_trials=n_trials)
-        model = _fit_ranker(best_params, data_train, flag_train, train_group, data_test, flag_test, test_group)
+        model = _fit_ranker_final(best_params, data_train, flag_train, train_group)
 
         # モデルの保存
         save_lightGBM_model(model, place_id, type, length)

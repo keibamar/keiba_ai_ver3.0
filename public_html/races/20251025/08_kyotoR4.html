@@ -61,6 +61,77 @@
     .score-high { color: red; }
     .score-low { color: blue; }
     .score-verylow { color: darkblue; }
+
+    /* AI指数・Rank列（MARオリジナル予想情報）をボルドー系で区別 */
+    .ai-score-col {
+      border-left: 3px solid #7a2438;
+    }
+    .ai-rank-col {
+      border-right: 3px solid #7a2438;
+    }
+    td.ai-score-col, td.ai-rank-col {
+      font-size: 1.1em;
+      font-weight: bold;
+    }
+    tbody tr td.ai-score-col,
+    tbody tr td.ai-rank-col {
+      background-color: #fbeef0;
+    }
+    tbody tr:nth-child(even) td {
+      background-color: #f5f5f5;
+    }
+    tbody tr:nth-child(even) td.ai-score-col,
+    tbody tr:nth-child(even) td.ai-rank-col {
+      background-color: #f3d9de;
+    }
+    th.ai-score-col, th.ai-rank-col {
+      background-color: #7a2438;
+      color: white;
+    }
+
+    /* コースリンク（レース名横）- 芝は緑、ダートは茶 */
+    .course-link {
+      font-size: 0.75em;
+      font-weight: bold;
+      text-decoration: none;
+      margin-left: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      vertical-align: middle;
+    }
+    .course-link.turf {
+      color: #2e7d32;
+      border: 1px solid #81c784;
+      background-color: #e8f5e9;
+    }
+    .course-link.turf:hover {
+      background-color: #c8e6c9;
+    }
+    .course-link.dirt {
+      color: #8d6e3a;
+      border: 1px solid #bcaaa4;
+      background-color: #efebe9;
+    }
+    .course-link.dirt:hover {
+      background-color: #d7ccc8;
+    }
+
+    /* レースヘッダー */
+    .race-page-title {
+      font-size: 1.2em;
+      margin-bottom: 6px;
+    }
+    .race-page-time {
+      font-size: 1.15em;
+      font-weight: bold;
+      margin: 4px 0;
+      color: #333;
+    }
+    .race-page-info {
+      font-size: 1.05em;
+      color: #555;
+      margin: 4px 0 12px;
+    }
     #payoutTable td.num {
       text-align: right;
       padding-right: 10px;
@@ -236,11 +307,10 @@
 <script src="../../assets/js/sidebar-toggle.js"></script>
   <p class="breadcrumb"><a href="../../">HOME</a> &rsaquo; <a href="../../races/index.html">レースカレンダー</a> &rsaquo; <a href="../../races/20251025/index.html">2025/10/25</a> &rsaquo; <a href="../../races/20251025/08_kyotoR4.html">京都</a> &rsaquo; <span class="breadcrumb-current">4R 3歳以上障害OP</span></p>
   <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "HOME", "item": "https://mar-keiba.com/"}, {"@type": "ListItem", "position": 2, "name": "レースカレンダー", "item": "https://mar-keiba.com/races/index.html"}, {"@type": "ListItem", "position": 3, "name": "2025/10/25", "item": "https://mar-keiba.com/races/20251025/index.html"}, {"@type": "ListItem", "position": 4, "name": "京都", "item": "https://mar-keiba.com/races/20251025/08_kyotoR4.html"}, {"@type": "ListItem", "position": 5, "name": "4R 3歳以上障害OP"}]}</script>
-  <h2>2025/10/25 </h2>
-  <h2>京都競馬場 第4R </h2>
-  <h2>3歳以上障害OP</h2>
-  <p>障害3170m 天候:曇 馬場:良 クラス:オープン</p>
-  <p>発走時刻: 11:25</p>
+  <h2 class="race-page-title">2025/10/25　京都競馬場　第4R　3歳以上障害OP<a href="../../courses/08_kyoto/障害-3170.html" class="course-link turf">障害3170m</a></h2>
+  <p class="race-page-time">発走時刻: 11:25</p>
+  <p class="race-page-info">天候:曇 馬場:良 クラス:オープン</p>
+  <p class="odds-update-label odds-update-label--confirmed">確定オッズ</p>
   <div class="table-wrap table-wrap--full">
   <table id="raceTable">
     <thead>
@@ -252,9 +322,10 @@
         <th>斤量</th>
         <th>騎手</th>
         <th>馬体重</th>
-        <th>AI指数</th>
-        <th>Rank ▼</th>
-        <th>人気</th>
+        <th>人気 ▼</th>
+        <th>単勝オッズ</th>
+        <th class="ai-score-col">AI指数</th>
+        <th class="ai-rank-col">Rank ▼</th>
       </tr>
     </thead>
     <tbody>
@@ -263,104 +334,112 @@
           <td style="background-color:white; color:#000;">1</td>
           <td style="background-color:white; color:#000;">1</td>
           <td><a href="javascript:void(0);" onclick="scrollToReport('horse_report_0_1')" style="color: blue; text-decoration: underline; cursor: pointer;">ウイングランブルー</a></td>
-          <td>牡5</td>
+          <td style="">牡5</td>
           <td>60.0</td>
           <td>大江圭</td>
           <td style="color:red; font-weight:bold;">474(+10)</td>
-          <td></td>
-          <td style="background-color:#ffffff;"></td>
           <td style="background-color:#ffffff;">4</td>
+          <td style="color:#333;">13.9</td>
+          <td class="ai-score-col"></td>
+          <td class="ai-rank-col" style=""></td>
         </tr>
         
         <tr>
           <td style="background-color:black; color:#fff;">2</td>
           <td style="background-color:black; color:#fff;">2</td>
           <td><a href="javascript:void(0);" onclick="scrollToReport('horse_report_1_2')" style="color: blue; text-decoration: underline; cursor: pointer;">サルサロッサ</a></td>
-          <td>牝6</td>
+          <td style="color:#c62828; font-weight:bold;">牝6</td>
           <td>58.0</td>
           <td>伴</td>
           <td style="">456(+2)</td>
-          <td></td>
-          <td style="background-color:#ffffff;"></td>
           <td style="background-color:#ffffff;">7</td>
+          <td style="color:#333;">55.7</td>
+          <td class="ai-score-col"></td>
+          <td class="ai-rank-col" style=""></td>
         </tr>
         
         <tr>
           <td style="background-color:red; color:#fff;">3</td>
           <td style="background-color:red; color:#fff;">3</td>
           <td><a href="javascript:void(0);" onclick="scrollToReport('horse_report_2_3')" style="color: blue; text-decoration: underline; cursor: pointer;">コパノニコルソン</a></td>
-          <td>牡6</td>
+          <td style="">牡6</td>
           <td>60.0</td>
           <td>小牧加</td>
           <td style="">520(-4)</td>
-          <td></td>
-          <td style="background-color:#ffffff;"></td>
           <td style="background-color:#B0E0E6;">2</td>
+          <td style="color:#c62828; font-weight:bold;">3.9</td>
+          <td class="ai-score-col"></td>
+          <td class="ai-rank-col" style=""></td>
         </tr>
         
         <tr>
           <td style="background-color:blue; color:#fff;">4</td>
           <td style="background-color:blue; color:#fff;">4</td>
           <td><a href="javascript:void(0);" onclick="scrollToReport('horse_report_3_4')" style="color: blue; text-decoration: underline; cursor: pointer;">ヴラディア</a></td>
-          <td>牡6</td>
+          <td style="">牡6</td>
           <td>60.0</td>
           <td>石神深</td>
           <td style="">480(-4)</td>
-          <td></td>
-          <td style="background-color:#ffffff;"></td>
           <td style="background-color:#ffffff;">6</td>
+          <td style="color:#333;">40.0</td>
+          <td class="ai-score-col"></td>
+          <td class="ai-rank-col" style=""></td>
         </tr>
         
         <tr>
           <td style="background-color:yellow; color:#000;">5</td>
           <td style="background-color:yellow; color:#000;">5</td>
           <td><a href="javascript:void(0);" onclick="scrollToReport('horse_report_4_5')" style="color: blue; text-decoration: underline; cursor: pointer;">シゲルタヌキ</a></td>
-          <td>牡6</td>
+          <td style="">牡6</td>
           <td>60.0</td>
           <td>小坂</td>
           <td style="color:red; font-weight:bold;">494(+10)</td>
-          <td></td>
-          <td style="background-color:#ffffff;"></td>
           <td style="background-color:#ffffff;">8</td>
+          <td style="color:#333;">61.1</td>
+          <td class="ai-score-col"></td>
+          <td class="ai-rank-col" style=""></td>
         </tr>
         
         <tr>
           <td style="background-color:green; color:#000;">6</td>
           <td style="background-color:green; color:#000;">6</td>
           <td><a href="javascript:void(0);" onclick="scrollToReport('horse_report_5_6')" style="color: blue; text-decoration: underline; cursor: pointer;">スズカキング</a></td>
-          <td>牡8</td>
+          <td style="">牡8</td>
           <td>60.0</td>
           <td>小野寺</td>
           <td style="color:red; font-weight:bold;">472(+16)</td>
-          <td></td>
-          <td style="background-color:#ffffff;"></td>
           <td style="background-color:#ffffff;">5</td>
+          <td style="color:#333;">20.3</td>
+          <td class="ai-score-col"></td>
+          <td class="ai-rank-col" style=""></td>
         </tr>
         
         <tr>
           <td style="background-color:orange; color:#fff;">7</td>
           <td style="background-color:orange; color:#fff;">7</td>
           <td><a href="javascript:void(0);" onclick="scrollToReport('horse_report_6_7')" style="color: blue; text-decoration: underline; cursor: pointer;">ヴィンテージボンド</a></td>
-          <td>牡6</td>
+          <td style="">牡6</td>
           <td>60.0</td>
           <td>難波</td>
           <td style="">492(-4)</td>
-          <td></td>
-          <td style="background-color:#ffffff;"></td>
           <td style="background-color:#FFA07A;">3</td>
+          <td style="color:#c62828; font-weight:bold;">9.0</td>
+          <td class="ai-score-col"></td>
+          <td class="ai-rank-col" style=""></td>
         </tr>
         
         <tr>
           <td style="background-color:pink; color:#000;">8</td>
           <td style="background-color:pink; color:#000;">8</td>
           <td><a href="javascript:void(0);" onclick="scrollToReport('horse_report_7_8')" style="color: blue; text-decoration: underline; cursor: pointer;">サンダーアラート</a></td>
-          <td>セ4</td>
+          <td style="">セ4</td>
           <td>60.0</td>
           <td>上野</td>
           <td style="">482(+8)</td>
-          <td></td>
-          <td style="background-color:#ffffff;"></td>
           <td style="background-color:#FFD700;">1</td>
+          <td style="color:#c62828; font-weight:bold;">1.4</td>
+          <td class="ai-score-col"></td>
+          <td class="ai-rank-col" style=""></td>
         </tr>
         
     </tbody>
@@ -387,7 +466,7 @@
           <th>着順</th><th>枠</th><th>馬番</th><th>馬名</th>
           <th>騎手</th><th>馬体重</th><th>タイム</th><th>着差</th>
           <th>人気</th><th>上り</th><th>通過</th>
-          <th>単勝オッズ</th><th>AI指数</th><th>Rank</th>
+          <th>単勝オッズ</th><th class="ai-score-col">AI指数</th><th class="ai-rank-col">Rank</th>
         </tr>
       </thead>
       <tbody>
@@ -405,8 +484,8 @@
             <td>13.8</td>
             <td>6-6-5-5</td>
             <td>3.9</td>
-            <td></td>
-            <td style="background-color:#ffffff;">None</td>
+            <td class="ai-score-col"></td>
+            <td class="ai-rank-col" style="">None</td>
         </tr>
         
         <tr>
@@ -422,8 +501,8 @@
             <td>13.8</td>
             <td>3-3-3-3</td>
             <td>9.0</td>
-            <td></td>
-            <td style="background-color:#ffffff;">None</td>
+            <td class="ai-score-col"></td>
+            <td class="ai-rank-col" style="">None</td>
         </tr>
         
         <tr>
@@ -439,8 +518,8 @@
             <td>13.9</td>
             <td>1-1-1-1</td>
             <td>13.9</td>
-            <td></td>
-            <td style="background-color:#ffffff;">None</td>
+            <td class="ai-score-col"></td>
+            <td class="ai-rank-col" style="">None</td>
         </tr>
         
         <tr>
@@ -456,8 +535,8 @@
             <td>13.9</td>
             <td>4-3-4-4</td>
             <td>40.0</td>
-            <td></td>
-            <td style="background-color:#ffffff;">None</td>
+            <td class="ai-score-col"></td>
+            <td class="ai-rank-col" style="">None</td>
         </tr>
         
         <tr>
@@ -473,8 +552,8 @@
             <td>14.0</td>
             <td>8-8-8-7</td>
             <td>55.7</td>
-            <td></td>
-            <td style="background-color:#ffffff;">None</td>
+            <td class="ai-score-col"></td>
+            <td class="ai-rank-col" style="">None</td>
         </tr>
         
         <tr>
@@ -490,8 +569,8 @@
             <td>14.0</td>
             <td>7-7-7-7</td>
             <td>61.1</td>
-            <td></td>
-            <td style="background-color:#ffffff;">None</td>
+            <td class="ai-score-col"></td>
+            <td class="ai-rank-col" style="">None</td>
         </tr>
         
         <tr>
@@ -507,8 +586,8 @@
             <td>14.0</td>
             <td>4-3-5-6</td>
             <td>1.4</td>
-            <td></td>
-            <td style="background-color:#ffffff;">None</td>
+            <td class="ai-score-col"></td>
+            <td class="ai-rank-col" style="">None</td>
         </tr>
         
         <tr>
@@ -524,8 +603,8 @@
             <td>14.2</td>
             <td>2-2-2-2</td>
             <td>20.3</td>
-            <td></td>
-            <td style="background-color:#ffffff;">None</td>
+            <td class="ai-score-col"></td>
+            <td class="ai-rank-col" style="">None</td>
         </tr>
         
       </tbody>
@@ -600,9 +679,9 @@
     </div>
     
   <div class="book-recommendation">
-      <p class="book-recommendation-title">📚 東大式「確率統計」で競馬に勝つ方法</p>
-      <p class="book-recommendation-note">確率統計の基礎からオリジナル指数づくりまでを解説。</p>
-      <p class="book-recommendation-links"><a href="https://www.amazon.co.jp/dp/4584104115?tag=markeiba-22" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--amazon">東大式「確率統計」で競馬に勝つ方法（Amazon）</a> / <a href="https://hb.afl.rakuten.co.jp/ichiba/5556cac6.a0533177.5556cac7.0a45b379/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fvaboo%2Fva4115410458u30%2F" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--rakuten">東大式「確率統計」で競馬に勝つ方法（楽天市場）</a></p>
+      <p class="book-recommendation-title">📚 勝ち馬がわかる 血統の教科書2.0</p>
+      <p class="book-recommendation-note">血統の基礎から実践的な予想方法まで解説した入門書。</p>
+      <p class="book-recommendation-links"><a href="https://www.amazon.co.jp/dp/4262144739?tag=markeiba-22" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--amazon">勝ち馬がわかる 血統の教科書2.0（Amazon）</a> / <a href="https://hb.afl.rakuten.co.jp/ichiba/34d56027.4cd7e36e.34d56028.7817ac3c/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fbook%2F17411932%2F" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--rakuten">勝ち馬がわかる 血統の教科書2.0（楽天市場）</a></p>
     </div>
 
   <div class="ad-unit">
@@ -2485,19 +2564,17 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     // ======== スタイル設定部分 ========
+    // 列順: 枠[0] 馬番[1] 馬名[2] 性齢[3] 斤量[4] 騎手[5] 馬体重[6]
+    //       人気[7] 単勝オッズ[8] AI指数[9] Rank[10]
     const rows = document.querySelectorAll("#raceTable tbody tr");
     rows.forEach(row => {
       const waku = parseInt(row.children[0].innerText);
       row.children[0].classList.add(`waku-${waku}`);
       row.children[1].classList.add(`waku-${waku}`);
-      const rank = parseInt(row.children[8].innerText);
-      if (rank === 1) row.children[8].classList.add("rank-1");
-      if (rank === 2) row.children[8].classList.add("rank-2");
-      if (rank === 3) row.children[8].classList.add("rank-3");
-      const score = parseFloat(row.children[7].innerText);
-      if (score >= 0.1) row.children[7].classList.add("score-high");
-      if (score < 0 && score >= -1) row.children[7].classList.add("score-low");
-      if (score < -1) row.children[7].classList.add("score-verylow");
+      const rank = parseInt(row.children[10].innerText);
+      if (rank === 1) row.children[10].classList.add("rank-1");
+      if (rank === 2) row.children[10].classList.add("rank-2");
+      if (rank === 3) row.children[10].classList.add("rank-3");
     });
     // ======== ソート機能部分 ========
     const table = document.getElementById("raceTable");
@@ -2556,7 +2633,8 @@
     }
 
     // ======== 対象列にクリックイベントを追加 ========
-    [1, 8].forEach(idx => {
+    // 馬番[1]、人気[7]、Rank[10] をソート可能に
+    [1, 7, 10].forEach(idx => {
       const th = headers[idx];
       if (th) {
         th.style.cursor = "pointer";
@@ -2573,7 +2651,7 @@
   <footer>
     <p class="site-footer-brand">&copy; MAR(まーる) 競馬AIデータサイト</p>
     <p class="site-footer-disclaimer">本サイトの予想・データは参考情報です。的中や回収を保証するものではありません。実際の購入は自己責任でお願いします。</p>
-    <p class="site-footer-updated">データ最終更新: 2026/07/01</p>
+    <p class="site-footer-updated">データ最終更新: 2026/07/02</p>
     <div class="a8-program-recommendation">
       <p class="a8-program-title">🔗 おすすめサービス</p>
       <p class="a8-program-item"><a href="https://px.a8.net/svt/ejp?a8mat=4B684D+EPADKI+50+2HGLCX" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--a8">お名前.com</a> <span class="a8-program-note">国内シェアNo.1の独自ドメイン取得サービス。</span></p>
