@@ -219,6 +219,63 @@ def make_weekend_provisional_html(base_day=date.today()):
         make_html_prev_day(race_day)
 
 
+def refresh_prev_day_odds(race_day):
+    """前日夜のオッズ・人気だけを再取得してCSVとHTMLを更新する（毎週金・土 20:00 実行想定）
+
+    make_html_prev_day 実行時（夕方）は netkeiba がまだオッズ・人気を
+    「---.-」/「**」で表示しているため未確定のまま保存される。
+    前日夜になると netkeiba が速報値を公開し始めるため、この関数で
+    AI予想の再計算なしにオッズ・人気だけを上書きする。
+
+    Args:
+        race_day (date): レース開催日（通常は実行日の翌日）
+    """
+    time_id_list = race_card_dataset_manager.get_time_id_list(race_day)
+    if not time_id_list:
+        print(f"race_time_id_list なし: {race_day}")
+        return
+
+    updated = False
+    for _, race_id in time_id_list:
+        try:
+            odds_df = netkeiba_scraper.scrape_race_card_odds(race_id)
+            if odds_df.empty:
+                print(f"  オッズ取得スキップ: {race_id}")
+                continue
+
+            race_card_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
+            if race_card_df.empty or "馬名" not in race_card_df.columns:
+                print(f"  レースカード未生成: {race_id}")
+                continue
+
+            # 馬名をキーにオッズ・人気を更新（不一致行は既存値を保持）
+            odds_map = odds_df.set_index(odds_df["馬名"].str.strip())["オッズ"].to_dict()
+            pop_map = odds_df.set_index(odds_df["馬名"].str.strip())["人気"].to_dict()
+
+            race_card_df = race_card_df.copy()
+            name_key = race_card_df["馬名"].astype(str).str.strip()
+
+            mapped_odds = name_key.map(odds_map)
+            mapped_pop = name_key.map(pop_map)
+
+            mask_odds = mapped_odds.notna()
+            mask_pop = mapped_pop.notna()
+            if mask_odds.any():
+                race_card_df.loc[mask_odds, "オッズ"] = mapped_odds[mask_odds]
+            if mask_pop.any():
+                race_card_df.loc[mask_pop, "人気"] = mapped_pop[mask_pop]
+
+            race_card_dataset_manager.save_race_cards(race_card_df, race_day, race_id)
+            print(f"  オッズ・人気更新: {race_id}")
+            updated = True
+        except Exception:
+            print(f"  オッズ更新エラー: {race_id}", sys.exc_info())
+
+    if updated:
+        race_page_generator.make_daily_race_card_html(race_day)
+        print(f"HTML再生成完了: {race_day}")
+
+
 def make_html_prev_day(race_day):
     """翌日分の出馬表・予想・HTMLを事前生成する（毎週金・土実行想定）
 

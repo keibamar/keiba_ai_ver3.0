@@ -397,6 +397,41 @@ def scrape_race_card(race_id):
         return info, pd.DataFrame(), pd.DataFrame()
 
 
+def scrape_race_card_odds(race_id):
+    """race_idから馬名・オッズ・人気のみ取得する（軽量版）
+
+    前日夜のオッズ・人気更新（refresh_prev_day_odds）で使用する。
+    scrape_race_cardと同じURLを使い、テーブルのオッズ・人気列だけ抽出して返す。
+    馬名をキーにするため、枠順抽せん前後にかかわらず使用できる。
+
+    Args:
+        race_id (str): race_id
+
+    Returns:
+        pd.DataFrame: 馬名・オッズ・人気の3列。取得失敗時は空のDataFrame。
+    """
+    try:
+        url = "https://race.netkeiba.com/race/shutuba.html?race_id=" + str(race_id)
+        if not common.url_exists(url):
+            return pd.DataFrame()
+        soup = common.fetch_soup(url)
+        if not common.validate_soup(soup, url, "scrape_race_card_odds", require_table=True):
+            return pd.DataFrame()
+
+        df = pd.read_html(str(soup))[0]
+        df = df.rename(columns=lambda x: x.replace(" ", ""))
+        df = df.iloc[:, :11]
+        df = df.drop(columns="印")
+        df.columns = df.columns.droplevel(0)
+        df.columns = list(df.columns[:-2]) + ["オッズ", "人気"]
+
+        df["馬名"] = df["馬名"].astype(str).str.strip()
+        return df[["馬名", "オッズ", "人気"]].reset_index(drop=True)
+    except Exception as e:
+        common.scraping_error(e)
+        return pd.DataFrame()
+
+
 def scrape_race_results_dataframe(race_id_list):
     """race_id_listのrace_resultsのDataFrameを作成
 
