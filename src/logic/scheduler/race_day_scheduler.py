@@ -29,6 +29,8 @@ import sys
 from datetime import date, timedelta
 from time import sleep
 
+import pandas as pd
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
@@ -244,19 +246,35 @@ def refresh_prev_day_odds(race_day):
                 continue
 
             race_card_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
-            if race_card_df.empty or "馬名" not in race_card_df.columns:
+            if race_card_df.empty or "馬番" not in race_card_df.columns:
                 print(f"  レースカード未生成: {race_id}")
                 continue
 
-            # 馬名をキーにオッズ・人気を更新（不一致行は既存値を保持）
-            odds_map = odds_df.set_index(odds_df["馬名"].str.strip())["オッズ"].to_dict()
-            pop_map = odds_df.set_index(odds_df["馬名"].str.strip())["人気"].to_dict()
-
+            # API は馬番キーで返るため馬番でマッチング
+            # 枠順未確定で馬番が空の場合は行位置で対応付け
             race_card_df = race_card_df.copy()
-            name_key = race_card_df["馬名"].astype(str).str.strip()
+            has_umaban = (
+                "馬番" in race_card_df.columns
+                and race_card_df["馬番"].notna().any()
+                and (race_card_df["馬番"].astype(str).str.strip() != "").any()
+            )
 
-            mapped_odds = name_key.map(odds_map)
-            mapped_pop = name_key.map(pop_map)
+            if has_umaban:
+                odds_map = odds_df.set_index("馬番")["オッズ"].to_dict()
+                pop_map = odds_df.set_index("馬番")["人気"].to_dict()
+                key = race_card_df["馬番"].astype(str).str.strip()
+                mapped_odds = key.map(odds_map)
+                mapped_pop = key.map(pop_map)
+            else:
+                # 枠順未確定: 行順が shutuba.html と同じ前提で位置対応
+                mapped_odds = pd.Series(
+                    odds_df["オッズ"].values[:len(race_card_df)],
+                    index=race_card_df.index,
+                )
+                mapped_pop = pd.Series(
+                    odds_df["人気"].values[:len(race_card_df)],
+                    index=race_card_df.index,
+                )
 
             mask_odds = mapped_odds.notna()
             mask_pop = mapped_pop.notna()

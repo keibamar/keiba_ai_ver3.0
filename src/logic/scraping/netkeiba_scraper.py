@@ -8,6 +8,7 @@ HTTP/HTML共通処理は src/logic/scraping/common.py に切り出している�
 import re
 
 import pandas as pd
+import requests
 from tqdm import tqdm
 
 from src.config.constants import BETTING_TYPE_LIST
@@ -398,35 +399,44 @@ def scrape_race_card(race_id):
 
 
 def scrape_race_card_odds(race_id):
-    """race_idから馬名・オッズ・人気のみ取得する（軽量版）
+    """race_idから馬番・オッズ・人気を取得する（netkeiba 単勝オッズ API 版）
 
-    前日夜のオッズ・人気更新（refresh_prev_day_odds）で使用する。
-    scrape_race_cardと同じURLを使い、テーブルのオッズ・人気列だけ抽出して返す。
-    馬名をキーにするため、枠順抽せん前後にかかわらず使用できる。
+    shutuba.html のオッズ・人気は JavaScript で動的更新されるため、
+    requests + pd.read_html では静的 HTML の「---.-」/「**」しか取れない。
+    netkeiba が内部で呼び出している単勝オッズ API を直接叩いて取得する。
+
+    レスポンス形式:
+        {"status":"yoso", "data":{"odds":{"1":{"馬番":["オッズ","","人気"],...}}}}
+        "1" = 単勝。vals[0]=単勝オッズ, vals[2]=人気順位。
 
     Args:
         race_id (str): race_id
 
     Returns:
-        pd.DataFrame: 馬名・オッズ・人気の3列。取得失敗時は空のDataFrame。
+        pd.DataFrame: 馬番(str)・オッズ・人気の3列。失敗時は空のDataFrame。
     """
     try:
-        url = "https://race.netkeiba.com/race/shutuba.html?race_id=" + str(race_id)
-        if not common.url_exists(url):
-            return pd.DataFrame()
-        soup = common.fetch_soup(url)
-        if not common.validate_soup(soup, url, "scrape_race_card_odds", require_table=True):
+        url = (
+            "https://race.netkeiba.com/api/api_get_jra_odds.html"
+            f"?race_id={race_id}&type=1&action=update"
+        )
+        resp = requests.get(url, headers=common.scraping_header, timeout=15)
+        tanshuku = resp.json().get("data", {}).get("odds", {}).get("1", {})
+
+        if not tanshuku:
+            print(f"scrape_race_card_odds: odds empty race_id={race_id}")
             return pd.DataFrame()
 
-        df = pd.read_html(str(soup))[0]
-        df = df.rename(columns=lambda x: x.replace(" ", ""))
-        df = df.iloc[:, :11]
-        df = df.drop(columns="印")
-        df.columns = df.columns.droplevel(0)
-        df.columns = list(df.columns[:-2]) + ["オッズ", "人気"]
-
-        df["馬名"] = df["馬名"].astype(str).str.strip()
-        return df[["馬名", "オッズ", "人気"]].reset_index(drop=True)
+        rows = []
+        for umaban, vals in tanshuku.items():
+            # vals = [単勝オッズ, (複勝下限), 人気] の3要素リスト
+            if isinstance(vals, list) and len(vals) >= 3:
+                rows.append({
+                    "馬番": str(umaban),
+                    "オッズ": str(vals[0]),
+                    "人気": str(vals[2]),
+                })
+        return pd.DataFrame(rows)
     except Exception as e:
         common.scraping_error(e)
         return pd.DataFrame()
