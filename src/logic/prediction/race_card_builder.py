@@ -65,8 +65,22 @@ def make_race_card(race_id):
             if "人気" in race_card_df.columns
             else None
         )
+        # v3ブレンド用: オッズ系列（「---.-」はNaNに変換）と騎手ID
+        odds_series = (
+            pd.to_numeric(race_card_df["オッズ"], errors="coerce").reset_index(drop=True)
+            if "オッズ" in race_card_df.columns
+            else None
+        )
+        jockey_ids = (
+            race_card_df["jockey_id"].reset_index(drop=True).tolist()
+            if "jockey_id" in race_card_df.columns
+            else None
+        )
         rank_df = race_prediction_engine.blended_rank_prediction(
-            race_id, horse_ids, race_info_df, waku_df, popularity_series=popularity_series
+            race_id, horse_ids, race_info_df, waku_df,
+            popularity_series=popularity_series,
+            odds_series=odds_series,
+            jockey_ids=jockey_ids,
         )
     else:
         print(f"ℹ️ [スキップ/エラーではありません] 枠順未確定のためAI予想をスキップ: {race_id}")
