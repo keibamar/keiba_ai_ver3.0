@@ -3,7 +3,7 @@
 v3 の 65 特徴量 + current_odds + current_popularity = 67 特徴量で
 LightGBM LambdaRank モデルを学習し _v4 サフィックスで保存する。
 
-対象: 函館(2)・福島(3)・小倉(10)  ← テスト的中率比較と同じ 3 場
+対象: 全10場
 
 実行:
     python scripts/train_v4_models.py
@@ -38,7 +38,7 @@ from src.PredictionModels.LightGBM.make_dataset_v4 import (
 )
 
 TRAIN_YEARS   = list(range(2020, date.today().year + 1))
-TARGET_VENUES = [2, 3, 10]   # 函館, 福島, 小倉
+TARGET_VENUES = list(range(1, 11))  # 全10場
 MODEL_SUFFIX  = "_v4"
 N_TRIALS      = 20
 
@@ -126,7 +126,7 @@ def train_all_courses():
 if __name__ == "__main__":
     print("=" * 55)
     print("v4 モデル学習（的中率重視 + オッズ/人気特徴量）")
-    print(f"対象場: 函館・福島・小倉")
+    print(f"対象場: 全10場")
     print(f"訓練年: {TRAIN_YEARS[0]}〜{TRAIN_YEARS[-1]}")
     print("=" * 55)
 

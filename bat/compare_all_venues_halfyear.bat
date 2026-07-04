@@ -2,8 +2,7 @@
 cd C:\keiba_ai\keiba_ai_ver3.0
 set PYTHONIOENCODING=utf-8
 echo ================================
-echo v4 モデル学習（的中率重視 + オッズ/人気）
-echo 全10場 2020-2026年
+echo 2026年上期 全場 v1/v3blend/v4 比較
 echo ================================
-python scripts\train_v4_models.py
+python scripts\compare_all_venues_halfyear.py
 pause
