@@ -33,6 +33,18 @@ def make_race_card(race_id):
 
     race_info_df = race_card_transform.fill_race_info_defaults(race_info_df)
 
+    # オッズ・人気を API から取得してマージ（scrape_race_card は静的 HTML のため ---.-/** のまま）
+    odds_df = netkeiba_scraper.scrape_race_card_odds(race_id)
+    if not odds_df.empty and "馬番" in odds_df.columns:
+        # 馬番キーを文字列で統一してマップを作り、race_card_df の型は変えない
+        key_series = race_card_df["馬番"].reset_index(drop=True).astype(str).str.strip()
+        odds_map  = dict(zip(odds_df["馬番"].astype(str).str.strip(), odds_df["オッズ"]))
+        ninki_map = dict(zip(odds_df["馬番"].astype(str).str.strip(), odds_df["人気"]))
+        race_card_df = race_card_df.reset_index(drop=True)
+        race_card_df["オッズ"] = key_series.map(odds_map).fillna(race_card_df["オッズ"])
+        race_card_df["人気"]   = key_series.map(ninki_map).fillna(race_card_df["人気"])
+        race_card_df.index = [str(race_id)] * len(race_card_df)
+
     # 出走馬の過去成績と血統情報を取得
     horse_ids = race_card_df.at[str(race_id), "horse_id"]
     horse_peds_df = pd.DataFrame()
