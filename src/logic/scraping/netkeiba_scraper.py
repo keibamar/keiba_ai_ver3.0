@@ -432,7 +432,7 @@ def scrape_race_card_odds(race_id):
             # vals = [単勝オッズ, (複勝下限), 人気] の3要素リスト
             if isinstance(vals, list) and len(vals) >= 3:
                 rows.append({
-                    "馬番": str(umaban),
+                    "馬番": str(int(umaban)),  # "01"→"1" に正規化
                     "オッズ": str(vals[0]),
                     "人気": str(vals[2]),
                 })
