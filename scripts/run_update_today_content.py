@@ -14,6 +14,7 @@ raceMeetings.js（カレンダーの日付セルに表示する開催場・メ�
 import os
 import sys
 import warnings
+from datetime import date, datetime, timedelta
 
 warnings.simplefilter("ignore")
 
@@ -25,7 +26,13 @@ from src.logic.html_generator import daily_index_generator, home_generator  # no
 from src.managers import html_manager  # noqa: E402
 
 if __name__ == "__main__":
+    # 深夜0:05の自動実行時、date.today()は既に翌日になっているが
+    # ページに表示するコンテンツ（「本日の開催」「今週のメインレース」）は
+    # 前日のレース情報を指すべきのため、6時前は前日を基準日とする。
+    now = datetime.now()
+    target_date = date.today() - timedelta(days=1) if now.hour < 6 else date.today()
+
     html_manager.regenerate_race_meetings_js()
-    daily_index_generator.make_races_calendar_page()
-    home_generator.make_home_page()
+    daily_index_generator.make_races_calendar_page(target_date)
+    home_generator.make_home_page(target_date)
     print("Update Today Content Done")

@@ -420,14 +420,20 @@ def _today_meetings_html(races, base_path=""):
     return f'<ul class="today-meeting-list">\n{items}</ul>'
 
 
-def races_calendar_template():
+def races_calendar_template(target_date=None):
     """開催日カレンダーページ（public_html/races/index.html）のHTMLを返す
 
     旧 web/site/races/index.html の構成を移植。大きな月表示カレンダーをここに
     集約し、本日開催がある場合は出馬表・コース詳細データへのリンクも併せて表示する。
     このページ自身が大きな月表示カレンダーを持つため、右側タブには同じカレンダーを
     二重に表示しないようshow_calendar=Falseを渡す（階層表示のみ出す）。
+
+    Args:
+        target_date (date | None): 「本日の開催」として扱う日付。Noneの場合は
+            date.today()を使う。0:05の日次更新など早朝実行時には前日を渡すこと。
     """
+    if target_date is None:
+        target_date = date.today()
     # site_nav_html（site_nav_html.pyからdaily_index_generator.calendar_widget_htmlを
     # 参照している）との循環importを避けるため、ここで遅延importする。
     from src.logic.html_generator.site_nav_html import (
@@ -440,7 +446,7 @@ def races_calendar_template():
         site_nav_html,
     )
 
-    today_races = ai_performance_calculator.get_today_main_races_with_course(date.today())
+    today_races = ai_performance_calculator.get_today_main_races_with_course(target_date)
 
     return f"""
 <!DOCTYPE html>
@@ -476,6 +482,6 @@ def races_calendar_template():
 """
 
 
-def make_races_calendar_page():
+def make_races_calendar_page(target_date=None):
     """開催日カレンダーページ（public_html/races/index.html）を生成する"""
-    html_manager.save_races_calendar_html(races_calendar_template())
+    html_manager.save_races_calendar_html(races_calendar_template(target_date))

@@ -284,8 +284,8 @@ def _weekly_meeting_summary_html(summaries):
     return f'<ul class="weekly-meeting-list">\n{items}</ul>'
 
 
-def home_template():
-    today = date.today()
+def home_template(target_date=None):
+    today = target_date if target_date is not None else date.today()
     df = dataset_manager.get_ai_performance_dataset()
     overall_performance = dataset_manager.aggregate(df)
     # 開催週（土曜始まり）ごとの的中率・回収率の推移。直近8週分（古い→新しい順）を表示する
@@ -356,6 +356,6 @@ def home_template():
 """
 
 
-def make_home_page():
+def make_home_page(target_date=None):
     """public_html/index.html を生成する"""
-    html_manager.save_home_html(home_template())
+    html_manager.save_home_html(home_template(target_date))
