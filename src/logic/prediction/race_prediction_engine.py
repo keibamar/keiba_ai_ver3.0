@@ -787,7 +787,8 @@ def blended_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
         if valid.any():
             blended_rank[valid.values] = rankdata(-np.array(p_comb)[valid.values], method="min").astype(int)
 
-        result_df = pd.DataFrame({"score": p_comb, "rank": blended_rank})
+        score_display = _zscore(pd.Series(p_comb)).values
+        result_df = pd.DataFrame({"score": score_display, "rank": blended_rank})
         result_df["rank"] = result_df["rank"].astype("Int64")
         result_df["score_hitrate"] = hitrate_df["score"]
         result_df["rank_hitrate"]  = hitrate_df["rank"]
