@@ -6,6 +6,7 @@ libs/mail_api.py、libs/post_text.py からの移植。
 配当結果レポート（make_return_text等）・日次配信オーケストレーションは対象外。
 """
 
+import datetime
 import os
 import smtplib
 import ssl
@@ -201,6 +202,26 @@ def send_race_pred(race_day, race_id):
     send_email(text_path)
 
 
+_POST_ERROR_LOG = os.path.join(paths.PROJECT_ROOT, "logs", "post_errors.log")
+
+
+def _log_post_error(context: str, e: Exception) -> None:
+    """投稿失敗をログファイルに記録する。レートリミットは [RATE LIMIT] で識別する。"""
+    is_rate_limit = isinstance(e, tweepy.errors.TooManyRequests)
+    label = "[RATE LIMIT]" if is_rate_limit else "[ERROR]"
+    line = (
+        f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {label} {context}: "
+        f"{e.__class__.__name__}: {e}\n"
+    )
+    print(line.rstrip())
+    try:
+        os.makedirs(os.path.dirname(_POST_ERROR_LOG), exist_ok=True)
+        with open(_POST_ERROR_LOG, "a", encoding="utf-8") as f:
+            f.write(line)
+    except Exception:
+        pass
+
+
 def post_text_error(e):
     """エラー時動作を記載する
 
@@ -232,6 +253,7 @@ def post_text_data(text_path):
             client.create_tweet(text=tweet_str)
         except Exception as e:
             post_text_error(e)
+            _log_post_error(os.path.basename(text_path), e)
             fp.close()
             raise Exception("post failed")
         fp.close()
@@ -259,6 +281,7 @@ def post_text(text):
         client.create_tweet(text=text)
     except Exception as e:
         post_text_error(e)
+        _log_post_error("post_text", e)
         raise Exception("post failed")
 
 
@@ -288,4 +311,5 @@ def post_text_with_image(text, image_path):
         client.create_tweet(text=text, media_ids=[media.media_id])
     except Exception as e:
         post_text_error(e)
+        _log_post_error(f"post_text_with_image({os.path.basename(image_path)})", e)
         raise Exception("post failed")
