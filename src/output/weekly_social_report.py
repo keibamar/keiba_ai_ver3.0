@@ -70,8 +70,17 @@ def post_weekend_summary(today=None):
         print("直近の週末のAI成績データが無いため、まとめ投稿をスキップしました。")
         return
 
+    sat_n = m.aggregate(m.filter_by_date_range(df, saturday, saturday))["win"]["n"]
+    sun_n = m.aggregate(m.filter_by_date_range(df, sunday, sunday))["win"]["n"]
+    if sat_n > 0 and sun_n > 0:
+        date_label = f"{saturday.strftime('%m/%d')}〜{sunday.strftime('%m/%d')}"
+    elif sat_n > 0:
+        date_label = saturday.strftime('%m/%d')
+    else:
+        date_label = sunday.strftime('%m/%d')
+
     text = (
-        f"📊 {saturday.strftime('%m/%d')}〜{sunday.strftime('%m/%d')}のMARの予想結果\n\n"
+        f"📊 {date_label}のMARの予想結果\n\n"
         f"単勝 的中率{win['hit_rate']:.1f}% 回収率{win['return_rate']:.1f}%\n"
         f"複勝 的中率{place['hit_rate']:.1f}% 回収率{place['return_rate']:.1f}%\n"
         f"(対象{win['n']}件)\n\n"
