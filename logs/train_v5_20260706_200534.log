@@ -1,0 +1,687 @@
+=======================================================
+v5 モデル学習（血統カテゴリカル特徴量追加）
+対象場: 全10場  訓練年: 2020〜2026
+=======================================================
+
+[Step 0] 血統 vocab を構築 / 読み込み...
+vocab読み込み済み: 1738種類 (c:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\pedigree_vocab_v5.json)
+
+[Step 1] 欠損データセットを生成...
+
+[データ生成] 01_sapporo 2020年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 3810
+
+[データ生成] 01_sapporo 2022年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 8069
+
+[データ生成] 01_sapporo 2023年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 10223
+
+[データ生成] 01_sapporo 2024年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 12338
+
+[データ生成] 01_sapporo 2025年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 12607
+
+[データ生成] 01_sapporo 2026年 (9コース欠損)
+  データなし: 2026 01_sapporo
+
+[データ生成] 02_hakodate 2021年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 5293
+
+[データ生成] 02_hakodate 2026年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 9213
+
+[データ生成] 03_fukushima 2026年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 16516
+
+[データ生成] 04_nigata 2026年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 24991
+
+[データ生成] 05_tokyo 2020年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 15145
+
+[データ生成] 05_tokyo 2021年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 22679
+
+[データ生成] 05_tokyo 2022年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 30239
+
+[データ生成] 05_tokyo 2023年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 37831
+
+[データ生成] 05_tokyo 2024年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 45102
+
+[データ生成] 05_tokyo 2025年 (2コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 45369
+
+[データ生成] 05_tokyo 2026年 (2コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 41710
+
+[データ生成] 06_nakayama 2026年 (2コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 40428
+
+[データ生成] 08_kyoto 2021年 (13コース欠損)
+  データなし: 2021 08_kyoto
+
+[データ生成] 08_kyoto 2022年 (13コース欠損)
+  データなし: 2022 08_kyoto
+
+[データ生成] 10_kokura 2020年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 6780
+
+[データ生成] 10_kokura 2021年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 11689
+
+[データ生成] 10_kokura 2022年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 16539
+
+[データ生成] 10_kokura 2023年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 20300
+
+[データ生成] 10_kokura 2024年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 24196
+
+[データ生成] 10_kokura 2025年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 23943
+
+[データ生成] 10_kokura 2026年 (1コース欠損)
+  騎手×コース成績テーブル構築中...
+  ルックアップエントリ数: 22700
+
+[Step 2] モデル学習...
+
+=======================================================
+[学習] 01_sapporo (place_id=1)
+=======================================================
+
+  芝1000m ...
+    訓練 1753行 / テスト 440行
+    最良パラメータ: {'n_estimators': 309, 'learning_rate': 0.01299068177733171, 'num_leaves': 28, 'max_depth': 9, 'min_child_samples': 15, 'reg_alpha': 0.09473572117188851, 'reg_lambda': 0.0011623432943295802}
+    保存完了: 芝1000m_v5
+
+  芝1200m ...
+    訓練 1753行 / テスト 440行
+    最良パラメータ: {'n_estimators': 309, 'learning_rate': 0.01299068177733171, 'num_leaves': 28, 'max_depth': 9, 'min_child_samples': 15, 'reg_alpha': 0.09473572117188851, 'reg_lambda': 0.0011623432943295802}
+    保存完了: 芝1200m_v5
+
+  芝1500m ...
+    訓練 2265行 / テスト 577行
+    最良パラメータ: {'n_estimators': 314, 'learning_rate': 0.03464286349480737, 'num_leaves': 40, 'max_depth': 10, 'min_child_samples': 10, 'reg_alpha': 0.0010255501573352807, 'reg_lambda': 0.7190677644817105}
+    保存完了: 芝1500m_v5
+
+  芝1800m ...
+    訓練 2265行 / テスト 577行
+    最良パラメータ: {'n_estimators': 314, 'learning_rate': 0.03464286349480737, 'num_leaves': 40, 'max_depth': 10, 'min_child_samples': 10, 'reg_alpha': 0.0010255501573352807, 'reg_lambda': 0.7190677644817105}
+    保存完了: 芝1800m_v5
+
+  芝2000m ...
+    訓練 1420行 / テスト 361行
+    最良パラメータ: {'n_estimators': 225, 'learning_rate': 0.04721553607697163, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 0.013695332647306414, 'reg_lambda': 0.17504739726856905}
+    保存完了: 芝2000m_v5
+
+  芝2600m ...
+    訓練 525行 / テスト 134行
+    最良パラメータ: {'n_estimators': 379, 'learning_rate': 0.005743749302159308, 'num_leaves': 48, 'max_depth': 8, 'min_child_samples': 8, 'reg_alpha': 0.0028073229099750295, 'reg_lambda': 0.012496333968303307}
+    保存完了: 芝2600m_v5
+
+  ダート1000m ...
+    訓練 979行 / テスト 244行
+    最良パラメータ: {'n_estimators': 221, 'learning_rate': 0.04750403931085677, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 2.584006683164645, 'reg_lambda': 0.17519147151832634}
+    保存完了: ダート1000m_v5
+
+  ダート1700m ...
+    訓練 3101行 / テスト 790行
+    最良パラメータ: {'n_estimators': 494, 'learning_rate': 0.049629890103941615, 'num_leaves': 64, 'max_depth': 6, 'min_child_samples': 30, 'reg_alpha': 0.04602666228684508, 'reg_lambda': 0.46041358248698205}
+    保存完了: ダート1700m_v5
+
+  ダート2400m ...
+    訓練 105行 / テスト 34行
+    最良パラメータ: {'n_estimators': 379, 'learning_rate': 0.005743749302159308, 'num_leaves': 48, 'max_depth': 8, 'min_child_samples': 3, 'reg_alpha': 0.0028073229099750295, 'reg_lambda': 0.012496333968303307}
+    保存完了: ダート2400m_v5
+
+=======================================================
+[学習] 02_hakodate (place_id=2)
+=======================================================
+
+  芝1000m ...
+    訓練 2759行 / テスト 697行
+    最良パラメータ: {'n_estimators': 406, 'learning_rate': 0.01133314197631174, 'num_leaves': 26, 'max_depth': 7, 'min_child_samples': 11, 'reg_alpha': 0.2761694624808533, 'reg_lambda': 0.0112178596332227}
+    保存完了: 芝1000m_v5
+
+  芝1200m ...
+    訓練 2759行 / テスト 697行
+    最良パラメータ: {'n_estimators': 406, 'learning_rate': 0.01133314197631174, 'num_leaves': 26, 'max_depth': 7, 'min_child_samples': 11, 'reg_alpha': 0.2761694624808533, 'reg_lambda': 0.0112178596332227}
+    保存完了: 芝1200m_v5
+
+  芝1800m ...
+    訓練 1253行 / テスト 332行
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+[LightGBM] [Warning] Met categorical feature which contains sparse values. Consider renumbering to consecutive integers started from zero
+    最良パラメータ: {'n_estimators': 347, 'learning_rate': 0.020467543734830815, 'num_leaves': 46, 'max_depth': 10, 'min_child_samples': 21, 'reg_alpha': 0.017784946468432317, 'reg_lambda': 0.03308362546133902}
+    保存完了: 芝1800m_v5
+
+  芝2000m ...
+    訓練 876行 / テスト 237行
+    最良パラメータ: {'n_estimators': 191, 'learning_rate': 0.034133501277301366, 'num_leaves': 54, 'max_depth': 10, 'min_child_samples': 28, 'reg_alpha': 0.001058819371905615, 'reg_lambda': 0.009330197361583102}
+    保存完了: 芝2000m_v5
+
+  芝2600m ...
+    訓練 358行 / テスト 107行
+    最良パラメータ: {'n_estimators': 480, 'learning_rate': 0.04640390626234847, 'num_leaves': 62, 'max_depth': 3, 'min_child_samples': 29, 'reg_alpha': 0.001098564944856228, 'reg_lambda': 0.36069163975392604}
+    保存完了: 芝2600m_v5
+
+  ダート1000m ...
+    訓練 1116行 / テスト 278行
+    最良パラメータ: {'n_estimators': 333, 'learning_rate': 0.021062083997815284, 'num_leaves': 54, 'max_depth': 8, 'min_child_samples': 30, 'reg_alpha': 0.008560318151633406, 'reg_lambda': 0.007711630081905115}
+    保存完了: ダート1000m_v5
+
+  ダート1700m ...
+    訓練 2303行 / テスト 576行
+    最良パラメータ: {'n_estimators': 191, 'learning_rate': 0.034133501277301366, 'num_leaves': 54, 'max_depth': 10, 'min_child_samples': 28, 'reg_alpha': 0.001058819371905615, 'reg_lambda': 0.009330197361583102}
+    保存完了: ダート1700m_v5
+
+  ダート2400m ...
+    訓練 119行 / テスト 32行
+    最良パラメータ: {'n_estimators': 245, 'learning_rate': 0.018585180132685557, 'num_leaves': 37, 'max_depth': 10, 'min_child_samples': 3, 'reg_alpha': 0.00532463457929216, 'reg_lambda': 0.0036382518028858744}
+    保存完了: ダート2400m_v5
+
+=======================================================
+[学習] 03_fukushima (place_id=3)
+=======================================================
+
+  芝1200m ...
+    訓練 3882行 / テスト 972行
+    最良パラメータ: {'n_estimators': 101, 'learning_rate': 0.03698019355857243, 'num_leaves': 57, 'max_depth': 6, 'min_child_samples': 26, 'reg_alpha': 0.0010666784520768683, 'reg_lambda': 0.04557571886979141}
+    保存完了: 芝1200m_v5
+
+  芝1800m ...
+    訓練 2126行 / テスト 534行
+    最良パラメータ: {'n_estimators': 379, 'learning_rate': 0.005743749302159308, 'num_leaves': 48, 'max_depth': 8, 'min_child_samples': 8, 'reg_alpha': 0.0028073229099750295, 'reg_lambda': 0.012496333968303307}
+    保存完了: 芝1800m_v5
+
+  芝2000m ...
+    訓練 1794行 / テスト 455行
+    最良パラメータ: {'n_estimators': 420, 'learning_rate': 0.014469361482488454, 'num_leaves': 54, 'max_depth': 3, 'min_child_samples': 20, 'reg_alpha': 0.003151060651827965, 'reg_lambda': 1.9263197180254745}
+    保存完了: 芝2000m_v5
+
+  芝2600m ...
+    訓練 794行 / テスト 203行
+    最良パラメータ: {'n_estimators': 209, 'learning_rate': 0.037317680063648606, 'num_leaves': 64, 'max_depth': 5, 'min_child_samples': 24, 'reg_alpha': 0.058474006623797266, 'reg_lambda': 0.4384826233965447}
+    保存完了: 芝2600m_v5
+
+  ダート1150m ...
+    訓練 2636行 / テスト 675行
+    最良パラメータ: {'n_estimators': 414, 'learning_rate': 0.030607259355228872, 'num_leaves': 16, 'max_depth': 5, 'min_child_samples': 10, 'reg_alpha': 2.7142164258500032, 'reg_lambda': 0.11715232158701892}
+    保存完了: ダート1150m_v5
+
+  ダート1700m ...
+    訓練 4000行 / テスト 1010行
+    最良パラメータ: {'n_estimators': 491, 'learning_rate': 0.048773140374548024, 'num_leaves': 24, 'max_depth': 7, 'min_child_samples': 13, 'reg_alpha': 0.11965984260957023, 'reg_lambda': 0.20566496471276505}
+    保存完了: ダート1700m_v5
+
+  ダート2400m ...
+    訓練 116行 / テスト 28行
+    最良パラメータ: {'n_estimators': 247, 'learning_rate': 0.022389603089744983, 'num_leaves': 25, 'max_depth': 5, 'min_child_samples': 4, 'reg_alpha': 0.01150109139204754, 'reg_lambda': 0.006643912549574161}
+    保存完了: ダート2400m_v5
+
+=======================================================
+[学習] 04_nigata (place_id=4)
+=======================================================
+
+  芝1000m ...
+    訓練 3289行 / テスト 824行
+    最良パラメータ: {'n_estimators': 108, 'learning_rate': 0.04632937655415707, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 2.6345228754989987, 'reg_lambda': 0.2106192817448327}
+    保存完了: 芝1000m_v5
+
+  芝1200m ...
+    訓練 3289行 / テスト 824行
+    最良パラメータ: {'n_estimators': 108, 'learning_rate': 0.04632937655415707, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 2.6345228754989987, 'reg_lambda': 0.2106192817448327}
+    保存完了: 芝1200m_v5
+
+  芝1400m ...
+    訓練 6194行 / テスト 1550行
+    最良パラメータ: {'n_estimators': 288, 'learning_rate': 0.02738715984082641, 'num_leaves': 43, 'max_depth': 6, 'min_child_samples': 18, 'reg_alpha': 0.010138647215521164, 'reg_lambda': 0.01770785809529649}
+    保存完了: 芝1400m_v5
+
+  芝1600m ...
+    訓練 6194行 / テスト 1550行
+    最良パラメータ: {'n_estimators': 288, 'learning_rate': 0.02738715984082641, 'num_leaves': 43, 'max_depth': 6, 'min_child_samples': 18, 'reg_alpha': 0.010138647215521164, 'reg_lambda': 0.01770785809529649}
+    保存完了: 芝1600m_v5
+
+  芝1800m ...
+    訓練 6194行 / テスト 1550行
+    最良パラメータ: {'n_estimators': 288, 'learning_rate': 0.02738715984082641, 'num_leaves': 43, 'max_depth': 6, 'min_child_samples': 18, 'reg_alpha': 0.010138647215521164, 'reg_lambda': 0.01770785809529649}
+    保存完了: 芝1800m_v5
+
+  芝2000m ...
+    訓練 1830行 / テスト 460行
+    最良パラメータ: {'n_estimators': 177, 'learning_rate': 0.015668845186530528, 'num_leaves': 41, 'max_depth': 6, 'min_child_samples': 9, 'reg_alpha': 0.009223583315618233, 'reg_lambda': 0.0013497367720611002}
+    保存完了: 芝2000m_v5
+
+  芝2200m ...
+    訓練 1015行 / テスト 259行
+    最良パラメータ: {'n_estimators': 227, 'learning_rate': 0.04638945151639016, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 0.0010980447267460633, 'reg_lambda': 0.011812419976497741}
+    保存完了: 芝2200m_v5
+
+  芝2400m ...
+    訓練 1015行 / テスト 259行
+    最良パラメータ: {'n_estimators': 227, 'learning_rate': 0.04638945151639016, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 0.0010980447267460633, 'reg_lambda': 0.011812419976497741}
+    保存完了: 芝2400m_v5
+
+  ダート1200m ...
+    訓練 4521行 / テスト 1135行
+    最良パラメータ: {'n_estimators': 320, 'learning_rate': 0.02595131508847582, 'num_leaves': 45, 'max_depth': 7, 'min_child_samples': 14, 'reg_alpha': 0.17613763016070647, 'reg_lambda': 0.03323102927882457}
+    保存完了: ダート1200m_v5
+
+  ダート1800m ...
+    訓練 5344行 / テスト 1342行
+    最良パラメータ: {'n_estimators': 420, 'learning_rate': 0.014469361482488454, 'num_leaves': 54, 'max_depth': 3, 'min_child_samples': 20, 'reg_alpha': 0.003151060651827965, 'reg_lambda': 1.9263197180254745}
+    保存完了: ダート1800m_v5
+
+  ダート2500m ...
+    訓練 79行 / テスト 26行
+    最良パラメータ: {'n_estimators': 379, 'learning_rate': 0.005743749302159308, 'num_leaves': 48, 'max_depth': 8, 'min_child_samples': 3, 'reg_alpha': 0.0028073229099750295, 'reg_lambda': 0.012496333968303307}
+    保存完了: ダート2500m_v5
+
+=======================================================
+[学習] 05_tokyo (place_id=5)
+=======================================================
+
+  芝1400m ...
+    訓練 13053行 / テスト 3274行
+    最良パラメータ: {'n_estimators': 320, 'learning_rate': 0.02595131508847582, 'num_leaves': 45, 'max_depth': 7, 'min_child_samples': 14, 'reg_alpha': 0.17613763016070647, 'reg_lambda': 0.03323102927882457}
+    保存完了: 芝1400m_v5
+
+  芝1600m ...
+    訓練 13053行 / テスト 3274行
+    最良パラメータ: {'n_estimators': 320, 'learning_rate': 0.02595131508847582, 'num_leaves': 45, 'max_depth': 7, 'min_child_samples': 14, 'reg_alpha': 0.17613763016070647, 'reg_lambda': 0.03323102927882457}
+    保存完了: 芝1600m_v5
+
+  芝1800m ...
+    訓練 13053行 / テスト 3274行
+    最良パラメータ: {'n_estimators': 320, 'learning_rate': 0.02595131508847582, 'num_leaves': 45, 'max_depth': 7, 'min_child_samples': 14, 'reg_alpha': 0.17613763016070647, 'reg_lambda': 0.03323102927882457}
+    保存完了: 芝1800m_v5
+
+  芝2000m ...
+    訓練 2519行 / テスト 638行
+    最良パラメータ: {'n_estimators': 225, 'learning_rate': 0.04721553607697163, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 0.013695332647306414, 'reg_lambda': 0.17504739726856905}
+    保存完了: 芝2000m_v5
+
+  芝2300m ...
+    訓練 2256行 / テスト 584行
+    最良パラメータ: {'n_estimators': 221, 'learning_rate': 0.04750403931085677, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 2.584006683164645, 'reg_lambda': 0.17519147151832634}
+    保存完了: 芝2300m_v5
+
+  芝2400m ...
+    訓練 2256行 / テスト 584行
+    最良パラメータ: {'n_estimators': 221, 'learning_rate': 0.04750403931085677, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 2.584006683164645, 'reg_lambda': 0.17519147151832634}
+    保存完了: 芝2400m_v5
+
+  芝2500m ...
+    訓練 2256行 / テスト 584行
+    最良パラメータ: {'n_estimators': 221, 'learning_rate': 0.04750403931085677, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 2.584006683164645, 'reg_lambda': 0.17519147151832634}
+    保存完了: 芝2500m_v5
+
+  芝3400m ...
+    訓練 71行 / テスト 32行
+    最良パラメータ: {'n_estimators': 245, 'learning_rate': 0.018585180132685557, 'num_leaves': 37, 'max_depth': 10, 'min_child_samples': 2, 'reg_alpha': 0.00532463457929216, 'reg_lambda': 0.0036382518028858744}
+    保存完了: 芝3400m_v5
+
+  ダート1300m ...
+    訓練 1917行 / テスト 495行
+    最良パラメータ: {'n_estimators': 227, 'learning_rate': 0.04638945151639016, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 0.0010980447267460633, 'reg_lambda': 0.011812419976497741}
+    保存完了: ダート1300m_v5
+
+  ダート1400m ...
+    訓練 16495行 / テスト 4138行
+    最良パラメータ: {'n_estimators': 177, 'learning_rate': 0.006822995880877761, 'num_leaves': 42, 'max_depth': 6, 'min_child_samples': 12, 'reg_alpha': 0.04662172506535361, 'reg_lambda': 0.25221961329483467}
+    保存完了: ダート1400m_v5
+
+  ダート1600m ...
+    訓練 16495行 / テスト 4138行
+    最良パラメータ: {'n_estimators': 177, 'learning_rate': 0.006822995880877761, 'num_leaves': 42, 'max_depth': 6, 'min_child_samples': 12, 'reg_alpha': 0.04662172506535361, 'reg_lambda': 0.25221961329483467}
+    保存完了: ダート1600m_v5
+
+  ダート2100m ...
+    訓練 2922行 / テスト 736行
+    最良パラメータ: {'n_estimators': 244, 'learning_rate': 0.035592050928207344, 'num_leaves': 55, 'max_depth': 10, 'min_child_samples': 19, 'reg_alpha': 0.2876799554366408, 'reg_lambda': 0.02389133130829315}
+    保存完了: ダート2100m_v5
+
+  ダート2400m ...
+    データなし: スキップ
+
+=======================================================
+[学習] 06_nakayama (place_id=6)
+=======================================================
+
+  芝1200m ...
+    訓練 2570行 / テスト 644行
+    最良パラメータ: {'n_estimators': 225, 'learning_rate': 0.04721553607697163, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 0.013695332647306414, 'reg_lambda': 0.17504739726856905}
+    保存完了: 芝1200m_v5
+
+  芝1600m ...
+    訓練 7178行 / テスト 1801行
+    最良パラメータ: {'n_estimators': 320, 'learning_rate': 0.02595131508847582, 'num_leaves': 45, 'max_depth': 7, 'min_child_samples': 14, 'reg_alpha': 0.17613763016070647, 'reg_lambda': 0.03323102927882457}
+    保存完了: 芝1600m_v5
+
+  芝1800m ...
+    訓練 7178行 / テスト 1801行
+    最良パラメータ: {'n_estimators': 320, 'learning_rate': 0.02595131508847582, 'num_leaves': 45, 'max_depth': 7, 'min_child_samples': 14, 'reg_alpha': 0.17613763016070647, 'reg_lambda': 0.03323102927882457}
+    保存完了: 芝1800m_v5
+
+  芝2000m ...
+    訓練 3715行 / テスト 937行
+    最良パラメータ: {'n_estimators': 190, 'learning_rate': 0.03551519151204281, 'num_leaves': 64, 'max_depth': 5, 'min_child_samples': 8, 'reg_alpha': 0.017883230299376603, 'reg_lambda': 0.008398020604901916}
+    保存完了: 芝2000m_v5
+
+  芝2200m ...
+    訓練 2024行 / テスト 513行
+    最良パラメータ: {'n_estimators': 108, 'learning_rate': 0.0463761764664459, 'num_leaves': 17, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 2.638519885976584, 'reg_lambda': 0.3068785084453601}
+    保存完了: 芝2200m_v5
+
+  芝2500m ...
+    訓練 2024行 / テスト 513行
+    最良パラメータ: {'n_estimators': 108, 'learning_rate': 0.0463761764664459, 'num_leaves': 17, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 2.638519885976584, 'reg_lambda': 0.3068785084453601}
+    保存完了: 芝2500m_v5
+
+  芝3600m ...
+    訓練 58行 / テスト 28行
+    最良パラメータ: {'n_estimators': 457, 'learning_rate': 0.04598675496284059, 'num_leaves': 34, 'max_depth': 9, 'min_child_samples': 4, 'reg_alpha': 0.09444083473101433, 'reg_lambda': 1.653528726720999}
+    保存完了: 芝3600m_v5
+
+  ダート1200m ...
+    訓練 10332行 / テスト 2589行
+    最良パラメータ: {'n_estimators': 108, 'learning_rate': 0.0463761764664459, 'num_leaves': 17, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 2.638519885976584, 'reg_lambda': 0.3068785084453601}
+    保存完了: ダート1200m_v5
+
+  ダート1800m ...
+    訓練 10850行 / テスト 2723行
+    最良パラメータ: {'n_estimators': 128, 'learning_rate': 0.006110817364354473, 'num_leaves': 16, 'max_depth': 9, 'min_child_samples': 24, 'reg_alpha': 1.0595897111084032, 'reg_lambda': 2.527985846003494}
+    保存完了: ダート1800m_v5
+
+  ダート2400m ...
+    訓練 739行 / テスト 186行
+    最良パラメータ: {'n_estimators': 457, 'learning_rate': 0.04598675496284059, 'num_leaves': 34, 'max_depth': 9, 'min_child_samples': 17, 'reg_alpha': 0.09444083473101433, 'reg_lambda': 1.653528726720999}
+    保存完了: ダート2400m_v5
+
+  ダート2500m ...
+    訓練 739行 / テスト 186行
+    最良パラメータ: {'n_estimators': 457, 'learning_rate': 0.04598675496284059, 'num_leaves': 34, 'max_depth': 9, 'min_child_samples': 17, 'reg_alpha': 0.09444083473101433, 'reg_lambda': 1.653528726720999}
+    保存完了: ダート2500m_v5
+
+=======================================================
+[学習] 07_chukyo (place_id=7)
+=======================================================
+
+  芝1200m ...
+    訓練 1706行 / テスト 440行
+    最良パラメータ: {'n_estimators': 225, 'learning_rate': 0.04721553607697163, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 0.013695332647306414, 'reg_lambda': 0.17504739726856905}
+    保存完了: 芝1200m_v5
+
+  芝1400m ...
+    訓練 5259行 / テスト 1328行
+    最良パラメータ: {'n_estimators': 433, 'learning_rate': 0.014194844188626907, 'num_leaves': 58, 'max_depth': 8, 'min_child_samples': 19, 'reg_alpha': 0.03725712308418928, 'reg_lambda': 0.059974420207602304}
+    保存完了: 芝1400m_v5
+
+  芝1600m ...
+    訓練 5259行 / テスト 1328行
+    最良パラメータ: {'n_estimators': 433, 'learning_rate': 0.014194844188626907, 'num_leaves': 58, 'max_depth': 8, 'min_child_samples': 19, 'reg_alpha': 0.03725712308418928, 'reg_lambda': 0.059974420207602304}
+    保存完了: 芝1600m_v5
+
+  芝2000m ...
+    訓練 3437行 / テスト 867行
+    最良パラメータ: {'n_estimators': 420, 'learning_rate': 0.014469361482488454, 'num_leaves': 54, 'max_depth': 3, 'min_child_samples': 20, 'reg_alpha': 0.003151060651827965, 'reg_lambda': 1.9263197180254745}
+    保存完了: 芝2000m_v5
+
+  芝2200m ...
+    訓練 1410行 / テスト 353行
+    最良パラメータ: {'n_estimators': 410, 'learning_rate': 0.02980376054635006, 'num_leaves': 50, 'max_depth': 7, 'min_child_samples': 11, 'reg_alpha': 0.1103448247042462, 'reg_lambda': 0.053844458685759586}
+    保存完了: 芝2200m_v5
+
+  ダート1200m ...
+    訓練 3321行 / テスト 841行
+    最良パラメータ: {'n_estimators': 224, 'learning_rate': 0.04968389279998202, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 30, 'reg_alpha': 0.019097456068698684, 'reg_lambda': 0.30763935070657494}
+    保存完了: ダート1200m_v5
+
+  ダート1400m ...
+    訓練 10270行 / テスト 2583行
+    最良パラメータ: {'n_estimators': 247, 'learning_rate': 0.027882277229437733, 'num_leaves': 40, 'max_depth': 9, 'min_child_samples': 24, 'reg_alpha': 0.054202515659413655, 'reg_lambda': 0.010647320214790193}
+    保存完了: ダート1400m_v5
+
+  ダート1800m ...
+    訓練 10270行 / テスト 2583行
+    最良パラメータ: {'n_estimators': 247, 'learning_rate': 0.027882277229437733, 'num_leaves': 40, 'max_depth': 9, 'min_child_samples': 24, 'reg_alpha': 0.054202515659413655, 'reg_lambda': 0.010647320214790193}
+    保存完了: ダート1800m_v5
+
+  ダート1900m ...
+    訓練 1891行 / テスト 481行
+    最良パラメータ: {'n_estimators': 320, 'learning_rate': 0.02595131508847582, 'num_leaves': 45, 'max_depth': 7, 'min_child_samples': 14, 'reg_alpha': 0.17613763016070647, 'reg_lambda': 0.03323102927882457}
+    保存完了: ダート1900m_v5
+
+=======================================================
+[学習] 08_kyoto (place_id=8)
+=======================================================
+
+  芝1200m ...
+    訓練 1172行 / テスト 299行
+    最良パラメータ: {'n_estimators': 253, 'learning_rate': 0.005008162427449748, 'num_leaves': 25, 'max_depth': 8, 'min_child_samples': 24, 'reg_alpha': 0.046203365781611445, 'reg_lambda': 0.0010866697284250282}
+    保存完了: 芝1200m_v5
+
+  芝1400m ...
+    訓練 6044行 / テスト 1532行
+    最良パラメータ: {'n_estimators': 476, 'learning_rate': 0.04898972583838678, 'num_leaves': 17, 'max_depth': 7, 'min_child_samples': 27, 'reg_alpha': 0.1859686069853601, 'reg_lambda': 2.521998215988086}
+    保存完了: 芝1400m_v5
+
+  芝1600m ...
+    訓練 6044行 / テスト 1532行
+    最良パラメータ: {'n_estimators': 476, 'learning_rate': 0.04898972583838678, 'num_leaves': 17, 'max_depth': 7, 'min_child_samples': 27, 'reg_alpha': 0.1859686069853601, 'reg_lambda': 2.521998215988086}
+    保存完了: 芝1600m_v5
+
+  芝1800m ...
+    訓練 6044行 / テスト 1532行
+    最良パラメータ: {'n_estimators': 476, 'learning_rate': 0.04898972583838678, 'num_leaves': 17, 'max_depth': 7, 'min_child_samples': 27, 'reg_alpha': 0.1859686069853601, 'reg_lambda': 2.521998215988086}
+    保存完了: 芝1800m_v5
+
+  芝2000m ...
+    訓練 1707行 / テスト 426行
+    最良パラメータ: {'n_estimators': 101, 'learning_rate': 0.034133501277301366, 'num_leaves': 56, 'max_depth': 6, 'min_child_samples': 12, 'reg_alpha': 0.028211826887339947, 'reg_lambda': 0.006677757515348214}
+    保存完了: 芝2000m_v5
+
+  芝2200m ...
+    訓練 1272行 / テスト 318行
+    最良パラメータ: {'n_estimators': 379, 'learning_rate': 0.005743749302159308, 'num_leaves': 48, 'max_depth': 8, 'min_child_samples': 8, 'reg_alpha': 0.0028073229099750295, 'reg_lambda': 0.012496333968303307}
+    保存完了: 芝2200m_v5
+
+  芝2400m ...
+    訓練 1272行 / テスト 318行
+    最良パラメータ: {'n_estimators': 379, 'learning_rate': 0.005743749302159308, 'num_leaves': 48, 'max_depth': 8, 'min_child_samples': 8, 'reg_alpha': 0.0028073229099750295, 'reg_lambda': 0.012496333968303307}
+    保存完了: 芝2400m_v5
+
+  芝3000m ...
+    訓練 178行 / テスト 47行
+    最良パラメータ: {'n_estimators': 245, 'learning_rate': 0.018585180132685557, 'num_leaves': 37, 'max_depth': 10, 'min_child_samples': 3, 'reg_alpha': 0.00532463457929216, 'reg_lambda': 0.0036382518028858744}
+    保存完了: 芝3000m_v5
+
+  芝3200m ...
+    訓練 178行 / テスト 47行
+    最良パラメータ: {'n_estimators': 245, 'learning_rate': 0.018585180132685557, 'num_leaves': 37, 'max_depth': 10, 'min_child_samples': 3, 'reg_alpha': 0.00532463457929216, 'reg_lambda': 0.0036382518028858744}
+    保存完了: 芝3200m_v5
+
+  ダート1200m ...
+    訓練 2863行 / テスト 724行
+    最良パラメータ: {'n_estimators': 347, 'learning_rate': 0.020467543734830815, 'num_leaves': 46, 'max_depth': 10, 'min_child_samples': 21, 'reg_alpha': 0.017784946468432317, 'reg_lambda': 0.03308362546133902}
+    保存完了: ダート1200m_v5
+
+  ダート1400m ...
+    訓練 8486行 / テスト 2129行
+    最良パラメータ: {'n_estimators': 309, 'learning_rate': 0.01299068177733171, 'num_leaves': 28, 'max_depth': 9, 'min_child_samples': 15, 'reg_alpha': 0.09473572117188851, 'reg_lambda': 0.0011623432943295802}
+    保存完了: ダート1400m_v5
+
+  ダート1800m ...
+    訓練 8486行 / テスト 2129行
+    最良パラメータ: {'n_estimators': 309, 'learning_rate': 0.01299068177733171, 'num_leaves': 28, 'max_depth': 9, 'min_child_samples': 15, 'reg_alpha': 0.09473572117188851, 'reg_lambda': 0.0011623432943295802}
+    保存完了: ダート1800m_v5
+
+  ダート1900m ...
+    訓練 1326行 / テスト 340行
+    最良パラメータ: {'n_estimators': 488, 'learning_rate': 0.03062710814429584, 'num_leaves': 63, 'max_depth': 5, 'min_child_samples': 13, 'reg_alpha': 0.016778296767072123, 'reg_lambda': 0.09508542043369939}
+    保存完了: ダート1900m_v5
+
+=======================================================
+[学習] 09_hanshin (place_id=9)
+=======================================================
+
+  芝1200m ...
+    訓練 1484行 / テスト 387行
+    最良パラメータ: {'n_estimators': 215, 'learning_rate': 0.005013678176614997, 'num_leaves': 63, 'max_depth': 6, 'min_child_samples': 11, 'reg_alpha': 0.01150109139204754, 'reg_lambda': 0.013943507751480315}
+    保存完了: 芝1200m_v5
+
+  芝1400m ...
+    訓練 8685行 / テスト 2189行
+    最良パラメータ: {'n_estimators': 294, 'learning_rate': 0.009472426155007084, 'num_leaves': 29, 'max_depth': 5, 'min_child_samples': 15, 'reg_alpha': 0.041436868883001535, 'reg_lambda': 0.019520401964031604}
+    保存完了: 芝1400m_v5
+
+  芝1600m ...
+    訓練 8685行 / テスト 2189行
+    最良パラメータ: {'n_estimators': 294, 'learning_rate': 0.009472426155007084, 'num_leaves': 29, 'max_depth': 5, 'min_child_samples': 15, 'reg_alpha': 0.041436868883001535, 'reg_lambda': 0.019520401964031604}
+    保存完了: 芝1600m_v5
+
+  芝1800m ...
+    訓練 8685行 / テスト 2189行
+    最良パラメータ: {'n_estimators': 294, 'learning_rate': 0.009472426155007084, 'num_leaves': 29, 'max_depth': 5, 'min_child_samples': 15, 'reg_alpha': 0.041436868883001535, 'reg_lambda': 0.019520401964031604}
+    保存完了: 芝1800m_v5
+
+  芝2000m ...
+    訓練 2453行 / テスト 619行
+    最良パラメータ: {'n_estimators': 227, 'learning_rate': 0.049472053494810604, 'num_leaves': 64, 'max_depth': 6, 'min_child_samples': 30, 'reg_alpha': 0.017346125984690663, 'reg_lambda': 0.1271706937582155}
+    保存完了: 芝2000m_v5
+
+  芝2200m ...
+    訓練 1759行 / テスト 441行
+    最良パラメータ: {'n_estimators': 155, 'learning_rate': 0.007862349874524862, 'num_leaves': 34, 'max_depth': 9, 'min_child_samples': 4, 'reg_alpha': 0.8196643530198039, 'reg_lambda': 0.0021584690047057415}
+    保存完了: 芝2200m_v5
+
+  芝2400m ...
+    訓練 1759行 / テスト 441行
+    最良パラメータ: {'n_estimators': 155, 'learning_rate': 0.007862349874524862, 'num_leaves': 34, 'max_depth': 9, 'min_child_samples': 4, 'reg_alpha': 0.8196643530198039, 'reg_lambda': 0.0021584690047057415}
+    保存完了: 芝2400m_v5
+
+  芝2600m ...
+    訓練 1759行 / テスト 441行
+    最良パラメータ: {'n_estimators': 155, 'learning_rate': 0.007862349874524862, 'num_leaves': 34, 'max_depth': 9, 'min_child_samples': 4, 'reg_alpha': 0.8196643530198039, 'reg_lambda': 0.0021584690047057415}
+    保存完了: 芝2600m_v5
+
+  芝3000m ...
+    訓練 150行 / テスト 41行
+    最良パラメータ: {'n_estimators': 245, 'learning_rate': 0.018585180132685557, 'num_leaves': 37, 'max_depth': 10, 'min_child_samples': 3, 'reg_alpha': 0.00532463457929216, 'reg_lambda': 0.0036382518028858744}
+    保存完了: 芝3000m_v5
+
+  ダート1200m ...
+    訓練 4766行 / テスト 1201行
+    最良パラメータ: {'n_estimators': 347, 'learning_rate': 0.020467543734830815, 'num_leaves': 46, 'max_depth': 10, 'min_child_samples': 21, 'reg_alpha': 0.017784946468432317, 'reg_lambda': 0.03308362546133902}
+    保存完了: ダート1200m_v5
+
+  ダート1400m ...
+    訓練 13770行 / テスト 3443行
+    最良パラメータ: {'n_estimators': 428, 'learning_rate': 0.03261180112844506, 'num_leaves': 26, 'max_depth': 6, 'min_child_samples': 26, 'reg_alpha': 0.015515377327137337, 'reg_lambda': 0.11482466522381679}
+    保存完了: ダート1400m_v5
+
+  ダート1800m ...
+    訓練 13770行 / テスト 3443行
+    最良パラメータ: {'n_estimators': 428, 'learning_rate': 0.03261180112844506, 'num_leaves': 26, 'max_depth': 6, 'min_child_samples': 26, 'reg_alpha': 0.015515377327137337, 'reg_lambda': 0.11482466522381679}
+    保存完了: ダート1800m_v5
+
+  ダート2000m ...
+    訓練 1344行 / テスト 341行
+    最良パラメータ: {'n_estimators': 453, 'learning_rate': 0.028820450842250392, 'num_leaves': 57, 'max_depth': 6, 'min_child_samples': 11, 'reg_alpha': 0.019336743602794762, 'reg_lambda': 0.031641954388215016}
+    保存完了: ダート2000m_v5
+
+=======================================================
+[学習] 10_kokura (place_id=10)
+=======================================================
+
+  芝1200m ...
+    訓練 5914行 / テスト 1498行
+    最良パラメータ: {'n_estimators': 225, 'learning_rate': 0.04721553607697163, 'num_leaves': 62, 'max_depth': 6, 'min_child_samples': 29, 'reg_alpha': 0.013695332647306414, 'reg_lambda': 0.17504739726856905}
+    保存完了: 芝1200m_v5
+
+  芝1700m ...
+    訓練 2915行 / テスト 738行
+    最良パラメータ: {'n_estimators': 268, 'learning_rate': 0.034661822669081244, 'num_leaves': 57, 'max_depth': 6, 'min_child_samples': 26, 'reg_alpha': 0.0010798316973333081, 'reg_lambda': 0.06544108435800927}
+    保存完了: 芝1700m_v5
+
+  芝1800m ...
+    訓練 2915行 / テスト 738行
+    最良パラメータ: {'n_estimators': 268, 'learning_rate': 0.034661822669081244, 'num_leaves': 57, 'max_depth': 6, 'min_child_samples': 26, 'reg_alpha': 0.0010798316973333081, 'reg_lambda': 0.06544108435800927}
+    保存完了: 芝1800m_v5
+
+  芝2000m ...
+    訓練 2757行 / テスト 690行
+    最良パラメータ: {'n_estimators': 177, 'learning_rate': 0.03407977844491766, 'num_leaves': 58, 'max_depth': 7, 'min_child_samples': 10, 'reg_alpha': 0.0010160511575906053, 'reg_lambda': 0.010745565853795965}
+    保存完了: 芝2000m_v5
+
+  芝2600m ...
+    訓練 691行 / テスト 178行
+    最良パラメータ: {'n_estimators': 379, 'learning_rate': 0.005743749302159308, 'num_leaves': 48, 'max_depth': 8, 'min_child_samples': 8, 'reg_alpha': 0.0028073229099750295, 'reg_lambda': 0.012496333968303307}
+    保存完了: 芝2600m_v5
+
+  ダート1000m ...
+    訓練 2089行 / テスト 530行
+    最良パラメータ: {'n_estimators': 303, 'learning_rate': 0.025784489112771408, 'num_leaves': 48, 'max_depth': 7, 'min_child_samples': 24, 'reg_alpha': 0.015542296379953543, 'reg_lambda': 0.055518991432425}
+    保存完了: ダート1000m_v5
+
+  ダート1700m ...
+    訓練 5093行 / テスト 1290行
+    最良パラメータ: {'n_estimators': 320, 'learning_rate': 0.02595131508847582, 'num_leaves': 45, 'max_depth': 7, 'min_child_samples': 14, 'reg_alpha': 0.17613763016070647, 'reg_lambda': 0.03323102927882457}
+    保存完了: ダート1700m_v5
+
+  ダート2400m ...
+    訓練 131行 / テスト 35行
+    最良パラメータ: {'n_estimators': 288, 'learning_rate': 0.006939634807295637, 'num_leaves': 64, 'max_depth': 10, 'min_child_samples': 9, 'reg_alpha': 0.058474006623797266, 'reg_lambda': 0.011668422056936367}
+    保存完了: ダート2400m_v5
+
+=======================================================
+完了
+=======================================================
