@@ -380,6 +380,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
         f"{date_display} {place_name}競馬場 第{race_num}R {race_name}の出馬表・AI予想データ。",
         f"{SITE_URL}/races/{date_str}/{place_key}R{race_num}.html",
     )
+    noindex_tag = '<meta name="robots" content="noindex, follow">' if race_num <= 10 else ""
     # 広告は意味のある区切りに限定して配置する（出馬表の後・配当結果の後・
     # コース別データの後の3箇所。ページ全体で多すぎる印象にならないようにするため）。
     ad_unit_1 = ad_unit_html(AD_SLOT_IN_CONTENT_1)
@@ -395,6 +396,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {meta_tags}
+  {noindex_tag}
   {adsense}
   {ga4}
   <title>{date_display} {place_name}競馬場 第{race_num}R {race_name}</title>
@@ -798,6 +800,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     adsense=adsense,
     ga4=ga4,
     meta_tags=meta_tags,
+    noindex_tag=noindex_tag,
     ad_unit_1=ad_unit_1,
     ad_unit_2=ad_unit_2,
     ad_unit_3=ad_unit_3,

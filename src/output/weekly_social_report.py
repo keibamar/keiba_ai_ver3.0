@@ -12,7 +12,6 @@ from datetime import date, timedelta
 
 from src.config.constants import NAME_LIST
 from src.logic.calculators import ai_performance_calculator as calc
-from src.logic.html_generator.site_nav_html import SITE_URL
 from src.managers import ai_performance_dataset_manager as m
 from src.output import prediction_publisher
 
@@ -37,12 +36,7 @@ def post_weekend_preview(today=None):
         place_name = NAME_LIST[race["place_id"] - 1]
         weekday_kanji = "土" if race["race_day"].weekday() == 5 else "日"
         lines.append(f"・{weekday_kanji} {place_name}11R {race['race_name']}")
-    lines.extend([
-        "",
-        "AI予想・出馬表はこちら👇",
-        f"{SITE_URL}/",
-        "#MAR競馬予想 #競馬AI",
-    ])
+    lines.append("#MAR競馬予想 #競馬AI")
     prediction_publisher.post_text("\n".join(lines))
     print("週末プレビュー投稿完了")
 
@@ -84,8 +78,6 @@ def post_weekend_summary(today=None):
         f"単勝 的中率{win['hit_rate']:.1f}% 回収率{win['return_rate']:.1f}%\n"
         f"複勝 的中率{place['hit_rate']:.1f}% 回収率{place['return_rate']:.1f}%\n"
         f"(対象{win['n']}件)\n\n"
-        "詳しいデータはこちら👇\n"
-        f"{SITE_URL}/\n"
         "#MAR競馬予想 #競馬AI"
     )
     prediction_publisher.post_text(text)
