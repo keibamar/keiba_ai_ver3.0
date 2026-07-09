@@ -245,6 +245,7 @@ def site_footer_html(base_path=""):
     <p class="site-footer-updated">データ最終更新: {updated_at}</p>
     {affiliate_html.a8_program_recommendation_html()}
     <p class="site-footer-links">
+      <a href="{base_path}about.html">このサイトについて</a>
       <a href="{base_path}privacy.html">プライバシーポリシー</a>
       <a href="{base_path}terms.html">利用規約</a>
     </p>

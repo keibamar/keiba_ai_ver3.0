@@ -19,6 +19,7 @@ if PROJECT_ROOT not in sys.path:
 from src.logic.html_generator import (  # noqa: E402
     ai_performance_report_generator,
     course_report_generator,
+    legal_pages_generator,
 )
 from src.managers import ai_performance_dataset_manager  # noqa: E402
 
@@ -32,4 +33,7 @@ if __name__ == "__main__":
     ai_performance_report_generator.make_all_annual_performance_pages()
     ai_performance_report_generator.make_all_course_performance_pages()
     ai_performance_report_generator.make_all_meeting_performance_pages()
+    legal_pages_generator.make_about_page()
+    legal_pages_generator.make_privacy_policy_page()
+    legal_pages_generator.make_terms_page()
     print("Weekly Update Html Done")

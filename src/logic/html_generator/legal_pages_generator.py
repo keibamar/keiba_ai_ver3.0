@@ -141,6 +141,74 @@ def terms_template():
 """
 
 
+def about_template():
+    """このサイトについて（about.html）のHTMLを返す"""
+    breadcrumb_items = [("このサイトについて", None)]
+    return f"""
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {meta_tags_html(
+      f"このサイトについて｜{SITE_NAME}",
+      f"{SITE_NAME}（まーる）は、機械学習AIを活用した競馬予想・コース別データ分析サイトです。AIの仕組みや運営方針をご紹介します。",
+      f"{SITE_URL}/about.html",
+  )}
+  {adsense_script_html()}
+  {ga4_script_html()}
+  <title>このサイトについて｜{SITE_NAME}</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+</head>
+<body>
+  {site_nav_html(base_path="", current_path="about.html")}
+  {breadcrumb_html(breadcrumb_items, base_path="")}
+  <main>
+  <h1>このサイトについて</h1>
+
+  <h2>MARとは</h2>
+  <p>MAR（まーる）は、機械学習AIを活用した競馬予想・データ分析サイトです。
+  JRAの過去レースデータをもとに構築したAIモデルが出馬表を分析し、各馬のスコアと予想順位を提供します。
+  AIによる予想成績（的中率・回収率）や、競馬場・コース別の傾向データをすべて無料で公開しています。</p>
+
+  <h2>AIの仕組み</h2>
+  <p>当サイトのAIは、<strong>LightGBM（勾配ブースティング）のランキング学習（LambdaRank）</strong>を採用しています。
+  2020年〜2025年のJRAレース結果を学習データとして使用し、以下の60以上の特徴量から各馬のスコアを算出しています。</p>
+  <ul>
+    <li>馬の過去成績（コース別・距離別・馬場状態別の着順・タイム）</li>
+    <li>騎手の当該コースにおける勝率・複勝率</li>
+    <li>血統情報（父・母父・父方祖父）</li>
+    <li>枠順・馬番の傾向</li>
+  </ul>
+  <p>AIのスコアが高い馬ほど「このコースでこの条件なら好走しやすい」と判断された馬です。
+  ただし、競馬は多くの不確定要素を含むため、スコアが高くても必ず勝つわけではありません。</p>
+
+  <h2>掲載コンテンツ</h2>
+  <ul>
+    <li><strong>AI予想出馬表</strong>：毎週土日のレースに対してAIスコア・予想順位を掲載します</li>
+    <li><strong>AI成績レポート</strong>：単勝・複勝の的中率と回収率を週次・コース別に公開します</li>
+    <li><strong>コース別データ</strong>：各競馬場・距離・芝ダート別の傾向データを掲載します</li>
+  </ul>
+
+  <h2>運営方針</h2>
+  <p>当サイトはAI予想の成績データをすべてオープンに公開しています。
+  成績がよい期間だけを選んで掲載するようなことはせず、良い時も悪い時も実績のまま掲載します。
+  AIの改善・更新を行った際は、新旧モデルの成績を比較した上で採用モデルを決定しています。</p>
+
+  <h2>お問い合わせ</h2>
+  <p>ご意見・ご質問は、X（旧Twitter）のDMよりお気軽にどうぞ。</p>
+  <p><a href="https://x.com/keiba_mar" target="_blank" rel="noopener noreferrer">X: @keiba_mar</a></p>
+
+  <p><a href="privacy.html">プライバシーポリシー</a>　<a href="terms.html">利用規約</a></p>
+  <p><a href="./">&larr; HOMEへ戻る</a></p>
+  </main>
+  {site_footer_html()}
+</body>
+</html>
+"""
+
+
 def make_privacy_policy_page():
     """public_html/privacy.html を生成する"""
     html_manager.save_privacy_policy_html(privacy_policy_template())
@@ -149,3 +217,8 @@ def make_privacy_policy_page():
 def make_terms_page():
     """public_html/terms.html を生成する"""
     html_manager.save_terms_html(terms_template())
+
+
+def make_about_page():
+    """public_html/about.html を生成する"""
+    html_manager.save_about_html(about_template())

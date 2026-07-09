@@ -320,7 +320,10 @@ def home_template(target_date=None):
   <main>
     {site_nav_html(base_path="", current_path="index.html")}
     <h1>{SITE_TITLE}</h1>
-    <p>このサイトでは、競馬AIの成績、レースカレンダー、コース別データを閲覧できます。</p>
+    <p>MAR（まーる）は、<strong>機械学習AIを活用した競馬予想・データ分析サイト</strong>です。
+    JRAの過去レースデータで学習したAIが毎週土日のレースを予想し、成績をすべてオープンに公開しています。
+    AIの予想成績（的中率・回収率）や競馬場・コース別の傾向データを無料でご利用いただけます。
+    <a href="about.html">詳しくはこちら &rarr;</a></p>
 
     <h2>今週の開催</h2>
     {_weekly_meeting_summary_html(weekly_meetings)}
