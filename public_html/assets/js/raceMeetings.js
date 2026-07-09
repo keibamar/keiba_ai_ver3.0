@@ -1284,5 +1284,57 @@ window.raceMeetings = {
       "race_card_url": "races/20260705/10_kokuraR11.html",
       "grade": "G3"
     }
+  ],
+  "20260711": [
+    {
+      "place_name": "函館",
+      "race_name": "五稜郭S",
+      "times": 1,
+      "day_number": 9,
+      "race_card_url": "races/20260711/02_hakodateR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "小倉",
+      "race_name": "釜山S",
+      "times": 2,
+      "day_number": 5,
+      "race_card_url": "races/20260711/10_kokuraR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "福島",
+      "race_name": "安達太良S",
+      "times": 2,
+      "day_number": 5,
+      "race_card_url": "races/20260711/03_fukushimaR11.html",
+      "grade": null
+    }
+  ],
+  "20260712": [
+    {
+      "place_name": "函館",
+      "race_name": "巴賞",
+      "times": 1,
+      "day_number": 10,
+      "race_card_url": "races/20260712/02_hakodateR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "小倉",
+      "race_name": "阿蘇S",
+      "times": 2,
+      "day_number": 6,
+      "race_card_url": "races/20260712/10_kokuraR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "福島",
+      "race_name": "七夕賞",
+      "times": 2,
+      "day_number": 6,
+      "race_card_url": "races/20260712/03_fukushimaR11.html",
+      "grade": "G3"
+    }
   ]
 };
