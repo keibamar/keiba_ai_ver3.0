@@ -13,7 +13,6 @@ from src.config.constants import NAME_LIST, PLACE_LIST
 from src.config.lists import SYMBOL_LIST
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator.rate_gauge_html import BET_RESULT_BIG_PAYOUT_THRESHOLD
-from src.logic.html_generator.site_nav_html import SITE_URL
 from src.managers import race_card_dataset_manager, race_info_dataset_manager, race_schedule_dataset_manager
 from src.output import highlight_image_generator, prediction_publisher
 
@@ -75,15 +74,13 @@ def find_big_hits(race_day):
     return hits
 
 
-def _highlight_post_text(race_day, hit, place_name, place_key):
-    """ハイライト投稿の本文を返す（該当レースの出馬表ページへ直リンクする）"""
-    race_url = f"https://mar-keiba.com/races/{race_day.strftime('%Y%m%d')}/{place_key}R{hit['race_num']}.html"
+def _highlight_post_text(race_day, hit, place_name):
+    """ハイライト投稿の本文を返す"""
     return (
         "🎯的中！\n"
         f"{place_name}{hit['race_num']}R {hit['race_name']}\n"
         f"{hit['bet_type_label']} {hit['payout']:.0f}円\n"
-        f"AI本命: {hit['pick_name']}\n\n"
-        f"{race_url}\n"
+        f"AI本命: {hit['pick_name']}\n"
         "#MAR競馬予想 #競馬AI"
     )
 
@@ -102,7 +99,7 @@ def post_big_hit_highlights(race_day=date.today()):
             hit["bet_type_label"], hit["payout"], place_name, hit["race_num"], hit["race_name"],
             hit["pick_name"], image_path,
         )
-        text = _highlight_post_text(race_day, hit, place_name, place_key)
+        text = _highlight_post_text(race_day, hit, place_name)
         prediction_publisher.post_text_with_image(text, image_path)
         print(f"高配当ハイライト投稿: {place_name}{hit['race_num']}R {hit['bet_type_label']} {hit['payout']:.0f}円")
 
@@ -225,6 +222,6 @@ def post_daily_high_payout_summary(race_day=date.today()):
             lines.append(f"3連複{hit['trio_symbols']}　{hit['trio_payout']:.0f}円")
         lines.append("")
 
-    lines.extend([f"{SITE_URL}/", "#MAR競馬予想 #競馬AI"])
+    lines.append("#MAR競馬予想 #競馬AI")
     prediction_publisher.post_text("\n".join(lines))
     print(f"高配当まとめ投稿完了（{len(hits)}件）")
