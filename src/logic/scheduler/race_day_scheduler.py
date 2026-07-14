@@ -419,12 +419,16 @@ def post_daily_race_pred(race_day=date.today()):
                 # textの作成
                 prediction_publisher.make_race_text(race_day, race_id)
                 # API対策で計9レースのみ投稿（月次ツイート上限対策）
-                if len(time_id_list) <= 9:
-                    post_race_pred(race_id, race_day)
-                    print("post:" + str(race_time + ":" + str(race_id)))
-                else:
-                    print("no post for API restrictions")
-                # mail送信
+                try:
+                    if len(time_id_list) <= 9:
+                        post_race_pred(race_id, race_day)
+                        print("post:" + str(race_time + ":" + str(race_id)))
+                    else:
+                        print("no post for API restrictions")
+                except Exception:
+                    print("post_error (SNS):" + str(race_time + ":" + str(race_id)))
+                    print(sys.exc_info())
+                # mail送信（ポスト失敗でも送信する）
                 prediction_publisher.send_race_pred(race_day, race_id)
             except Exception:
                 print("post_error:" + str(race_time + ":" + str(race_id)))
