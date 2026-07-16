@@ -1336,5 +1336,57 @@ window.raceMeetings = {
       "race_card_url": "races/20260712/03_fukushimaR11.html",
       "grade": "G3"
     }
+  ],
+  "20260718": [
+    {
+      "place_name": "函館",
+      "race_name": "マリーンS",
+      "times": 1,
+      "day_number": 11,
+      "race_card_url": "races/20260718/02_hakodateR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "小倉",
+      "race_name": "テレQ杯",
+      "times": 2,
+      "day_number": 7,
+      "race_card_url": "races/20260718/10_kokuraR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "福島",
+      "race_name": "阿武隈S",
+      "times": 2,
+      "day_number": 7,
+      "race_card_url": "races/20260718/03_fukushimaR11.html",
+      "grade": null
+    }
+  ],
+  "20260719": [
+    {
+      "place_name": "函館",
+      "race_name": "函館2歳S",
+      "times": 1,
+      "day_number": 12,
+      "race_card_url": "races/20260719/02_hakodateR11.html",
+      "grade": "G3"
+    },
+    {
+      "place_name": "福島",
+      "race_name": "福島テレビ賞",
+      "times": 2,
+      "day_number": 8,
+      "race_card_url": "races/20260719/03_fukushimaR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "小倉",
+      "race_name": "小倉記念",
+      "times": 2,
+      "day_number": 8,
+      "race_card_url": "races/20260719/10_kokuraR11.html",
+      "grade": null
+    }
   ]
 };
