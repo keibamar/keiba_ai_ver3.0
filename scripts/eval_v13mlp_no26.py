@@ -161,7 +161,14 @@ def build_v8_row(race_id, rc_df, race_info_df, race_card_path):
             hw_abs_1_list.append(hw_abs_1)
             extra_v8_rows.append(extra_v8)
 
-        dataset_v6_extra = pd.DataFrame(extra_v6_rows)
+        _V6_EXTRA_NAMES = [
+            "time_df_course4", "time_df_class4", "ninki_4", "result_4",
+            "agari_4", "margin_4", "corner_ratio_4",
+            "time_df_course5", "time_df_class5", "ninki_5", "result_5",
+            "agari_5", "margin_5", "corner_ratio_5",
+            "rank_trend_5", "win_rate_recent5",
+        ]
+        dataset_v6_extra = pd.DataFrame(extra_v6_rows, columns=_V6_EXTRA_NAMES)
         dataset_v8_extra = pd.DataFrame(extra_v8_rows, columns=[
             "corner_chase_1","corner_chase_2","corner_chase_3",
             "corner_chase_4","corner_chase_5","agari_trend_5","time_diff_trend_5",
