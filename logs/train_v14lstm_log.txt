@@ -1,0 +1,2378 @@
+使用デバイス: cuda
+SEQ_COLS: 40, CURRENT_COLS: 54
+=======================================================
+v14lstm_no26  学習年: 2020～2025
+モデル: LSTM(過去5走×8特徴) + Embedding(血統×3) + MLP
+損失: BCEWithLogitsLoss + オッズ重み付き
+デバイス: cuda
+=======================================================
+
+[Step 1] 血統 vocab をロード...
+vocab読み込み済み: 1738種類 (C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\pedigree_vocab_v5.json)
+  vocab_size: 1738
+
+[Step 2] モデル学習...
+
+=======================================================
+[学習] 01_sapporo
+=======================================================
+
+  芝1000m ...
+    train=1765行 / val=428行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=1.1834 va=0.9463 (best=0.9463)
+    ep  2: tr=1.0852 va=0.9459 (best=0.9459)
+    ep  3: tr=1.0286 va=0.9244 (best=0.9244)
+    ep  4: tr=1.0021 va=0.8950 (best=0.8950)
+    ep  5: tr=1.0397 va=0.8691 (best=0.8691)
+    ep  6: tr=0.9261 va=0.8460 (best=0.8460)
+    ep  7: tr=0.9669 va=0.8357 (best=0.8357)
+    ep  8: tr=0.9802 va=0.8334 (best=0.8334)
+    ep  9: tr=0.8903 va=0.8776 (best=0.8334)
+    ep 10: tr=0.8527 va=0.9115 (best=0.8334)
+    ep 11: tr=0.8518 va=0.8993 (best=0.8334)
+    ep 12: tr=0.8389 va=0.8691 (best=0.8334)
+    ep 13: tr=0.8155 va=0.8542 (best=0.8334)
+    ep 14: tr=0.7771 va=0.8393 (best=0.8334)
+    ep 15: tr=0.7623 va=0.8507 (best=0.8334)
+    ep 16: tr=0.7386 va=0.8875 (best=0.8334)
+    ep 17: tr=0.7447 va=0.8230 (best=0.8230)
+    ep 18: tr=0.6959 va=0.8570 (best=0.8230)
+    ep 19: tr=0.6802 va=0.7848 (best=0.7848)
+    ep 20: tr=0.6542 va=0.7291 (best=0.7291)
+    ep 21: tr=0.6394 va=0.7346 (best=0.7291)
+    ep 22: tr=0.6492 va=0.7113 (best=0.7113)
+    ep 23: tr=0.6190 va=0.8027 (best=0.7113)
+    ep 24: tr=0.5746 va=0.8594 (best=0.7113)
+    ep 25: tr=0.5651 va=0.7891 (best=0.7113)
+    ep 26: tr=0.5823 va=0.8349 (best=0.7113)
+    ep 27: tr=0.5225 va=0.7499 (best=0.7113)
+    ep 28: tr=0.5772 va=0.8093 (best=0.7113)
+    ep 29: tr=0.5241 va=0.8655 (best=0.7113)
+    ep 30: tr=0.5390 va=0.9730 (best=0.7113)
+    ep 31: tr=0.5834 va=0.8878 (best=0.7113)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\turf1000_lambdarank_model_v14lstm_no26.pt
+
+  芝1200m ...
+    train=1765行 / val=428行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=1.1712 va=0.9177 (best=0.9177)
+    ep  2: tr=1.0483 va=0.8842 (best=0.8842)
+    ep  3: tr=0.9947 va=0.8623 (best=0.8623)
+    ep  4: tr=0.9900 va=0.8391 (best=0.8391)
+    ep  5: tr=1.0165 va=0.8329 (best=0.8329)
+    ep  6: tr=0.9758 va=0.8168 (best=0.8168)
+    ep  7: tr=0.9611 va=0.8352 (best=0.8168)
+    ep  8: tr=0.9392 va=0.8450 (best=0.8168)
+    ep  9: tr=0.9449 va=0.8486 (best=0.8168)
+    ep 10: tr=0.8969 va=0.8589 (best=0.8168)
+    ep 11: tr=0.8341 va=0.8445 (best=0.8168)
+    ep 12: tr=0.8819 va=0.8863 (best=0.8168)
+    ep 13: tr=0.8505 va=0.8900 (best=0.8168)
+    ep 14: tr=0.8352 va=0.8544 (best=0.8168)
+    ep 15: tr=0.7491 va=0.8264 (best=0.8168)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\turf1200_lambdarank_model_v14lstm_no26.pt
+
+  芝1500m ...
+    train=2273行 / val=569行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.3538651868004775, 'lr': 0.00924137484784525, 'wd': 3.6090228365779854e-05}
+    ep  1: tr=1.2224 va=0.7913 (best=0.7913)
+    ep  2: tr=1.2029 va=0.8022 (best=0.7913)
+    ep  3: tr=1.2793 va=0.8099 (best=0.7913)
+    ep  4: tr=1.1671 va=0.8499 (best=0.7913)
+    ep  5: tr=1.1641 va=0.8633 (best=0.7913)
+    ep  6: tr=1.0687 va=0.9101 (best=0.7913)
+    ep  7: tr=1.0616 va=0.8985 (best=0.7913)
+    ep  8: tr=1.0438 va=0.8929 (best=0.7913)
+    ep  9: tr=1.0416 va=0.8871 (best=0.7913)
+    ep 10: tr=0.9689 va=0.9444 (best=0.7913)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\turf1500_lambdarank_model_v14lstm_no26.pt
+
+  芝1800m ...
+    train=2273行 / val=569行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.38478404318215653, 'lr': 0.009183012623613892, 'wd': 4.138061515930775e-05}
+    ep  1: tr=1.2389 va=0.8658 (best=0.8658)
+    ep  2: tr=1.1640 va=0.7965 (best=0.7965)
+    ep  3: tr=1.1351 va=0.8181 (best=0.7965)
+    ep  4: tr=1.1075 va=0.8303 (best=0.7965)
+    ep  5: tr=1.0796 va=0.8333 (best=0.7965)
+    ep  6: tr=1.2107 va=0.8408 (best=0.7965)
+    ep  7: tr=1.1173 va=0.8828 (best=0.7965)
+    ep  8: tr=1.0750 va=0.9162 (best=0.7965)
+    ep  9: tr=1.0250 va=0.8398 (best=0.7965)
+    ep 10: tr=0.9700 va=0.8324 (best=0.7965)
+    ep 11: tr=0.9384 va=0.9273 (best=0.7965)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\turf1800_lambdarank_model_v14lstm_no26.pt
+
+  芝2000m ...
+    train=1425行 / val=356行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 1, 'hidden': [128, 64], 'dropout': 0.29197630639825717, 'lr': 0.00019351140885595286, 'wd': 0.0007750644796341915}
+    ep  1: tr=1.2928 va=1.5452 (best=1.5452)
+    ep  2: tr=1.2795 va=1.5676 (best=1.5452)
+    ep  3: tr=1.2795 va=1.5970 (best=1.5452)
+    ep  4: tr=1.2292 va=1.6250 (best=1.5452)
+    ep  5: tr=1.2317 va=1.6454 (best=1.5452)
+    ep  6: tr=1.2425 va=1.6659 (best=1.5452)
+    ep  7: tr=1.2646 va=1.6840 (best=1.5452)
+    ep  8: tr=1.2098 va=1.7015 (best=1.5452)
+    ep  9: tr=1.2173 va=1.7178 (best=1.5452)
+    ep 10: tr=1.1832 va=1.7348 (best=1.5452)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\turf2000_lambdarank_model_v14lstm_no26.pt
+
+  芝2600m ...
+    train=537行 / val=122行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.38478404318215653, 'lr': 0.009183012623613892, 'wd': 4.138061515930775e-05}
+    ep  1: tr=0.9504 va=1.6439 (best=1.6439)
+    ep  2: tr=1.3843 va=1.5840 (best=1.5840)
+    ep  3: tr=0.9574 va=1.5099 (best=1.5099)
+    ep  4: tr=1.6750 va=1.5084 (best=1.5084)
+    ep  5: tr=0.7559 va=1.5652 (best=1.5084)
+    ep  6: tr=0.7482 va=1.5838 (best=1.5084)
+    ep  7: tr=0.6888 va=1.5337 (best=1.5084)
+    ep  8: tr=1.2908 va=1.5257 (best=1.5084)
+    ep  9: tr=0.8510 va=1.4965 (best=1.4965)
+    ep 10: tr=0.6987 va=1.4450 (best=1.4450)
+    ep 11: tr=0.9153 va=1.4221 (best=1.4221)
+    ep 12: tr=0.7779 va=1.3834 (best=1.3834)
+    ep 13: tr=0.8167 va=1.3275 (best=1.3275)
+    ep 14: tr=0.8888 va=1.3004 (best=1.3004)
+    ep 15: tr=0.7354 va=1.2769 (best=1.2769)
+    ep 16: tr=0.9601 va=1.2392 (best=1.2392)
+    ep 17: tr=1.3122 va=1.1986 (best=1.1986)
+    ep 18: tr=0.7385 va=1.1604 (best=1.1604)
+    ep 19: tr=0.6440 va=1.1430 (best=1.1430)
+    ep 20: tr=0.8085 va=1.1352 (best=1.1352)
+    ep 21: tr=0.9127 va=1.1376 (best=1.1352)
+    ep 22: tr=0.6788 va=1.1364 (best=1.1352)
+    ep 23: tr=0.7540 va=1.1340 (best=1.1340)
+    ep 24: tr=0.9689 va=1.1332 (best=1.1332)
+    ep 25: tr=0.7888 va=1.1267 (best=1.1267)
+    ep 26: tr=0.6572 va=1.1246 (best=1.1246)
+    ep 27: tr=0.5967 va=1.1228 (best=1.1228)
+    ep 28: tr=0.5817 va=1.1230 (best=1.1228)
+    ep 29: tr=0.8745 va=1.1258 (best=1.1228)
+    ep 30: tr=0.5351 va=1.1327 (best=1.1228)
+    ep 31: tr=0.8330 va=1.1426 (best=1.1228)
+    ep 32: tr=0.8447 va=1.1419 (best=1.1228)
+    ep 33: tr=0.5590 va=1.1379 (best=1.1228)
+    ep 34: tr=0.6558 va=1.1283 (best=1.1228)
+    ep 35: tr=0.6689 va=1.1145 (best=1.1145)
+    ep 36: tr=0.5894 va=1.1132 (best=1.1132)
+    ep 37: tr=0.5366 va=1.1152 (best=1.1132)
+    ep 38: tr=0.7385 va=1.1223 (best=1.1132)
+    ep 39: tr=0.6651 va=1.1328 (best=1.1132)
+    ep 40: tr=0.5673 va=1.1347 (best=1.1132)
+    ep 41: tr=0.7478 va=1.1429 (best=1.1132)
+    ep 42: tr=0.6792 va=1.1506 (best=1.1132)
+    ep 43: tr=0.5682 va=1.1563 (best=1.1132)
+    ep 44: tr=0.5057 va=1.1608 (best=1.1132)
+    ep 45: tr=0.5323 va=1.1587 (best=1.1132)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\turf2600_lambdarank_model_v14lstm_no26.pt
+
+  ダート1000m ...
+    train=983行 / val=240行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 2, 'hidden': [128, 64, 32], 'dropout': 0.304546089731045, 'lr': 0.0005236194873419149, 'wd': 7.4827960376208e-05}
+    ep  1: tr=1.1719 va=1.2512 (best=1.2512)
+    ep  2: tr=1.1817 va=1.2444 (best=1.2444)
+    ep  3: tr=1.1878 va=1.2428 (best=1.2428)
+    ep  4: tr=1.1194 va=1.2426 (best=1.2426)
+    ep  5: tr=1.1646 va=1.2459 (best=1.2426)
+    ep  6: tr=1.1544 va=1.2512 (best=1.2426)
+    ep  7: tr=1.1079 va=1.2515 (best=1.2426)
+    ep  8: tr=1.0909 va=1.2505 (best=1.2426)
+    ep  9: tr=1.1133 va=1.2534 (best=1.2426)
+    ep 10: tr=1.1077 va=1.2568 (best=1.2426)
+    ep 11: tr=1.0846 va=1.2602 (best=1.2426)
+    ep 12: tr=1.1161 va=1.2645 (best=1.2426)
+    ep 13: tr=1.1090 va=1.2686 (best=1.2426)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\dirt1000_lambdarank_model_v14lstm_no26.pt
+
+  ダート1700m ...
+    train=3124行 / val=767行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=1.1917 va=0.9964 (best=0.9964)
+    ep  2: tr=1.0567 va=0.9940 (best=0.9940)
+    ep  3: tr=1.0755 va=0.9829 (best=0.9829)
+    ep  4: tr=1.0288 va=0.9266 (best=0.9266)
+    ep  5: tr=0.9763 va=0.9240 (best=0.9240)
+    ep  6: tr=0.9593 va=0.9867 (best=0.9240)
+    ep  7: tr=0.9319 va=1.0535 (best=0.9240)
+    ep  8: tr=0.9601 va=1.0966 (best=0.9240)
+    ep  9: tr=0.9296 va=0.9769 (best=0.9240)
+    ep 10: tr=0.9162 va=0.9329 (best=0.9240)
+    ep 11: tr=0.8909 va=0.9384 (best=0.9240)
+    ep 12: tr=0.8911 va=0.8823 (best=0.8823)
+    ep 13: tr=0.8597 va=0.9763 (best=0.8823)
+    ep 14: tr=0.9005 va=0.8874 (best=0.8823)
+    ep 15: tr=0.8358 va=0.9825 (best=0.8823)
+    ep 16: tr=0.8076 va=0.9675 (best=0.8823)
+    ep 17: tr=0.7685 va=0.9477 (best=0.8823)
+    ep 18: tr=0.8370 va=0.9131 (best=0.8823)
+    ep 19: tr=0.7192 va=0.9460 (best=0.8823)
+    ep 20: tr=0.7276 va=1.0865 (best=0.8823)
+    ep 21: tr=0.7513 va=0.8656 (best=0.8656)
+    ep 22: tr=0.7754 va=0.8145 (best=0.8145)
+    ep 23: tr=0.7080 va=0.8189 (best=0.8145)
+    ep 24: tr=0.6733 va=0.8317 (best=0.8145)
+    ep 25: tr=0.6626 va=0.8360 (best=0.8145)
+    ep 26: tr=0.7216 va=0.9031 (best=0.8145)
+    ep 27: tr=0.7464 va=0.8670 (best=0.8145)
+    ep 28: tr=0.6402 va=1.0490 (best=0.8145)
+    ep 29: tr=0.7487 va=1.0110 (best=0.8145)
+    ep 30: tr=0.6800 va=0.9335 (best=0.8145)
+    ep 31: tr=0.6639 va=0.8642 (best=0.8145)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\dirt1700_lambdarank_model_v14lstm_no26.pt
+
+  ダート2400m ...
+    train=118行 / val=21行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.10087486848392017, 'lr': 0.0037972153518244485, 'wd': 5.289436012977095e-05}
+    ep  1: tr=1.1642 va=1.6051 (best=1.6051)
+    ep  2: tr=1.0987 va=1.4947 (best=1.4947)
+    ep  3: tr=0.9138 va=1.4690 (best=1.4690)
+    ep  4: tr=0.8874 va=1.4777 (best=1.4690)
+    ep  5: tr=0.8794 va=1.4716 (best=1.4690)
+    ep  6: tr=0.8491 va=1.4524 (best=1.4524)
+    ep  7: tr=0.8134 va=1.4680 (best=1.4524)
+    ep  8: tr=0.7731 va=1.4989 (best=1.4524)
+    ep  9: tr=0.7528 va=1.5489 (best=1.4524)
+    ep 10: tr=0.7009 va=1.6181 (best=1.4524)
+    ep 11: tr=0.7329 va=1.7116 (best=1.4524)
+    ep 12: tr=0.6768 va=1.8315 (best=1.4524)
+    ep 13: tr=0.6516 va=1.9650 (best=1.4524)
+    ep 14: tr=0.6400 va=2.1162 (best=1.4524)
+    ep 15: tr=0.6240 va=2.2443 (best=1.4524)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\dirt2400_lambdarank_model_v14lstm_no26.pt
+
+=======================================================
+[学習] 02_hakodate
+=======================================================
+
+  芝1000m ...
+    train=2685行 / val=669行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 32, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.20052297598522106, 'lr': 0.0097183651329337, 'wd': 2.4655671539865996e-05}
+    ep  1: tr=1.2347 va=1.1115 (best=1.1115)
+    ep  2: tr=1.0745 va=1.1689 (best=1.1115)
+    ep  3: tr=1.0340 va=1.1099 (best=1.1099)
+    ep  4: tr=1.0017 va=1.1062 (best=1.1062)
+    ep  5: tr=1.0010 va=1.1319 (best=1.1062)
+    ep  6: tr=0.9456 va=1.1064 (best=1.1062)
+    ep  7: tr=0.9389 va=1.0712 (best=1.0712)
+    ep  8: tr=0.9186 va=1.0778 (best=1.0712)
+    ep  9: tr=0.9379 va=1.0604 (best=1.0604)
+    ep 10: tr=0.8750 va=1.0939 (best=1.0604)
+    ep 11: tr=0.8416 va=1.1733 (best=1.0604)
+    ep 12: tr=0.7691 va=1.0968 (best=1.0604)
+    ep 13: tr=0.7615 va=1.1574 (best=1.0604)
+    ep 14: tr=0.7446 va=1.5205 (best=1.0604)
+    ep 15: tr=0.7163 va=1.5427 (best=1.0604)
+    ep 16: tr=0.6594 va=1.5570 (best=1.0604)
+    ep 17: tr=0.6249 va=1.5896 (best=1.0604)
+    ep 18: tr=0.5863 va=1.2933 (best=1.0604)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\turf1000_lambdarank_model_v14lstm_no26.pt
+
+  芝1200m ...
+    train=2685行 / val=669行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.207715954496429, 'lr': 0.0035097667371267764, 'wd': 0.00010522276317041136}
+    ep  1: tr=1.1221 va=1.1515 (best=1.1515)
+    ep  2: tr=1.0157 va=1.1786 (best=1.1515)
+    ep  3: tr=1.0252 va=1.1964 (best=1.1515)
+    ep  4: tr=1.0363 va=1.2025 (best=1.1515)
+    ep  5: tr=0.9390 va=1.1635 (best=1.1515)
+    ep  6: tr=0.9423 va=1.1363 (best=1.1363)
+    ep  7: tr=0.9080 va=1.1455 (best=1.1363)
+    ep  8: tr=0.9096 va=1.1389 (best=1.1363)
+    ep  9: tr=0.9150 va=1.1296 (best=1.1296)
+    ep 10: tr=0.9609 va=1.1411 (best=1.1296)
+    ep 11: tr=0.8897 va=1.1661 (best=1.1296)
+    ep 12: tr=0.8434 va=1.1457 (best=1.1296)
+    ep 13: tr=0.7496 va=1.1517 (best=1.1296)
+    ep 14: tr=0.7476 va=1.2495 (best=1.1296)
+    ep 15: tr=0.7302 va=1.3400 (best=1.1296)
+    ep 16: tr=0.6770 va=1.6316 (best=1.1296)
+    ep 17: tr=0.6767 va=1.9003 (best=1.1296)
+    ep 18: tr=0.6229 va=1.9533 (best=1.1296)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\turf1200_lambdarank_model_v14lstm_no26.pt
+
+  芝1800m ...
+    train=1243行 / val=300行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.3910170881738796, 'lr': 0.009610039984205497, 'wd': 3.660590558212345e-05}
+    ep  1: tr=1.0529 va=1.1919 (best=1.1919)
+    ep  2: tr=1.1043 va=1.2786 (best=1.1919)
+    ep  3: tr=1.1244 va=1.3436 (best=1.1919)
+    ep  4: tr=1.0513 va=1.3749 (best=1.1919)
+    ep  5: tr=0.9848 va=1.3458 (best=1.1919)
+    ep  6: tr=0.9930 va=1.3238 (best=1.1919)
+    ep  7: tr=0.9882 va=1.3190 (best=1.1919)
+    ep  8: tr=0.9710 va=1.2953 (best=1.1919)
+    ep  9: tr=0.9885 va=1.2303 (best=1.1919)
+    ep 10: tr=0.9855 va=1.1829 (best=1.1829)
+    ep 11: tr=0.9408 va=1.1638 (best=1.1638)
+    ep 12: tr=0.9590 va=1.1428 (best=1.1428)
+    ep 13: tr=0.9714 va=1.1522 (best=1.1428)
+    ep 14: tr=0.8922 va=1.2140 (best=1.1428)
+    ep 15: tr=0.8886 va=1.2342 (best=1.1428)
+    ep 16: tr=0.8770 va=1.1878 (best=1.1428)
+    ep 17: tr=0.9124 va=1.1743 (best=1.1428)
+    ep 18: tr=0.9281 va=1.2060 (best=1.1428)
+    ep 19: tr=0.9390 va=1.2025 (best=1.1428)
+    ep 20: tr=0.9599 va=1.1471 (best=1.1428)
+    ep 21: tr=0.9031 va=1.1518 (best=1.1428)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\turf1800_lambdarank_model_v14lstm_no26.pt
+
+  芝2000m ...
+    train=873行 / val=213行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 2, 'hidden': [128, 64, 32], 'dropout': 0.13061344322440843, 'lr': 0.0002616697456085449, 'wd': 2.1019338091154404e-05}
+    ep  1: tr=1.3505 va=1.4995 (best=1.4995)
+    ep  2: tr=1.3652 va=1.4836 (best=1.4836)
+    ep  3: tr=1.3101 va=1.4719 (best=1.4719)
+    ep  4: tr=1.3606 va=1.4646 (best=1.4646)
+    ep  5: tr=1.2967 va=1.4639 (best=1.4639)
+    ep  6: tr=1.2987 va=1.4627 (best=1.4627)
+    ep  7: tr=1.2821 va=1.4643 (best=1.4627)
+    ep  8: tr=1.2459 va=1.4673 (best=1.4627)
+    ep  9: tr=1.2717 va=1.4691 (best=1.4627)
+    ep 10: tr=1.3247 va=1.4706 (best=1.4627)
+    ep 11: tr=1.2855 va=1.4729 (best=1.4627)
+    ep 12: tr=1.1853 va=1.4762 (best=1.4627)
+    ep 13: tr=1.2110 va=1.4794 (best=1.4627)
+    ep 14: tr=1.2105 va=1.4836 (best=1.4627)
+    ep 15: tr=1.2382 va=1.4875 (best=1.4627)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\turf2000_lambdarank_model_v14lstm_no26.pt
+
+  芝2600m ...
+    train=362行 / val=88行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.2021335422846579, 'lr': 0.009344272837238446, 'wd': 1.0204483902247283e-05}
+    ep  1: tr=1.1907 va=1.0366 (best=1.0366)
+    ep  2: tr=1.1884 va=1.0512 (best=1.0366)
+    ep  3: tr=1.1178 va=1.0767 (best=1.0366)
+    ep  4: tr=1.1205 va=1.1032 (best=1.0366)
+    ep  5: tr=1.0506 va=1.1219 (best=1.0366)
+    ep  6: tr=1.0984 va=1.1306 (best=1.0366)
+    ep  7: tr=1.0098 va=1.1317 (best=1.0366)
+    ep  8: tr=0.9882 va=1.1110 (best=1.0366)
+    ep  9: tr=1.0071 va=1.0741 (best=1.0366)
+    ep 10: tr=1.0123 va=1.0486 (best=1.0366)
+    ep 11: tr=0.9147 va=1.0317 (best=1.0317)
+    ep 12: tr=0.9392 va=1.0128 (best=1.0128)
+    ep 13: tr=1.0203 va=0.9981 (best=0.9981)
+    ep 14: tr=0.8641 va=0.9870 (best=0.9870)
+    ep 15: tr=0.8936 va=0.9846 (best=0.9846)
+    ep 16: tr=0.8801 va=0.9854 (best=0.9846)
+    ep 17: tr=0.8851 va=0.9851 (best=0.9846)
+    ep 18: tr=0.8465 va=0.9801 (best=0.9801)
+    ep 19: tr=0.8197 va=0.9766 (best=0.9766)
+    ep 20: tr=0.7768 va=0.9710 (best=0.9710)
+    ep 21: tr=0.8512 va=0.9657 (best=0.9657)
+    ep 22: tr=0.7586 va=0.9627 (best=0.9627)
+    ep 23: tr=0.7091 va=0.9621 (best=0.9621)
+    ep 24: tr=0.7571 va=0.9620 (best=0.9620)
+    ep 25: tr=0.8067 va=0.9576 (best=0.9576)
+    ep 26: tr=0.7162 va=0.9622 (best=0.9576)
+    ep 27: tr=0.6583 va=0.9637 (best=0.9576)
+    ep 28: tr=0.6745 va=0.9638 (best=0.9576)
+    ep 29: tr=0.6915 va=0.9695 (best=0.9576)
+    ep 30: tr=0.6870 va=0.9783 (best=0.9576)
+    ep 31: tr=0.6483 va=0.9934 (best=0.9576)
+    ep 32: tr=0.6455 va=1.0120 (best=0.9576)
+    ep 33: tr=0.6195 va=1.0280 (best=0.9576)
+    ep 34: tr=0.5949 va=1.0378 (best=0.9576)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\turf2600_lambdarank_model_v14lstm_no26.pt
+
+  ダート1000m ...
+    train=1081行 / val=265行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.39369614099457123, 'lr': 0.009963908343902683, 'wd': 4.471306610515222e-05}
+    ep  1: tr=1.2663 va=1.0210 (best=1.0210)
+    ep  2: tr=1.0565 va=1.0058 (best=1.0058)
+    ep  3: tr=1.0465 va=1.0207 (best=1.0058)
+    ep  4: tr=1.0393 va=0.9767 (best=0.9767)
+    ep  5: tr=1.1556 va=0.9807 (best=0.9767)
+    ep  6: tr=1.0445 va=0.9955 (best=0.9767)
+    ep  7: tr=0.9440 va=1.0077 (best=0.9767)
+    ep  8: tr=0.8934 va=1.0170 (best=0.9767)
+    ep  9: tr=1.1474 va=1.0190 (best=0.9767)
+    ep 10: tr=0.8305 va=1.1587 (best=0.9767)
+    ep 11: tr=0.8956 va=1.2872 (best=0.9767)
+    ep 12: tr=0.9727 va=1.2689 (best=0.9767)
+    ep 13: tr=0.8568 va=1.2037 (best=0.9767)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\dirt1000_lambdarank_model_v14lstm_no26.pt
+
+  ダート1700m ...
+    train=2253行 / val=555行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.2586684759258714, 'lr': 0.001368009527972693, 'wd': 0.0007098936257405903}
+    ep  1: tr=1.2549 va=1.0384 (best=1.0384)
+    ep  2: tr=1.2674 va=1.0781 (best=1.0384)
+    ep  3: tr=1.1494 va=1.1024 (best=1.0384)
+    ep  4: tr=1.1529 va=1.1150 (best=1.0384)
+    ep  5: tr=1.1550 va=1.1183 (best=1.0384)
+    ep  6: tr=1.1311 va=1.1166 (best=1.0384)
+    ep  7: tr=1.1679 va=1.1099 (best=1.0384)
+    ep  8: tr=1.1195 va=1.0985 (best=1.0384)
+    ep  9: tr=1.1419 va=1.0927 (best=1.0384)
+    ep 10: tr=1.1257 va=1.0886 (best=1.0384)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\dirt1700_lambdarank_model_v14lstm_no26.pt
+
+  ダート2400m ...
+    train=128行 / val=23行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=1.1203 va=1.4753 (best=1.4753)
+    ep  2: tr=1.0639 va=1.4638 (best=1.4638)
+    ep  3: tr=0.9504 va=1.4541 (best=1.4541)
+    ep  4: tr=0.9978 va=1.4439 (best=1.4439)
+    ep  5: tr=0.9111 va=1.4384 (best=1.4384)
+    ep  6: tr=0.8779 va=1.4280 (best=1.4280)
+    ep  7: tr=0.9041 va=1.4157 (best=1.4157)
+    ep  8: tr=0.8957 va=1.3991 (best=1.3991)
+    ep  9: tr=0.8450 va=1.3699 (best=1.3699)
+    ep 10: tr=0.8282 va=1.3478 (best=1.3478)
+    ep 11: tr=0.8056 va=1.3345 (best=1.3345)
+    ep 12: tr=0.7661 va=1.3363 (best=1.3345)
+    ep 13: tr=0.7969 va=1.3438 (best=1.3345)
+    ep 14: tr=0.7723 va=1.3461 (best=1.3345)
+    ep 15: tr=0.7696 va=1.3466 (best=1.3345)
+    ep 16: tr=0.7914 va=1.3474 (best=1.3345)
+    ep 17: tr=0.7878 va=1.3486 (best=1.3345)
+    ep 18: tr=0.7029 va=1.3634 (best=1.3345)
+    ep 19: tr=0.7028 va=1.3771 (best=1.3345)
+    ep 20: tr=0.6990 va=1.3839 (best=1.3345)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\dirt2400_lambdarank_model_v14lstm_no26.pt
+
+=======================================================
+[学習] 03_fukushima
+=======================================================
+
+  芝1200m ...
+    train=3664行 / val=907行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.2021335422846579, 'lr': 0.009344272837238446, 'wd': 2.971999527950389e-05}
+    ep  1: tr=1.1910 va=1.0535 (best=1.0535)
+    ep  2: tr=1.0802 va=1.0161 (best=1.0161)
+    ep  3: tr=0.9559 va=1.0444 (best=1.0161)
+    ep  4: tr=0.9712 va=1.0266 (best=1.0161)
+    ep  5: tr=0.9911 va=0.9739 (best=0.9739)
+    ep  6: tr=0.8868 va=0.9336 (best=0.9336)
+    ep  7: tr=0.9030 va=0.9733 (best=0.9336)
+    ep  8: tr=1.0429 va=0.9889 (best=0.9336)
+    ep  9: tr=0.8652 va=1.0097 (best=0.9336)
+    ep 10: tr=0.8317 va=1.0394 (best=0.9336)
+    ep 11: tr=0.8537 va=1.0818 (best=0.9336)
+    ep 12: tr=0.8159 va=1.0118 (best=0.9336)
+    ep 13: tr=0.7856 va=1.0492 (best=0.9336)
+    ep 14: tr=0.7703 va=1.0033 (best=0.9336)
+    ep 15: tr=0.6947 va=1.0561 (best=0.9336)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\turf1200_lambdarank_model_v14lstm_no26.pt
+
+  芝1800m ...
+    train=2036行 / val=500行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.39369614099457123, 'lr': 0.009963908343902683, 'wd': 2.876572039039444e-05}
+    ep  1: tr=1.1960 va=1.3364 (best=1.3364)
+    ep  2: tr=1.1678 va=1.3558 (best=1.3364)
+    ep  3: tr=1.0971 va=1.2916 (best=1.2916)
+    ep  4: tr=1.0764 va=1.2170 (best=1.2170)
+    ep  5: tr=1.0190 va=1.1635 (best=1.1635)
+    ep  6: tr=1.0159 va=1.1746 (best=1.1635)
+    ep  7: tr=1.0629 va=1.2385 (best=1.1635)
+    ep  8: tr=0.9539 va=1.3445 (best=1.1635)
+    ep  9: tr=0.9583 va=1.3854 (best=1.1635)
+    ep 10: tr=0.9506 va=1.4242 (best=1.1635)
+    ep 11: tr=0.9369 va=1.4344 (best=1.1635)
+    ep 12: tr=0.9345 va=1.3399 (best=1.1635)
+    ep 13: tr=0.9704 va=1.3090 (best=1.1635)
+    ep 14: tr=0.9372 va=1.3234 (best=1.1635)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\turf1800_lambdarank_model_v14lstm_no26.pt
+
+  芝2000m ...
+    train=1680行 / val=419行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.2586684759258714, 'lr': 0.001368009527972693, 'wd': 0.0007098936257405903}
+    ep  1: tr=1.1436 va=1.1963 (best=1.1963)
+    ep  2: tr=1.1276 va=1.1844 (best=1.1844)
+    ep  3: tr=1.1289 va=1.1899 (best=1.1844)
+    ep  4: tr=1.1529 va=1.2008 (best=1.1844)
+    ep  5: tr=1.0144 va=1.2104 (best=1.1844)
+    ep  6: tr=1.0827 va=1.2157 (best=1.1844)
+    ep  7: tr=1.0342 va=1.2228 (best=1.1844)
+    ep  8: tr=1.0964 va=1.2272 (best=1.1844)
+    ep  9: tr=1.0722 va=1.2286 (best=1.1844)
+    ep 10: tr=1.0309 va=1.2338 (best=1.1844)
+    ep 11: tr=1.0433 va=1.2374 (best=1.1844)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\turf2000_lambdarank_model_v14lstm_no26.pt
+
+  芝2600m ...
+    train=747行 / val=181行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.17962331315528712, 'lr': 0.0042407892609582715, 'wd': 0.0002702503567300175}
+    ep  1: tr=1.0889 va=1.4764 (best=1.4764)
+    ep  2: tr=0.9881 va=1.4783 (best=1.4764)
+    ep  3: tr=0.9133 va=1.4819 (best=1.4764)
+    ep  4: tr=0.8796 va=1.4870 (best=1.4764)
+    ep  5: tr=0.9924 va=1.4854 (best=1.4764)
+    ep  6: tr=0.8947 va=1.4771 (best=1.4764)
+    ep  7: tr=0.8687 va=1.4826 (best=1.4764)
+    ep  8: tr=0.8451 va=1.5143 (best=1.4764)
+    ep  9: tr=0.8228 va=1.5520 (best=1.4764)
+    ep 10: tr=0.9040 va=1.5918 (best=1.4764)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\turf2600_lambdarank_model_v14lstm_no26.pt
+
+  ダート1150m ...
+    train=2516行 / val=625行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=1.2426 va=1.1251 (best=1.1251)
+    ep  2: tr=1.1326 va=1.1232 (best=1.1232)
+    ep  3: tr=1.1109 va=1.1028 (best=1.1028)
+    ep  4: tr=1.1001 va=1.0870 (best=1.0870)
+    ep  5: tr=1.0719 va=1.0850 (best=1.0850)
+    ep  6: tr=0.9917 va=1.0876 (best=1.0850)
+    ep  7: tr=0.9652 va=1.0960 (best=1.0850)
+    ep  8: tr=0.9237 va=1.1136 (best=1.0850)
+    ep  9: tr=0.9543 va=1.1630 (best=1.0850)
+    ep 10: tr=0.9083 va=1.1371 (best=1.0850)
+    ep 11: tr=0.8531 va=1.1656 (best=1.0850)
+    ep 12: tr=0.8504 va=1.2102 (best=1.0850)
+    ep 13: tr=0.8148 va=1.2276 (best=1.0850)
+    ep 14: tr=0.7763 va=1.2220 (best=1.0850)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\dirt1150_lambdarank_model_v14lstm_no26.pt
+
+  ダート1700m ...
+    train=3789行 / val=936行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.19428795941755836, 'lr': 0.00010542417088841312, 'wd': 0.00024915870658919815}
+    ep  1: tr=1.3584 va=1.3123 (best=1.3123)
+    ep  2: tr=1.2928 va=1.3254 (best=1.3123)
+    ep  3: tr=1.2903 va=1.3332 (best=1.3123)
+    ep  4: tr=1.2803 va=1.3391 (best=1.3123)
+    ep  5: tr=1.2364 va=1.3463 (best=1.3123)
+    ep  6: tr=1.3863 va=1.3540 (best=1.3123)
+    ep  7: tr=1.3302 va=1.3603 (best=1.3123)
+    ep  8: tr=1.2550 va=1.3686 (best=1.3123)
+    ep  9: tr=1.2595 va=1.3745 (best=1.3123)
+    ep 10: tr=1.2117 va=1.3791 (best=1.3123)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\dirt1700_lambdarank_model_v14lstm_no26.pt
+
+  ダート2400m ...
+    train=117行 / val=27行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.39369614099457123, 'lr': 0.009963908343902683, 'wd': 2.876572039039444e-05}
+    ep  1: tr=1.6279 va=0.7636 (best=0.7636)
+    ep  2: tr=1.4151 va=0.6245 (best=0.6245)
+    ep  3: tr=1.4097 va=0.5739 (best=0.5739)
+    ep  4: tr=1.0814 va=0.5480 (best=0.5480)
+    ep  5: tr=1.0598 va=0.5397 (best=0.5397)
+    ep  6: tr=1.0962 va=0.5452 (best=0.5397)
+    ep  7: tr=1.0588 va=0.5454 (best=0.5397)
+    ep  8: tr=1.0657 va=0.5495 (best=0.5397)
+    ep  9: tr=1.1090 va=0.5671 (best=0.5397)
+    ep 10: tr=1.0101 va=0.5885 (best=0.5397)
+    ep 11: tr=1.0302 va=0.6181 (best=0.5397)
+    ep 12: tr=0.8353 va=0.6438 (best=0.5397)
+    ep 13: tr=1.0090 va=0.6627 (best=0.5397)
+    ep 14: tr=0.8389 va=0.6823 (best=0.5397)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\dirt2400_lambdarank_model_v14lstm_no26.pt
+
+=======================================================
+[学習] 04_nigata
+=======================================================
+
+  芝1000m ...
+    train=3124行 / val=770行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=1.0850 va=1.0376 (best=1.0376)
+    ep  2: tr=1.2102 va=1.0034 (best=1.0034)
+    ep  3: tr=0.9043 va=0.9748 (best=0.9748)
+    ep  4: tr=0.8984 va=0.9648 (best=0.9648)
+    ep  5: tr=0.8880 va=0.9580 (best=0.9580)
+    ep  6: tr=0.8671 va=0.9633 (best=0.9580)
+    ep  7: tr=0.8553 va=0.9705 (best=0.9580)
+    ep  8: tr=0.8255 va=0.9734 (best=0.9580)
+    ep  9: tr=0.7903 va=0.9960 (best=0.9580)
+    ep 10: tr=0.8004 va=1.0789 (best=0.9580)
+    ep 11: tr=0.7506 va=1.1795 (best=0.9580)
+    ep 12: tr=0.7141 va=1.0409 (best=0.9580)
+    ep 13: tr=0.7296 va=1.0617 (best=0.9580)
+    ep 14: tr=0.6816 va=1.1446 (best=0.9580)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf1000_lambdarank_model_v14lstm_no26.pt
+
+  芝1200m ...
+    train=3124行 / val=770行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.38478404318215653, 'lr': 0.009183012623613892, 'wd': 4.138061515930775e-05}
+    ep  1: tr=1.0748 va=1.1336 (best=1.1336)
+    ep  2: tr=1.3042 va=1.0776 (best=1.0776)
+    ep  3: tr=0.9635 va=0.9808 (best=0.9808)
+    ep  4: tr=0.9450 va=0.9720 (best=0.9720)
+    ep  5: tr=0.9463 va=1.0017 (best=0.9720)
+    ep  6: tr=1.0434 va=1.0383 (best=0.9720)
+    ep  7: tr=0.8742 va=0.9887 (best=0.9720)
+    ep  8: tr=0.9247 va=0.9888 (best=0.9720)
+    ep  9: tr=0.8017 va=1.0733 (best=0.9720)
+    ep 10: tr=0.8167 va=1.0986 (best=0.9720)
+    ep 11: tr=0.8758 va=1.0703 (best=0.9720)
+    ep 12: tr=0.8292 va=0.9897 (best=0.9720)
+    ep 13: tr=0.6913 va=1.0509 (best=0.9720)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf1200_lambdarank_model_v14lstm_no26.pt
+
+  芝1400m ...
+    train=6018行 / val=1487行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.23512654922813536, 'lr': 0.002550673662919353, 'wd': 0.0008673478693671215}
+    ep  1: tr=1.1103 va=1.0891 (best=1.0891)
+    ep  2: tr=1.0329 va=1.0829 (best=1.0829)
+    ep  3: tr=1.0038 va=1.0789 (best=1.0789)
+    ep  4: tr=0.9876 va=1.0613 (best=1.0613)
+    ep  5: tr=0.9632 va=1.0735 (best=1.0613)
+    ep  6: tr=0.9513 va=1.0899 (best=1.0613)
+    ep  7: tr=0.9521 va=1.1171 (best=1.0613)
+    ep  8: tr=0.9215 va=1.1232 (best=1.0613)
+    ep  9: tr=0.9453 va=1.1475 (best=1.0613)
+    ep 10: tr=0.9218 va=1.1731 (best=1.0613)
+    ep 11: tr=0.9198 va=1.1880 (best=1.0613)
+    ep 12: tr=0.8933 va=1.1782 (best=1.0613)
+    ep 13: tr=0.8676 va=1.1867 (best=1.0613)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf1400_lambdarank_model_v14lstm_no26.pt
+
+  芝1600m ...
+    train=6018行 / val=1487行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.38582470345509556, 'lr': 0.0007838821177219167, 'wd': 0.0004929664291135948}
+    ep  1: tr=1.1524 va=1.0991 (best=1.0991)
+    ep  2: tr=1.1101 va=1.0984 (best=1.0984)
+    ep  3: tr=1.1031 va=1.0992 (best=1.0984)
+    ep  4: tr=1.0755 va=1.0973 (best=1.0973)
+    ep  5: tr=1.0515 va=1.0995 (best=1.0973)
+    ep  6: tr=1.0497 va=1.1015 (best=1.0973)
+    ep  7: tr=1.0309 va=1.1015 (best=1.0973)
+    ep  8: tr=1.0334 va=1.0955 (best=1.0955)
+    ep  9: tr=1.0169 va=1.0957 (best=1.0955)
+    ep 10: tr=1.0152 va=1.0932 (best=1.0932)
+    ep 11: tr=1.0330 va=1.0901 (best=1.0901)
+    ep 12: tr=1.0088 va=1.0945 (best=1.0901)
+    ep 13: tr=1.0050 va=1.0906 (best=1.0901)
+    ep 14: tr=0.9789 va=1.0861 (best=1.0861)
+    ep 15: tr=0.9725 va=1.0947 (best=1.0861)
+    ep 16: tr=0.9833 va=1.0991 (best=1.0861)
+    ep 17: tr=0.9688 va=1.0967 (best=1.0861)
+    ep 18: tr=0.9679 va=1.0951 (best=1.0861)
+    ep 19: tr=0.9565 va=1.0995 (best=1.0861)
+    ep 20: tr=0.9576 va=1.1076 (best=1.0861)
+    ep 21: tr=0.9545 va=1.1008 (best=1.0861)
+    ep 22: tr=0.9580 va=1.0965 (best=1.0861)
+    ep 23: tr=0.9406 va=1.0923 (best=1.0861)
+    ep 24: tr=0.9212 va=1.0847 (best=1.0847)
+    ep 25: tr=0.9234 va=1.0806 (best=1.0806)
+    ep 26: tr=0.9278 va=1.0822 (best=1.0806)
+    ep 27: tr=0.9167 va=1.0783 (best=1.0783)
+    ep 28: tr=0.9185 va=1.0824 (best=1.0783)
+    ep 29: tr=0.9332 va=1.0828 (best=1.0783)
+    ep 30: tr=0.9438 va=1.0864 (best=1.0783)
+    ep 31: tr=0.9245 va=1.0880 (best=1.0783)
+    ep 32: tr=0.9132 va=1.0819 (best=1.0783)
+    ep 33: tr=0.9204 va=1.0805 (best=1.0783)
+    ep 34: tr=0.9160 va=1.0767 (best=1.0767)
+    ep 35: tr=0.9093 va=1.0776 (best=1.0767)
+    ep 36: tr=0.9178 va=1.0768 (best=1.0767)
+    ep 37: tr=0.9071 va=1.0778 (best=1.0767)
+    ep 38: tr=0.8905 va=1.0815 (best=1.0767)
+    ep 39: tr=0.8943 va=1.0799 (best=1.0767)
+    ep 40: tr=0.8986 va=1.0798 (best=1.0767)
+    ep 41: tr=0.8922 va=1.0804 (best=1.0767)
+    ep 42: tr=0.8770 va=1.0802 (best=1.0767)
+    ep 43: tr=0.8888 va=1.0809 (best=1.0767)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf1600_lambdarank_model_v14lstm_no26.pt
+
+  芝1800m ...
+    train=6018行 / val=1487行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=1.1185 va=1.1256 (best=1.1256)
+    ep  2: tr=1.0051 va=1.2212 (best=1.1256)
+    ep  3: tr=0.9941 va=1.2340 (best=1.1256)
+    ep  4: tr=0.9679 va=1.2241 (best=1.1256)
+    ep  5: tr=0.9476 va=1.1861 (best=1.1256)
+    ep  6: tr=0.9317 va=1.1195 (best=1.1195)
+    ep  7: tr=0.9183 va=1.3506 (best=1.1195)
+    ep  8: tr=0.8861 va=1.1937 (best=1.1195)
+    ep  9: tr=0.8598 va=1.1762 (best=1.1195)
+    ep 10: tr=0.8552 va=1.1585 (best=1.1195)
+    ep 11: tr=0.8638 va=1.1617 (best=1.1195)
+    ep 12: tr=0.8519 va=1.1488 (best=1.1195)
+    ep 13: tr=0.8588 va=1.1903 (best=1.1195)
+    ep 14: tr=0.8154 va=1.1529 (best=1.1195)
+    ep 15: tr=0.7915 va=1.2534 (best=1.1195)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf1800_lambdarank_model_v14lstm_no26.pt
+
+  芝2000m ...
+    train=1736行 / val=431行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=1.2093 va=1.1208 (best=1.1208)
+    ep  2: tr=1.0260 va=1.1142 (best=1.1142)
+    ep  3: tr=1.0175 va=1.1037 (best=1.1037)
+    ep  4: tr=0.9670 va=1.0904 (best=1.0904)
+    ep  5: tr=0.9708 va=1.0818 (best=1.0818)
+    ep  6: tr=0.9420 va=1.0653 (best=1.0653)
+    ep  7: tr=0.8994 va=1.0657 (best=1.0653)
+    ep  8: tr=1.0222 va=1.0645 (best=1.0645)
+    ep  9: tr=0.9356 va=1.0491 (best=1.0491)
+    ep 10: tr=0.9274 va=1.0699 (best=1.0491)
+    ep 11: tr=0.8810 va=1.0842 (best=1.0491)
+    ep 12: tr=0.8730 va=1.1319 (best=1.0491)
+    ep 13: tr=0.8657 va=1.1820 (best=1.0491)
+    ep 14: tr=0.8153 va=1.2451 (best=1.0491)
+    ep 15: tr=0.8037 va=1.1775 (best=1.0491)
+    ep 16: tr=0.7879 va=1.1012 (best=1.0491)
+    ep 17: tr=0.7516 va=1.1278 (best=1.0491)
+    ep 18: tr=0.7610 va=1.1427 (best=1.0491)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf2000_lambdarank_model_v14lstm_no26.pt
+
+  芝2200m ...
+    train=984行 / val=246行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.38478404318215653, 'lr': 0.009280006514008381, 'wd': 3.461751661573067e-05}
+    ep  1: tr=1.4939 va=1.1919 (best=1.1919)
+    ep  2: tr=1.6746 va=1.1830 (best=1.1830)
+    ep  3: tr=1.4627 va=1.1859 (best=1.1830)
+    ep  4: tr=1.3905 va=1.1787 (best=1.1787)
+    ep  5: tr=1.4750 va=1.1615 (best=1.1615)
+    ep  6: tr=1.2838 va=1.1505 (best=1.1505)
+    ep  7: tr=1.3227 va=1.1383 (best=1.1383)
+    ep  8: tr=1.2564 va=1.1280 (best=1.1280)
+    ep  9: tr=1.3294 va=1.1192 (best=1.1192)
+    ep 10: tr=1.4501 va=1.1068 (best=1.1068)
+    ep 11: tr=1.3824 va=1.0944 (best=1.0944)
+    ep 12: tr=1.3208 va=1.0832 (best=1.0832)
+    ep 13: tr=1.1249 va=1.0790 (best=1.0790)
+    ep 14: tr=1.1888 va=1.0737 (best=1.0737)
+    ep 15: tr=1.3835 va=1.0703 (best=1.0703)
+    ep 16: tr=1.2499 va=1.0671 (best=1.0671)
+    ep 17: tr=1.1416 va=1.0662 (best=1.0662)
+    ep 18: tr=1.2385 va=1.0659 (best=1.0659)
+    ep 19: tr=1.2210 va=1.0678 (best=1.0659)
+    ep 20: tr=1.4572 va=1.0685 (best=1.0659)
+    ep 21: tr=1.1530 va=1.0670 (best=1.0659)
+    ep 22: tr=1.1764 va=1.0677 (best=1.0659)
+    ep 23: tr=1.0673 va=1.0690 (best=1.0659)
+    ep 24: tr=1.2065 va=1.0691 (best=1.0659)
+    ep 25: tr=1.1589 va=1.0696 (best=1.0659)
+    ep 26: tr=1.1944 va=1.0722 (best=1.0659)
+    ep 27: tr=1.2146 va=1.0757 (best=1.0659)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf2200_lambdarank_model_v14lstm_no26.pt
+
+  芝2400m ...
+    train=984行 / val=246行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.2021335422846579, 'lr': 0.009344272837238446, 'wd': 1.0204483902247283e-05}
+    ep  1: tr=1.5597 va=1.2183 (best=1.2183)
+    ep  2: tr=1.4002 va=1.1704 (best=1.1704)
+    ep  3: tr=1.4134 va=1.1400 (best=1.1400)
+    ep  4: tr=1.3498 va=1.1188 (best=1.1188)
+    ep  5: tr=1.3291 va=1.1066 (best=1.1066)
+    ep  6: tr=1.2766 va=1.0964 (best=1.0964)
+    ep  7: tr=1.2601 va=1.0989 (best=1.0964)
+    ep  8: tr=1.2216 va=1.1080 (best=1.0964)
+    ep  9: tr=1.1733 va=1.1174 (best=1.0964)
+    ep 10: tr=1.1979 va=1.1199 (best=1.0964)
+    ep 11: tr=1.1419 va=1.1216 (best=1.0964)
+    ep 12: tr=1.0953 va=1.1291 (best=1.0964)
+    ep 13: tr=1.0340 va=1.1457 (best=1.0964)
+    ep 14: tr=1.0721 va=1.1498 (best=1.0964)
+    ep 15: tr=1.0149 va=1.1585 (best=1.0964)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf2400_lambdarank_model_v14lstm_no26.pt
+
+  ダート1200m ...
+    train=4314行 / val=1078行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.39369614099457123, 'lr': 0.0013558803747198706, 'wd': 0.0009049911227773807}
+    ep  1: tr=1.1178 va=1.1350 (best=1.1350)
+    ep  2: tr=1.0672 va=1.1323 (best=1.1323)
+    ep  3: tr=1.1360 va=1.1366 (best=1.1323)
+    ep  4: tr=1.0398 va=1.1444 (best=1.1323)
+    ep  5: tr=1.0285 va=1.1431 (best=1.1323)
+    ep  6: tr=1.0376 va=1.1308 (best=1.1308)
+    ep  7: tr=1.0433 va=1.1145 (best=1.1145)
+    ep  8: tr=1.0335 va=1.1194 (best=1.1145)
+    ep  9: tr=0.9815 va=1.0951 (best=1.0951)
+    ep 10: tr=1.0017 va=1.0861 (best=1.0861)
+    ep 11: tr=0.9712 va=1.0864 (best=1.0861)
+    ep 12: tr=1.0133 va=1.0973 (best=1.0861)
+    ep 13: tr=0.9404 va=1.0985 (best=1.0861)
+    ep 14: tr=0.9347 va=1.0947 (best=1.0861)
+    ep 15: tr=0.9397 va=1.0851 (best=1.0851)
+    ep 16: tr=0.9122 va=1.0862 (best=1.0851)
+    ep 17: tr=0.9069 va=1.0934 (best=1.0851)
+    ep 18: tr=0.8820 va=1.1096 (best=1.0851)
+    ep 19: tr=0.8918 va=1.1336 (best=1.0851)
+    ep 20: tr=0.8964 va=1.1179 (best=1.0851)
+    ep 21: tr=0.8817 va=1.0910 (best=1.0851)
+    ep 22: tr=0.9530 va=1.1161 (best=1.0851)
+    ep 23: tr=0.8914 va=1.1126 (best=1.0851)
+    ep 24: tr=0.8797 va=1.1181 (best=1.0851)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\dirt1200_lambdarank_model_v14lstm_no26.pt
+
+  ダート1800m ...
+    train=5083行 / val=1265行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.2959602459571401, 'lr': 0.0020146821564116864, 'wd': 7.291835638201717e-05}
+    ep  1: tr=1.2025 va=1.2529 (best=1.2529)
+    ep  2: tr=1.1371 va=1.2402 (best=1.2402)
+    ep  3: tr=1.1198 va=1.2380 (best=1.2380)
+    ep  4: tr=1.1020 va=1.2216 (best=1.2216)
+    ep  5: tr=1.0676 va=1.2013 (best=1.2013)
+    ep  6: tr=1.0875 va=1.1891 (best=1.1891)
+    ep  7: tr=1.0434 va=1.1796 (best=1.1796)
+    ep  8: tr=1.0614 va=1.1912 (best=1.1796)
+    ep  9: tr=1.0265 va=1.1845 (best=1.1796)
+    ep 10: tr=1.0393 va=1.1593 (best=1.1593)
+    ep 11: tr=1.0081 va=1.1447 (best=1.1447)
+    ep 12: tr=0.9651 va=1.1626 (best=1.1447)
+    ep 13: tr=0.9793 va=1.1334 (best=1.1334)
+    ep 14: tr=0.9752 va=1.1398 (best=1.1334)
+    ep 15: tr=0.9666 va=1.2225 (best=1.1334)
+    ep 16: tr=0.8806 va=1.2105 (best=1.1334)
+    ep 17: tr=0.8471 va=1.1979 (best=1.1334)
+    ep 18: tr=0.8573 va=1.2735 (best=1.1334)
+    ep 19: tr=0.8064 va=1.4052 (best=1.1334)
+    ep 20: tr=0.8481 va=1.4603 (best=1.1334)
+    ep 21: tr=0.7661 va=1.4041 (best=1.1334)
+    ep 22: tr=0.7448 va=1.5701 (best=1.1334)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\dirt1800_lambdarank_model_v14lstm_no26.pt
+
+  ダート2500m ...
+    train=90行 / val=15行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 2, 'hidden': [128, 64, 32], 'dropout': 0.38478404318215653, 'lr': 0.00893999767146043, 'wd': 4.138061515930775e-05}
+    ep  1: tr=1.3195 va=0.6587 (best=0.6587)
+    ep  2: tr=1.2178 va=0.6333 (best=0.6333)
+    ep  3: tr=1.1188 va=0.6495 (best=0.6333)
+    ep  4: tr=1.2885 va=0.6740 (best=0.6333)
+    ep  5: tr=1.1430 va=0.6868 (best=0.6333)
+    ep  6: tr=1.2970 va=0.7050 (best=0.6333)
+    ep  7: tr=1.0881 va=0.7231 (best=0.6333)
+    ep  8: tr=1.1238 va=0.7525 (best=0.6333)
+    ep  9: tr=0.9572 va=0.7652 (best=0.6333)
+    ep 10: tr=1.1922 va=0.7671 (best=0.6333)
+    ep 11: tr=1.1255 va=0.7632 (best=0.6333)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\dirt2500_lambdarank_model_v14lstm_no26.pt
+
+=======================================================
+[学習] 05_tokyo
+=======================================================
+
+  芝1400m ...
+    train=12082行 / val=3010行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.3370017835949666, 'lr': 0.000470726652588372, 'wd': 0.00011432574940042034}
+    ep  1: tr=1.2078 va=1.2783 (best=1.2783)
+    ep  2: tr=1.2088 va=1.2799 (best=1.2783)
+    ep  3: tr=1.1453 va=1.2867 (best=1.2783)
+    ep  4: tr=1.1352 va=1.2879 (best=1.2783)
+    ep  5: tr=1.1339 va=1.2926 (best=1.2783)
+    ep  6: tr=1.1009 va=1.2853 (best=1.2783)
+    ep  7: tr=1.1097 va=1.2925 (best=1.2783)
+    ep  8: tr=1.1220 va=1.2919 (best=1.2783)
+    ep  9: tr=1.1033 va=1.2972 (best=1.2783)
+    ep 10: tr=1.1307 va=1.2830 (best=1.2783)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf1400_lambdarank_model_v14lstm_no26.pt
+
+  芝1600m ...
+    train=12082行 / val=3010行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 2, 'hidden': [128, 64, 32], 'dropout': 0.304546089731045, 'lr': 0.0005236194873419149, 'wd': 7.4827960376208e-05}
+    ep  1: tr=1.2383 va=1.2970 (best=1.2970)
+    ep  2: tr=1.1921 va=1.2977 (best=1.2970)
+    ep  3: tr=1.1923 va=1.3073 (best=1.2970)
+    ep  4: tr=1.1598 va=1.2892 (best=1.2892)
+    ep  5: tr=1.1460 va=1.2790 (best=1.2790)
+    ep  6: tr=1.1232 va=1.2864 (best=1.2790)
+    ep  7: tr=1.1158 va=1.3034 (best=1.2790)
+    ep  8: tr=1.1314 va=1.3028 (best=1.2790)
+    ep  9: tr=1.1109 va=1.2990 (best=1.2790)
+    ep 10: tr=1.1189 va=1.3008 (best=1.2790)
+    ep 11: tr=1.1177 va=1.3135 (best=1.2790)
+    ep 12: tr=1.0905 va=1.3091 (best=1.2790)
+    ep 13: tr=1.0765 va=1.3116 (best=1.2790)
+    ep 14: tr=1.1063 va=1.3220 (best=1.2790)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf1600_lambdarank_model_v14lstm_no26.pt
+
+  芝1800m ...
+    train=12082行 / val=3010行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.2554237063040737, 'lr': 0.0007058335325936579, 'wd': 0.0002605734609191066}
+    ep  1: tr=1.3184 va=1.3105 (best=1.3105)
+    ep  2: tr=1.2446 va=1.2907 (best=1.2907)
+    ep  3: tr=1.1942 va=1.2773 (best=1.2773)
+    ep  4: tr=1.1860 va=1.2579 (best=1.2579)
+    ep  5: tr=1.1733 va=1.2756 (best=1.2579)
+    ep  6: tr=1.1287 va=1.2677 (best=1.2579)
+    ep  7: tr=1.1140 va=1.2663 (best=1.2579)
+    ep  8: tr=1.1020 va=1.2618 (best=1.2579)
+    ep  9: tr=1.0918 va=1.2669 (best=1.2579)
+    ep 10: tr=1.0802 va=1.2909 (best=1.2579)
+    ep 11: tr=1.0837 va=1.3015 (best=1.2579)
+    ep 12: tr=1.0667 va=1.2883 (best=1.2579)
+    ep 13: tr=1.0631 va=1.2957 (best=1.2579)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf1800_lambdarank_model_v14lstm_no26.pt
+
+  芝2000m ...
+    train=2363行 / val=591行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.38478404318215653, 'lr': 0.009280006514008381, 'wd': 3.461751661573067e-05}
+    ep  1: tr=1.1217 va=0.9035 (best=0.9035)
+    ep  2: tr=1.0844 va=0.9224 (best=0.9035)
+    ep  3: tr=1.0187 va=0.8874 (best=0.8874)
+    ep  4: tr=1.0088 va=0.8680 (best=0.8680)
+    ep  5: tr=0.9832 va=0.8772 (best=0.8680)
+    ep  6: tr=0.9611 va=0.8820 (best=0.8680)
+    ep  7: tr=0.9278 va=0.8804 (best=0.8680)
+    ep  8: tr=0.9290 va=0.8890 (best=0.8680)
+    ep  9: tr=0.9378 va=0.9084 (best=0.8680)
+    ep 10: tr=0.8923 va=0.8921 (best=0.8680)
+    ep 11: tr=0.9136 va=0.8508 (best=0.8508)
+    ep 12: tr=0.8998 va=0.8606 (best=0.8508)
+    ep 13: tr=0.8946 va=0.8543 (best=0.8508)
+    ep 14: tr=0.8745 va=0.8453 (best=0.8453)
+    ep 15: tr=0.8713 va=0.8515 (best=0.8453)
+    ep 16: tr=0.8506 va=0.8460 (best=0.8453)
+    ep 17: tr=0.9425 va=0.8322 (best=0.8322)
+    ep 18: tr=0.8618 va=0.7852 (best=0.7852)
+    ep 19: tr=0.8510 va=0.7934 (best=0.7852)
+    ep 20: tr=0.8655 va=0.8202 (best=0.7852)
+    ep 21: tr=0.9085 va=0.8392 (best=0.7852)
+    ep 22: tr=0.8549 va=0.8541 (best=0.7852)
+    ep 23: tr=0.8455 va=0.8676 (best=0.7852)
+    ep 24: tr=0.8323 va=0.8655 (best=0.7852)
+    ep 25: tr=0.8085 va=0.8659 (best=0.7852)
+    ep 26: tr=0.8168 va=0.8690 (best=0.7852)
+    ep 27: tr=0.7844 va=0.8646 (best=0.7852)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf2000_lambdarank_model_v14lstm_no26.pt
+
+  芝2300m ...
+    train=2034行 / val=508行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64], 'dropout': 0.3392591053653152, 'lr': 0.0029966949832234456, 'wd': 3.6090228365779854e-05}
+    ep  1: tr=1.0729 va=0.8934 (best=0.8934)
+    ep  2: tr=1.0246 va=0.9008 (best=0.8934)
+    ep  3: tr=0.9656 va=0.9084 (best=0.8934)
+    ep  4: tr=0.9350 va=0.9156 (best=0.8934)
+    ep  5: tr=0.9398 va=0.9242 (best=0.8934)
+    ep  6: tr=0.9253 va=0.9410 (best=0.8934)
+    ep  7: tr=0.8839 va=0.9581 (best=0.8934)
+    ep  8: tr=0.9374 va=0.9831 (best=0.8934)
+    ep  9: tr=0.8783 va=1.0043 (best=0.8934)
+    ep 10: tr=0.8817 va=1.0107 (best=0.8934)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf2300_lambdarank_model_v14lstm_no26.pt
+
+  芝2400m ...
+    train=2034行 / val=508行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.343943316955748, 'lr': 0.0041174415655415835, 'wd': 4.7287661949647206e-05}
+    ep  1: tr=1.0527 va=0.8982 (best=0.8982)
+    ep  2: tr=0.9889 va=0.9316 (best=0.8982)
+    ep  3: tr=0.9847 va=0.9617 (best=0.8982)
+    ep  4: tr=0.9446 va=0.9887 (best=0.8982)
+    ep  5: tr=0.9345 va=1.0020 (best=0.8982)
+    ep  6: tr=0.8887 va=1.0072 (best=0.8982)
+    ep  7: tr=0.8856 va=1.0113 (best=0.8982)
+    ep  8: tr=0.8506 va=1.0040 (best=0.8982)
+    ep  9: tr=0.8681 va=0.9992 (best=0.8982)
+    ep 10: tr=0.8421 va=1.0165 (best=0.8982)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf2400_lambdarank_model_v14lstm_no26.pt
+
+  芝2500m ...
+    train=2034行 / val=508行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.2959602459571401, 'lr': 0.0020146821564116864, 'wd': 7.291835638201717e-05}
+    ep  1: tr=1.0359 va=0.9357 (best=0.9357)
+    ep  2: tr=1.0187 va=0.9420 (best=0.9357)
+    ep  3: tr=0.9854 va=0.9495 (best=0.9357)
+    ep  4: tr=0.9457 va=0.9661 (best=0.9357)
+    ep  5: tr=0.9648 va=0.9756 (best=0.9357)
+    ep  6: tr=0.9433 va=0.9794 (best=0.9357)
+    ep  7: tr=0.9433 va=0.9810 (best=0.9357)
+    ep  8: tr=0.8972 va=0.9785 (best=0.9357)
+    ep  9: tr=0.9179 va=0.9813 (best=0.9357)
+    ep 10: tr=0.9060 va=0.9830 (best=0.9357)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf2500_lambdarank_model_v14lstm_no26.pt
+
+  芝3400m ...
+    train=72行 / val=16行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.2586684759258714, 'lr': 0.001368009527972693, 'wd': 0.0007098936257405903}
+    ep  1: tr=3.8159 va=0.5683 (best=0.5683)
+    ep  2: tr=4.8159 va=0.6049 (best=0.5683)
+    ep  3: tr=3.9224 va=0.6208 (best=0.5683)
+    ep  4: tr=3.6822 va=0.6291 (best=0.5683)
+    ep  5: tr=3.4018 va=0.6359 (best=0.5683)
+    ep  6: tr=3.0513 va=0.6422 (best=0.5683)
+    ep  7: tr=2.7080 va=0.6464 (best=0.5683)
+    ep  8: tr=3.4139 va=0.6499 (best=0.5683)
+    ep  9: tr=2.5696 va=0.6520 (best=0.5683)
+    ep 10: tr=2.6296 va=0.6532 (best=0.5683)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf3400_lambdarank_model_v14lstm_no26.pt
+
+  ダート1300m ...
+    train=1788行 / val=436行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 2, 'hidden': [128, 64, 32], 'dropout': 0.39369614099457123, 'lr': 0.009963908343902683, 'wd': 4.471306610515222e-05}
+    ep  1: tr=1.3972 va=1.0286 (best=1.0286)
+    ep  2: tr=1.3450 va=1.0310 (best=1.0286)
+    ep  3: tr=1.3829 va=1.0858 (best=1.0286)
+    ep  4: tr=1.2254 va=1.1845 (best=1.0286)
+    ep  5: tr=1.1681 va=1.2635 (best=1.0286)
+    ep  6: tr=1.2240 va=1.2505 (best=1.0286)
+    ep  7: tr=1.1710 va=1.1995 (best=1.0286)
+    ep  8: tr=1.1116 va=1.1725 (best=1.0286)
+    ep  9: tr=1.1115 va=1.2208 (best=1.0286)
+    ep 10: tr=1.0599 va=1.2800 (best=1.0286)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\dirt1300_lambdarank_model_v14lstm_no26.pt
+
+  ダート1400m ...
+    train=15083行 / val=3764行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.2586684759258714, 'lr': 0.001368009527972693, 'wd': 0.0007098936257405903}
+    ep  1: tr=1.0976 va=0.9956 (best=0.9956)
+    ep  2: tr=1.0987 va=1.0004 (best=0.9956)
+    ep  3: tr=1.1189 va=1.0024 (best=0.9956)
+    ep  4: tr=1.0782 va=1.0187 (best=0.9956)
+    ep  5: tr=1.0543 va=1.0446 (best=0.9956)
+    ep  6: tr=1.0493 va=1.0169 (best=0.9956)
+    ep  7: tr=1.0542 va=1.0436 (best=0.9956)
+    ep  8: tr=1.0139 va=1.0389 (best=0.9956)
+    ep  9: tr=1.0222 va=1.0349 (best=0.9956)
+    ep 10: tr=0.9990 va=1.0473 (best=0.9956)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\dirt1400_lambdarank_model_v14lstm_no26.pt
+
+  ダート1600m ...
+    train=15083行 / val=3764行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.29319705976889127, 'lr': 0.0007042228249480472, 'wd': 0.00016322490640824139}
+    ep  1: tr=1.1364 va=1.0114 (best=1.0114)
+    ep  2: tr=1.1079 va=1.0163 (best=1.0114)
+    ep  3: tr=1.0797 va=1.0083 (best=1.0083)
+    ep  4: tr=1.1014 va=1.0026 (best=1.0026)
+    ep  5: tr=1.0657 va=0.9942 (best=0.9942)
+    ep  6: tr=1.0367 va=0.9935 (best=0.9935)
+    ep  7: tr=1.0645 va=0.9896 (best=0.9896)
+    ep  8: tr=1.0731 va=1.0062 (best=0.9896)
+    ep  9: tr=1.0237 va=0.9921 (best=0.9896)
+    ep 10: tr=1.0168 va=0.9895 (best=0.9895)
+    ep 11: tr=1.0092 va=0.9737 (best=0.9737)
+    ep 12: tr=1.0206 va=0.9729 (best=0.9729)
+    ep 13: tr=1.0154 va=0.9769 (best=0.9729)
+    ep 14: tr=0.9757 va=0.9588 (best=0.9588)
+    ep 15: tr=1.0354 va=0.9672 (best=0.9588)
+    ep 16: tr=0.9918 va=0.9714 (best=0.9588)
+    ep 17: tr=0.9823 va=0.9474 (best=0.9474)
+    ep 18: tr=0.9748 va=0.9627 (best=0.9474)
+    ep 19: tr=0.9532 va=0.9535 (best=0.9474)
+    ep 20: tr=0.9479 va=0.9568 (best=0.9474)
+    ep 21: tr=0.9250 va=0.9535 (best=0.9474)
+    ep 22: tr=0.9261 va=0.9586 (best=0.9474)
+    ep 23: tr=0.9182 va=0.9532 (best=0.9474)
+    ep 24: tr=0.9048 va=0.9650 (best=0.9474)
+    ep 25: tr=0.9211 va=0.9645 (best=0.9474)
+    ep 26: tr=0.8926 va=0.9615 (best=0.9474)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\dirt1600_lambdarank_model_v14lstm_no26.pt
+
+  ダート2100m ...
+    train=2646行 / val=662行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.3392591053653152, 'lr': 0.002197802087677753, 'wd': 4.915066582526463e-05}
+    ep  1: tr=2.1301 va=0.9612 (best=0.9612)
+    ep  2: tr=1.0979 va=0.9801 (best=0.9612)
+    ep  3: tr=1.3678 va=0.9990 (best=0.9612)
+    ep  4: tr=1.1701 va=1.0097 (best=0.9612)
+    ep  5: tr=1.1870 va=1.0220 (best=0.9612)
+    ep  6: tr=1.2672 va=1.0406 (best=0.9612)
+    ep  7: tr=1.1423 va=1.0729 (best=0.9612)
+    ep  8: tr=1.1218 va=1.1012 (best=0.9612)
+    ep  9: tr=1.1362 va=1.1116 (best=0.9612)
+    ep 10: tr=1.4375 va=1.1146 (best=0.9612)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\dirt2100_lambdarank_model_v14lstm_no26.pt
+
+  ダート2400m ...
+    データなし: スキップ
+
+=======================================================
+[学習] 06_nakayama
+=======================================================
+
+  芝1200m ...
+    train=2431行 / val=596行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.3451586963894362, 'lr': 0.0038070482512988658, 'wd': 3.778603084669304e-05}
+    ep  1: tr=1.1722 va=1.0626 (best=1.0626)
+    ep  2: tr=1.1035 va=1.0284 (best=1.0284)
+    ep  3: tr=1.0668 va=1.0114 (best=1.0114)
+    ep  4: tr=1.0455 va=1.0007 (best=1.0007)
+    ep  5: tr=1.0074 va=0.9917 (best=0.9917)
+    ep  6: tr=1.0051 va=0.9839 (best=0.9839)
+    ep  7: tr=0.9902 va=0.9722 (best=0.9722)
+    ep  8: tr=0.9855 va=0.9628 (best=0.9628)
+    ep  9: tr=0.9633 va=0.9571 (best=0.9571)
+    ep 10: tr=0.9529 va=0.9423 (best=0.9423)
+    ep 11: tr=0.9961 va=0.9438 (best=0.9423)
+    ep 12: tr=0.9356 va=0.9491 (best=0.9423)
+    ep 13: tr=0.9379 va=0.9538 (best=0.9423)
+    ep 14: tr=0.8991 va=0.9661 (best=0.9423)
+    ep 15: tr=0.9080 va=0.9900 (best=0.9423)
+    ep 16: tr=0.8871 va=0.9950 (best=0.9423)
+    ep 17: tr=0.8571 va=0.9825 (best=0.9423)
+    ep 18: tr=0.8984 va=0.9606 (best=0.9423)
+    ep 19: tr=0.8890 va=1.0051 (best=0.9423)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf1200_lambdarank_model_v14lstm_no26.pt
+
+  芝1600m ...
+    train=6611行 / val=1653行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.39652473499948687, 'lr': 0.009963908343902683, 'wd': 4.0184172337592825e-05}
+    ep  1: tr=1.1024 va=1.2587 (best=1.2587)
+    ep  2: tr=1.0160 va=1.1614 (best=1.1614)
+    ep  3: tr=1.0190 va=1.2052 (best=1.1614)
+    ep  4: tr=1.0042 va=1.2375 (best=1.1614)
+    ep  5: tr=0.9847 va=1.3292 (best=1.1614)
+    ep  6: tr=0.9918 va=1.2427 (best=1.1614)
+    ep  7: tr=1.0234 va=1.1971 (best=1.1614)
+    ep  8: tr=0.9765 va=1.1935 (best=1.1614)
+    ep  9: tr=0.9549 va=1.2265 (best=1.1614)
+    ep 10: tr=0.9422 va=1.2668 (best=1.1614)
+    ep 11: tr=0.9135 va=1.2693 (best=1.1614)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf1600_lambdarank_model_v14lstm_no26.pt
+
+  芝1800m ...
+    train=6611行 / val=1653行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 1, 'hidden': [128, 64], 'dropout': 0.29197630639825717, 'lr': 0.00019351140885595286, 'wd': 0.0007750644796341915}
+    ep  1: tr=1.1430 va=1.1372 (best=1.1372)
+    ep  2: tr=1.1359 va=1.1318 (best=1.1318)
+    ep  3: tr=1.1003 va=1.1282 (best=1.1282)
+    ep  4: tr=1.1036 va=1.1275 (best=1.1275)
+    ep  5: tr=1.0793 va=1.1299 (best=1.1275)
+    ep  6: tr=1.0643 va=1.1279 (best=1.1275)
+    ep  7: tr=1.0423 va=1.1276 (best=1.1275)
+    ep  8: tr=1.0581 va=1.1254 (best=1.1254)
+    ep  9: tr=1.0369 va=1.1273 (best=1.1254)
+    ep 10: tr=1.0178 va=1.1299 (best=1.1254)
+    ep 11: tr=1.0364 va=1.1297 (best=1.1254)
+    ep 12: tr=1.0240 va=1.1322 (best=1.1254)
+    ep 13: tr=1.0208 va=1.1326 (best=1.1254)
+    ep 14: tr=1.0265 va=1.1342 (best=1.1254)
+    ep 15: tr=1.0026 va=1.1363 (best=1.1254)
+    ep 16: tr=1.0168 va=1.1378 (best=1.1254)
+    ep 17: tr=0.9886 va=1.1402 (best=1.1254)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf1800_lambdarank_model_v14lstm_no26.pt
+
+  芝2000m ...
+    train=3375行 / val=831行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64], 'dropout': 0.11228407446273662, 'lr': 0.00250232076084707, 'wd': 1.0156135888668476e-05}
+    ep  1: tr=1.0033 va=1.0241 (best=1.0241)
+    ep  2: tr=0.9307 va=0.9642 (best=0.9642)
+    ep  3: tr=0.8954 va=0.9374 (best=0.9374)
+    ep  4: tr=0.8902 va=0.9151 (best=0.9151)
+    ep  5: tr=0.8908 va=0.8883 (best=0.8883)
+    ep  6: tr=0.8478 va=0.8875 (best=0.8875)
+    ep  7: tr=0.8193 va=0.8972 (best=0.8875)
+    ep  8: tr=0.8206 va=0.8788 (best=0.8788)
+    ep  9: tr=0.7921 va=0.8938 (best=0.8788)
+    ep 10: tr=0.8395 va=0.8940 (best=0.8788)
+    ep 11: tr=0.7994 va=0.8965 (best=0.8788)
+    ep 12: tr=0.7823 va=0.8712 (best=0.8712)
+    ep 13: tr=0.8035 va=0.8956 (best=0.8712)
+    ep 14: tr=0.7672 va=0.8854 (best=0.8712)
+    ep 15: tr=0.7689 va=0.8997 (best=0.8712)
+    ep 16: tr=0.7453 va=0.8890 (best=0.8712)
+    ep 17: tr=0.7228 va=0.9061 (best=0.8712)
+    ep 18: tr=0.7350 va=0.9396 (best=0.8712)
+    ep 19: tr=0.6942 va=0.9193 (best=0.8712)
+    ep 20: tr=0.7319 va=0.9904 (best=0.8712)
+    ep 21: tr=0.6707 va=1.0026 (best=0.8712)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf2000_lambdarank_model_v14lstm_no26.pt
+
+  芝2200m ...
+    train=1821行 / val=456行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.3538651868004775, 'lr': 0.00924137484784525, 'wd': 3.6090228365779854e-05}
+    ep  1: tr=1.0568 va=0.8442 (best=0.8442)
+    ep  2: tr=0.9159 va=0.8598 (best=0.8442)
+    ep  3: tr=0.8984 va=0.9579 (best=0.8442)
+    ep  4: tr=0.8738 va=0.9134 (best=0.8442)
+    ep  5: tr=0.8433 va=0.8913 (best=0.8442)
+    ep  6: tr=0.8336 va=0.8810 (best=0.8442)
+    ep  7: tr=0.8084 va=0.8824 (best=0.8442)
+    ep  8: tr=0.8128 va=0.9017 (best=0.8442)
+    ep  9: tr=0.7823 va=0.9108 (best=0.8442)
+    ep 10: tr=0.7190 va=0.8383 (best=0.8383)
+    ep 11: tr=0.7562 va=0.7180 (best=0.7180)
+    ep 12: tr=0.7122 va=0.6780 (best=0.6780)
+    ep 13: tr=0.7080 va=0.7076 (best=0.6780)
+    ep 14: tr=0.6585 va=0.6854 (best=0.6780)
+    ep 15: tr=0.6585 va=0.7079 (best=0.6780)
+    ep 16: tr=0.6005 va=0.6739 (best=0.6739)
+    ep 17: tr=0.6181 va=0.7158 (best=0.6739)
+    ep 18: tr=0.5530 va=0.6710 (best=0.6710)
+    ep 19: tr=0.5709 va=0.6393 (best=0.6393)
+    ep 20: tr=0.5540 va=0.6577 (best=0.6393)
+    ep 21: tr=0.5043 va=0.7348 (best=0.6393)
+    ep 22: tr=0.5160 va=0.7326 (best=0.6393)
+    ep 23: tr=0.5077 va=0.6916 (best=0.6393)
+    ep 24: tr=0.4615 va=0.6937 (best=0.6393)
+    ep 25: tr=0.4850 va=0.7173 (best=0.6393)
+    ep 26: tr=0.4659 va=0.8059 (best=0.6393)
+    ep 27: tr=0.4422 va=0.7693 (best=0.6393)
+    ep 28: tr=0.4136 va=0.7572 (best=0.6393)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf2200_lambdarank_model_v14lstm_no26.pt
+
+  芝2500m ...
+    train=1821行 / val=456行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.3910170881738796, 'lr': 0.009607220389037012, 'wd': 4.5315457525435956e-05}
+    ep  1: tr=1.0625 va=0.8586 (best=0.8586)
+    ep  2: tr=0.9363 va=0.8791 (best=0.8586)
+    ep  3: tr=0.9048 va=0.9313 (best=0.8586)
+    ep  4: tr=0.8912 va=0.8339 (best=0.8339)
+    ep  5: tr=0.8959 va=0.8080 (best=0.8080)
+    ep  6: tr=0.8909 va=0.8189 (best=0.8080)
+    ep  7: tr=0.8284 va=0.7980 (best=0.7980)
+    ep  8: tr=0.8367 va=0.7902 (best=0.7902)
+    ep  9: tr=0.8143 va=0.7917 (best=0.7902)
+    ep 10: tr=0.8058 va=0.7906 (best=0.7902)
+    ep 11: tr=0.8159 va=0.7975 (best=0.7902)
+    ep 12: tr=0.7623 va=0.7748 (best=0.7748)
+    ep 13: tr=0.8061 va=0.7467 (best=0.7467)
+    ep 14: tr=0.7223 va=0.7100 (best=0.7100)
+    ep 15: tr=0.6961 va=0.6957 (best=0.6957)
+    ep 16: tr=0.6868 va=0.7400 (best=0.6957)
+    ep 17: tr=0.6246 va=0.7405 (best=0.6957)
+    ep 18: tr=0.6074 va=0.6961 (best=0.6957)
+    ep 19: tr=0.5933 va=0.7355 (best=0.6957)
+    ep 20: tr=0.5694 va=0.8859 (best=0.6957)
+    ep 21: tr=0.6211 va=0.7104 (best=0.6957)
+    ep 22: tr=0.5450 va=0.6353 (best=0.6353)
+    ep 23: tr=0.5023 va=0.6140 (best=0.6140)
+    ep 24: tr=0.5015 va=0.6131 (best=0.6131)
+    ep 25: tr=0.4970 va=0.6058 (best=0.6058)
+    ep 26: tr=0.4903 va=0.5986 (best=0.5986)
+    ep 27: tr=0.4442 va=0.5988 (best=0.5986)
+    ep 28: tr=0.4483 va=0.6048 (best=0.5986)
+    ep 29: tr=0.4161 va=0.6065 (best=0.5986)
+    ep 30: tr=0.4227 va=0.6031 (best=0.5986)
+    ep 31: tr=0.4081 va=0.6051 (best=0.5986)
+    ep 32: tr=0.3994 va=0.6085 (best=0.5986)
+    ep 33: tr=0.4277 va=0.6331 (best=0.5986)
+    ep 34: tr=0.4039 va=0.6451 (best=0.5986)
+    ep 35: tr=0.4027 va=0.6528 (best=0.5986)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf2500_lambdarank_model_v14lstm_no26.pt
+
+  芝3600m ...
+    train=72行 / val=14行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.2021335422846579, 'lr': 0.009344272837238446, 'wd': 2.971999527950389e-05}
+    ep  1: tr=1.1257 va=0.7219 (best=0.7219)
+    ep  2: tr=0.8891 va=0.8485 (best=0.7219)
+    ep  3: tr=0.8928 va=0.9607 (best=0.7219)
+    ep  4: tr=0.7899 va=1.0145 (best=0.7219)
+    ep  5: tr=0.7246 va=1.0123 (best=0.7219)
+    ep  6: tr=0.7567 va=1.0095 (best=0.7219)
+    ep  7: tr=0.6702 va=0.9582 (best=0.7219)
+    ep  8: tr=0.6449 va=0.8756 (best=0.7219)
+    ep  9: tr=0.6112 va=0.8167 (best=0.7219)
+    ep 10: tr=0.5381 va=0.7745 (best=0.7219)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf3600_lambdarank_model_v14lstm_no26.pt
+
+  ダート1200m ...
+    train=9401行 / val=2345行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.224278898354401, 'lr': 0.00013436773384110736, 'wd': 0.00024262985503685795}
+    ep  1: tr=1.0831 va=1.2464 (best=1.2464)
+    ep  2: tr=1.0963 va=1.2601 (best=1.2464)
+    ep  3: tr=1.1021 va=1.2778 (best=1.2464)
+    ep  4: tr=1.0501 va=1.2902 (best=1.2464)
+    ep  5: tr=1.0970 va=1.2979 (best=1.2464)
+    ep  6: tr=1.0809 va=1.3135 (best=1.2464)
+    ep  7: tr=1.0326 va=1.3173 (best=1.2464)
+    ep  8: tr=1.0780 va=1.3269 (best=1.2464)
+    ep  9: tr=1.0491 va=1.3317 (best=1.2464)
+    ep 10: tr=1.0311 va=1.3384 (best=1.2464)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\dirt1200_lambdarank_model_v14lstm_no26.pt
+
+  ダート1800m ...
+    train=9808行 / val=2448行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.395948513329933, 'lr': 0.002594413542469504, 'wd': 0.0002140440236789662}
+    ep  1: tr=1.1892 va=1.0598 (best=1.0598)
+    ep  2: tr=1.0795 va=1.0620 (best=1.0598)
+    ep  3: tr=1.0922 va=1.0429 (best=1.0429)
+    ep  4: tr=1.0637 va=1.0491 (best=1.0429)
+    ep  5: tr=1.0297 va=1.0503 (best=1.0429)
+    ep  6: tr=0.9992 va=1.0688 (best=1.0429)
+    ep  7: tr=1.0167 va=1.0786 (best=1.0429)
+    ep  8: tr=0.9974 va=1.0822 (best=1.0429)
+    ep  9: tr=0.9797 va=1.0765 (best=1.0429)
+    ep 10: tr=0.9841 va=1.0834 (best=1.0429)
+    ep 11: tr=0.9528 va=1.1075 (best=1.0429)
+    ep 12: tr=0.9860 va=1.1085 (best=1.0429)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\dirt1800_lambdarank_model_v14lstm_no26.pt
+
+  ダート2400m ...
+    train=674行 / val=167行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 1, 'hidden': [128, 64], 'dropout': 0.18852970169700764, 'lr': 0.004108342388989116, 'wd': 5.0409660940722404e-05}
+    ep  1: tr=1.1266 va=0.9539 (best=0.9539)
+    ep  2: tr=1.0708 va=0.9080 (best=0.9080)
+    ep  3: tr=1.0469 va=0.8928 (best=0.8928)
+    ep  4: tr=0.9292 va=0.8844 (best=0.8844)
+    ep  5: tr=1.0271 va=0.8708 (best=0.8708)
+    ep  6: tr=0.9163 va=0.8550 (best=0.8550)
+    ep  7: tr=0.8002 va=0.8367 (best=0.8367)
+    ep  8: tr=0.8174 va=0.8329 (best=0.8329)
+    ep  9: tr=0.8973 va=0.8355 (best=0.8329)
+    ep 10: tr=0.7685 va=0.8287 (best=0.8287)
+    ep 11: tr=0.7816 va=0.8330 (best=0.8287)
+    ep 12: tr=0.8215 va=0.8296 (best=0.8287)
+    ep 13: tr=0.7325 va=0.8284 (best=0.8284)
+    ep 14: tr=0.6724 va=0.8427 (best=0.8284)
+    ep 15: tr=0.7377 va=0.8743 (best=0.8284)
+    ep 16: tr=0.6321 va=0.9078 (best=0.8284)
+    ep 17: tr=0.6255 va=0.9072 (best=0.8284)
+    ep 18: tr=0.6413 va=0.8998 (best=0.8284)
+    ep 19: tr=0.6485 va=0.8921 (best=0.8284)
+    ep 20: tr=0.5447 va=0.8984 (best=0.8284)
+    ep 21: tr=0.6918 va=0.9043 (best=0.8284)
+    ep 22: tr=0.6004 va=0.9001 (best=0.8284)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\dirt2400_lambdarank_model_v14lstm_no26.pt
+
+  ダート2500m ...
+    train=674行 / val=167行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=1.0510 va=0.9507 (best=0.9507)
+    ep  2: tr=1.0670 va=0.9434 (best=0.9434)
+    ep  3: tr=1.0111 va=0.9326 (best=0.9326)
+    ep  4: tr=0.9654 va=0.9165 (best=0.9165)
+    ep  5: tr=0.9103 va=0.9003 (best=0.9003)
+    ep  6: tr=0.9022 va=0.8860 (best=0.8860)
+    ep  7: tr=0.9535 va=0.8712 (best=0.8712)
+    ep  8: tr=0.9411 va=0.8646 (best=0.8646)
+    ep  9: tr=0.8133 va=0.8580 (best=0.8580)
+    ep 10: tr=0.8956 va=0.8545 (best=0.8545)
+    ep 11: tr=0.8992 va=0.8496 (best=0.8496)
+    ep 12: tr=0.8259 va=0.8435 (best=0.8435)
+    ep 13: tr=0.7976 va=0.8296 (best=0.8296)
+    ep 14: tr=0.7606 va=0.8092 (best=0.8092)
+    ep 15: tr=0.7230 va=0.8005 (best=0.8005)
+    ep 16: tr=0.7012 va=0.7996 (best=0.7996)
+    ep 17: tr=0.7923 va=0.8269 (best=0.7996)
+    ep 18: tr=0.7008 va=0.8718 (best=0.7996)
+    ep 19: tr=0.6449 va=0.8835 (best=0.7996)
+    ep 20: tr=0.6374 va=0.8649 (best=0.7996)
+    ep 21: tr=0.7510 va=0.8437 (best=0.7996)
+    ep 22: tr=0.6378 va=0.8539 (best=0.7996)
+    ep 23: tr=0.6203 va=0.8886 (best=0.7996)
+    ep 24: tr=0.5982 va=0.9409 (best=0.7996)
+    ep 25: tr=0.5979 va=0.9971 (best=0.7996)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\dirt2500_lambdarank_model_v14lstm_no26.pt
+
+=======================================================
+[学習] 07_chukyo
+=======================================================
+
+  芝1200m ...
+    train=1678行 / val=414行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.15495740860213505, 'lr': 0.0014894497971271962, 'wd': 1.0970213817508292e-05}
+    ep  1: tr=1.2329 va=1.2267 (best=1.2267)
+    ep  2: tr=1.0836 va=1.2088 (best=1.2088)
+    ep  3: tr=1.0172 va=1.2072 (best=1.2072)
+    ep  4: tr=1.0432 va=1.2097 (best=1.2072)
+    ep  5: tr=0.9590 va=1.2216 (best=1.2072)
+    ep  6: tr=1.1350 va=1.2286 (best=1.2072)
+    ep  7: tr=0.9438 va=1.2277 (best=1.2072)
+    ep  8: tr=0.9230 va=1.2201 (best=1.2072)
+    ep  9: tr=0.9168 va=1.2201 (best=1.2072)
+    ep 10: tr=0.9647 va=1.2277 (best=1.2072)
+    ep 11: tr=0.8826 va=1.2364 (best=1.2072)
+    ep 12: tr=0.9133 va=1.2489 (best=1.2072)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\turf1200_lambdarank_model_v14lstm_no26.pt
+
+  芝1400m ...
+    train=5049行 / val=1253行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.38478404318215653, 'lr': 0.009280006514008381, 'wd': 3.461751661573067e-05}
+    ep  1: tr=1.2078 va=1.2237 (best=1.2237)
+    ep  2: tr=1.0697 va=1.1306 (best=1.1306)
+    ep  3: tr=1.0640 va=1.0698 (best=1.0698)
+    ep  4: tr=1.0524 va=1.0420 (best=1.0420)
+    ep  5: tr=1.0401 va=1.0300 (best=1.0300)
+    ep  6: tr=1.0233 va=1.0487 (best=1.0300)
+    ep  7: tr=1.0568 va=1.0602 (best=1.0300)
+    ep  8: tr=1.0107 va=1.0630 (best=1.0300)
+    ep  9: tr=1.0230 va=1.0485 (best=1.0300)
+    ep 10: tr=0.9989 va=1.0421 (best=1.0300)
+    ep 11: tr=1.0014 va=1.0486 (best=1.0300)
+    ep 12: tr=0.9804 va=1.1005 (best=1.0300)
+    ep 13: tr=0.9806 va=1.1344 (best=1.0300)
+    ep 14: tr=0.9356 va=1.1446 (best=1.0300)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\turf1400_lambdarank_model_v14lstm_no26.pt
+
+  芝1600m ...
+    train=5049行 / val=1253行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [64, 32], 'dropout': 0.20052297598522106, 'lr': 0.004309357817966182, 'wd': 7.298431328202812e-05}
+    ep  1: tr=1.1391 va=1.0477 (best=1.0477)
+    ep  2: tr=1.0802 va=1.0480 (best=1.0477)
+    ep  3: tr=1.0587 va=1.0649 (best=1.0477)
+    ep  4: tr=1.0368 va=1.1049 (best=1.0477)
+    ep  5: tr=1.0222 va=1.0580 (best=1.0477)
+    ep  6: tr=1.0085 va=1.0451 (best=1.0451)
+    ep  7: tr=1.0196 va=1.0798 (best=1.0451)
+    ep  8: tr=0.9793 va=1.0565 (best=1.0451)
+    ep  9: tr=0.9616 va=1.0568 (best=1.0451)
+    ep 10: tr=0.9560 va=1.0812 (best=1.0451)
+    ep 11: tr=0.9088 va=1.0899 (best=1.0451)
+    ep 12: tr=0.8881 va=1.1027 (best=1.0451)
+    ep 13: tr=0.8724 va=1.0943 (best=1.0451)
+    ep 14: tr=0.8614 va=1.1196 (best=1.0451)
+    ep 15: tr=0.8046 va=1.2063 (best=1.0451)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\turf1600_lambdarank_model_v14lstm_no26.pt
+
+  芝2000m ...
+    train=3317行 / val=821行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.38478404318215653, 'lr': 0.009280006514008381, 'wd': 3.461751661573067e-05}
+    ep  1: tr=1.0886 va=1.0736 (best=1.0736)
+    ep  2: tr=0.9812 va=1.0747 (best=1.0736)
+    ep  3: tr=1.0040 va=1.1115 (best=1.0736)
+    ep  4: tr=0.9437 va=1.0641 (best=1.0641)
+    ep  5: tr=0.9595 va=1.0673 (best=1.0641)
+    ep  6: tr=0.9283 va=1.0790 (best=1.0641)
+    ep  7: tr=0.9358 va=1.0717 (best=1.0641)
+    ep  8: tr=0.9151 va=1.0901 (best=1.0641)
+    ep  9: tr=0.8993 va=1.0921 (best=1.0641)
+    ep 10: tr=0.9009 va=1.0639 (best=1.0639)
+    ep 11: tr=0.8823 va=1.0557 (best=1.0557)
+    ep 12: tr=0.8752 va=1.0780 (best=1.0557)
+    ep 13: tr=0.8724 va=1.0824 (best=1.0557)
+    ep 14: tr=0.8834 va=1.0820 (best=1.0557)
+    ep 15: tr=0.9088 va=1.0882 (best=1.0557)
+    ep 16: tr=0.8596 va=1.1007 (best=1.0557)
+    ep 17: tr=0.8687 va=1.1263 (best=1.0557)
+    ep 18: tr=0.8165 va=1.1571 (best=1.0557)
+    ep 19: tr=0.8066 va=1.1625 (best=1.0557)
+    ep 20: tr=0.8284 va=1.2162 (best=1.0557)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\turf2000_lambdarank_model_v14lstm_no26.pt
+
+  芝2200m ...
+    train=1354行 / val=337行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64], 'dropout': 0.11164687881292171, 'lr': 0.0040964009780275834, 'wd': 1.1230566728110378e-05}
+    ep  1: tr=1.1882 va=0.9462 (best=0.9462)
+    ep  2: tr=1.0895 va=0.8427 (best=0.8427)
+    ep  3: tr=1.0110 va=0.7810 (best=0.7810)
+    ep  4: tr=1.0144 va=0.7701 (best=0.7701)
+    ep  5: tr=1.0131 va=0.7608 (best=0.7608)
+    ep  6: tr=0.9731 va=0.7476 (best=0.7476)
+    ep  7: tr=0.9605 va=0.7421 (best=0.7421)
+    ep  8: tr=0.9399 va=0.7138 (best=0.7138)
+    ep  9: tr=0.9538 va=0.6917 (best=0.6917)
+    ep 10: tr=0.9232 va=0.6850 (best=0.6850)
+    ep 11: tr=0.9555 va=0.6766 (best=0.6766)
+    ep 12: tr=0.8831 va=0.6654 (best=0.6654)
+    ep 13: tr=0.9066 va=0.6576 (best=0.6576)
+    ep 14: tr=0.8637 va=0.6683 (best=0.6576)
+    ep 15: tr=0.9012 va=0.6869 (best=0.6576)
+    ep 16: tr=0.8530 va=0.6658 (best=0.6576)
+    ep 17: tr=0.8441 va=0.6468 (best=0.6468)
+    ep 18: tr=0.8005 va=0.6410 (best=0.6410)
+    ep 19: tr=0.8245 va=0.6342 (best=0.6342)
+    ep 20: tr=0.8184 va=0.6250 (best=0.6250)
+    ep 21: tr=0.7685 va=0.6331 (best=0.6250)
+    ep 22: tr=0.7615 va=0.6584 (best=0.6250)
+    ep 23: tr=0.7372 va=0.6698 (best=0.6250)
+    ep 24: tr=0.7341 va=0.6576 (best=0.6250)
+    ep 25: tr=0.6591 va=0.6634 (best=0.6250)
+    ep 26: tr=0.6720 va=0.6666 (best=0.6250)
+    ep 27: tr=0.6530 va=0.6688 (best=0.6250)
+    ep 28: tr=0.6517 va=0.6987 (best=0.6250)
+    ep 29: tr=0.6093 va=0.7042 (best=0.6250)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\turf2200_lambdarank_model_v14lstm_no26.pt
+
+  ダート1200m ...
+    train=3253行 / val=814行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=1.1725 va=0.9073 (best=0.9073)
+    ep  2: tr=1.1354 va=0.8736 (best=0.8736)
+    ep  3: tr=1.1370 va=0.8769 (best=0.8736)
+    ep  4: tr=1.1204 va=0.8037 (best=0.8037)
+    ep  5: tr=1.0467 va=0.8266 (best=0.8037)
+    ep  6: tr=1.1428 va=0.9345 (best=0.8037)
+    ep  7: tr=1.0134 va=0.8195 (best=0.8037)
+    ep  8: tr=1.0143 va=0.9255 (best=0.8037)
+    ep  9: tr=0.9757 va=0.9313 (best=0.8037)
+    ep 10: tr=0.9497 va=0.8435 (best=0.8037)
+    ep 11: tr=0.9237 va=0.8887 (best=0.8037)
+    ep 12: tr=0.9169 va=1.0825 (best=0.8037)
+    ep 13: tr=0.8752 va=0.9912 (best=0.8037)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\dirt1200_lambdarank_model_v14lstm_no26.pt
+
+  ダート1400m ...
+    train=10035行 / val=2497行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.39369614099457123, 'lr': 0.009963908343902683, 'wd': 4.471306610515222e-05}
+    ep  1: tr=1.2704 va=1.0749 (best=1.0749)
+    ep  2: tr=1.1464 va=1.0588 (best=1.0588)
+    ep  3: tr=1.1186 va=1.0535 (best=1.0535)
+    ep  4: tr=1.1140 va=1.0727 (best=1.0535)
+    ep  5: tr=1.1004 va=1.0796 (best=1.0535)
+    ep  6: tr=1.0577 va=1.1213 (best=1.0535)
+    ep  7: tr=1.0076 va=1.0246 (best=1.0246)
+    ep  8: tr=0.9632 va=1.0926 (best=1.0246)
+    ep  9: tr=0.8785 va=1.0801 (best=1.0246)
+    ep 10: tr=0.8455 va=1.0953 (best=1.0246)
+    ep 11: tr=0.7798 va=1.0913 (best=1.0246)
+    ep 12: tr=0.7691 va=1.1134 (best=1.0246)
+    ep 13: tr=0.7338 va=1.1851 (best=1.0246)
+    ep 14: tr=0.7183 va=1.2448 (best=1.0246)
+    ep 15: tr=0.7228 va=1.3130 (best=1.0246)
+    ep 16: tr=0.6796 va=1.4727 (best=1.0246)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\dirt1400_lambdarank_model_v14lstm_no26.pt
+
+  ダート1800m ...
+    train=10035行 / val=2497行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.18720372192108267, 'lr': 0.009227542286251996, 'wd': 4.5399950685669324e-05}
+    ep  1: tr=1.1430 va=1.0293 (best=1.0293)
+    ep  2: tr=1.1442 va=1.0785 (best=1.0293)
+    ep  3: tr=1.1016 va=1.0957 (best=1.0293)
+    ep  4: tr=1.0964 va=1.0497 (best=1.0293)
+    ep  5: tr=1.0885 va=1.1323 (best=1.0293)
+    ep  6: tr=1.0709 va=1.0895 (best=1.0293)
+    ep  7: tr=1.0309 va=1.0823 (best=1.0293)
+    ep  8: tr=0.9718 va=1.0176 (best=1.0176)
+    ep  9: tr=0.9570 va=1.0539 (best=1.0176)
+    ep 10: tr=0.9344 va=1.0452 (best=1.0176)
+    ep 11: tr=0.8959 va=1.1629 (best=1.0176)
+    ep 12: tr=0.8835 va=1.0759 (best=1.0176)
+    ep 13: tr=0.7943 va=1.1057 (best=1.0176)
+    ep 14: tr=0.7616 va=1.0297 (best=1.0176)
+    ep 15: tr=0.7642 va=1.2709 (best=1.0176)
+    ep 16: tr=0.7570 va=1.4562 (best=1.0176)
+    ep 17: tr=0.7019 va=1.2775 (best=1.0176)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\dirt1800_lambdarank_model_v14lstm_no26.pt
+
+  ダート1900m ...
+    train=1841行 / val=451行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.39369614099457123, 'lr': 0.009963908343902683, 'wd': 2.876572039039444e-05}
+    ep  1: tr=1.1345 va=1.0985 (best=1.0985)
+    ep  2: tr=1.2683 va=1.1010 (best=1.0985)
+    ep  3: tr=1.3496 va=1.0664 (best=1.0664)
+    ep  4: tr=1.4387 va=1.0636 (best=1.0636)
+    ep  5: tr=1.0235 va=1.0488 (best=1.0488)
+    ep  6: tr=1.1056 va=1.0447 (best=1.0447)
+    ep  7: tr=1.1526 va=1.0332 (best=1.0332)
+    ep  8: tr=1.0590 va=1.0271 (best=1.0271)
+    ep  9: tr=1.1165 va=1.0222 (best=1.0222)
+    ep 10: tr=1.0017 va=1.0190 (best=1.0190)
+    ep 11: tr=1.0124 va=1.0181 (best=1.0181)
+    ep 12: tr=1.0467 va=1.0236 (best=1.0181)
+    ep 13: tr=0.9475 va=1.0267 (best=1.0181)
+    ep 14: tr=1.0329 va=1.0311 (best=1.0181)
+    ep 15: tr=0.9214 va=1.0368 (best=1.0181)
+    ep 16: tr=0.9239 va=1.0305 (best=1.0181)
+    ep 17: tr=0.8941 va=1.0309 (best=1.0181)
+    ep 18: tr=0.9102 va=1.0221 (best=1.0181)
+    ep 19: tr=0.8725 va=1.0181 (best=1.0181)
+    ep 20: tr=1.0650 va=1.0360 (best=1.0181)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\dirt1900_lambdarank_model_v14lstm_no26.pt
+
+=======================================================
+[学習] 08_kyoto
+=======================================================
+
+  芝1200m ...
+    train=1030行 / val=256行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=0.9474 va=1.2461 (best=1.2461)
+    ep  2: tr=0.8543 va=1.2408 (best=1.2408)
+    ep  3: tr=1.3779 va=1.2559 (best=1.2408)
+    ep  4: tr=1.0626 va=1.2570 (best=1.2408)
+    ep  5: tr=0.8239 va=1.2592 (best=1.2408)
+    ep  6: tr=1.2914 va=1.2645 (best=1.2408)
+    ep  7: tr=0.7207 va=1.2699 (best=1.2408)
+    ep  8: tr=0.7243 va=1.2772 (best=1.2408)
+    ep  9: tr=0.7022 va=1.2758 (best=1.2408)
+    ep 10: tr=0.8557 va=1.2570 (best=1.2408)
+    ep 11: tr=0.7027 va=1.2115 (best=1.2115)
+    ep 12: tr=0.8150 va=1.1637 (best=1.1637)
+    ep 13: tr=0.7920 va=1.1523 (best=1.1523)
+    ep 14: tr=1.0960 va=1.1561 (best=1.1523)
+    ep 15: tr=0.6394 va=1.1759 (best=1.1523)
+    ep 16: tr=0.6562 va=1.1855 (best=1.1523)
+    ep 17: tr=1.6000 va=1.1851 (best=1.1523)
+    ep 18: tr=0.6644 va=1.1883 (best=1.1523)
+    ep 19: tr=1.0762 va=1.1914 (best=1.1523)
+    ep 20: tr=1.2081 va=1.1901 (best=1.1523)
+    ep 21: tr=1.1345 va=1.1831 (best=1.1523)
+    ep 22: tr=0.6544 va=1.1744 (best=1.1523)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\turf1200_lambdarank_model_v14lstm_no26.pt
+
+  芝1400m ...
+    train=5192行 / val=1288行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.10120266739650072, 'lr': 0.004252273964322329, 'wd': 1.0737003969138461e-05}
+    ep  1: tr=1.1711 va=1.0344 (best=1.0344)
+    ep  2: tr=1.0856 va=1.0198 (best=1.0198)
+    ep  3: tr=1.0763 va=1.0443 (best=1.0198)
+    ep  4: tr=1.0445 va=1.0535 (best=1.0198)
+    ep  5: tr=1.0687 va=1.0222 (best=1.0198)
+    ep  6: tr=1.0538 va=1.0326 (best=1.0198)
+    ep  7: tr=0.9854 va=1.0450 (best=1.0198)
+    ep  8: tr=0.9830 va=1.0281 (best=1.0198)
+    ep  9: tr=1.0371 va=1.0036 (best=1.0036)
+    ep 10: tr=0.9850 va=1.0385 (best=1.0036)
+    ep 11: tr=0.9622 va=1.0401 (best=1.0036)
+    ep 12: tr=1.0677 va=1.0164 (best=1.0036)
+    ep 13: tr=1.0086 va=1.0757 (best=1.0036)
+    ep 14: tr=0.9914 va=0.9770 (best=0.9770)
+    ep 15: tr=0.9414 va=1.0123 (best=0.9770)
+    ep 16: tr=0.8854 va=1.0687 (best=0.9770)
+    ep 17: tr=0.8831 va=1.0766 (best=0.9770)
+    ep 18: tr=0.8505 va=1.1983 (best=0.9770)
+    ep 19: tr=0.8495 va=1.6908 (best=0.9770)
+    ep 20: tr=0.8420 va=1.1724 (best=0.9770)
+    ep 21: tr=0.7971 va=1.1442 (best=0.9770)
+    ep 22: tr=0.7903 va=1.1233 (best=0.9770)
+    ep 23: tr=0.7687 va=1.1434 (best=0.9770)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\turf1400_lambdarank_model_v14lstm_no26.pt
+
+  芝1600m ...
+    train=5192行 / val=1288行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.3338999442538108, 'lr': 0.0020602501438393003, 'wd': 0.0001342460989488974}
+    ep  1: tr=1.4083 va=1.0416 (best=1.0416)
+    ep  2: tr=1.1097 va=1.0448 (best=1.0416)
+    ep  3: tr=1.1715 va=1.0331 (best=1.0331)
+    ep  4: tr=1.1240 va=1.0289 (best=1.0289)
+    ep  5: tr=1.1368 va=1.0257 (best=1.0257)
+    ep  6: tr=1.0473 va=1.0338 (best=1.0257)
+    ep  7: tr=1.0520 va=1.0337 (best=1.0257)
+    ep  8: tr=1.0276 va=1.0331 (best=1.0257)
+    ep  9: tr=1.0618 va=1.0242 (best=1.0242)
+    ep 10: tr=1.0831 va=1.0394 (best=1.0242)
+    ep 11: tr=1.0098 va=1.0395 (best=1.0242)
+    ep 12: tr=0.9708 va=1.0366 (best=1.0242)
+    ep 13: tr=0.9757 va=1.0179 (best=1.0179)
+    ep 14: tr=1.0099 va=1.0253 (best=1.0179)
+    ep 15: tr=0.9547 va=1.0082 (best=1.0082)
+    ep 16: tr=0.9531 va=1.0029 (best=1.0029)
+    ep 17: tr=0.9617 va=0.9862 (best=0.9862)
+    ep 18: tr=0.9271 va=0.9839 (best=0.9839)
+    ep 19: tr=0.9139 va=0.9688 (best=0.9688)
+    ep 20: tr=0.9184 va=0.9811 (best=0.9688)
+    ep 21: tr=0.8455 va=0.9891 (best=0.9688)
+    ep 22: tr=0.8324 va=0.9965 (best=0.9688)
+    ep 23: tr=0.8551 va=1.0187 (best=0.9688)
+    ep 24: tr=0.7965 va=1.0406 (best=0.9688)
+    ep 25: tr=0.8590 va=1.0134 (best=0.9688)
+    ep 26: tr=0.8949 va=1.0357 (best=0.9688)
+    ep 27: tr=0.7935 va=1.0471 (best=0.9688)
+    ep 28: tr=0.8214 va=1.0542 (best=0.9688)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\turf1600_lambdarank_model_v14lstm_no26.pt
+
+  芝1800m ...
+    train=5192行 / val=1288行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.32857638898478225, 'lr': 0.004738380325760274, 'wd': 2.967795959922969e-05}
+    ep  1: tr=1.3025 va=1.0019 (best=1.0019)
+    ep  2: tr=1.2065 va=1.0672 (best=1.0019)
+    ep  3: tr=1.1227 va=1.0348 (best=1.0019)
+    ep  4: tr=1.0767 va=1.0174 (best=1.0019)
+    ep  5: tr=1.0765 va=1.0244 (best=1.0019)
+    ep  6: tr=1.1331 va=1.0070 (best=1.0019)
+    ep  7: tr=1.0620 va=1.0490 (best=1.0019)
+    ep  8: tr=1.0030 va=1.0211 (best=1.0019)
+    ep  9: tr=1.0762 va=1.0349 (best=1.0019)
+    ep 10: tr=1.0528 va=1.0133 (best=1.0019)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\turf1800_lambdarank_model_v14lstm_no26.pt
+
+  芝2000m ...
+    train=1448行 / val=356行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.17880707853544997, 'lr': 0.009963908343902683, 'wd': 1.0941398510037507e-05}
+    ep  1: tr=1.3042 va=1.0560 (best=1.0560)
+    ep  2: tr=1.2484 va=1.0605 (best=1.0560)
+    ep  3: tr=1.2072 va=1.0575 (best=1.0560)
+    ep  4: tr=1.1566 va=1.0638 (best=1.0560)
+    ep  5: tr=1.1842 va=1.0619 (best=1.0560)
+    ep  6: tr=1.1295 va=1.0614 (best=1.0560)
+    ep  7: tr=1.1152 va=1.0706 (best=1.0560)
+    ep  8: tr=1.0710 va=1.0726 (best=1.0560)
+    ep  9: tr=1.0609 va=1.0880 (best=1.0560)
+    ep 10: tr=1.0432 va=1.0999 (best=1.0560)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\turf2000_lambdarank_model_v14lstm_no26.pt
+
+  芝2200m ...
+    train=1060行 / val=261行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.1850700792378394, 'lr': 0.009106017865930741, 'wd': 3.461751661573067e-05}
+    ep  1: tr=0.9788 va=1.0810 (best=1.0810)
+    ep  2: tr=0.8442 va=1.0098 (best=1.0098)
+    ep  3: tr=0.7412 va=0.9889 (best=0.9889)
+    ep  4: tr=0.8991 va=1.0037 (best=0.9889)
+    ep  5: tr=0.7671 va=0.9748 (best=0.9748)
+    ep  6: tr=0.7467 va=0.9456 (best=0.9456)
+    ep  7: tr=0.7735 va=0.9153 (best=0.9153)
+    ep  8: tr=0.7091 va=0.8985 (best=0.8985)
+    ep  9: tr=0.6452 va=0.8973 (best=0.8973)
+    ep 10: tr=0.7501 va=0.8942 (best=0.8942)
+    ep 11: tr=0.7108 va=0.9273 (best=0.8942)
+    ep 12: tr=0.8029 va=0.9310 (best=0.8942)
+    ep 13: tr=0.6810 va=0.9054 (best=0.8942)
+    ep 14: tr=0.8668 va=0.9153 (best=0.8942)
+    ep 15: tr=0.6324 va=0.9210 (best=0.8942)
+    ep 16: tr=0.6039 va=0.9413 (best=0.8942)
+    ep 17: tr=0.6792 va=0.9712 (best=0.8942)
+    ep 18: tr=0.5871 va=0.9967 (best=0.8942)
+    ep 19: tr=0.5998 va=0.9948 (best=0.8942)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\turf2200_lambdarank_model_v14lstm_no26.pt
+
+  芝2400m ...
+    train=1060行 / val=261行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.18499400584277176, 'lr': 0.0037972153518244485, 'wd': 3.6420652343563296e-05}
+    ep  1: tr=0.9936 va=1.0537 (best=1.0537)
+    ep  2: tr=1.1529 va=1.0084 (best=1.0084)
+    ep  3: tr=0.8518 va=0.9867 (best=0.9867)
+    ep  4: tr=1.1760 va=0.9843 (best=0.9843)
+    ep  5: tr=1.1163 va=0.9717 (best=0.9717)
+    ep  6: tr=0.7853 va=0.9525 (best=0.9525)
+    ep  7: tr=0.8835 va=0.9405 (best=0.9405)
+    ep  8: tr=0.9019 va=0.9210 (best=0.9210)
+    ep  9: tr=0.8033 va=0.8998 (best=0.8998)
+    ep 10: tr=0.8415 va=0.9030 (best=0.8998)
+    ep 11: tr=0.6539 va=0.9050 (best=0.8998)
+    ep 12: tr=0.7222 va=0.9010 (best=0.8998)
+    ep 13: tr=0.6934 va=0.8953 (best=0.8953)
+    ep 14: tr=0.6852 va=0.8988 (best=0.8953)
+    ep 15: tr=0.6326 va=0.8974 (best=0.8953)
+    ep 16: tr=0.6455 va=0.9095 (best=0.8953)
+    ep 17: tr=0.6415 va=0.9150 (best=0.8953)
+    ep 18: tr=0.7994 va=0.9338 (best=0.8953)
+    ep 19: tr=0.6747 va=0.9281 (best=0.8953)
+    ep 20: tr=0.6618 va=0.9020 (best=0.8953)
+    ep 21: tr=0.6183 va=0.9122 (best=0.8953)
+    ep 22: tr=0.5927 va=0.9158 (best=0.8953)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\turf2400_lambdarank_model_v14lstm_no26.pt
+
+  芝3000m ...
+    train=173行 / val=28行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.368126424374304, 'lr': 0.00250232076084707, 'wd': 1.0217840329663883e-05}
+    ep  1: tr=0.7726 va=0.8667 (best=0.8667)
+    ep  2: tr=0.7454 va=0.8263 (best=0.8263)
+    ep  3: tr=0.7009 va=0.8094 (best=0.8094)
+    ep  4: tr=0.6710 va=0.8046 (best=0.8046)
+    ep  5: tr=0.6530 va=0.7998 (best=0.7998)
+    ep  6: tr=0.6473 va=0.7933 (best=0.7933)
+    ep  7: tr=0.6435 va=0.7855 (best=0.7855)
+    ep  8: tr=0.5907 va=0.7790 (best=0.7790)
+    ep  9: tr=0.6127 va=0.7689 (best=0.7689)
+    ep 10: tr=0.5859 va=0.7588 (best=0.7588)
+    ep 11: tr=0.5965 va=0.7500 (best=0.7500)
+    ep 12: tr=0.5810 va=0.7388 (best=0.7388)
+    ep 13: tr=0.5814 va=0.7252 (best=0.7252)
+    ep 14: tr=0.5465 va=0.7100 (best=0.7100)
+    ep 15: tr=0.5205 va=0.6967 (best=0.6967)
+    ep 16: tr=0.5150 va=0.6876 (best=0.6876)
+    ep 17: tr=0.5363 va=0.6830 (best=0.6830)
+    ep 18: tr=0.4891 va=0.6809 (best=0.6809)
+    ep 19: tr=0.5253 va=0.6793 (best=0.6793)
+    ep 20: tr=0.5005 va=0.6819 (best=0.6793)
+    ep 21: tr=0.4881 va=0.6865 (best=0.6793)
+    ep 22: tr=0.4889 va=0.6918 (best=0.6793)
+    ep 23: tr=0.4732 va=0.6991 (best=0.6793)
+    ep 24: tr=0.4705 va=0.7076 (best=0.6793)
+    ep 25: tr=0.4955 va=0.7178 (best=0.6793)
+    ep 26: tr=0.4735 va=0.7268 (best=0.6793)
+    ep 27: tr=0.4691 va=0.7369 (best=0.6793)
+    ep 28: tr=0.4762 va=0.7478 (best=0.6793)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\turf3000_lambdarank_model_v14lstm_no26.pt
+
+  芝3200m ...
+    train=173行 / val=28行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 128, 'lstm_layers': 1, 'hidden': [128, 64], 'dropout': 0.1904435915633305, 'lr': 0.001953126687558377, 'wd': 2.829979234296081e-05}
+    ep  1: tr=0.9032 va=0.8904 (best=0.8904)
+    ep  2: tr=0.8254 va=0.8584 (best=0.8584)
+    ep  3: tr=0.7944 va=0.8341 (best=0.8341)
+    ep  4: tr=0.7749 va=0.8169 (best=0.8169)
+    ep  5: tr=0.7672 va=0.8040 (best=0.8040)
+    ep  6: tr=0.7407 va=0.7902 (best=0.7902)
+    ep  7: tr=0.7186 va=0.7769 (best=0.7769)
+    ep  8: tr=0.6982 va=0.7655 (best=0.7655)
+    ep  9: tr=0.6812 va=0.7558 (best=0.7558)
+    ep 10: tr=0.6327 va=0.7495 (best=0.7495)
+    ep 11: tr=0.6261 va=0.7465 (best=0.7465)
+    ep 12: tr=0.6228 va=0.7437 (best=0.7437)
+    ep 13: tr=0.6104 va=0.7402 (best=0.7402)
+    ep 14: tr=0.6053 va=0.7375 (best=0.7375)
+    ep 15: tr=0.5922 va=0.7352 (best=0.7352)
+    ep 16: tr=0.5805 va=0.7309 (best=0.7309)
+    ep 17: tr=0.5650 va=0.7281 (best=0.7281)
+    ep 18: tr=0.5478 va=0.7269 (best=0.7269)
+    ep 19: tr=0.5493 va=0.7226 (best=0.7226)
+    ep 20: tr=0.5322 va=0.7194 (best=0.7194)
+    ep 21: tr=0.5333 va=0.7148 (best=0.7148)
+    ep 22: tr=0.5315 va=0.7082 (best=0.7082)
+    ep 23: tr=0.5032 va=0.7004 (best=0.7004)
+    ep 24: tr=0.4849 va=0.6953 (best=0.6953)
+    ep 25: tr=0.4928 va=0.6920 (best=0.6920)
+    ep 26: tr=0.4857 va=0.6892 (best=0.6892)
+    ep 27: tr=0.4861 va=0.6846 (best=0.6846)
+    ep 28: tr=0.4662 va=0.6801 (best=0.6801)
+    ep 29: tr=0.4710 va=0.6747 (best=0.6747)
+    ep 30: tr=0.4635 va=0.6695 (best=0.6695)
+    ep 31: tr=0.4621 va=0.6655 (best=0.6655)
+    ep 32: tr=0.4694 va=0.6619 (best=0.6619)
+    ep 33: tr=0.4467 va=0.6558 (best=0.6558)
+    ep 34: tr=0.4606 va=0.6506 (best=0.6506)
+    ep 35: tr=0.4456 va=0.6464 (best=0.6464)
+    ep 36: tr=0.4408 va=0.6425 (best=0.6425)
+    ep 37: tr=0.4438 va=0.6397 (best=0.6397)
+    ep 38: tr=0.4335 va=0.6371 (best=0.6371)
+    ep 39: tr=0.4306 va=0.6350 (best=0.6350)
+    ep 40: tr=0.4395 va=0.6330 (best=0.6330)
+    ep 41: tr=0.4149 va=0.6318 (best=0.6318)
+    ep 42: tr=0.4245 va=0.6312 (best=0.6312)
+    ep 43: tr=0.4369 va=0.6312 (best=0.6312)
+    ep 44: tr=0.4333 va=0.6308 (best=0.6308)
+    ep 45: tr=0.4257 va=0.6307 (best=0.6307)
+    ep 46: tr=0.4076 va=0.6310 (best=0.6307)
+    ep 47: tr=0.4277 va=0.6310 (best=0.6307)
+    ep 48: tr=0.4292 va=0.6308 (best=0.6307)
+    ep 49: tr=0.4111 va=0.6316 (best=0.6307)
+    ep 50: tr=0.4126 va=0.6323 (best=0.6307)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\turf3200_lambdarank_model_v14lstm_no26.pt
+
+  ダート1200m ...
+    train=2435行 / val=608行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 1, 'hidden': [128, 64], 'dropout': 0.29197630639825717, 'lr': 0.00019351140885595286, 'wd': 0.0007750644796341915}
+    ep  1: tr=1.1563 va=1.2638 (best=1.2638)
+    ep  2: tr=1.1195 va=1.2519 (best=1.2519)
+    ep  3: tr=1.1236 va=1.2448 (best=1.2448)
+    ep  4: tr=1.1192 va=1.2413 (best=1.2413)
+    ep  5: tr=1.0881 va=1.2391 (best=1.2391)
+    ep  6: tr=1.0665 va=1.2356 (best=1.2356)
+    ep  7: tr=1.0722 va=1.2303 (best=1.2303)
+    ep  8: tr=1.0443 va=1.2268 (best=1.2268)
+    ep  9: tr=1.0856 va=1.2232 (best=1.2232)
+    ep 10: tr=1.0804 va=1.2188 (best=1.2188)
+    ep 11: tr=1.0564 va=1.2153 (best=1.2153)
+    ep 12: tr=1.0375 va=1.2128 (best=1.2128)
+    ep 13: tr=1.0288 va=1.2095 (best=1.2095)
+    ep 14: tr=0.9944 va=1.2067 (best=1.2067)
+    ep 15: tr=1.0244 va=1.2049 (best=1.2049)
+    ep 16: tr=0.9914 va=1.2028 (best=1.2028)
+    ep 17: tr=1.0260 va=1.2018 (best=1.2018)
+    ep 18: tr=0.9963 va=1.2012 (best=1.2012)
+    ep 19: tr=0.9997 va=1.2001 (best=1.2001)
+    ep 20: tr=1.0096 va=1.1991 (best=1.1991)
+    ep 21: tr=0.9908 va=1.1975 (best=1.1975)
+    ep 22: tr=0.9885 va=1.1974 (best=1.1974)
+    ep 23: tr=0.9813 va=1.1959 (best=1.1959)
+    ep 24: tr=0.9867 va=1.1954 (best=1.1954)
+    ep 25: tr=0.9937 va=1.1957 (best=1.1954)
+    ep 26: tr=0.9623 va=1.1949 (best=1.1949)
+    ep 27: tr=0.9805 va=1.1948 (best=1.1948)
+    ep 28: tr=0.9675 va=1.1945 (best=1.1945)
+    ep 29: tr=0.9506 va=1.1943 (best=1.1943)
+    ep 30: tr=0.9588 va=1.1946 (best=1.1943)
+    ep 31: tr=0.9681 va=1.1949 (best=1.1943)
+    ep 32: tr=0.9524 va=1.1950 (best=1.1943)
+    ep 33: tr=0.9646 va=1.1959 (best=1.1943)
+    ep 34: tr=0.9935 va=1.1963 (best=1.1943)
+    ep 35: tr=0.9796 va=1.1967 (best=1.1943)
+    ep 36: tr=0.9516 va=1.1968 (best=1.1943)
+    ep 37: tr=0.9759 va=1.1965 (best=1.1943)
+    ep 38: tr=0.9512 va=1.1959 (best=1.1943)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\dirt1200_lambdarank_model_v14lstm_no26.pt
+
+  ダート1400m ...
+    train=7229行 / val=1800行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.38478404318215653, 'lr': 0.009280006514008381, 'wd': 3.461751661573067e-05}
+    ep  1: tr=1.1004 va=1.2292 (best=1.2292)
+    ep  2: tr=1.2169 va=1.1909 (best=1.1909)
+    ep  3: tr=1.0258 va=1.2180 (best=1.1909)
+    ep  4: tr=1.0470 va=1.1935 (best=1.1909)
+    ep  5: tr=1.1409 va=1.2413 (best=1.1909)
+    ep  6: tr=1.0491 va=1.2130 (best=1.1909)
+    ep  7: tr=1.0419 va=1.2130 (best=1.1909)
+    ep  8: tr=1.0650 va=1.2282 (best=1.1909)
+    ep  9: tr=1.0101 va=1.2156 (best=1.1909)
+    ep 10: tr=0.9722 va=1.2963 (best=1.1909)
+    ep 11: tr=1.0083 va=1.2819 (best=1.1909)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\dirt1400_lambdarank_model_v14lstm_no26.pt
+
+  ダート1800m ...
+    train=7229行 / val=1800行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.29319705976889127, 'lr': 0.0007042228249480472, 'wd': 0.00016322490640824139}
+    ep  1: tr=1.1052 va=1.1931 (best=1.1931)
+    ep  2: tr=1.1330 va=1.1850 (best=1.1850)
+    ep  3: tr=1.1000 va=1.2058 (best=1.1850)
+    ep  4: tr=1.0695 va=1.1918 (best=1.1850)
+    ep  5: tr=1.0491 va=1.1893 (best=1.1850)
+    ep  6: tr=1.0716 va=1.1914 (best=1.1850)
+    ep  7: tr=1.0361 va=1.1910 (best=1.1850)
+    ep  8: tr=1.0317 va=1.1857 (best=1.1850)
+    ep  9: tr=1.0877 va=1.1746 (best=1.1746)
+    ep 10: tr=1.0097 va=1.1670 (best=1.1670)
+    ep 11: tr=1.0031 va=1.1646 (best=1.1646)
+    ep 12: tr=0.9967 va=1.1717 (best=1.1646)
+    ep 13: tr=0.9845 va=1.1829 (best=1.1646)
+    ep 14: tr=0.9823 va=1.1857 (best=1.1646)
+    ep 15: tr=1.0200 va=1.1912 (best=1.1646)
+    ep 16: tr=0.9797 va=1.1814 (best=1.1646)
+    ep 17: tr=0.9675 va=1.1961 (best=1.1646)
+    ep 18: tr=0.9918 va=1.1985 (best=1.1646)
+    ep 19: tr=0.9939 va=1.2099 (best=1.1646)
+    ep 20: tr=0.9597 va=1.1928 (best=1.1646)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\dirt1800_lambdarank_model_v14lstm_no26.pt
+
+  ダート1900m ...
+    train=1073行 / val=262行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.38478404318215653, 'lr': 0.009183012623613892, 'wd': 4.138061515930775e-05}
+    ep  1: tr=1.4757 va=0.9520 (best=0.9520)
+    ep  2: tr=0.9395 va=0.9400 (best=0.9400)
+    ep  3: tr=1.2615 va=0.9540 (best=0.9400)
+    ep  4: tr=0.8015 va=0.9598 (best=0.9400)
+    ep  5: tr=0.9066 va=0.9687 (best=0.9400)
+    ep  6: tr=1.0563 va=1.0013 (best=0.9400)
+    ep  7: tr=0.7401 va=1.0340 (best=0.9400)
+    ep  8: tr=0.8906 va=1.0273 (best=0.9400)
+    ep  9: tr=0.7744 va=1.0082 (best=0.9400)
+    ep 10: tr=0.7864 va=1.0119 (best=0.9400)
+    ep 11: tr=0.8129 va=1.0290 (best=0.9400)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\08_kyoto\dirt1900_lambdarank_model_v14lstm_no26.pt
+
+=======================================================
+[学習] 09_hanshin
+=======================================================
+
+  芝1200m ...
+    train=1390行 / val=335行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.11164687881292171, 'lr': 0.0002899967694107754, 'wd': 1.159618432563884e-05}
+    ep  1: tr=1.3665 va=1.1267 (best=1.1267)
+    ep  2: tr=1.3955 va=1.1230 (best=1.1230)
+    ep  3: tr=1.2896 va=1.1240 (best=1.1230)
+    ep  4: tr=1.2785 va=1.1300 (best=1.1230)
+    ep  5: tr=1.2904 va=1.1391 (best=1.1230)
+    ep  6: tr=1.2267 va=1.1493 (best=1.1230)
+    ep  7: tr=1.2464 va=1.1606 (best=1.1230)
+    ep  8: tr=1.2025 va=1.1711 (best=1.1230)
+    ep  9: tr=1.2211 va=1.1819 (best=1.1230)
+    ep 10: tr=1.2097 va=1.1930 (best=1.1230)
+    ep 11: tr=1.2054 va=1.2025 (best=1.1230)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf1200_lambdarank_model_v14lstm_no26.pt
+
+  芝1400m ...
+    train=8113行 / val=2018行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.35482748694741795, 'lr': 0.009258985156014234, 'wd': 3.6090228365779854e-05}
+    ep  1: tr=1.1415 va=1.0019 (best=1.0019)
+    ep  2: tr=1.1405 va=0.9805 (best=0.9805)
+    ep  3: tr=1.1349 va=0.9544 (best=0.9544)
+    ep  4: tr=1.0563 va=0.9668 (best=0.9544)
+    ep  5: tr=1.0405 va=0.9573 (best=0.9544)
+    ep  6: tr=1.0502 va=0.9990 (best=0.9544)
+    ep  7: tr=1.0184 va=0.9537 (best=0.9537)
+    ep  8: tr=1.0170 va=1.0583 (best=0.9537)
+    ep  9: tr=1.0001 va=1.0174 (best=0.9537)
+    ep 10: tr=0.9835 va=0.9635 (best=0.9537)
+    ep 11: tr=0.9622 va=0.9354 (best=0.9354)
+    ep 12: tr=1.0019 va=1.0618 (best=0.9354)
+    ep 13: tr=0.9547 va=0.9462 (best=0.9354)
+    ep 14: tr=0.9276 va=0.9997 (best=0.9354)
+    ep 15: tr=0.8992 va=0.9768 (best=0.9354)
+    ep 16: tr=0.8851 va=1.1306 (best=0.9354)
+    ep 17: tr=0.8770 va=0.9692 (best=0.9354)
+    ep 18: tr=0.8669 va=1.0070 (best=0.9354)
+    ep 19: tr=0.8310 va=1.0172 (best=0.9354)
+    ep 20: tr=0.8060 va=0.9828 (best=0.9354)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf1400_lambdarank_model_v14lstm_no26.pt
+
+  芝1600m ...
+    train=8113行 / val=2018行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=1.1292 va=0.9837 (best=0.9837)
+    ep  2: tr=1.1163 va=0.9686 (best=0.9686)
+    ep  3: tr=1.0704 va=1.0381 (best=0.9686)
+    ep  4: tr=1.0103 va=1.0077 (best=0.9686)
+    ep  5: tr=1.0345 va=1.0142 (best=0.9686)
+    ep  6: tr=1.0032 va=1.0111 (best=0.9686)
+    ep  7: tr=0.9742 va=1.0091 (best=0.9686)
+    ep  8: tr=0.9893 va=1.0414 (best=0.9686)
+    ep  9: tr=0.9446 va=1.0997 (best=0.9686)
+    ep 10: tr=0.9044 va=1.0645 (best=0.9686)
+    ep 11: tr=0.8856 va=1.0882 (best=0.9686)
+    ep 12: tr=0.8699 va=0.9506 (best=0.9506)
+    ep 13: tr=0.8170 va=0.9658 (best=0.9506)
+    ep 14: tr=0.7878 va=1.0095 (best=0.9506)
+    ep 15: tr=0.8480 va=0.9543 (best=0.9506)
+    ep 16: tr=0.7884 va=1.0179 (best=0.9506)
+    ep 17: tr=0.8144 va=0.9062 (best=0.9062)
+    ep 18: tr=0.7645 va=1.0809 (best=0.9062)
+    ep 19: tr=0.7240 va=0.9612 (best=0.9062)
+    ep 20: tr=0.7019 va=1.0756 (best=0.9062)
+    ep 21: tr=0.6692 va=0.9668 (best=0.9062)
+    ep 22: tr=0.6644 va=0.9745 (best=0.9062)
+    ep 23: tr=0.6564 va=1.0881 (best=0.9062)
+    ep 24: tr=0.6268 va=1.1442 (best=0.9062)
+    ep 25: tr=0.6148 va=0.9920 (best=0.9062)
+    ep 26: tr=0.6033 va=1.0998 (best=0.9062)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf1600_lambdarank_model_v14lstm_no26.pt
+
+  芝1800m ...
+    train=8113行 / val=2018行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.10639162464551644, 'lr': 0.004309357817966182, 'wd': 1.244965242506764e-05}
+    ep  1: tr=1.1559 va=0.9912 (best=0.9912)
+    ep  2: tr=1.0589 va=0.9790 (best=0.9790)
+    ep  3: tr=1.0365 va=1.0783 (best=0.9790)
+    ep  4: tr=1.0286 va=1.0097 (best=0.9790)
+    ep  5: tr=1.0097 va=0.9871 (best=0.9790)
+    ep  6: tr=0.9716 va=1.0075 (best=0.9790)
+    ep  7: tr=0.9511 va=1.1070 (best=0.9790)
+    ep  8: tr=0.9193 va=1.0673 (best=0.9790)
+    ep  9: tr=0.9326 va=1.0599 (best=0.9790)
+    ep 10: tr=0.9041 va=1.0395 (best=0.9790)
+    ep 11: tr=0.9131 va=1.1185 (best=0.9790)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf1800_lambdarank_model_v14lstm_no26.pt
+
+  芝2000m ...
+    train=2267行 / val=567行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.35482748694741795, 'lr': 0.009258985156014234, 'wd': 3.398527271597771e-05}
+    ep  1: tr=1.1217 va=2.2786 (best=2.2786)
+    ep  2: tr=1.0771 va=1.8393 (best=1.8393)
+    ep  3: tr=1.0372 va=1.7458 (best=1.7458)
+    ep  4: tr=1.0684 va=1.6675 (best=1.6675)
+    ep  5: tr=0.9934 va=1.5126 (best=1.5126)
+    ep  6: tr=0.9783 va=1.4630 (best=1.4630)
+    ep  7: tr=0.9808 va=1.4030 (best=1.4030)
+    ep  8: tr=0.9431 va=1.3702 (best=1.3702)
+    ep  9: tr=0.9471 va=1.3813 (best=1.3702)
+    ep 10: tr=0.8746 va=1.3744 (best=1.3702)
+    ep 11: tr=0.8605 va=1.3576 (best=1.3576)
+    ep 12: tr=0.8289 va=1.3309 (best=1.3309)
+    ep 13: tr=0.8414 va=1.2624 (best=1.2624)
+    ep 14: tr=0.7700 va=1.2585 (best=1.2585)
+    ep 15: tr=0.7552 va=1.1544 (best=1.1544)
+    ep 16: tr=0.7371 va=1.0999 (best=1.0999)
+    ep 17: tr=0.7100 va=1.1173 (best=1.0999)
+    ep 18: tr=0.6632 va=1.3010 (best=1.0999)
+    ep 19: tr=0.6909 va=1.5674 (best=1.0999)
+    ep 20: tr=0.6763 va=1.8299 (best=1.0999)
+    ep 21: tr=0.6203 va=1.5170 (best=1.0999)
+    ep 22: tr=0.6216 va=1.4719 (best=1.0999)
+    ep 23: tr=0.5806 va=1.3397 (best=1.0999)
+    ep 24: tr=0.5975 va=1.5659 (best=1.0999)
+    ep 25: tr=0.5850 va=1.8476 (best=1.0999)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf2000_lambdarank_model_v14lstm_no26.pt
+
+  芝2200m ...
+    train=1582行 / val=395行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.33459386847726186, 'lr': 0.0005063616837185448, 'wd': 2.488582347864979e-05}
+    ep  1: tr=1.2793 va=1.0216 (best=1.0216)
+    ep  2: tr=1.2437 va=1.0156 (best=1.0156)
+    ep  3: tr=1.1965 va=1.0251 (best=1.0156)
+    ep  4: tr=1.0518 va=1.0343 (best=1.0156)
+    ep  5: tr=1.0815 va=1.0411 (best=1.0156)
+    ep  6: tr=1.0696 va=1.0435 (best=1.0156)
+    ep  7: tr=1.0834 va=1.0475 (best=1.0156)
+    ep  8: tr=1.0901 va=1.0504 (best=1.0156)
+    ep  9: tr=1.0506 va=1.0488 (best=1.0156)
+    ep 10: tr=1.0086 va=1.0477 (best=1.0156)
+    ep 11: tr=1.0213 va=1.0482 (best=1.0156)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf2200_lambdarank_model_v14lstm_no26.pt
+
+  芝2400m ...
+    train=1582行 / val=395行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 2, 'hidden': [128, 64, 32], 'dropout': 0.304546089731045, 'lr': 0.0005236194873419149, 'wd': 7.4827960376208e-05}
+    ep  1: tr=1.1138 va=1.0521 (best=1.0521)
+    ep  2: tr=1.1498 va=1.0529 (best=1.0521)
+    ep  3: tr=1.1182 va=1.0535 (best=1.0521)
+    ep  4: tr=1.0898 va=1.0556 (best=1.0521)
+    ep  5: tr=1.1878 va=1.0593 (best=1.0521)
+    ep  6: tr=1.0933 va=1.0655 (best=1.0521)
+    ep  7: tr=1.0911 va=1.0674 (best=1.0521)
+    ep  8: tr=1.2414 va=1.0672 (best=1.0521)
+    ep  9: tr=1.1086 va=1.0654 (best=1.0521)
+    ep 10: tr=1.0457 va=1.0640 (best=1.0521)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf2400_lambdarank_model_v14lstm_no26.pt
+
+  芝2600m ...
+    train=1582行 / val=395行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.12913038273791838, 'lr': 0.004741216804249708, 'wd': 1.5566709318481206e-05}
+    ep  1: tr=1.0881 va=1.0441 (best=1.0441)
+    ep  2: tr=1.2524 va=1.0468 (best=1.0441)
+    ep  3: tr=0.9835 va=1.1181 (best=1.0441)
+    ep  4: tr=1.1405 va=1.1330 (best=1.0441)
+    ep  5: tr=0.9681 va=1.1371 (best=1.0441)
+    ep  6: tr=0.9830 va=1.1158 (best=1.0441)
+    ep  7: tr=0.9598 va=1.1156 (best=1.0441)
+    ep  8: tr=1.0129 va=1.1081 (best=1.0441)
+    ep  9: tr=0.9840 va=1.0890 (best=1.0441)
+    ep 10: tr=1.0073 va=1.0548 (best=1.0441)
+    ep 11: tr=0.9155 va=1.0191 (best=1.0191)
+    ep 12: tr=0.9002 va=1.0019 (best=1.0019)
+    ep 13: tr=1.1013 va=1.0156 (best=1.0019)
+    ep 14: tr=0.8480 va=1.0291 (best=1.0019)
+    ep 15: tr=0.8300 va=1.0313 (best=1.0019)
+    ep 16: tr=0.8672 va=1.0326 (best=1.0019)
+    ep 17: tr=0.9060 va=1.0374 (best=1.0019)
+    ep 18: tr=0.8396 va=1.0635 (best=1.0019)
+    ep 19: tr=0.8684 va=1.0883 (best=1.0019)
+    ep 20: tr=0.7970 va=1.1114 (best=1.0019)
+    ep 21: tr=0.7946 va=1.1273 (best=1.0019)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf2600_lambdarank_model_v14lstm_no26.pt
+
+  芝3000m ...
+    train=151行 / val=21行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 1, 'hidden': [128, 64], 'dropout': 0.29197630639825717, 'lr': 0.00019351140885595286, 'wd': 0.0007750644796341915}
+    ep  1: tr=1.3450 va=1.2254 (best=1.2254)
+    ep  2: tr=1.3646 va=1.1004 (best=1.1004)
+    ep  3: tr=1.3825 va=1.0498 (best=1.0498)
+    ep  4: tr=1.3357 va=1.0218 (best=1.0218)
+    ep  5: tr=1.2793 va=1.0024 (best=1.0024)
+    ep  6: tr=1.4091 va=0.9888 (best=0.9888)
+    ep  7: tr=1.2426 va=0.9797 (best=0.9797)
+    ep  8: tr=1.3043 va=0.9732 (best=0.9732)
+    ep  9: tr=1.3260 va=0.9683 (best=0.9683)
+    ep 10: tr=1.1768 va=0.9649 (best=0.9649)
+    ep 11: tr=1.2482 va=0.9628 (best=0.9628)
+    ep 12: tr=1.2059 va=0.9608 (best=0.9608)
+    ep 13: tr=1.3467 va=0.9584 (best=0.9584)
+    ep 14: tr=1.2776 va=0.9567 (best=0.9567)
+    ep 15: tr=1.2542 va=0.9568 (best=0.9567)
+    ep 16: tr=1.3691 va=0.9568 (best=0.9567)
+    ep 17: tr=1.2870 va=0.9582 (best=0.9567)
+    ep 18: tr=1.1922 va=0.9593 (best=0.9567)
+    ep 19: tr=1.2318 va=0.9606 (best=0.9567)
+    ep 20: tr=1.2879 va=0.9620 (best=0.9567)
+    ep 21: tr=1.2449 va=0.9641 (best=0.9567)
+    ep 22: tr=1.1648 va=0.9650 (best=0.9567)
+    ep 23: tr=1.1594 va=0.9665 (best=0.9567)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf3000_lambdarank_model_v14lstm_no26.pt
+
+  ダート1200m ...
+    train=4395行 / val=1087行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.39369614099457123, 'lr': 0.009963908343902683, 'wd': 2.876572039039444e-05}
+    ep  1: tr=1.0116 va=0.9213 (best=0.9213)
+    ep  2: tr=0.9540 va=0.9197 (best=0.9197)
+    ep  3: tr=0.8923 va=0.8621 (best=0.8621)
+    ep  4: tr=0.8751 va=0.9160 (best=0.8621)
+    ep  5: tr=0.8673 va=0.8577 (best=0.8577)
+    ep  6: tr=0.8731 va=0.9354 (best=0.8577)
+    ep  7: tr=0.8375 va=0.9368 (best=0.8577)
+    ep  8: tr=0.8475 va=0.8847 (best=0.8577)
+    ep  9: tr=0.8063 va=0.8556 (best=0.8556)
+    ep 10: tr=0.8222 va=0.8761 (best=0.8556)
+    ep 11: tr=0.7890 va=0.8779 (best=0.8556)
+    ep 12: tr=0.8019 va=0.8917 (best=0.8556)
+    ep 13: tr=0.7911 va=0.9404 (best=0.8556)
+    ep 14: tr=0.7541 va=0.9230 (best=0.8556)
+    ep 15: tr=0.7282 va=0.8875 (best=0.8556)
+    ep 16: tr=0.7204 va=0.8959 (best=0.8556)
+    ep 17: tr=0.6874 va=0.9659 (best=0.8556)
+    ep 18: tr=0.6499 va=1.0610 (best=0.8556)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\dirt1200_lambdarank_model_v14lstm_no26.pt
+
+  ダート1400m ...
+    train=12576行 / val=3137行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.38478404318215653, 'lr': 0.009280006514008381, 'wd': 3.461751661573067e-05}
+    ep  1: tr=1.0633 va=0.9834 (best=0.9834)
+    ep  2: tr=1.0048 va=0.9569 (best=0.9569)
+    ep  3: tr=1.0321 va=0.9551 (best=0.9551)
+    ep  4: tr=1.0214 va=0.9684 (best=0.9551)
+    ep  5: tr=0.9910 va=0.9590 (best=0.9551)
+    ep  6: tr=0.9876 va=0.9669 (best=0.9551)
+    ep  7: tr=0.9849 va=0.9869 (best=0.9551)
+    ep  8: tr=0.9597 va=0.9743 (best=0.9551)
+    ep  9: tr=0.9456 va=0.9987 (best=0.9551)
+    ep 10: tr=0.9365 va=1.0528 (best=0.9551)
+    ep 11: tr=0.9133 va=1.0277 (best=0.9551)
+    ep 12: tr=0.8792 va=0.9727 (best=0.9551)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\dirt1400_lambdarank_model_v14lstm_no26.pt
+
+  ダート1800m ...
+    train=12576行 / val=3137行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [128, 64], 'dropout': 0.3392591053653152, 'lr': 0.004071258639968784, 'wd': 0.0001153600187504696}
+    ep  1: tr=1.0528 va=0.9696 (best=0.9696)
+    ep  2: tr=1.0171 va=0.9746 (best=0.9696)
+    ep  3: tr=1.0061 va=0.9678 (best=0.9678)
+    ep  4: tr=1.0203 va=0.9665 (best=0.9665)
+    ep  5: tr=0.9768 va=0.9739 (best=0.9665)
+    ep  6: tr=0.9642 va=0.9683 (best=0.9665)
+    ep  7: tr=0.9615 va=0.9772 (best=0.9665)
+    ep  8: tr=0.9328 va=0.9799 (best=0.9665)
+    ep  9: tr=0.9049 va=1.0257 (best=0.9665)
+    ep 10: tr=0.8448 va=1.0419 (best=0.9665)
+    ep 11: tr=0.8265 va=1.0128 (best=0.9665)
+    ep 12: tr=0.7903 va=0.9955 (best=0.9665)
+    ep 13: tr=0.7633 va=0.9872 (best=0.9665)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\dirt1800_lambdarank_model_v14lstm_no26.pt
+
+  ダート2000m ...
+    train=1255行 / val=303行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 1, 'hidden': [64, 32], 'dropout': 0.10237994338152276, 'lr': 0.004733716509977976, 'wd': 0.000916201716329588}
+    ep  1: tr=1.1587 va=1.3972 (best=1.3972)
+    ep  2: tr=1.0508 va=1.3893 (best=1.3893)
+    ep  3: tr=1.1352 va=1.3432 (best=1.3432)
+    ep  4: tr=1.0423 va=1.3254 (best=1.3254)
+    ep  5: tr=0.9681 va=1.3158 (best=1.3158)
+    ep  6: tr=0.9959 va=1.3725 (best=1.3158)
+    ep  7: tr=0.9478 va=1.4960 (best=1.3158)
+    ep  8: tr=0.9491 va=1.5570 (best=1.3158)
+    ep  9: tr=0.9385 va=1.5233 (best=1.3158)
+    ep 10: tr=0.9136 va=1.4826 (best=1.3158)
+    ep 11: tr=0.8550 va=1.4138 (best=1.3158)
+    ep 12: tr=0.8495 va=1.3659 (best=1.3158)
+    ep 13: tr=0.7966 va=1.2620 (best=1.2620)
+    ep 14: tr=0.8037 va=1.2072 (best=1.2072)
+    ep 15: tr=0.7747 va=1.1820 (best=1.1820)
+    ep 16: tr=0.7742 va=1.2046 (best=1.1820)
+    ep 17: tr=0.7559 va=1.2416 (best=1.1820)
+    ep 18: tr=0.7505 va=1.4030 (best=1.1820)
+    ep 19: tr=0.6822 va=1.5440 (best=1.1820)
+    ep 20: tr=0.6661 va=1.6012 (best=1.1820)
+    ep 21: tr=0.5991 va=1.5143 (best=1.1820)
+    ep 22: tr=0.5899 va=1.4505 (best=1.1820)
+    ep 23: tr=0.5738 va=1.4040 (best=1.1820)
+    ep 24: tr=0.5110 va=1.3708 (best=1.1820)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\dirt2000_lambdarank_model_v14lstm_no26.pt
+
+=======================================================
+[学習] 10_kokura
+=======================================================
+
+  芝1200m ...
+    train=5497行 / val=1362行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.2586684759258714, 'lr': 0.001368009527972693, 'wd': 0.0007098936257405903}
+    ep  1: tr=1.1833 va=1.2500 (best=1.2500)
+    ep  2: tr=1.1380 va=1.2283 (best=1.2283)
+    ep  3: tr=1.1218 va=1.2114 (best=1.2114)
+    ep  4: tr=1.0954 va=1.2119 (best=1.2114)
+    ep  5: tr=1.0911 va=1.2023 (best=1.2023)
+    ep  6: tr=1.0693 va=1.1942 (best=1.1942)
+    ep  7: tr=1.0756 va=1.2032 (best=1.1942)
+    ep  8: tr=1.0420 va=1.1986 (best=1.1942)
+    ep  9: tr=1.0241 va=1.2023 (best=1.1942)
+    ep 10: tr=0.9960 va=1.1902 (best=1.1902)
+    ep 11: tr=1.0388 va=1.1866 (best=1.1866)
+    ep 12: tr=0.9802 va=1.1972 (best=1.1866)
+    ep 13: tr=0.9647 va=1.2148 (best=1.1866)
+    ep 14: tr=0.9527 va=1.1933 (best=1.1866)
+    ep 15: tr=0.9327 va=1.1991 (best=1.1866)
+    ep 16: tr=0.9347 va=1.2000 (best=1.1866)
+    ep 17: tr=0.9098 va=1.2085 (best=1.1866)
+    ep 18: tr=0.9057 va=1.2266 (best=1.1866)
+    ep 19: tr=0.8762 va=1.2555 (best=1.1866)
+    ep 20: tr=0.9003 va=1.2536 (best=1.1866)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\turf1200_lambdarank_model_v14lstm_no26.pt
+
+  芝1700m ...
+    train=2729行 / val=680行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.38637748570194747, 'lr': 0.00893999767146043, 'wd': 4.019271246466603e-05}
+    ep  1: tr=1.1560 va=1.9817 (best=1.9817)
+    ep  2: tr=1.1541 va=1.6432 (best=1.6432)
+    ep  3: tr=1.0862 va=1.4287 (best=1.4287)
+    ep  4: tr=1.0537 va=1.3083 (best=1.3083)
+    ep  5: tr=1.0289 va=1.2918 (best=1.2918)
+    ep  6: tr=1.0191 va=1.5134 (best=1.2918)
+    ep  7: tr=1.0550 va=1.5449 (best=1.2918)
+    ep  8: tr=1.0182 va=1.5209 (best=1.2918)
+    ep  9: tr=1.0448 va=1.5516 (best=1.2918)
+    ep 10: tr=1.0444 va=1.5983 (best=1.2918)
+    ep 11: tr=0.9845 va=1.4867 (best=1.2918)
+    ep 12: tr=1.0156 va=1.4888 (best=1.2918)
+    ep 13: tr=0.9390 va=1.4777 (best=1.2918)
+    ep 14: tr=0.9673 va=1.5319 (best=1.2918)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\turf1700_lambdarank_model_v14lstm_no26.pt
+
+  芝1800m ...
+    train=2729行 / val=680行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 1, 'hidden': [128, 64, 32], 'dropout': 0.3392591053653152, 'lr': 0.0033459258875204088, 'wd': 0.000916201716329588}
+    ep  1: tr=1.1885 va=1.3245 (best=1.3245)
+    ep  2: tr=1.2125 va=1.3049 (best=1.3049)
+    ep  3: tr=1.1093 va=1.2991 (best=1.2991)
+    ep  4: tr=1.1366 va=1.3102 (best=1.2991)
+    ep  5: tr=1.0442 va=1.3244 (best=1.2991)
+    ep  6: tr=1.0750 va=1.3213 (best=1.2991)
+    ep  7: tr=0.9900 va=1.3348 (best=1.2991)
+    ep  8: tr=1.0141 va=1.3414 (best=1.2991)
+    ep  9: tr=1.0466 va=1.3564 (best=1.2991)
+    ep 10: tr=1.0042 va=1.3690 (best=1.2991)
+    ep 11: tr=0.9785 va=1.4102 (best=1.2991)
+    ep 12: tr=0.9352 va=1.4535 (best=1.2991)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\turf1800_lambdarank_model_v14lstm_no26.pt
+
+  芝2000m ...
+    train=2468行 / val=615行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.18829036415821918, 'lr': 0.00250232076084707, 'wd': 1.0247345976175511e-05}
+    ep  1: tr=1.1828 va=1.1940 (best=1.1940)
+    ep  2: tr=1.0762 va=1.2167 (best=1.1940)
+    ep  3: tr=1.0399 va=1.2056 (best=1.1940)
+    ep  4: tr=0.9858 va=1.1946 (best=1.1940)
+    ep  5: tr=0.9763 va=1.1787 (best=1.1787)
+    ep  6: tr=0.9568 va=1.1721 (best=1.1721)
+    ep  7: tr=0.9404 va=1.1783 (best=1.1721)
+    ep  8: tr=0.9333 va=1.1983 (best=1.1721)
+    ep  9: tr=0.9221 va=1.2056 (best=1.1721)
+    ep 10: tr=0.8875 va=1.2166 (best=1.1721)
+    ep 11: tr=0.8784 va=1.2156 (best=1.1721)
+    ep 12: tr=0.8183 va=1.2051 (best=1.1721)
+    ep 13: tr=0.8327 va=1.2349 (best=1.1721)
+    ep 14: tr=0.7996 va=1.2708 (best=1.1721)
+    ep 15: tr=0.7557 va=1.2862 (best=1.1721)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\turf2000_lambdarank_model_v14lstm_no26.pt
+
+  芝2600m ...
+    train=632行 / val=156行
+    best_params: {'embed_dim': 32, 'lstm_hidden': 64, 'lstm_layers': 2, 'hidden': [128, 64], 'dropout': 0.3409747966752612, 'lr': 0.00942717555668515, 'wd': 3.596013602792516e-05}
+    ep  1: tr=0.9775 va=0.5818 (best=0.5818)
+    ep  2: tr=0.9984 va=0.5684 (best=0.5684)
+    ep  3: tr=0.9375 va=0.5670 (best=0.5670)
+    ep  4: tr=0.8612 va=0.5481 (best=0.5481)
+    ep  5: tr=0.7560 va=0.5264 (best=0.5264)
+    ep  6: tr=0.9746 va=0.5273 (best=0.5264)
+    ep  7: tr=0.8019 va=0.5603 (best=0.5264)
+    ep  8: tr=0.8361 va=0.5930 (best=0.5264)
+    ep  9: tr=0.7968 va=0.6133 (best=0.5264)
+    ep 10: tr=0.7921 va=0.6106 (best=0.5264)
+    ep 11: tr=0.7137 va=0.6201 (best=0.5264)
+    ep 12: tr=0.6707 va=0.6161 (best=0.5264)
+    ep 13: tr=0.7231 va=0.5920 (best=0.5264)
+    ep 14: tr=0.7026 va=0.5731 (best=0.5264)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\turf2600_lambdarank_model_v14lstm_no26.pt
+
+  ダート1000m ...
+    train=1944行 / val=479行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 32, 'lstm_layers': 1, 'hidden': [64, 32], 'dropout': 0.10120399721377862, 'lr': 0.003601591548129699, 'wd': 8.873401992551163e-05}
+    ep  1: tr=1.2446 va=1.1897 (best=1.1897)
+    ep  2: tr=1.1817 va=1.1697 (best=1.1697)
+    ep  3: tr=1.1433 va=1.1661 (best=1.1661)
+    ep  4: tr=1.0958 va=1.2001 (best=1.1661)
+    ep  5: tr=1.0860 va=1.2111 (best=1.1661)
+    ep  6: tr=1.0574 va=1.2297 (best=1.1661)
+    ep  7: tr=1.0154 va=1.2222 (best=1.1661)
+    ep  8: tr=1.0142 va=1.2004 (best=1.1661)
+    ep  9: tr=0.9795 va=1.1811 (best=1.1661)
+    ep 10: tr=0.9639 va=1.1417 (best=1.1417)
+    ep 11: tr=0.9428 va=1.1171 (best=1.1171)
+    ep 12: tr=0.9254 va=1.1303 (best=1.1171)
+    ep 13: tr=0.9071 va=1.1619 (best=1.1171)
+    ep 14: tr=0.9023 va=1.1359 (best=1.1171)
+    ep 15: tr=0.8614 va=1.1027 (best=1.1027)
+    ep 16: tr=0.8197 va=1.1144 (best=1.1027)
+    ep 17: tr=0.8372 va=1.1191 (best=1.1027)
+    ep 18: tr=0.7990 va=1.1307 (best=1.1027)
+    ep 19: tr=0.8030 va=1.1489 (best=1.1027)
+    ep 20: tr=0.7589 va=1.1752 (best=1.1027)
+    ep 21: tr=0.7707 va=1.1396 (best=1.1027)
+    ep 22: tr=0.7425 va=1.1778 (best=1.1027)
+    ep 23: tr=0.7440 va=1.2537 (best=1.1027)
+    ep 24: tr=0.7348 va=1.2174 (best=1.1027)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\dirt1000_lambdarank_model_v14lstm_no26.pt
+
+  ダート1700m ...
+    train=4740行 / val=1168行
+    best_params: {'embed_dim': 8, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.38582470345509556, 'lr': 0.0007838821177219167, 'wd': 0.0004929664291135948}
+    ep  1: tr=1.2011 va=1.4176 (best=1.4176)
+    ep  2: tr=1.2174 va=1.4199 (best=1.4176)
+    ep  3: tr=1.1747 va=1.4044 (best=1.4044)
+    ep  4: tr=1.1643 va=1.3877 (best=1.3877)
+    ep  5: tr=1.1477 va=1.3845 (best=1.3845)
+    ep  6: tr=1.1054 va=1.3798 (best=1.3798)
+    ep  7: tr=1.0968 va=1.3729 (best=1.3729)
+    ep  8: tr=1.1117 va=1.3676 (best=1.3676)
+    ep  9: tr=1.2089 va=1.3671 (best=1.3671)
+    ep 10: tr=1.0663 va=1.3752 (best=1.3671)
+    ep 11: tr=1.0964 va=1.3644 (best=1.3644)
+    ep 12: tr=1.0937 va=1.3591 (best=1.3591)
+    ep 13: tr=1.1501 va=1.3529 (best=1.3529)
+    ep 14: tr=1.0596 va=1.3549 (best=1.3529)
+    ep 15: tr=1.0525 va=1.3513 (best=1.3513)
+    ep 16: tr=1.0617 va=1.3605 (best=1.3513)
+    ep 17: tr=1.0674 va=1.3576 (best=1.3513)
+    ep 18: tr=1.0309 va=1.3747 (best=1.3513)
+    ep 19: tr=1.0455 va=1.3634 (best=1.3513)
+    ep 20: tr=1.0452 va=1.3691 (best=1.3513)
+    ep 21: tr=1.0741 va=1.3622 (best=1.3513)
+    ep 22: tr=0.9965 va=1.3719 (best=1.3513)
+    ep 23: tr=1.0323 va=1.3849 (best=1.3513)
+    ep 24: tr=1.0180 va=1.3772 (best=1.3513)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\dirt1700_lambdarank_model_v14lstm_no26.pt
+
+  ダート2400m ...
+    train=117行 / val=27行
+    best_params: {'embed_dim': 16, 'lstm_hidden': 128, 'lstm_layers': 2, 'hidden': [64, 32], 'dropout': 0.38478404318215653, 'lr': 0.00907611454688629, 'wd': 4.019351066416202e-05}
+    ep  1: tr=1.1766 va=1.0821 (best=1.0821)
+    ep  2: tr=1.1142 va=0.8730 (best=0.8730)
+    ep  3: tr=1.0387 va=0.7740 (best=0.7740)
+    ep  4: tr=0.9453 va=0.7545 (best=0.7545)
+    ep  5: tr=0.9709 va=0.7592 (best=0.7545)
+    ep  6: tr=0.9351 va=0.7714 (best=0.7545)
+    ep  7: tr=0.8614 va=0.7723 (best=0.7545)
+    ep  8: tr=0.8972 va=0.7716 (best=0.7545)
+    ep  9: tr=0.8178 va=0.7807 (best=0.7545)
+    ep 10: tr=0.7706 va=0.8031 (best=0.7545)
+    ep 11: tr=0.7887 va=0.8335 (best=0.7545)
+    ep 12: tr=0.7344 va=0.8512 (best=0.7545)
+    ep 13: tr=0.8367 va=0.8316 (best=0.7545)
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\dirt2400_lambdarank_model_v14lstm_no26.pt
+
+=======================================================
+完了
+=======================================================
