@@ -117,7 +117,7 @@ def _build_seq(race_info_5):
                 _parse_result(row.get("着順", "")),
                 _parse_agari(row.get("上り", "")),
                 _parse_margin(row.get("着差", "")),
-                _parse_corner_ratio(row.get("通過", "")),
+                _parse_corner_ratio(row.get("通過", ""), row.get("頭数", row.get("頭 数", ""))),
                 _parse_corner_chase(
                     row.get("通過", ""), row.get("頭数", row.get("頭 数", ""))
                 ),
