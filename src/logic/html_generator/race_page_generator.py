@@ -1826,8 +1826,22 @@ def make_race_card_html(date_str, place_id, target_id):
                 target_id,
                 date_str
             )
+            # AI指数・rank・人気を rowから取得して総評に渡す
+            _score_raw = row.get("score", "")
+            try:
+                _ai_idx = score_to_index(float(_score_raw)) if _score_raw != "" and pd.notna(_score_raw) else None
+            except Exception:
+                _ai_idx = None
+            try:
+                _rank = int(row.get("rank", "")) if pd.notna(row.get("rank", "")) else None
+            except Exception:
+                _rank = None
+            try:
+                _pop = int(float(row.get("人気", ""))) if pd.notna(row.get("人気", "")) else None
+            except Exception:
+                _pop = None
             # 🧩 HTML化
-            report_html = horse_report_generator.horse_report_to_html(report)
+            report_html = horse_report_generator.horse_report_to_html(report, _ai_idx, _rank, _pop)
 
             # 折りたたみセクションでラップ
             unique_id = f"horse_report_{idx}_{umaban}"

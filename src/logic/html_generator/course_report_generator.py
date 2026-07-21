@@ -45,6 +45,7 @@ from src.logic.html_generator.site_nav_html import (
 )
 from src.logic.html_generator.sparkline_html import single_line_trend_svg
 from src.managers import (
+    ai_performance_dataset_manager,
     html_manager,
     peds_results_dataset_manager,
     race_info_dataset_manager,
@@ -789,6 +790,195 @@ def _feature_callout_html(race_type, course_len, ground_state, class_name, frame
     return ""
 
 
+def _insight(text):
+    """データインサイトの1文をHTMLにする"""
+    return f'<p class="data-insight">{text}</p>\n'
+
+
+def _frame_insight_html(frame_chakudo_df, race_type, course_len):
+    """枠番別着度数チャートの読み方・評価を1〜2文で返す"""
+    rows = [
+        r for r in _chakudo_rows(frame_chakudo_df, race_type, course_len, "枠番", range(1, 9))
+        if r["total"] > 0 and r["top3_rate"] is not None
+    ]
+    if len(rows) < 2:
+        return ""
+    best = max(rows, key=lambda r: r["top3_rate"])
+    inner = [r for r in rows if r["rank"] <= 4]
+    outer = [r for r in rows if r["rank"] >= 5]
+    parts = [f"{best['rank']}枠の3着内率が{best['top3_rate']:.1f}%（n={best['total']}）で最高"]
+    if inner and outer:
+        it = sum(r["total"] for r in inner)
+        ot = sum(r["total"] for r in outer)
+        if it > 0 and ot > 0:
+            ir = sum(r["1着"]+r["2着"]+r["3着"] for r in inner) / it * 100
+            or_ = sum(r["1着"]+r["2着"]+r["3着"] for r in outer) / ot * 100
+            diff = or_ - ir
+            if diff >= ADVANTAGE_THRESHOLD_POINTS:
+                parts.append(f"外枠（5〜8枠）優位（内枠比+{diff:.1f}pt）")
+            elif diff <= -ADVANTAGE_THRESHOLD_POINTS:
+                parts.append(f"内枠（1〜4枠）優位（外枠比+{abs(diff):.1f}pt）")
+            else:
+                parts.append("内外の差は小さくフラット")
+    return _insight("枠番傾向: " + "、".join(parts) + "。")
+
+
+def _horse_insight_html(horse_chakudo_df, race_type, course_len, n_horses_typical=16):
+    """馬番別着度数チャートの読み方を1文で返す（内/外馬番の傾向）"""
+    rows = [
+        r for r in _chakudo_rows(horse_chakudo_df, race_type, course_len, "馬番", range(1, n_horses_typical + 1))
+        if r["total"] > 0 and r["top3_rate"] is not None
+    ]
+    if len(rows) < 4:
+        return ""
+    best = max(rows, key=lambda r: r["top3_rate"])
+    worst = min(rows, key=lambda r: r["top3_rate"])
+    diff = best["top3_rate"] - worst["top3_rate"]
+    if diff < ADVANTAGE_THRESHOLD_POINTS:
+        return _insight(f"馬番傾向: 全馬番で3着内率の差が{diff:.1f}ptと小さく、馬番による有利不利は出にくいコースです。")
+    return _insight(
+        f"馬番傾向: {best['rank']}番が3着内率{best['top3_rate']:.1f}%（n={best['total']}）で最高、"
+        f"{worst['rank']}番が{worst['top3_rate']:.1f}%で最低（差{diff:.1f}pt）。"
+    )
+
+
+def _pop_insight_html(pop_chakudo_df, race_type, course_len):
+    """人気別着度数チャートの読み方を1〜2文で返す（1番人気の支配力・荒れやすさ）"""
+    rows = [
+        r for r in _chakudo_rows(pop_chakudo_df, race_type, course_len, "人気", range(1, 19))
+        if r["total"] > 0 and r["top3_rate"] is not None
+    ]
+    if not rows:
+        return ""
+    pop1 = next((r for r in rows if r["rank"] == 1), None)
+    if pop1 is None:
+        return ""
+    win1_rate = pop1["1着"] / pop1["total"] * 100 if pop1["total"] else 0
+    top3_1 = pop1["top3_rate"]
+    if win1_rate >= 35:
+        desc = f"1番人気の単勝率{win1_rate:.1f}%・3着内率{top3_1:.1f}%と高く、人気馬が堅実に結果を出すコースです。"
+    elif win1_rate >= 25:
+        desc = f"1番人気の単勝率{win1_rate:.1f}%・3着内率{top3_1:.1f}%。標準的な安定感で、適度に波乱もあります。"
+    else:
+        desc = f"1番人気の単勝率{win1_rate:.1f}%・3着内率{top3_1:.1f}%と低めで、人気馬が飛ぶケースも目立つコースです。"
+    # 10番人気以降の着内率
+    longshots = [r for r in rows if r["rank"] >= 10]
+    if longshots:
+        ls_total = sum(r["total"] for r in longshots)
+        ls_top3 = sum(r["1着"]+r["2着"]+r["3着"] for r in longshots)
+        ls_rate = ls_top3 / ls_total * 100 if ls_total else 0
+        if ls_rate >= 15:
+            desc += f" 10番人気以降の3着内率も{ls_rate:.1f}%と高く、大穴が絡む波乱が起きやすい傾向です。"
+    return _insight(desc)
+
+
+def _peds_insight_html(peds_df):
+    """血統別成績チャートの読み方を1文で返す（主力種牡馬と勝率）"""
+    if peds_df is None or peds_df.empty:
+        return ""
+    df = peds_df.copy()
+    for col in ["1着", "2着", "3着", "着外"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+    df["total"] = df[["1着", "2着", "3着", "着外"]].sum(axis=1)
+    df["win_rate"] = df["1着"] / df["total"].replace(0, float("nan")) * 100
+
+    top_wins = df.nlargest(1, "1着")
+    if top_wins.empty:
+        return ""
+    r = top_wins.iloc[0]
+    parts = [
+        f"勝ち数1位は{r['血統']}（{int(r['1着'])}勝 / {int(r['total'])}戦、"
+        f"勝率{r['win_rate']:.1f}%）"
+    ]
+    # 勝率上位（5戦以上）が勝ち数1位と異なる場合
+    qualified = df[df["total"] >= 5].nlargest(1, "win_rate")
+    if not qualified.empty and qualified.iloc[0]["血統"] != r["血統"]:
+        q = qualified.iloc[0]
+        parts.append(
+            f"勝率は{q['血統']}が{q['win_rate']:.1f}%（{int(q['total'])}戦）と高い"
+        )
+    return _insight("血統傾向: " + "、".join(parts) + "。")
+
+
+def _passage_insight_html(overall_passage_row, passage_keys):
+    """通過順テーブルの読み方を1文で返す（先行・差し傾向の評価）"""
+    if overall_passage_row is None or not passage_keys:
+        return ""
+    # _passage_breakdown_row の返り値は passage1, agari キーを使う
+    p1_raw = overall_passage_row.get("passage1")
+    agari_raw = overall_passage_row.get("agari")
+    parts = []
+    if p1_raw and str(p1_raw) not in ("データなし", "", "nan"):
+        try:
+            p1 = float(str(p1_raw))
+            if p1 <= 3.0:
+                parts.append(f"勝ち馬の第1コーナー平均通過順位は{p1:.1f}番手と前め（先行有利傾向）")
+            elif p1 <= 6.0:
+                parts.append(f"勝ち馬の第1コーナー平均通過順位は{p1:.1f}番手（中段前後）")
+            else:
+                parts.append(f"勝ち馬の第1コーナー平均通過順位は{p1:.1f}番手と後ろめ（差し・追い込み傾向）")
+        except (ValueError, TypeError):
+            pass
+    if agari_raw and str(agari_raw) not in ("データなし", "", "nan"):
+        parts.append(f"勝ち馬の上り3F平均は{agari_raw}")
+    if not parts:
+        return ""
+    return _insight("通過順傾向: " + "、".join(parts) + "。")
+
+
+def _ground_state_insight_html(ground_breakdown):
+    """馬場別内訳データの読み方を1文で返す（配当変化・荒れやすさ）"""
+    by_state = {r["value"]: r for r in ground_breakdown}
+    good = by_state.get("良")
+    heavy = by_state.get("重")
+    if not good or not heavy:
+        return ""
+    good_ret = good.get("win_return_raw")
+    heavy_ret = heavy.get("win_return_raw")
+    if good_ret is None or heavy_ret is None:
+        return ""
+    diff = heavy_ret - good_ret
+    if diff >= 600:
+        return _insight(
+            f"馬場傾向: 重馬場では良馬場より単勝平均配当が約{diff:.0f}円高く（良{good_ret:.0f}円→重{heavy_ret:.0f}円）、"
+            f"馬場が悪化すると波乱が起きやすくなります。"
+        )
+    if diff <= -400:
+        return _insight(
+            f"馬場傾向: 重馬場（{heavy_ret:.0f}円）でも良馬場（{good_ret:.0f}円）と配当水準がほぼ変わらず、"
+            f"馬場状態に関わらず堅い決着が多い傾向です。"
+        )
+    return _insight(
+        f"馬場傾向: 良馬場（単勝平均{good_ret:.0f}円）と重馬場（{heavy_ret:.0f}円）の配当差は{abs(diff):.0f}円で、"
+        f"馬場による荒れ方の変化は比較的少ないコースです。"
+    )
+
+
+def _ai_course_insight_html(ai_df, place_id, race_type, course_len):
+    """このコースにおけるAI予想の実績を1文で返す"""
+    if ai_df is None or ai_df.empty:
+        return ""
+    course_df = ai_performance_dataset_manager.filter_by_course(ai_df, place_id, race_type, course_len)
+    if course_df.empty or len(course_df) < 10:
+        return ""
+    perf = ai_performance_dataset_manager.aggregate(course_df)
+    win = perf.get("win", {})
+    n = win.get("n", 0)
+    hit = win.get("hit_rate")
+    roi = win.get("return_rate")
+    if n < 10 or hit is None or roi is None:
+        return ""
+    if roi >= 100:
+        eval_str = "回収率100%超えで利益が出ている"
+    elif roi >= 85:
+        eval_str = "回収率80%台で平均的な水準"
+    else:
+        eval_str = "回収率が低めで苦手な傾向"
+    return _insight(
+        f"AI成績: このコースでの単勝的中率{hit:.1f}%・回収率{roi:.0f}%（{n}R集計）。{eval_str}コースです。"
+    )
+
+
 CHAKUDO_SEGMENT_LABELS = ["1着", "2着", "3着", "着外"]
 CHAKUDO_SEGMENT_CLASSES = {"1着": "seg-1st", "2着": "seg-2nd", "3着": "seg-3rd", "着外": "seg-out"}
 
@@ -1370,7 +1560,7 @@ def aggregate_peds_by_race_type(place_id, race_type):
     return result.sort_values("1着", ascending=False).reset_index(drop=True)
 
 
-def course_report_to_html(report):
+def course_report_to_html(report, ai_df=None):
     place_name = NAME_LIST[report["place_id"] - 1]
     place_id = report["place_id"]
     race_type = report["race_type"]
@@ -1455,6 +1645,10 @@ def course_report_to_html(report):
     peds_ground_state_breakdown = build_peds_ground_state_breakdown(place_id, race_type, course_len)
     peds_year_breakdown = build_peds_year_breakdown(place_id, race_type, course_len)
 
+    ground_breakdown = build_ground_state_breakdown(place_id, race_type, course_len)
+
+    overall_passage_row = _passage_breakdown_row(place_id, race_type, course_len, "全", "全", "all")
+
     current_label_html = course_label_html(race_type, course_len)
     breadcrumb_items = [
         ("コース詳細データ", "courses/index.html"),
@@ -1503,10 +1697,6 @@ def course_report_to_html(report):
   <p><a href="index.html">&larr; {place_name}のコース一覧へ</a></p>
   <h1>{place_name} {current_label_html} コース詳細</h1>
 
-  <!-- 常時同じ「全期間トータル」を表示していたsummary-statsは、馬場×クラス×年度の
-       メインタブで同じ情報（より柔軟な絞り込み付き）が見られるため廃止した。
-       将来的にはここにこのコースの解説・特徴（手動執筆）を表示する想定。 -->
-
   <div class="tabbed-section">
     <div class="section-tabs">
       <button class="tab-main" data-target="cross" aria-selected="true">馬場×クラス×年度（メイン）</button>
@@ -1523,10 +1713,13 @@ def course_report_to_html(report):
         馬場状態・クラス・年度を選び、必要な組み合わせの成績だけを表示します
         （いずれも「全て」を選ぶと単体の内訳・全体の成績になります）。
       </p>
+      {_ground_state_insight_html(ground_breakdown)}
+      {_ai_course_insight_html(ai_df, place_id, race_type, course_len)}
       {cross_filter_html}
     </div>
 
     <div class="section-panel" data-section="passage" hidden>
+      {_passage_insight_html(overall_passage_row, passage_keys)}
       {_passage_breakdown_table_html(class_passage_breakdown, "クラス", "クラス別", passage_keys)}
       {_passage_breakdown_table_html(ground_state_passage_breakdown, "馬場状態", "馬場別", passage_keys)}
       <details class="breakdown">
@@ -1537,6 +1730,7 @@ def course_report_to_html(report):
 
     <div class="section-panel" data-section="chakudo" hidden>
       {frame_chakudo_chart}
+      {_frame_insight_html(frame_chakudo_df, race_type, course_len)}
       <details class="breakdown">
         <summary>枠番データ：クラス別を表示</summary>
         {frame_chakudo_class_html}
@@ -1546,6 +1740,7 @@ def course_report_to_html(report):
         {frame_chakudo_ground_html}
       </details>
       {horse_chakudo_chart}
+      {_horse_insight_html(horse_chakudo_df, race_type, course_len)}
       <details class="breakdown">
         <summary>馬番データ：クラス別を表示</summary>
         {horse_chakudo_class_html}
@@ -1555,6 +1750,7 @@ def course_report_to_html(report):
         {horse_chakudo_ground_html}
       </details>
       {pop_chakudo_chart}
+      {_pop_insight_html(pop_chakudo_df, race_type, course_len)}
       <details class="breakdown">
         <summary>人気データ：クラス別を表示</summary>
         {pop_chakudo_class_html}
@@ -1586,6 +1782,7 @@ def course_report_to_html(report):
 
     <div class="section-panel" data-section="peds" hidden>
       {_peds_chart_html(peds_total_df, "TOTAL（上位10件）")}
+      {_peds_insight_html(peds_total_df)}
       {_peds_breakdown_html(peds_class_breakdown, "class", "クラス別")}
       {_peds_breakdown_html(peds_ground_state_breakdown, "ground_state", "馬場別")}
       <details class="breakdown">
@@ -1788,16 +1985,17 @@ def make_track_page(place_id):
     html_manager.save_track_index_html(place_id, html)
 
 
-def make_course_detail_page(place_id, race_type, course_len):
+def make_course_detail_page(place_id, race_type, course_len, ai_df=None):
     """個別コース詳細ページ（public_html/courses/{place}/{race_type}-{course_len}.html）を生成する"""
     report = build_course_report(place_id, race_type, course_len)
-    html_manager.save_course_detail_html(place_id, race_type, course_len, course_report_to_html(report))
+    html_manager.save_course_detail_html(place_id, race_type, course_len, course_report_to_html(report, ai_df=ai_df))
 
 
 def make_all_course_pages():
     """全開催場・全コースのコース詳細データページを一括生成する"""
+    ai_df = ai_performance_dataset_manager.get_ai_performance_dataset()
     make_course_index_page()
     for place_id in range(1, len(PLACE_LIST) + 1):
         make_track_page(place_id)
         for race_type, course_len in COURSE_LISTS[place_id - 1]:
-            make_course_detail_page(place_id, race_type, course_len)
+            make_course_detail_page(place_id, race_type, course_len, ai_df=ai_df)

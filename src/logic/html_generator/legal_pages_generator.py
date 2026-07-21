@@ -20,7 +20,7 @@ from src.logic.html_generator.site_nav_html import (
     site_footer_html,
     site_nav_html,
 )
-from src.managers import html_manager
+from src.managers import ai_performance_dataset_manager, html_manager
 
 
 def privacy_policy_template():
@@ -141,9 +141,44 @@ def terms_template():
 """
 
 
+def _about_ai_stats_html():
+    """about.html用のAI通算成績サマリーHTMLを返す（動的生成）"""
+    try:
+        df = ai_performance_dataset_manager.get_ai_performance_dataset()
+        if df.empty:
+            return ""
+        perf = ai_performance_dataset_manager.aggregate(df)
+        win = perf.get("win", {})
+        place = perf.get("place", {})
+        n = win.get("n", 0)
+        win_hit = win.get("hit_rate")
+        win_roi = win.get("return_rate")
+        place_hit = place.get("hit_rate")
+        place_roi = place.get("return_rate")
+        if n < 10 or win_hit is None:
+            return ""
+        years_df = df[df["year"].notna()]
+        year_min = int(years_df["year"].min()) if not years_df.empty else 2020
+        year_max = int(years_df["year"].max()) if not years_df.empty else 2025
+        return f"""<div class="about-ai-stats">
+  <h3>AIの現在の通算成績（{year_min}〜{year_max}年、{n}R集計）</h3>
+  <table>
+    <thead><tr><th>券種</th><th>的中率</th><th>回収率</th></tr></thead>
+    <tbody>
+      <tr><td>単勝</td><td>{win_hit:.1f}%</td><td>{win_roi:.0f}%</td></tr>
+      <tr><td>複勝</td><td>{place_hit:.1f}%</td><td>{place_roi:.0f}%</td></tr>
+    </tbody>
+  </table>
+  <p class="about-ai-stats-note">成績は毎週更新しています。詳細は<a href="performance/index.html">AI成績レポート</a>をご覧ください。</p>
+</div>"""
+    except Exception:
+        return ""
+
+
 def about_template():
     """このサイトについて（about.html）のHTMLを返す"""
     breadcrumb_items = [("このサイトについて", None)]
+    ai_stats_html = _about_ai_stats_html()
     return f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -183,27 +218,41 @@ def about_template():
 
   <h2>AIの仕組み</h2>
   <p>当サイトのAIは、<strong>LightGBM（勾配ブースティング）のランキング学習（LambdaRank）</strong>を採用しています。
-  2020年〜2025年のJRAレース結果を学習データとして使用し、以下の60以上の特徴量から各馬のスコアを算出しています。</p>
+  2020年〜2025年のJRAレース結果（全10競馬場、全コース）を学習データとして使用し、
+  100以上の特徴量から各馬のスコアを算出しています。</p>
   <ul>
-    <li>馬の過去成績（コース別・距離別・馬場状態別の着順・タイム）</li>
-    <li>騎手の当該コースにおける勝率・複勝率</li>
-    <li>血統情報（父・母父・父方祖父）</li>
-    <li>枠順・馬番の傾向</li>
+    <li><strong>過去成績</strong>：馬の直近5走の着順・タイム・コース適性</li>
+    <li><strong>騎手成績</strong>：当該コースにおける騎手の勝率・複勝率</li>
+    <li><strong>血統情報</strong>：父・母父・父方祖父の3世代分</li>
+    <li><strong>枠順・馬番</strong>：コースごとの枠番・馬番傾向</li>
+    <li><strong>オッズ</strong>：市場のオッズ情報（AIスコアに組み合わせて回収率を最適化）</li>
+    <li><strong>ペース適性</strong>：上り3Fタイムのコース平均との差（末脚の安定性・先行・追い込み適性）</li>
+    <li><strong>馬体重</strong>：前走からの増減・絶対値</li>
   </ul>
   <p>AIのスコアが高い馬ほど「このコースでこの条件なら好走しやすい」と判断された馬です。
   ただし、競馬は多くの不確定要素を含むため、スコアが高くても必ず勝つわけではありません。</p>
 
+  {ai_stats_html}
+
+  <h2>モデルの改善について</h2>
+  <p>AIモデルは継続的に改善しており、特徴量の追加・目的関数の変更・ハイパーパラメータの最適化を
+  定期的に行っています。新旧モデルは同じ2026年の直近レースデータで比較評価し、
+  成績が改善したと確認できた場合のみ本番環境へ切り替えています。
+  モデルの版は内部的に管理しており、現在は<strong>v7（オッズ重み付き二値分類）</strong>を採用しています。</p>
+
   <h2>掲載コンテンツ</h2>
   <ul>
     <li><strong>AI予想出馬表</strong>：毎週土日のレースに対してAIスコア・予想順位を掲載します</li>
-    <li><strong>AI成績レポート</strong>：単勝・複勝の的中率と回収率を週次・コース別に公開します</li>
-    <li><strong>コース別データ</strong>：各競馬場・距離・芝ダート別の傾向データを掲載します</li>
+    <li><strong>AI成績レポート</strong>：単勝・複勝の的中率と回収率を週次・コース別・開催別に公開します</li>
+    <li><strong>コース別データ</strong>：各競馬場・距離・芝ダート別の傾向データ（枠番・血統・馬場・通過順など）を掲載します</li>
   </ul>
 
   <h2>運営方針</h2>
   <p>当サイトはAI予想の成績データをすべてオープンに公開しています。
   成績がよい期間だけを選んで掲載するようなことはせず、良い時も悪い時も実績のまま掲載します。
-  AIの改善・更新を行った際は、新旧モデルの成績を比較した上で採用モデルを決定しています。</p>
+  AIの改善・更新を行った際は、新旧モデルの成績を比較した上で採用モデルを決定しています。
+  「AIを使えば必ず儲かる」という印象を与えることは意図していません。
+  データを根拠に自分自身で考えるための参考情報として、透明性の高い形で公開することが目的です。</p>
 
   <h2>お問い合わせ</h2>
   <p>ご意見・ご質問は、X（旧Twitter）のDMよりお気軽にどうぞ。</p>

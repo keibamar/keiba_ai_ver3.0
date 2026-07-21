@@ -587,6 +587,8 @@ def build_horse_report(horse_name, place_id, race_id, date_str):
     peds = load_horse_peds(hid)
     peds0 = peds.get("peds_0") or peds.get("peds0") or peds.get("peds_0 ", None)
     peds0 = extract_peds_name(peds0)
+    peds4_raw = peds.get("peds_4") or peds.get("peds4") or None
+    peds4 = extract_peds_name(peds4_raw) if peds4_raw else None
     peds_results = None
     if peds0:
         peds_results = peds_results_for_bloodline(place_id, race_type, course_len, ground_state, peds0)
@@ -616,6 +618,7 @@ def build_horse_report(horse_name, place_id, race_id, date_str):
         "horse_name": horse_name,
         "horse_id": hid,
         "peds0": peds0,
+        "peds4": peds4,
         "place_id": place_id,
         "race_type": race_type,
         "course_len": course_len,
@@ -626,6 +629,262 @@ def build_horse_report(horse_name, place_id, race_id, date_str):
         "surface_summary": surface_summary,
         "same_course_best": same_course_best,
     }
+
+
+# ---- 馬個別総評 ----
+
+_CLASS_ORDER = ["新馬", "未勝利", "1勝クラス", "2勝クラス", "3勝クラス", "オープン", "G3", "G2", "G1"]
+
+
+def _class_rank(class_name):
+    s = str(class_name)
+    for i, c in enumerate(_CLASS_ORDER):
+        if c in s:
+            return i
+    return -1
+
+
+def _avg_pass1(surface_summary, race_type):
+    """surface_summary から今回の芝/ダートの平均第1コーナー通過順(正規化値)を返す"""
+    key = "芝" if race_type and "芝" in race_type else "ダート"
+    s = surface_summary.get(key, {})
+    norm = s.get("avg_pass_norm")
+    if not norm or not isinstance(norm, list) or len(norm) == 0:
+        return None
+    v = norm[0]
+    return float(v) if v is not None else None
+
+
+def _horse_comment_html(report, ai_index, rank, popularity):
+    """各馬の総評文を生成する（データに特徴がある軸のみ言及、最大4文）
+
+    以下の5軸を評価し、閾値を超えたもののみ文章化する：
+    1. AI指数の絶対水準
+    2. 人気との乖離（穴候補判定）
+    3. 前走からの条件変化（コース/距離/クラス）
+    4. 血統のコース適性
+    5. 脚質傾向
+    """
+    sentences = []
+
+    race_type = report.get("race_type", "")
+    course_len_now = report.get("course_len")
+    ground_now = report.get("ground_state", "")
+    race_class_now = report.get("race_class", "")
+    recent5 = report.get("recent5") or []
+    peds_results = report.get("peds_results")
+    surface_summary = report.get("surface_summary") or {}
+
+    # ① AI指数の絶対評価（中程度は言及しない）
+    if ai_index is not None:
+        if ai_index >= 70:
+            sentences.append(
+                f"AI指数{ai_index}点はこのモデルでトップクラスの評価で、"
+                f"コース・距離別の能力面では出走馬中でも上位の水準にある。"
+            )
+        elif ai_index >= 63:
+            sentences.append(
+                f"AI指数{ai_index}点と高評価で、過去の同条件成績から能力的に一定以上の水準が認められる。"
+            )
+        elif ai_index <= 35:
+            sentences.append(
+                f"AI指数{ai_index}点と評価は低め。過去の同条件成績がこのコース・距離で苦戦傾向にある。"
+            )
+        elif ai_index <= 42:
+            sentences.append(
+                f"AI指数{ai_index}点とやや低く、今回のコース・距離への適性に課題が見られる。"
+            )
+
+    # ② 人気vs指数の乖離
+    try:
+        pop_int = int(popularity)
+        rank_int = int(rank)
+        if pop_int >= 6 and rank_int <= 2:
+            sentences.append(
+                f"人気（{pop_int}番人気）以上にAIが高評価しており、"
+                f"オッズほどの差はないとみる穴候補の1頭。"
+            )
+        elif pop_int <= 2 and rank_int >= 5 and ai_index is not None and ai_index <= 50:
+            sentences.append(
+                f"{pop_int}番人気と支持されているが、AIスコアは低めで"
+                f"人気ほどの評価はしていない。"
+            )
+    except (TypeError, ValueError):
+        pass
+
+    # ③ 前走からの条件変化（近5走[0]が最新走）
+    if recent5:
+        prev = recent5[0]
+        prev_type = str(prev.get("race_type", ""))
+        prev_len_raw = prev.get("course", "")
+        prev_class = str(prev.get("class_name", ""))
+        prev_ground = str(prev.get("ground", ""))
+
+        # コース転換
+        prev_is_turf = "芝" in prev_type
+        now_is_turf = race_type and "芝" in race_type
+        if prev_is_turf != now_is_turf:
+            if now_is_turf:
+                sentences.append(
+                    f"前走はダート（{prev_len_raw}m）からの芝転向。"
+                    f"過去の芝成績と血統適性がカギになる。"
+                )
+            else:
+                sentences.append(
+                    f"前走は芝（{prev_len_raw}m）からダート転向。"
+                    f"ダート経験の有無と血統面での適性が注目点。"
+                )
+        else:
+            # 距離変化
+            try:
+                prev_len = int(float(str(prev_len_raw)))
+                now_len = int(course_len_now) if course_len_now else 0
+                diff = now_len - prev_len
+                if diff <= -300:
+                    sentences.append(
+                        f"前走{prev_len}mから{abs(diff)}m短縮。"
+                        f"距離短縮で先行馬には追い風、差し馬は末脚が生きにくくなる可能性。"
+                    )
+                elif diff >= 300:
+                    sentences.append(
+                        f"前走{prev_len}mから{diff}m延長。"
+                        f"スタミナ面と序盤の行き脚が問われる。"
+                    )
+            except (ValueError, TypeError):
+                pass
+
+        # クラス変化
+        prev_cr = _class_rank(prev_class)
+        now_cr = _class_rank(race_class_now)
+        if prev_cr >= 0 and now_cr >= 0:
+            if now_cr > prev_cr:
+                sentences.append(
+                    f"{prev_class}から{race_class_now}へクラス上昇。"
+                    f"前走の内容と指数がクラス壁を越えられるかの判断材料になる。"
+                )
+            elif now_cr < prev_cr:
+                sentences.append(
+                    f"{prev_class}から{race_class_now}へクラス降格。"
+                    f"能力的に余裕があれば上位争い可能な条件。"
+                )
+
+        # 馬場変化（良→重系 or 重系→良）
+        now_heavy = ground_now in ("重", "不良", "不")
+        prev_heavy = prev_ground in ("重", "不良", "不")
+        if now_heavy and not prev_heavy and not sentences:
+            sentences.append("前走は良馬場だったが今回は重馬場。道悪適性の有無が結果を左右する。")
+        elif not now_heavy and prev_heavy and not sentences:
+            sentences.append("前走は道悪だったが今回は良馬場。本来の力を発揮できる条件かどうかに注目。")
+
+    # ④ 血統コース適性
+    if peds_results is not None and not peds_results.empty:
+        all_row = peds_results[peds_results["クラス"] == "all"]
+        if not all_row.empty:
+            r = all_row.iloc[0]
+            try:
+                win_r = float(r.get("勝率", 0))
+                fuku_r = float(r.get("複勝率", 0))
+                total_wins = int(r.get("1着", 0))
+                if win_r >= 18:
+                    sentences.append(
+                        f"父{report.get('peds0', '')}のこのコース勝率は{win_r:.1f}%（{total_wins}勝）と高く、"
+                        f"血統面での適性は申し分ない。"
+                    )
+                elif fuku_r >= 40:
+                    sentences.append(
+                        f"父{report.get('peds0', '')}の複勝率{fuku_r:.1f}%と安定感があり、"
+                        f"このコースとの血統的な相性は良い。"
+                    )
+                elif win_r > 0 and win_r <= 5 and total_wins <= 2:
+                    sentences.append(
+                        f"父{report.get('peds0', '')}のこのコース勝率は{win_r:.1f}%と低く、"
+                        f"血統面の適性には疑問が残る。"
+                    )
+            except (ValueError, TypeError):
+                pass
+
+    # ⑤ 脚質傾向（今回のコース種別での平均第1コーナー通過順）
+    p1 = _avg_pass1(surface_summary, race_type)
+    if p1 is not None:
+        if p1 <= 3.5:
+            sentences.append(
+                f"平均{p1:.1f}番手と先行タイプ。今回のコース・距離での先行有利/不利との相性が焦点。"
+            )
+        elif p1 >= 9.0:
+            sentences.append(
+                f"平均{p1:.1f}番手と後ろから競馬するタイプ。展開と上り勝負の質次第。"
+            )
+
+    # ⑥ 上り末脚の評価（今回の芝/ダートでの過去実績）
+    surf_key = "芝" if race_type and "芝" in race_type else "ダート"
+    surf = surface_summary.get(surf_key, {})
+    avg_up = surf.get("avg_up")
+    surf_count = surf.get("count", 0)
+    try:
+        avg_up_f = float(avg_up) if avg_up not in (None, "-") else None
+    except (ValueError, TypeError):
+        avg_up_f = None
+    if avg_up_f is not None and surf_count >= 3:
+        if avg_up_f <= 33.5:
+            sentences.append(
+                f"過去の{surf_key}レースでの平均上り{avg_up_f:.1f}秒は優秀で、"
+                f"末脚が武器になるタイプ。上りが問われる展開なら強み。"
+            )
+        elif avg_up_f >= 35.5:
+            sentences.append(
+                f"平均上り{avg_up_f:.1f}秒とやや時間がかかる傾向で、"
+                f"瞬発力勝負になる展開では苦しくなりやすい。"
+            )
+
+    # ⑦ 持ち時計・コース経験
+    scb = report.get("same_course_best")
+    if scb is None:
+        sentences.append(
+            f"このコース・距離での出走は初めてで持ち時計がなく、"
+            f"コース適性は他データから推測するしかない点が評価を難しくする。"
+        )
+    else:
+        t_str = scb.get("time_str", "-")
+        ground_str = scb.get("ground", "")
+        ground_note = f"（{ground_str}）" if ground_str else ""
+        sentences.append(
+            f"このコース・距離で{t_str}{ground_note}の持ち時計があり、コース経験は十分。"
+        )
+
+    # ⑧ 近5走の着順傾向（3走以上のデータで傾きが明確なときだけ）
+    results_numeric = []
+    for r in recent5:
+        val = r.get("result", "-")
+        try:
+            results_numeric.append(int(str(val).strip()))
+        except (ValueError, TypeError):
+            pass
+    if len(results_numeric) >= 3:
+        # 新しい順（recent5[0]が最新）なので古い順に並べ替えて傾き計算
+        vals = list(reversed(results_numeric))
+        n = len(vals)
+        xs = list(range(n))
+        x_mean = sum(xs) / n
+        y_mean = sum(vals) / n
+        num = sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, vals))
+        den = sum((x - x_mean) ** 2 for x in xs)
+        slope = num / den if den > 0 else 0.0
+        if slope < -1.0:
+            sentences.append(
+                f"近{n}走の着順が上向き傾向（平均{y_mean:.1f}着）で、"
+                f"充実期にある可能性が高い。"
+            )
+        elif slope > 1.0:
+            sentences.append(
+                f"近{n}走の着順が下降気味（平均{y_mean:.1f}着）で、"
+                f"フォームの立て直しが課題。今回の巻き返しに期待できるかが焦点。"
+            )
+
+    if not sentences:
+        return ""
+
+    items = "".join(f"<li>{s}</li>" for s in sentences)
+    return f'<ul class="horse-comment">{items}</ul>\n'
 
 
 # ---- HTML 整形 ----
@@ -688,7 +947,7 @@ def get_ground_state_color(ground_state):
     return ground_state_color
 
 
-def horse_report_to_html(report):
+def horse_report_to_html(report, ai_index=None, rank=None, popularity=None):
     """build_horse_report の出力からスタイル付きHTMLを作る
 
     色付けロジック:
@@ -703,11 +962,20 @@ def horse_report_to_html(report):
     html = []
     html.append("<div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>")
 
-    p = report.get("peds0", {})
-    if p:
-        html.append(f"<h4>血統 (父) : <strong>{p}</strong></h4>")
+    comment = _horse_comment_html(report, ai_index, rank, popularity)
+    if comment:
+        html.append('<div class="horse-comment-wrap">')
+        html.append(comment)
+        html.append("</div>")
+
+    p0 = report.get("peds0") or ""
+    p4 = report.get("peds4") or ""
+    if p0 and p4:
+        html.append(f"<h4>血統: 父 <strong>{p0}</strong> / 母父 <strong>{p4}</strong></h4>")
+    elif p0:
+        html.append(f"<h4>血統: 父 <strong>{p0}</strong></h4>")
     else:
-        html.append("<h4>血統 (父) : - </h4>")
+        html.append("<h4>血統: -</h4>")
 
     race_type = report.get("race_type", "-")
     course_len = report.get("course_len", "-")
