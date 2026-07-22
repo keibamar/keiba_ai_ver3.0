@@ -9,6 +9,7 @@ src/RacePrediction/day_race_prediction.py の日次予想パスを移植した�
 
 import os
 import re
+import sys as _sys
 
 import lightgbm as lgb
 import numpy as np
@@ -19,6 +20,44 @@ from datetime import date
 
 from src.config import paths
 from src.config.constants import PLACE_LIST
+
+# ── v2.0 ライブラリ（マルチモデル用） ──
+for _v2p in [r"C:\keiba_ai\keiba_ai_ver2.0\libs",
+             r"C:\keiba_ai\keiba_ai_ver2.0\src\PredictionModels\LightGBM"]:
+    if _v2p not in _sys.path:
+        _sys.path.append(_v2p)
+try:
+    from src.PredictionModels.LightGBM.make_dataset_v5 import (
+        build_pedigree_vocab as _mm_build_pedigree_vocab,
+        get_pedigree_cats   as _mm_get_pedigree_cats,
+    )
+    from src.PredictionModels.LightGBM.make_dataset_v6 import (
+        get_extra_past_race_features_v6 as _mm_get_v6_extra,
+    )
+    from src.PredictionModels.LightGBM.make_dataset_v7 import _parse_kinryo as _mm_parse_kinryo
+    from src.PredictionModels.LightGBM.make_dataset_v8 import (
+        get_extra_past_race_features_v8 as _mm_get_v8_extra,
+    )
+    from src.PredictionModels.LightGBM.make_dataset_v9 import (
+        get_extra_past_race_features_v9 as _mm_get_v9_extra,
+        index_v9 as _mm_index_v9,
+    )
+    _MM_AVAILABLE = True
+except ImportError:
+    _MM_AVAILABLE = False
+
+# ── マルチモデル列定義（初回インポート時に構築） ──
+if _MM_AVAILABLE:
+    _MM_IX9_NO_RACE = [c for c in _mm_index_v9 if c != "race_id"]   # 104列（重複あり）
+    _MM_NODDS_EXCL  = {"race_id", "current_odds", "current_popularity"}
+    _MM_NODDS_DUPS  = [c for c in _mm_index_v9 if c not in _MM_NODDS_EXCL]  # 102列（重複あり）
+    _mm_seen = set(); _MM_NODDS_COLS = []
+    for _c in _MM_NODDS_DUPS:
+        if _c not in _mm_seen:
+            _MM_NODDS_COLS.append(_c); _mm_seen.add(_c)
+    # 100列（重複排除後）
+    _MM_V11N_COLS = _MM_NODDS_COLS[:_MM_NODDS_COLS.index("horse_weight_abs_1") + 1]  # 86列
+    _MM_V12N_COLS = _MM_NODDS_COLS[:_MM_NODDS_COLS.index("time_diff_trend_5")  + 1]  # 93列
 from src.datasets.race_result import transform as race_result_transform
 from src.logic.calculators import average_calculator
 from src.managers import (
@@ -809,3 +848,233 @@ def blended_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
     result_df["score_value"]   = value_df["score"]
     result_df["rank_value"]    = value_df["rank"]
     return result_df
+
+
+# ============================================================
+# マルチモデル予測（3戦略: 的中率重視 / 回収率重視 / MAR推奨）
+# ============================================================
+
+_mm_model_cache: dict = {}
+_mm_ped_vocab = None
+
+
+def _mm_get_model(place_id, race_type, length, suffix):
+    key = (place_id, race_type, length, suffix)
+    if key not in _mm_model_cache:
+        type_str = "turf" if race_type == "芝" else "dirt"
+        mp = os.path.join(paths.PREDICTION_MODEL_PATH, PLACE_LIST[place_id - 1],
+                          f"{type_str}{length}_lambdarank_model{suffix}.txt")
+        if not os.path.isfile(mp):
+            raise FileNotFoundError(mp)
+        _mm_model_cache[key] = lgb.Booster(model_file=mp)
+    return _mm_model_cache[key]
+
+
+def _mm_vocab():
+    global _mm_ped_vocab
+    if _mm_ped_vocab is None and _MM_AVAILABLE:
+        _mm_ped_vocab = _mm_build_pedigree_vocab()
+    return _mm_ped_vocab
+
+
+def _mm_norm(arr):
+    arr = np.array(arr, dtype=float)
+    mn, mx = np.nanmin(arr), np.nanmax(arr)
+    return (arr - mn) / (mx - mn + 1e-12)
+
+
+def _mm_blend(s_vx, s_v7, alpha):
+    return (1 - alpha) * _mm_norm(s_vx) + alpha * _mm_norm(s_v7)
+
+
+def _mm_strategy_score(s_tan, s_san):
+    """本命が1位・3連複上位が2〜5位になる統合スコア。"""
+    s_tan_n = _mm_norm(s_tan)
+    s_san_n = _mm_norm(s_san)
+    honmei  = int(np.argmax(s_tan_n))
+    combined = s_san_n.copy()
+    spread = combined.max() - combined.min() + 1e-6
+    combined[honmei] = combined.max() + spread
+    return combined
+
+
+def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
+                                kinryo_series=None, jockey_ids=None, odds_series=None):
+    """3戦略（的中率重視/回収率重視/MAR推奨）の統合指数とランクを計算する。
+
+    戦略:
+      ②的中率重視: 単複=v11α0.6  / 3連複=v15α0.5
+      ①③回収率重視: 単複=v12_nodds / 3連複=v12_nodds
+      ④MAR推奨:    単複=v11_nodds / 3連複=v12α0.4
+
+    Returns:
+        pd.DataFrame: idx_hitrate, rank_hitrate, idx_value, rank_value,
+                      idx_mar, rank_mar 列（失敗時は空のDataFrame）
+    """
+    if not _MM_AVAILABLE:
+        return pd.DataFrame()
+    try:
+        place_id   = int(str(race_id)[4:6])
+        race_type  = race_info_df.at[0, "race_type"]
+        course_len = str(race_info_df.at[0, "course_len"])
+        course_info = [place_id, race_type, course_len,
+                       race_info_df.at[0, "ground_state"], race_info_df.at[0, "class"]]
+        n     = len(horse_ids)
+        vocab = _mm_vocab()
+        js    = _build_jockey_course_stats(place_id)
+        today = date.today()
+
+        feat_rows_v15   = []   # 104列（オッズあり、重複あり）
+        feat_rows_nodds = []   # 102列（オッズなし、重複あり）
+
+        for idx, hid in enumerate(horse_ids):
+            # v3 base (60列)
+            try:
+                row_v3 = make_dataset_for_lightgbm_v3(race_id, course_info, hid)
+                v3_vals = row_v3.values[0].tolist() if not row_v3.empty else [np.nan] * 60
+            except Exception:
+                v3_vals = [np.nan] * 60
+
+            # pedigree cats
+            f_cat, mf_cat, pgf_cat = _mm_get_pedigree_cats(hid, vocab)
+
+            # 過去5走
+            try:
+                r5 = past_performance_dataset_manager.get_past_race_info(hid, race_id, race_num=5)
+            except Exception:
+                r5 = pd.DataFrame()
+
+            ev6 = _mm_get_v6_extra(r5) if not r5.empty else [np.nan] * 16
+            ev8 = _mm_get_v8_extra(r5) if not r5.empty else [np.nan] * 7
+            ev9 = _mm_get_v9_extra(r5) if not r5.empty else [np.nan] * 7
+
+            # v7 extra（前走情報）
+            days_since = n_horses_1 = hw_abs_1 = np.nan
+            if not r5.empty:
+                try:
+                    prev_dt = pd.to_datetime(
+                        str(r5.iloc[0].get("日付", "")).strip().replace("/", "-"),
+                        format="%Y-%m-%d",
+                    )
+                    days_since = float((today - prev_dt.date()).days)
+                except Exception:
+                    pass
+                try:
+                    n_horses_1 = float(str(r5.iloc[0].get("頭数", "")).strip())
+                except Exception:
+                    pass
+                hw_abs_1 = _parse_weight(r5.iloc[0].get("馬体重", ""))
+
+            # 騎手成績
+            jid = str(jockey_ids[idx]) if jockey_ids and idx < len(jockey_ids) else None
+            wr, pr = js.get((jid, race_type, course_len), (np.nan, np.nan)) if jid else (np.nan, np.nan)
+
+            # 斤量
+            kry = np.nan
+            if kinryo_series is not None and idx < len(kinryo_series):
+                try:
+                    kry = _mm_parse_kinryo(kinryo_series.iloc[idx])
+                except Exception:
+                    pass
+
+            # 枠・馬番
+            waku_v   = float(waku_df["枠"].iloc[idx])  if "枠"  in waku_df.columns else np.nan
+            umaban_v = float(waku_df["馬番"].iloc[idx]) if "馬番" in waku_df.columns else np.nan
+
+            # オッズ・人気
+            odds_v = np.nan
+            if odds_series is not None and idx < len(odds_series):
+                try:
+                    odds_v = float(odds_series.iloc[idx])
+                except Exception:
+                    pass
+
+            n_hs = float(n)
+
+            def _ev(lst, i, default=np.nan):
+                return lst[i] if len(lst) > i else default
+
+            # 104列（オッズあり）
+            feat_rows_v15.append(
+                v3_vals
+                + [wr, pr, waku_v, umaban_v, odds_v, np.nan]           # jockey+waku+odds+pop
+                + [f_cat, mf_cat, pgf_cat]                              # ped_cats
+                + list(ev6)                                              # v6_extra
+                + [kry, days_since, n_hs, n_horses_1, hw_abs_1]        # v7_extra
+                + list(ev8[:5])                                         # corner_chase
+                + [_ev(ev8, 5), _ev(ev8, 6)]                           # agari_trend, time_diff_trend
+                + list(ev9[:5])                                         # agari_df_course
+                + [_ev(ev9, 5), _ev(ev9, 6)]                           # corner_ratio_std5, agari_std5
+            )  # 104列
+
+            # 102列（オッズなし: current_odds/pop を除く）
+            feat_rows_nodds.append(
+                v3_vals
+                + [wr, pr, waku_v, umaban_v]                           # jockey+waku（oddsなし）
+                + [f_cat, mf_cat, pgf_cat]
+                + list(ev6)
+                + [kry, days_since, n_hs, n_horses_1, hw_abs_1]
+                + list(ev8[:5])
+                + [_ev(ev8, 5), _ev(ev8, 6)]
+                + list(ev9[:5])
+                + [_ev(ev9, 5), _ev(ev9, 6)]
+            )  # 102列
+
+        # ── オッズあり DataFrame（列名付き 104列）──
+        df_v15 = pd.DataFrame(feat_rows_v15, columns=_MM_IX9_NO_RACE).fillna(-1)
+
+        def _score_v(suffix, n_cols):
+            m = _mm_get_model(place_id, race_type, course_len, suffix)
+            return m.predict(df_v15.iloc[:, :n_cols], num_iteration=m.best_iteration)
+
+        s_v7  = _score_v("_v7_no26",  66)
+        s_v11 = _score_v("_v11_no26", 90)
+        s_v12 = _score_v("_v12_no26", 97)
+        s_v15 = _score_v("_v15_no26", 104)
+
+        # ── オッズなし DataFrame（重複排除 100列）──
+        df_nodds = pd.DataFrame(feat_rows_nodds, columns=_MM_NODDS_DUPS).fillna(-1)
+        df_nodds = df_nodds.loc[:, ~df_nodds.columns.duplicated(keep="first")]
+
+        def _score_n(suffix, cols):
+            m = _mm_get_model(place_id, race_type, course_len, suffix)
+            return m.predict(df_nodds[cols], num_iteration=m.best_iteration)
+
+        s_v11n = _score_n("_v11nodds_no26", _MM_V11N_COLS)
+        s_v12n = _score_n("_v12nodds_no26", _MM_V12N_COLS)
+
+        # ── 戦略ブレンドスコア ──
+        # ②的中率重視: 単複=v11α0.6 / 3連複=v15α0.5
+        s_tan_hr  = _mm_blend(s_v11, s_v7, 0.6)
+        s_san_hr  = _mm_blend(s_v15, s_v7, 0.5)
+        # ①③回収率重視: 単複=v12n / 3連複=v12n
+        s_tan_val = _mm_norm(s_v12n)
+        s_san_val = _mm_norm(s_v12n)
+        # ④MAR推奨: 単複=v11n / 3連複=v12α0.4
+        s_tan_mar = _mm_norm(s_v11n)
+        s_san_mar = _mm_blend(s_v12, s_v7, 0.4)
+
+        # ── 統合スコア → ランク・指数 ──
+        def _to_rank_idx(s_tan, s_san):
+            combined = _mm_strategy_score(s_tan, s_san)
+            z   = _zscore(pd.Series(combined))
+            idx = [score_to_index(v) for v in z]
+            rnk = rank_index(combined.tolist())
+            return idx, rnk
+
+        idx_hr,  rnk_hr  = _to_rank_idx(s_tan_hr,  s_san_hr)
+        idx_val, rnk_val = _to_rank_idx(s_tan_val, s_san_val)
+        idx_mar, rnk_mar = _to_rank_idx(s_tan_mar, s_san_mar)
+
+        return pd.DataFrame({
+            "idx_hitrate":  idx_hr,
+            "rank_hitrate": rnk_hr,
+            "idx_value":    idx_val,
+            "rank_value":   rnk_val,
+            "idx_mar":      idx_mar,
+            "rank_mar":     rnk_mar,
+        })
+
+    except Exception as e:
+        prediction_error(e)
+        return pd.DataFrame()

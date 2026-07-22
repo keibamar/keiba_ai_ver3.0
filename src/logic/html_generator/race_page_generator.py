@@ -50,10 +50,10 @@ def read_race_csv(date_str, target_id):
         print(f"ℹ️ [スキップ/エラーではありません] レースカード未生成: race_day={date_str}, target_id={target_id}")
         return None
     cols = [
-        "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "馬体重(増減)", "score", "rank", "オッズ", "人気",
-        "score_hitrate", "rank_hitrate", "score_value", "rank_value",
+        "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "馬体重(増減)", "オッズ", "人気",
+        "idx_hitrate", "rank_hitrate", "idx_value", "rank_value", "idx_mar", "rank_mar",
     ]
-    existing = [c for c in cols if c in df.columns]
+    existing = list(dict.fromkeys([c for c in cols if c in df.columns]))
     return df[existing]
 
 
@@ -227,6 +227,56 @@ def _ai_index_cell_html(ai_index):
     return f"<td {td_attrs}>{ai_index}</td>"
 
 
+def _mm_index_cell_html(ai_index, rank, css_class, is_main=False):
+    """マルチモデル指数の表示用TD HTML
+
+    is_main=True（MAR列）はメイン指数として大きめフォント・強いランク色付け。
+    is_main=False（的中率/回収率）はサブ指数として小さめ・薄いランク色付け。
+    data-sort 属性に数値を持たせてJSソートを確実に動作させる。
+    """
+    if ai_index is None or ai_index == "" or (isinstance(ai_index, float) and pd.isna(ai_index)):
+        return f'<td class="{css_class}" data-sort="0"></td>'
+    try:
+        val = float(ai_index)
+    except (ValueError, TypeError):
+        return f'<td class="{css_class}" data-sort="0"></td>'
+    try:
+        rank_int = int(rank) if rank != "" and pd.notna(rank) else None
+    except (ValueError, TypeError):
+        rank_int = None
+
+    # ランク別背景色
+    if rank_int == 1:
+        bg = "#FFD700" if is_main else "#FFF9C4"   # 金 / 薄金
+    elif rank_int == 2:
+        bg = "#B0BEC5" if is_main else "#E0F7FA"   # 銀 / 薄水色
+    elif rank_int == 3:
+        bg = "#FFAB76" if is_main else "#FFE0B2"   # 銅 / 薄橙
+    else:
+        bg = ""
+
+    # 指数値の文字色
+    if val >= 70:
+        fg = "#c62828"
+    elif val >= 60:
+        fg = "#b71c1c"
+    elif val <= 39:
+        fg = "#1f4fd6"
+    else:
+        fg = "#333"
+
+    font_size = "1.15em" if is_main else "0.9em"
+    fw = "bold" if is_main or (rank_int and rank_int <= 3) else "normal"
+    bg_css = f"background-color:{bg};" if bg else ""
+    style = f"{bg_css}color:{fg};font-size:{font_size};font-weight:{fw};"
+
+    rank_str = (
+        f'<sup style="font-size:0.72em;margin-left:2px;color:#555;">({rank_int})</sup>'
+        if rank_int else ""
+    )
+    return f'<td class="{css_class}" data-sort="{val:.2f}" style="{style}">{val:.1f}{rank_str}</td>'
+
+
 def build_table_race_cards(df):
     """メインの出走表（csv側）から HTML の行文字列を作成"""
     if df is None or df.empty:
@@ -243,13 +293,6 @@ def build_table_race_cards(df):
         kinryo = row.get('斤量', '') if pd.notna(row.get('斤量', '')) else ''
         jockey = row.get('騎手', '') if pd.notna(row.get('騎手', '')) else ''
         body = row.get('馬体重(増減)', '') if pd.notna(row.get('馬体重(増減)', '')) else ''
-        # Score・Rankは常にバランス型（score/rank列）を表示する。的中率重視モデルの
-        # 生スコア（score_hitrate）等、別の計算結果を混ぜて表示すると、
-        # 「Scoreが違うのにRankが同じ」のような不整合になるため、Score/Rankは必ず
-        # 同じ計算結果（バランス型）のペアにする。的中率重視・回収率重視モデルの
-        # 予想は別途TOP5（build_ai_pick_summary_html）で補助的に示す。
-        score = row.get('score', "")
-        rank = row.get('rank', "")
         # 単勝オッズ（発走前に確定。未確定時は「---.-」等）
         odds_raw = row.get('オッズ', '')
 
@@ -269,29 +312,21 @@ def build_table_race_cards(df):
         # --- 性齢の色付け（牝→赤、セン→青、牡→デフォルト） ---
         seirei_style = _seirei_style(seirei)
 
-        # rank 表示の整形（score列は廃止してAI指数のみ表示）
-        try:
-            rank_fmt = int(rank) if rank != "" and pd.notna(rank) else ""
-        except Exception:
-            rank_fmt = rank
-
-        # AI指数（0〜100の偏差値形式 / 小数点1桁）
-        try:
-            ai_index = score_to_index(float(score)) if score != "" and pd.notna(score) else None
-        except Exception:
-            ai_index = None
-
         # --- 枠順背景色（結果表・配当表と同じ配色で一覧性を揃える） ---
         waku_color = WAKU_COLORS.get(str(waku), "#ffffff")
         waku_style = f'background-color:{waku_color}; color:{"#fff" if str(waku) in ["2", "3", "4", "7"] else "#000"};'
 
-        # --- AI予想Rank上位3頭: 人気と同系色だが薄いパステル系で区別 ---
-        rank_color = PRED_RANK_COLORS.get(str(rank_fmt), "")
-        rank_style = f'background-color:{rank_color};' if rank_color else ""
-
         # 馬名をクリック可能にする（詳細レポートへのリンク）
         unique_id = f"horse_report_{idx}_{umaban}"
         name_html = f'<a href="javascript:void(0);" onclick="scrollToReport(\'{unique_id}\')" style="color: blue; text-decoration: underline; cursor: pointer;">{html.escape(str(name))}</a>'
+
+        # 3戦略マルチモデル指数
+        idx_hitrate  = row.get('idx_hitrate', '')
+        rank_hitrate = row.get('rank_hitrate', '')
+        idx_value    = row.get('idx_value', '')
+        rank_value   = row.get('rank_value', '')
+        idx_mar      = row.get('idx_mar', '')
+        rank_mar     = row.get('rank_mar', '')
 
         rows += f"""
         <tr>
@@ -304,8 +339,9 @@ def build_table_race_cards(df):
           <td style="{weight_style}">{body}</td>
           <td style="{pop_style}">{popularity}</td>
           {_odds_cell_html(odds_raw)}
-          {_ai_index_cell_html(ai_index)}
-          <td class="ai-rank-col" style="{rank_style}">{rank_fmt}</td>
+          {_mm_index_cell_html(idx_hitrate, rank_hitrate, "mm-hitrate-col", is_main=False)}
+          {_mm_index_cell_html(idx_value,   rank_value,   "mm-value-col",   is_main=False)}
+          {_mm_index_cell_html(idx_mar,     rank_mar,     "mm-mar-col",     is_main=True)}
         </tr>
         """
     return rows
@@ -460,6 +496,57 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     th.ai-score-col, th.ai-rank-col {{
       background-color: #7a2438;
       color: white;
+    }}
+
+    /* 3戦略マルチモデル指数列 */
+    /* サブ指数（的中率・回収率）: 控えめな左ボーダーのみ */
+    .mm-hitrate-col {{
+      border-left: 3px solid #1565c0;
+    }}
+    .mm-value-col {{
+      border-left: 2px solid #2e7d32;
+    }}
+    /* メイン指数（MAR）: 両側ボーダーで囲って強調 */
+    .mm-mar-col {{
+      border-left: 3px solid #6a1b9a;
+      border-right: 3px solid #6a1b9a;
+    }}
+    /* サブ指数の既定セル背景（ランク色で上書きされる場合あり） */
+    tbody tr td.mm-hitrate-col {{
+      background-color: #f0f4ff;
+    }}
+    tbody tr td.mm-value-col {{
+      background-color: #f0fff4;
+    }}
+    tbody tr:nth-child(even) td.mm-hitrate-col {{
+      background-color: #e3ecff;
+    }}
+    tbody tr:nth-child(even) td.mm-value-col {{
+      background-color: #e3f5e8;
+    }}
+    /* MAR既定セル背景: やや濃いめ */
+    tbody tr td.mm-mar-col {{
+      background-color: #f5edff;
+    }}
+    tbody tr:nth-child(even) td.mm-mar-col {{
+      background-color: #ead9ff;
+    }}
+    /* ヘッダー色 */
+    th.mm-hitrate-col {{
+      background-color: #1565c0;
+      color: white;
+      font-size: 0.85em;
+    }}
+    th.mm-value-col {{
+      background-color: #2e7d32;
+      color: white;
+      font-size: 0.85em;
+    }}
+    th.mm-mar-col {{
+      background-color: #6a1b9a;
+      color: white;
+      font-size: 1.0em;
+      font-weight: bold;
     }}
 
     /* コースリンク（レース名横）- 芝は緑、ダートは茶 */
@@ -620,8 +707,9 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
         <th>馬体重</th>
         <th>人気 ▼</th>
         <th>単勝オッズ</th>
-        <th class="ai-score-col">AI指数</th>
-        <th class="ai-rank-col">Rank ▼</th>
+        <th class="mm-hitrate-col">的中率 ▼</th>
+        <th class="mm-value-col">回収率 ▼</th>
+        <th class="mm-mar-col">MAR ▼</th>
       </tr>
     </thead>
     <tbody>
@@ -702,24 +790,25 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
   document.addEventListener("DOMContentLoaded", () => {{
     // ======== スタイル設定部分 ========
     // 列順: 枠[0] 馬番[1] 馬名[2] 性齢[3] 斤量[4] 騎手[5] 馬体重[6]
-    //       人気[7] 単勝オッズ[8] AI指数[9] Rank[10]
+    //       人気[7] 単勝オッズ[8] 的中率[9] 回収率[10] MAR[11]
     const rows = document.querySelectorAll("#raceTable tbody tr");
     rows.forEach(row => {{
       const waku = parseInt(row.children[0].innerText);
       row.children[0].classList.add(`waku-${{waku}}`);
       row.children[1].classList.add(`waku-${{waku}}`);
-      const rank = parseInt(row.children[10].innerText);
-      if (rank === 1) row.children[10].classList.add("rank-1");
-      if (rank === 2) row.children[10].classList.add("rank-2");
-      if (rank === 3) row.children[10].classList.add("rank-3");
     }});
     // ======== ソート機能部分 ========
     const table = document.getElementById("raceTable");
     const headers = table.querySelectorAll("th");
 
     function getCellValue(tr, idx) {{
-      const val = tr.children[idx].innerText.trim();
-      return isNaN(val) ? val : Number(val);
+      const td = tr.children[idx];
+      // data-sort 属性があれば数値として優先使用（指数列の確実なソート用）
+      if (td && td.dataset.sort !== undefined && td.dataset.sort !== "") {{
+        return Number(td.dataset.sort);
+      }}
+      const val = td ? td.innerText.trim() : "";
+      return isNaN(val) || val === "" ? val : Number(val);
     }}
 
     function clearSortIndicators() {{
@@ -770,8 +859,8 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     }}
 
     // ======== 対象列にクリックイベントを追加 ========
-    // 馬番[1]、人気[7]、Rank[10] をソート可能に
-    [1, 7, 10].forEach(idx => {{
+    // 馬番[1]、人気[7]、的中率[9]、回収率[10]、MAR[11] をソート可能に
+    [1, 7, 9, 10, 11].forEach(idx => {{
       const th = headers[idx];
       if (th) {{
         th.style.cursor = "pointer";

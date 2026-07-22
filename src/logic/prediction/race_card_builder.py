@@ -9,7 +9,9 @@ src.datasets.race_card.transform に切り出している。
 import pandas as pd
 
 from src.datasets.race_card import transform as race_card_transform
+
 from src.logic.prediction import race_prediction_engine
+from src.logic.prediction.race_prediction_engine import multi_model_rank_prediction
 from src.logic.scraping import netkeiba_scraper
 from src.managers import horse_peds_dataset_manager, past_performance_dataset_manager
 
@@ -82,6 +84,21 @@ def make_race_card(race_id):
             odds_series=odds_series,
             jockey_ids=jockey_ids,
         )
+
+        # 3戦略マルチモデル予測（的中率重視/回収率重視/MAR推奨）
+        kinryo_col = race_card_df.columns[4] if len(race_card_df.columns) > 4 else None
+        kinryo_series = (
+            race_card_df[kinryo_col].reset_index(drop=True) if kinryo_col else None
+        )
+        multi_df = multi_model_rank_prediction(
+            race_id, horse_ids, race_info_df, waku_df,
+            kinryo_series=kinryo_series,
+            jockey_ids=jockey_ids,
+            odds_series=odds_series,
+        )
+        if not multi_df.empty and len(multi_df) == len(rank_df):
+            rank_df = pd.concat([rank_df.reset_index(drop=True),
+                                 multi_df.reset_index(drop=True)], axis=1)
     else:
         print(f"ℹ️ [スキップ/エラーではありません] 枠順未確定のためAI予想をスキップ: {race_id}")
         rank_df = race_card_transform.blank_rank_df(len(race_card_df))
