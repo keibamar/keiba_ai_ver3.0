@@ -96,39 +96,82 @@
   JRAの過去レースデータをもとに構築したAIモデルが出馬表を分析し、各馬のスコアと予想順位を提供します。
   AIによる予想成績（的中率・回収率）や、競馬場・コース別の傾向データをすべて無料で公開しています。</p>
 
+  <div class="about-content-grid">
+    <div class="about-content-card">
+      <div class="about-content-icon">📅</div>
+      <strong>AI予想出馬表</strong>
+      <p>毎週土日のレースにAIスコア・予想順位を掲載。MAR / MAR-hit / MAR-val の3モデル指数を表示。</p>
+      <a href="races/">出馬表を見る &rarr;</a>
+    </div>
+    <div class="about-content-card">
+      <div class="about-content-icon">📊</div>
+      <strong>AI成績レポート</strong>
+      <p>単勝・複勝・三連複の的中率・回収率を週次・競馬場別・コース別に公開。</p>
+      <a href="performance/">成績を見る &rarr;</a>
+    </div>
+    <div class="about-content-card">
+      <div class="about-content-icon">🏟️</div>
+      <strong>コース別データ</strong>
+      <p>各競馬場・距離・芝ダート別の傾向データ（枠番・血統・馬場・通過順など）を掲載。</p>
+      <a href="courses/">データを見る &rarr;</a>
+    </div>
+  </div>
+
   <h2>運営者について</h2>
-  <p>メーカーでソフトウェアエンジニアとして勤務しながら、趣味の競馬をより深く楽しむために
-  データ分析やAI開発・サイト運営を行っています。
-  AI予想の精度向上に向けて、特徴量の改善やモデルのチューニングを日々続けています。</p>
-  <p><strong>キタサンブラック</strong>をきっかけに競馬を始め、
-  <strong>アーモンドアイ</strong>の天皇賞を現地で観戦。
-  スタンドを揺るがす歓声と、他馬を圧倒するその走りに感動し、競馬にすっかりはまりました。
-  データと現地観戦、両方で競馬を楽しんでいます。</p>
+  <div class="about-author-box">
+    <p>メーカーでソフトウェアエンジニアとして勤務しながら、趣味の競馬をより深く楽しむために
+    データ分析・AI開発・サイト運営を行っています。
+    AI予想の精度向上に向けて、特徴量の改善やモデルのチューニングを日々続けています。</p>
+    <p><strong>キタサンブラック</strong>をきっかけに競馬を始め、
+    <strong>アーモンドアイ</strong>の天皇賞を現地で観戦。
+    スタンドを揺るがす歓声と、他馬を圧倒するその走りに感動し、競馬にすっかりはまりました。
+    データと現地観戦、両方で競馬を楽しんでいます。</p>
+  </div>
 
   <h2>AIの仕組み</h2>
   <p>当サイトのAIは、<strong>LightGBM（勾配ブースティング）</strong>をベースに構築しています。
-  2020年〜2025年のJRAレース結果（全10競馬場、全コース）を学習データとして使用し、
+  2020年〜2025年のJRAレース結果（全10競馬場・全コース）を学習データとして使用し、
   100以上の特徴量から各馬のスコアを算出しています。</p>
-  <ul>
-    <li><strong>過去成績</strong>：馬の直近5走の着順・タイム・コース適性</li>
-    <li><strong>騎手成績</strong>：当該コースにおける騎手の勝率・複勝率</li>
-    <li><strong>血統情報</strong>：父・母父・父方祖父の3世代分</li>
-    <li><strong>枠順・馬番</strong>：コースごとの枠番・馬番傾向</li>
-    <li><strong>オッズ</strong>：市場のオッズ情報（回収率最適化に活用）</li>
-    <li><strong>ペース適性</strong>：上り3Fタイムのコース平均との差（末脚の安定性・先行・追い込み適性）</li>
+
+  <ul class="about-feature-badges">
+    <li><strong>過去成績</strong>：直近5走の着順・タイム・コース適性</li>
+    <li><strong>騎手成績</strong>：当該コースの勝率・複勝率</li>
+    <li><strong>血統情報</strong>：父・母父・父方祖父の3世代</li>
+    <li><strong>枠順・馬番</strong>：コースごとの傾向</li>
+    <li><strong>オッズ</strong>：市場情報（回収率最適化に活用）</li>
+    <li><strong>ペース適性</strong>：上り3Fタイムのコース平均との差</li>
     <li><strong>馬体重</strong>：前走からの増減・絶対値</li>
   </ul>
-  <p>AIのスコアが高い馬ほど「このコースでこの条件なら好走しやすい」と判断された馬です。
-  ただし、競馬は多くの不確定要素を含むため、スコアが高くても必ず勝つわけではありません。</p>
 
-  <h3>MARモデルファミリーについて</h3>
-  <p>当サイトでは、目的関数の異なる3種類のモデルを <strong>MARファミリー</strong> として運用しています。</p>
-  <ul>
-    <li><strong>MAR</strong>（メインモデル）：的中率と回収率を総合的に評価するバランス型。出馬表の「MAR」列がこのスコアです。</li>
-    <li><strong>MAR-hit</strong>（的中率重視）：より高い確率で本命馬が馬券に絡むことを優先して学習したモデル。</li>
-    <li><strong>MAR-val</strong>（回収率重視）：高配当・高回収率を狙う本命選定を優先して学習したモデル。</li>
-  </ul>
-  <p>3モデルの成績はすべて<a href="performance/index.html">AI成績レポート</a>で公開しています。</p>
+  <p>スコアが高い馬ほど「このコース・この条件で好走しやすい」と判断された馬です。
+  ただし競馬は不確定要素を多く含み、スコアが高くても必ず勝つわけではありません。</p>
+
+  <h3>MARモデルファミリー</h3>
+  <p>当サイトでは、最適化の目的関数が異なる3種類のモデルを <strong>MARファミリー</strong> として運用しています。</p>
+
+  <div class="about-model-grid">
+    <div class="about-model-card about-model-card-main">
+      <div class="about-model-card-name">
+        <span class="model-tag model-tag-main">MAR</span>
+        <strong>メインモデル</strong>
+      </div>
+      <p>的中率と回収率を総合的に評価するバランス型。出馬表の「MAR」列がこのスコアです。</p>
+    </div>
+    <div class="about-model-card about-model-card-hit">
+      <div class="about-model-card-name">
+        <span class="model-tag model-tag-hit">MAR-hit</span>
+        <strong>的中率重視</strong>
+      </div>
+      <p>より高い確率で本命馬が馬券に絡むことを優先して学習したモデル。</p>
+    </div>
+    <div class="about-model-card about-model-card-val">
+      <div class="about-model-card-name">
+        <span class="model-tag model-tag-val">MAR-val</span>
+        <strong>回収率重視</strong>
+      </div>
+      <p>高配当・高回収率を狙う本命選定を優先して学習したモデル。</p>
+    </div>
+  </div>
 
   <div class="about-ai-stats">
   <h3>AIの現在の通算成績（2024〜2026年、5152R集計）</h3>
@@ -148,25 +191,22 @@
   成績が改善したと確認できた場合のみ本番環境へ切り替えています。
   現在は <strong>MARモデルファミリー（MAR / MAR-hit / MAR-val）</strong> を本番運用しています。</p>
 
-  <h2>掲載コンテンツ</h2>
-  <ul>
-    <li><strong>AI予想出馬表</strong>：毎週土日のレースに対してAIスコア・予想順位を掲載します</li>
-    <li><strong>AI成績レポート</strong>：単勝・複勝の的中率と回収率を週次・コース別・開催別に公開します</li>
-    <li><strong>コース別データ</strong>：各競馬場・距離・芝ダート別の傾向データ（枠番・血統・馬場・通過順など）を掲載します</li>
-  </ul>
-
   <h2>運営方針</h2>
-  <p>当サイトはAI予想の成績データをすべてオープンに公開しています。
-  成績がよい期間だけを選んで掲載するようなことはせず、良い時も悪い時も実績のまま掲載します。
-  AIの改善・更新を行った際は、新旧モデルの成績を比較した上で採用モデルを決定しています。
-  「AIを使えば必ず儲かる」という印象を与えることは意図していません。
-  データを根拠に自分自身で考えるための参考情報として、透明性の高い形で公開することが目的です。</p>
+  <div class="about-policy-box">
+    <p>当サイトはAI予想の成績データをすべてオープンに公開しています。
+    成績がよい期間だけを選んで掲載するようなことはせず、良い時も悪い時も実績のまま掲載します。</p>
+    <p>AIの改善・更新を行った際は、新旧モデルの成績を比較した上で採用モデルを決定しています。
+    「AIを使えば必ず儲かる」という印象を与えることは意図していません。
+    データを根拠に自分自身で考えるための参考情報として、透明性の高い形で公開することが目的です。</p>
+  </div>
 
   <h2>お問い合わせ</h2>
-  <p>ご意見・ご質問は、X（旧Twitter）のDMよりお気軽にどうぞ。</p>
-  <p><a href="https://x.com/keiba_mar" target="_blank" rel="noopener noreferrer">X: @keiba_mar</a></p>
+  <div class="about-contact-box">
+    <p>ご意見・ご質問は、X（旧Twitter）のDMよりお気軽にどうぞ。</p>
+    <a href="https://x.com/keiba_mar" target="_blank" rel="noopener noreferrer">&#120143; X: @keiba_mar</a>
+  </div>
 
-  <p><a href="privacy.html">プライバシーポリシー</a>　<a href="terms.html">利用規約</a></p>
+  <p style="margin-top:28px;"><a href="privacy.html">プライバシーポリシー</a>　<a href="terms.html">利用規約</a></p>
   <p><a href="./">&larr; HOMEへ戻る</a></p>
   </main>
   <footer>

@@ -725,6 +725,193 @@ p.data-insight {
   color: var(--mar-text-sub);
 }
 
+/* ========================================
+   about.html ページ専用レイアウト
+   ======================================== */
+
+/* コンテンツ3分割カード（出馬表/AI成績/コース別データ） */
+.about-content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 20px 0 32px;
+}
+
+.about-content-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  border-top: 3px solid var(--mar-accent);
+  padding: 18px 14px 14px;
+  text-align: center;
+  transition: box-shadow 0.15s;
+}
+
+.about-content-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.about-content-icon {
+  font-size: 1.8em;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.about-content-card strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.95em;
+}
+
+.about-content-card p {
+  margin: 0 0 10px;
+  font-size: 0.82em;
+  color: #666;
+  line-height: 1.5;
+}
+
+.about-content-card a {
+  display: inline-block;
+  font-size: 0.82em;
+  color: var(--mar-accent);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.about-content-card a:hover {
+  text-decoration: underline;
+}
+
+/* 運営者ボックス */
+.about-author-box {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 18px 22px;
+  line-height: 1.8;
+}
+
+/* AI特徴量バッジリスト */
+.about-feature-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.about-feature-badges li {
+  background: var(--mar-bg-accent);
+  border: 1px solid var(--mar-bg-accent-strong);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.88em;
+}
+
+.about-feature-badges li strong {
+  color: var(--mar-primary);
+}
+
+/* MARモデル3枚カード */
+.about-model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 14px 0 20px;
+}
+
+.about-model-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 14px 16px;
+  line-height: 1.6;
+}
+
+.about-model-card-main {
+  border-left: 4px solid #6a1b9a;
+  background: #fbf7fe;
+}
+
+.about-model-card-hit {
+  border-left: 4px solid #9c27b0;
+}
+
+.about-model-card-val {
+  border-left: 4px solid #ce93d8;
+}
+
+.about-model-card-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.about-model-card p {
+  margin: 0;
+  font-size: 0.88em;
+  color: #555;
+}
+
+/* 運営方針ボックス */
+.about-policy-box {
+  background: #fafafa;
+  border-left: 4px solid var(--mar-accent);
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  margin: 12px 0;
+  line-height: 1.85;
+}
+
+/* お問い合わせカード */
+.about-contact-box {
+  background: var(--mar-bg-accent);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin: 8px 0;
+}
+
+.about-contact-box a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 18px;
+  background: var(--mar-primary);
+  color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 0.95em;
+}
+
+.about-contact-box a:hover {
+  background: var(--mar-primary-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  .about-content-card { border-color: #444; background: #1a1a1a; }
+  .about-content-card p { color: #aaa; }
+  .about-author-box { background: #1a1a1a; border-color: #333; }
+  .about-feature-badges li { background: #2a1a1f; border-color: #4a2a30; }
+  .about-model-card { border-color: #444; }
+  .about-model-card-main { background: #1c0f2a; }
+  .about-model-card p { color: #aaa; }
+  .about-policy-box { background: #1a1a1a; }
+  .about-contact-box { background: #2a1a1f; }
+}
+:root[data-theme="dark"] .about-content-card { border-color: #444; background: #1a1a1a; }
+:root[data-theme="dark"] .about-content-card p { color: #aaa; }
+:root[data-theme="dark"] .about-author-box { background: #1a1a1a; border-color: #333; }
+:root[data-theme="dark"] .about-feature-badges li { background: #2a1a1f; border-color: #4a2a30; }
+:root[data-theme="dark"] .about-model-card { border-color: #444; }
+:root[data-theme="dark"] .about-model-card-main { background: #1c0f2a; }
+:root[data-theme="dark"] .about-model-card p { color: #aaa; }
+:root[data-theme="dark"] .about-policy-box { background: #1a1a1a; }
+:root[data-theme="dark"] .about-contact-box { background: #2a1a1f; }
+:root[data-theme="light"] .about-content-card { border-color: #ddd; background: #fff; }
+:root[data-theme="light"] .about-model-card-main { background: #fbf7fe; }
+
 /* --- 馬個別総評（horse-comment） --- */
 
 .horse-comment-wrap {
