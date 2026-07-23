@@ -122,45 +122,25 @@ def _is_scratched_finish(finish):
     return "除" in finish_str or "取" in finish_str
 
 
-def calc_race_hit_returns(race_day, race_id, box_num=5):
-    """1レース分の的中・回収額を、予想rank1位の馬を基準に計算する
+def _calc_hit_returns_by_col(pred_df, returns_df, sort_col, result_df=None, box_num=5):
+    """指定列(sort_col)でソートした本命馬の的中・回収を計算する内部共通処理。
 
-    Args:
-        race_day (date): レース開催日
-        race_id (str): race_id
-        box_num (int): 三連複BOXの頭数（初期値5、上位5位までを軸とする）
     Returns:
-        dict | None: {"win": (hit, return), "place": (hit, return), "trio_box": (hit, return)}
-            （hitは0/1、returnは100円あたりの配当額）。予想または確定配当が
-            存在しない場合、またはAI本命馬（rank=1）が除外・取消で出走しなかった
-            場合（的中/不的中ではなく払い戻しのため、的中率・回収率の対象から
-            除外したい）はNoneを返す。
+        dict | None: {"win": (hit, return), ...} or None（除外・取消時）
     """
-    pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
-
-    returns_df = race_info_dataset_manager.get_race_return_csv_for_race(race_id)
-    if returns_df.empty:
+    valid = pred_df[pd.to_numeric(pred_df[sort_col], errors="coerce").notna()]
+    if valid.empty:
         return None
-
-    # MAR推奨（メインモデル）が利用可能であればそちらを優先、
-    # 古いCSV（idx_mar 列なし）の場合は旧 score 列にフォールバックする。
-    if "idx_mar" in pred_df.columns and pred_df["idx_mar"].notna().any():
-        sort_col = "idx_mar"
-    elif "score" in pred_df.columns:
-        sort_col = "score"
-    else:
+    sorted_df = valid.sort_values(sort_col, ascending=False).reset_index(drop=True)
+    try:
+        sorted_nums = sorted_df["馬番"].astype(int).tolist()
+    except Exception:
         return None
-
-    # 降順で並べ常に1頭を本命馬として確定させる
-    # （三連複BOXも上位 box_num 頭で固定する）
-    sorted_df = pred_df.sort_values(sort_col, ascending=False).reset_index(drop=True)
-    sorted_nums = sorted_df["馬番"].astype(int).tolist()
     pick_num = sorted_nums[0] if sorted_nums else None
     box_nums = set(sorted_nums[:box_num])
 
-    if pick_num is not None:
-        result_df = race_result_dataset_manager.get_race_id_result(race_id)
-        pick_result = result_df[result_df["馬番"].astype(str) == str(pick_num)] if not result_df.empty else result_df
+    if pick_num is not None and result_df is not None and not result_df.empty:
+        pick_result = result_df[result_df["馬番"].astype(str) == str(pick_num)]
         if not pick_result.empty and _is_scratched_finish(pick_result.iloc[0]["着順"]):
             return None
 
@@ -168,14 +148,12 @@ def calc_race_hit_returns(race_day, race_id, box_num=5):
 
     win_df = returns_df[returns_df["式別"] == "単勝"].reset_index(drop=True)
     for i in range(len(win_df)):
-        num = int(win_df.at[i, "馬番"])
-        if num == pick_num:
+        if int(win_df.at[i, "馬番"]) == pick_num:
             result["win"] = (1, float(win_df.at[i, "配当"]))
 
     place_df = returns_df[returns_df["式別"] == "複勝"].reset_index(drop=True)
     for i in range(len(place_df)):
-        num = int(place_df.at[i, "馬番"])
-        if num == pick_num:
+        if int(place_df.at[i, "馬番"]) == pick_num:
             payout = place_df.at[i, "配当"]
             if isinstance(payout, str):
                 payout = re.sub(r"\D", "", payout)
@@ -191,6 +169,66 @@ def calc_race_hit_returns(race_day, race_id, box_num=5):
             result["trio_box"] = (1, float(payout) / math.comb(box_num, 3))
 
     return result
+
+
+def calc_race_hit_returns(race_day, race_id, box_num=5):
+    """1レース分の的中・回収額を、MARメインモデルのrank1位馬を基準に計算する
+
+    Returns:
+        dict | None: {"win": (hit, return), "place": (hit, return), "trio_box": (hit, return)}
+    """
+    pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
+    returns_df = race_info_dataset_manager.get_race_return_csv_for_race(race_id)
+    if returns_df.empty:
+        return None
+
+    if "idx_mar" in pred_df.columns and pred_df["idx_mar"].notna().any():
+        sort_col = "idx_mar"
+    elif "score" in pred_df.columns:
+        sort_col = "score"
+    else:
+        return None
+
+    result_df = race_result_dataset_manager.get_race_id_result(race_id)
+    return _calc_hit_returns_by_col(pred_df, returns_df, sort_col, result_df, box_num)
+
+
+def calc_race_hit_returns_all_models(race_day, race_id, box_num=5):
+    """1レース分の的中・回収額をMAR・MAR-hit・MAR-valの3モデル分まとめて計算する
+
+    Returns:
+        dict: {
+            "mar":  dict | None,   # MARメインモデル
+            "hit":  dict | None,   # MAR-hit（的中率重視）
+            "val":  dict | None,   # MAR-val（回収率重視）
+        }
+        各値は {"win": (hit, return), ...} または None
+    """
+    pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
+    returns_df = race_info_dataset_manager.get_race_return_csv_for_race(race_id)
+    if returns_df.empty:
+        return {"mar": None, "hit": None, "val": None}
+
+    result_df = race_result_dataset_manager.get_race_id_result(race_id)
+
+    # MAR メイン
+    if "idx_mar" in pred_df.columns and pred_df["idx_mar"].notna().any():
+        mar_col = "idx_mar"
+    elif "score" in pred_df.columns:
+        mar_col = "score"
+    else:
+        mar_col = None
+    mar_result = _calc_hit_returns_by_col(pred_df, returns_df, mar_col, result_df, box_num) if mar_col else None
+
+    # MAR-hit（的中率重視）
+    hit_col = "idx_hitrate" if ("idx_hitrate" in pred_df.columns and pred_df["idx_hitrate"].notna().any()) else None
+    hit_result = _calc_hit_returns_by_col(pred_df, returns_df, hit_col, result_df, box_num) if hit_col else None
+
+    # MAR-val（回収率重視）
+    val_col = "idx_value" if ("idx_value" in pred_df.columns and pred_df["idx_value"].notna().any()) else None
+    val_result = _calc_hit_returns_by_col(pred_df, returns_df, val_col, result_df, box_num) if val_col else None
+
+    return {"mar": mar_result, "hit": hit_result, "val": val_result}
 
 
 def get_current_meetings(today=None):

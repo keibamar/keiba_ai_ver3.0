@@ -58,13 +58,32 @@ COLUMNS = [
     "course_len",
     "ground_state",
     "class",
+    # MAR メインモデル
     "win_hit",
     "win_return",
     "place_hit",
     "place_return",
     "trio_box_hit",
     "trio_box_return",
+    # MAR-hit（的中率重視）
+    "hit_win_hit",
+    "hit_win_return",
+    "hit_place_hit",
+    "hit_place_return",
+    "hit_trio_box_hit",
+    "hit_trio_box_return",
+    # MAR-val（回収率重視）
+    "val_win_hit",
+    "val_win_return",
+    "val_place_hit",
+    "val_place_return",
+    "val_trio_box_hit",
+    "val_trio_box_return",
 ]
+
+# モデル名 → 列プレフィックスのマッピング
+MODEL_PREFIX = {"mar": "", "hit": "hit_", "val": "val_"}
+MODEL_LABELS = {"mar": "MAR", "hit": "MAR-hit", "val": "MAR-val"}
 
 
 def get_ai_performance_dataset():
@@ -142,11 +161,36 @@ def _build_race_conditions(race_ids_by_place_year):
     return conditions
 
 
-def _row_from_result(race_day, parsed, condition, result):
-    win_hit, win_return = result["win"]
-    place_hit, place_return = result["place"]
-    trio_box_hit, trio_box_return = result["trio_box"]
+def _model_result_cols(result, prefix):
+    """1モデル分の的中・回収をプレフィックス付き列名dictで返す。Noneのモデルは空欄。"""
+    if result is None:
+        return {
+            f"{prefix}win_hit": "",
+            f"{prefix}win_return": "",
+            f"{prefix}place_hit": "",
+            f"{prefix}place_return": "",
+            f"{prefix}trio_box_hit": "",
+            f"{prefix}trio_box_return": "",
+        }
     return {
+        f"{prefix}win_hit":      result["win"][0],
+        f"{prefix}win_return":   result["win"][1],
+        f"{prefix}place_hit":    result["place"][0],
+        f"{prefix}place_return": result["place"][1],
+        f"{prefix}trio_box_hit":    result["trio_box"][0],
+        f"{prefix}trio_box_return": result["trio_box"][1],
+    }
+
+
+def _row_from_result(race_day, parsed, condition, result):
+    """後方互換用: MARメインモデルのみのresultから行dictを作る（旧形式）"""
+    return _row_from_all_results(race_day, parsed, condition,
+                                 {"mar": result, "hit": None, "val": None})
+
+
+def _row_from_all_results(race_day, parsed, condition, all_results):
+    """3モデル分のresults dictから1行のdictを作る。"""
+    row = {
         "race_day": race_day,
         "year": parsed["year"],
         "place_id": parsed["place_id"],
@@ -155,13 +199,11 @@ def _row_from_result(race_day, parsed, condition, result):
         "course_len": condition.get("course_len", ""),
         "ground_state": condition.get("ground_state", ""),
         "class": condition.get("class", ""),
-        "win_hit": win_hit,
-        "win_return": win_return,
-        "place_hit": place_hit,
-        "place_return": place_return,
-        "trio_box_hit": trio_box_hit,
-        "trio_box_return": trio_box_return,
     }
+    row.update(_model_result_cols(all_results.get("mar"), ""))
+    row.update(_model_result_cols(all_results.get("hit"), "hit_"))
+    row.update(_model_result_cols(all_results.get("val"), "val_"))
+    return row
 
 
 def update_ai_performance_dataset():
@@ -190,12 +232,13 @@ def update_ai_performance_dataset():
 
     new_rows = {}
     for race_day, race_id in new_pairs:
-        result = ai_performance_calculator.calc_race_hit_returns(race_day, race_id)
-        if result is None:
+        all_results = ai_performance_calculator.calc_race_hit_returns_all_models(race_day, race_id)
+        # MARメインが取れないレース（払い戻し等）は全モデルスキップ
+        if all_results["mar"] is None:
             continue
         parsed = ai_performance_calculator.parse_race_id(race_id)
         condition = conditions.get(race_id, {})
-        new_rows[race_id] = _row_from_result(race_day, parsed, condition, result)
+        new_rows[race_id] = _row_from_all_results(race_day, parsed, condition, all_results)
 
     if not new_rows:
         return 0
@@ -209,25 +252,47 @@ def update_ai_performance_dataset():
 # --- 高速集計・フィルタ（永続化済みデータセットに対してpandasのみで処理する） -------------
 
 
-def aggregate(df):
-    """per-raceの行（データセットのDataFrame、または絞り込んだ部分集合）から
-    的中率・回収率・件数を集計する
+def aggregate(df, model="mar"):
+    """per-raceの行から指定モデルの的中率・回収率・件数を集計する
+
+    Args:
+        df: get_ai_performance_dataset()の戻り値（またはその部分集合）
+        model: "mar"（メイン）/ "hit"（MAR-hit）/ "val"（MAR-val）
 
     Returns:
-        dict: {"win": {"hit_rate": float, "return_rate": float, "n": int}, "place": {...}, "trio_box": {...}}
+        dict: {"win": {"hit_rate": float, "return_rate": float, "n": int}, ...}
     """
     if df.empty:
         return {bet_type: {"hit_rate": 0.0, "return_rate": 0.0, "n": 0} for bet_type in BET_TYPES}
 
-    n = len(df)
-    return {
-        bet_type: {
-            "hit_rate": df[f"{bet_type}_hit"].astype(float).mean() * 100,
-            "return_rate": df[f"{bet_type}_return"].astype(float).mean(),
-            "n": n,
-        }
-        for bet_type in BET_TYPES
-    }
+    prefix = MODEL_PREFIX.get(model, "")
+    result = {}
+    for bet_type in BET_TYPES:
+        hit_col = f"{prefix}{bet_type}_hit"
+        ret_col = f"{prefix}{bet_type}_return"
+        if hit_col not in df.columns or ret_col not in df.columns:
+            result[bet_type] = {"hit_rate": 0.0, "return_rate": 0.0, "n": 0}
+            continue
+        sub = df[[hit_col, ret_col]].replace("", float("nan")).dropna()
+        n = len(sub)
+        if n == 0:
+            result[bet_type] = {"hit_rate": 0.0, "return_rate": 0.0, "n": 0}
+        else:
+            result[bet_type] = {
+                "hit_rate": sub[hit_col].astype(float).mean() * 100,
+                "return_rate": sub[ret_col].astype(float).mean(),
+                "n": n,
+            }
+    return result
+
+
+def aggregate_all_models(df):
+    """3モデル分の集計をまとめて返す
+
+    Returns:
+        dict: {"mar": aggregate結果, "hit": ..., "val": ...}
+    """
+    return {model: aggregate(df, model) for model in MODEL_PREFIX}
 
 
 def filter_by_place(df, place_id):

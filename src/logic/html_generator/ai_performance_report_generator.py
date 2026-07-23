@@ -341,6 +341,47 @@ def _week_trend_html(by_week):
     return _trend_html(by_week)
 
 
+def _model_tag_html(model_key):
+    """MAR / MAR-hit / MAR-val のカラータグを返す"""
+    tag_class = {"mar": "model-tag-main", "hit": "model-tag-hit", "val": "model-tag-val"}
+    label = m.MODEL_LABELS.get(model_key, model_key)
+    return f'<span class="model-tag {tag_class.get(model_key, "")}">{label}</span>'
+
+
+def _sub_models_comparison_html(all_perf):
+    """MAR-hit / MAR-val の成績を2カラムで並べて返す"""
+    descs = {
+        "hit": "的中率重視モデル — より高確率な本命選定を目指す",
+        "val": "回収率重視モデル — 高配当・高回収率を狙った本命選定",
+    }
+    cards = ""
+    for model_key in ("hit", "val"):
+        cards += f"""<div class="sub-model-card">
+    <div class="sub-model-card-header sub-model-card-header-{model_key}">
+      <span class="sub-model-card-name">{m.MODEL_LABELS[model_key]}</span>
+      <span class="sub-model-card-desc">{descs[model_key]}</span>
+    </div>
+    <div class="sub-model-card-body">
+      {_performance_table_html(all_perf[model_key])}
+    </div>
+  </div>"""
+    return f'<div class="sub-model-grid">\n  {cards}\n</div>'
+
+
+def _three_models_section_html(all_perf):
+    """MAR(主)・MAR-hit・MAR-val の3モデル成績を1つのHTMLブロックで返す"""
+    mar_perf_html = _performance_table_html(all_perf["mar"])
+    return f"""<div class="model-primary-header">
+    {_model_tag_html("mar")}
+    <span>バランス型メインモデル</span>
+  </div>
+  <p class="model-primary-desc">的中率と回収率を総合的に評価して本命馬を選定するメインモデルです。</p>
+  {mar_perf_html}
+  <h3>サブモデル成績</h3>
+  <p class="model-primary-desc">MARファミリーの中で特定の指標に特化した2つのサブモデルです。いずれも同じデータをベースに、最適化の目的関数を変えて学習しています。</p>
+  {_sub_models_comparison_html(all_perf)}"""
+
+
 def _cross_filter_panel_html(ground_state, class_value, performance):
     return f"""<div class="cross-filter-panel" data-ground-state="{ground_state}" data-class="{class_value}" hidden>
     {_performance_table_html(performance)}
@@ -397,9 +438,9 @@ def make_ai_performance_index_page():
     df = m.get_ai_performance_dataset()
     this_year = date.today().year
 
-    total_performance = m.aggregate(df)
+    all_total = m.aggregate_all_models(df)
     this_year_df = m.filter_by_year(df, this_year)
-    this_year_performance = m.aggregate(this_year_df)
+    all_this_year = m.aggregate_all_models(this_year_df)
     this_year_week_trend = _week_trend_html(m.group_breakdown_by_week(this_year_df))
 
     years = sorted({int(year) for year in df["year"]}) if not df.empty else []
@@ -450,8 +491,11 @@ def make_ai_performance_index_page():
   {breadcrumb_html(breadcrumb_items, base_path="../")}
   <h1>AI予想成績</h1>
 
-  {_performance_table_html(total_performance, title="トータル成績")}
-  {_performance_table_html(this_year_performance, title=f"{this_year}年の成績")}
+  <h2>トータル成績</h2>
+  {_three_models_section_html(all_total)}
+
+  <h2>{this_year}年の成績</h2>
+  {_three_models_section_html(all_this_year)}
 
   <h2>今年の成績の推移</h2>
   {this_year_week_trend}
@@ -495,7 +539,7 @@ def make_annual_performance_page(year, df=None):
     """
     df = df if df is not None else m.get_ai_performance_dataset()
     year_df = m.filter_by_year(df, year)
-    performance = m.aggregate(year_df)
+    all_perf = m.aggregate_all_models(year_df)
     week_breakdown = m.group_breakdown_by_week(year_df)
     week_trend = _week_trend_html(week_breakdown)
     week_table = _breakdown_table_html(list(reversed(week_breakdown)), "週(開始日)", title="開催週別成績")
@@ -531,7 +575,7 @@ def make_annual_performance_page(year, df=None):
   <div class="page-layout">
   <main class="page-content">
   <h1>{year}年 AI予想成績</h1>
-  {_performance_table_html(performance)}
+  {_three_models_section_html(all_perf)}
 
   <h2>開催週別の傾向・推移</h2>
   {week_trend}
@@ -650,7 +694,7 @@ def make_meeting_performance_page(year, place_id, times, df=None):
     df = df if df is not None else m.get_ai_performance_dataset()
     place_name = NAME_LIST[place_id - 1]
     meeting_df = m.filter_by_meeting(df, year, place_id, times)
-    performance = m.aggregate(meeting_df)
+    all_perf_meeting = m.aggregate_all_models(meeting_df)
     race_day_ids = [
         (datetime.strptime(row["race_day"], "%Y-%m-%d").date(), race_id)
         for race_id, row in meeting_df.iterrows()
@@ -679,7 +723,7 @@ def make_meeting_performance_page(year, place_id, times, df=None):
   {site_nav_html(base_path="../../../", breadcrumb_items=breadcrumb_items)}
   {breadcrumb_html(breadcrumb_items, base_path="../../../")}
   <h1>{year}年 {place_name}{times}回 AI予想成績</h1>
-  {_performance_table_html(performance)}
+  {_three_models_section_html(all_perf_meeting)}
 
   {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
 
@@ -722,9 +766,11 @@ def make_course_performance_index_page(place_id, df=None):
     course_list = COURSE_LISTS[place_id - 1]
 
     place_df = m.filter_by_place(df, place_id)
-    total_performance = m.aggregate(place_df)
+    all_total_place = m.aggregate_all_models(place_df)
+    total_performance = all_total_place["mar"]  # _cross_filter_html等MAR専用箇所用
     this_year_df = m.filter_by_year(place_df, this_year)
-    this_year_performance = m.aggregate(this_year_df)
+    all_this_year_place = m.aggregate_all_models(this_year_df)
+    this_year_performance = all_this_year_place["mar"]
     this_year_week_breakdown = m.group_breakdown_by_week(this_year_df)
     this_year_week_trend = _week_trend_html(this_year_week_breakdown)
     this_year_week_table = _breakdown_table_html(
@@ -789,8 +835,10 @@ def make_course_performance_index_page(place_id, df=None):
     </div>
 
     <div class="section-panel" data-section="overview">
-      {_performance_table_html(total_performance, title="トータル成績")}
-      {_performance_table_html(this_year_performance, title=f"{this_year}年の成績")}
+      <h3>トータル成績</h3>
+      {_three_models_section_html(all_total_place)}
+      <h3>{this_year}年の成績</h3>
+      {_three_models_section_html(all_this_year_place)}
       {_breakdown_table_html(meeting_breakdown, "開催", title="開催別成績")}
       <h4>直近の開催週別の傾向・推移</h4>
       {this_year_week_trend}
@@ -840,8 +888,10 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
     place_name = NAME_LIST[place_id - 1]
 
     course_df = m.filter_by_course(df, place_id, race_type, course_len)
-    total_performance = m.aggregate(course_df)
-    this_year_performance = m.aggregate(m.filter_by_year(course_df, this_year))
+    all_total_course = m.aggregate_all_models(course_df)
+    total_performance = all_total_course["mar"]  # _cross_filter_html等MAR専用箇所用
+    all_this_year_course = m.aggregate_all_models(m.filter_by_year(course_df, this_year))
+    this_year_performance = all_this_year_course["mar"]
     by_class = m.group_breakdown(course_df, "class")
     by_ground_state = m.group_breakdown(course_df, "ground_state")
     by_year = sorted(m.group_breakdown(course_df, "year"), key=lambda item: item["value"], reverse=True)
@@ -902,8 +952,10 @@ def make_course_performance_page(place_id, race_type, course_len, df=None):
     </div>
 
     <div class="section-panel" data-section="overview">
-      {_performance_table_html(total_performance, title="トータル成績")}
-      {_performance_table_html(this_year_performance, title=f"{this_year}年の成績")}
+      <h3>トータル成績</h3>
+      {_three_models_section_html(all_total_course)}
+      <h3>{this_year}年の成績</h3>
+      {_three_models_section_html(all_this_year_course)}
     </div>
 
     <div class="section-panel" data-section="breakdown" hidden>

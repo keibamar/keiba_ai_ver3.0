@@ -700,9 +700,9 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
         <th>馬体重</th>
         <th>人気 ▼</th>
         <th>単勝オッズ</th>
-        <th class="mm-hitrate-col" title="的中率重視モデル指数（単複:v11α0.6 / 三連複:v15α0.5）">的中率モデル ▼</th>
-        <th class="mm-value-col" title="回収率重視モデル指数（オッズ不使用・前日公開可）">回収率モデル ▼</th>
-        <th class="mm-mar-col" title="MAR推奨指数（バランス型メインモデル）">MAR指数 ▼</th>
+        <th class="mm-hitrate-col" title="MAR-hit: 的中率重視モデル指数">MAR-hit ▼</th>
+        <th class="mm-value-col" title="MAR-val: 回収率重視モデル指数">MAR-val ▼</th>
+        <th class="mm-mar-col" title="MAR: バランス型メインモデル指数">MAR ▼</th>
       </tr>
     </thead>
     <tbody>
@@ -974,9 +974,9 @@ def generate_result_table(df):
           <th>騎手</th><th>馬体重</th><th>タイム</th><th>着差</th>
           <th>人気</th><th>上り</th><th>通過</th>
           <th>単勝オッズ</th>
-          <th class="mm-hitrate-col" title="的中率重視モデル指数">的中率モデル</th>
-          <th class="mm-value-col" title="回収率重視モデル指数">回収率モデル</th>
-          <th class="mm-mar-col" title="MAR推奨指数（メインモデル）">MAR指数</th>
+          <th class="mm-hitrate-col" title="MAR-hit: 的中率重視モデル指数">MAR-hit</th>
+          <th class="mm-value-col" title="MAR-val: 回収率重視モデル指数">MAR-val</th>
+          <th class="mm-mar-col" title="MAR: バランス型メインモデル指数">MAR</th>
         </tr>
       </thead>
       <tbody>

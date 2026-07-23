@@ -411,6 +411,94 @@ td a:hover {
   color: #888;
 }
 
+/* --- AI成績ページ: モデルタグ・3モデル比較レイアウト --- */
+.model-tag {
+  display: inline-block;
+  font-size: 0.75em;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.model-tag-main { background: #6a1b9a; color: #fff; }
+.model-tag-hit  { background: #9c27b0; color: #fff; }
+.model-tag-val  { background: #ce93d8; color: #4a148c; }
+
+.model-primary-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.model-primary-desc {
+  font-size: 0.85em;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.sub-model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.sub-model-card {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.sub-model-card-header {
+  padding: 8px 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  border-bottom: 1px solid #ddd;
+}
+.sub-model-card-header-hit { background: #f3e5f5; border-left: 4px solid #9c27b0; }
+.sub-model-card-header-val { background: #f3e5f5; border-left: 4px solid #6a1b9a; }
+
+.sub-model-card-name {
+  font-weight: bold;
+  font-size: 1.05em;
+}
+.sub-model-card-desc {
+  font-size: 0.82em;
+  color: #666;
+}
+
+.sub-model-card-body {
+  padding: 12px;
+}
+.sub-model-card-body .bet-stat-cards {
+  gap: 8px;
+}
+.sub-model-card-body .bet-stat-card {
+  flex: 1 1 130px;
+  padding: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .model-primary-desc { color: #aaa; }
+  .model-tag-val { background: #7b1fa2; color: #f3e5f5; }
+  .sub-model-card { border-color: #444; }
+  .sub-model-card-header { border-bottom-color: #444; }
+  .sub-model-card-header-hit,
+  .sub-model-card-header-val { background: #2a1535; }
+  .sub-model-card-desc { color: #aaa; }
+}
+:root[data-theme="dark"] .model-primary-desc { color: #aaa; }
+:root[data-theme="dark"] .model-tag-val { background: #7b1fa2; color: #f3e5f5; }
+:root[data-theme="dark"] .sub-model-card { border-color: #444; }
+:root[data-theme="dark"] .sub-model-card-header { border-bottom-color: #444; }
+:root[data-theme="dark"] .sub-model-card-header-hit,
+:root[data-theme="dark"] .sub-model-card-header-val { background: #2a1535; }
+:root[data-theme="dark"] .sub-model-card-desc { color: #aaa; }
+:root[data-theme="light"] .model-primary-desc { color: #666; }
+:root[data-theme="light"] .model-tag-val { background: #ce93d8; color: #4a148c; }
+
 /* --- 内訳テーブルの式別セル（_breakdown_table_html／_bet_stat_cell_html） --- */
 /* 概要カード（.bet-stat-card）と同じ「上に回収率(大)・下に的中率(小)」の縦並びを
    1セルの中で再現し、内訳テーブルでもカードと同じ主従関係を一目で分かるようにする。 */
