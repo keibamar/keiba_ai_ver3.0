@@ -327,12 +327,41 @@ def make_html_prev_day(race_day):
     daily_index_generator.make_daily_index_page(race_day)
 
 
+def _supplement_missing_weights(race_day):
+    """race_card CSVの馬体重(増減)が欠損している馬を結果データから補完する
+
+    馬体重はJRAが1〜7R（午前）と8〜12R（後発）の2バッチで発表する。
+    8R以降のスクレイピングが発表前に実行された場合、race_cardにNaNが残る。
+    この関数はそのような欠損をレース結果データから事後補完する。
+    """
+    time_id_list = race_card_dataset_manager.get_time_id_list(race_day)
+    for _, race_id in time_id_list:
+        try:
+            card = race_card_dataset_manager.get_race_cards(race_day, str(race_id))
+            if card.empty or "馬体重(増減)" not in card.columns:
+                continue
+            missing_count = card["馬体重(増減)"].isna().sum()
+            if missing_count == 0:
+                continue
+            results_df = race_result_dataset_manager.get_race_id_result(str(race_id))
+            if results_df.empty or "馬体重" not in results_df.columns:
+                continue
+            _update_race_card_from_result(race_day, str(race_id), results_df)
+            print(f"  馬体重補完: {race_id} ({missing_count}頭)")
+        except Exception as e:
+            print(f"  馬体重補完エラー: {race_id} - {e}")
+
+
 def update_daily_html(race_day=date.today()):
     """当日分のレース結果・配当結果を取得し、HTMLを再生成する（毎週土・日実行想定）
 
     Args:
         race_day(date) : レース開催日(初期値:今日)
     """
+    # 前日の馬体重欠損を補完（8R以降の2段階発表で取りこぼしが生じることがある）
+    prev_day = race_day - timedelta(days=1)
+    _supplement_missing_weights(prev_day)
+
     time_id_list = race_card_dataset_manager.get_time_id_list(race_day)
     for _, race_id in time_id_list:
         try:

@@ -372,12 +372,21 @@ def get_index_band_breakdown(df):
         try:
             race_day = _dt.strptime(str(row.get("race_day", ""))[:10], "%Y-%m-%d").date()
             pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
-            if pred_df.empty or "score" not in pred_df.columns:
+            if pred_df.empty:
                 continue
-            top_score = pd.to_numeric(pred_df["score"], errors="coerce").max()
-            if pd.isna(top_score):
+            # MARメインモデル優先、旧 score 列にフォールバック
+            if "idx_mar" in pred_df.columns and pred_df["idx_mar"].notna().any():
+                ai_idx = pd.to_numeric(pred_df["idx_mar"], errors="coerce").max()
+                if pd.isna(ai_idx):
+                    continue
+                ai_idx = int(round(float(ai_idx)))
+            elif "score" in pred_df.columns:
+                top_score = pd.to_numeric(pred_df["score"], errors="coerce").max()
+                if pd.isna(top_score):
+                    continue
+                ai_idx = score_to_index(float(top_score))
+            else:
                 continue
-            ai_idx = score_to_index(float(top_score))
             if ai_idx is None:
                 continue
         except Exception:
@@ -447,12 +456,18 @@ def get_horse_index_band_breakdown(df):
         try:
             race_day = _dt.strptime(str(row.get("race_day", ""))[:10], "%Y-%m-%d").date()
             pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
-            if pred_df.empty or "score" not in pred_df.columns or "horse_id" not in pred_df.columns:
+            if pred_df.empty or "horse_id" not in pred_df.columns:
                 continue
             result_df = race_result_dataset_manager.get_race_id_result(race_id)
             if result_df.empty or "着順" not in result_df.columns or "horse_id" not in result_df.columns:
                 continue
-            pred_sub = pred_df[["horse_id", "score"]].copy()
+            # MARメインモデル優先、旧 score 列にフォールバック
+            idx_col = "idx_mar" if ("idx_mar" in pred_df.columns and pred_df["idx_mar"].notna().any()) else (
+                "score" if "score" in pred_df.columns else None
+            )
+            if idx_col is None:
+                continue
+            pred_sub = pred_df[["horse_id", idx_col]].copy()
             pred_sub["horse_id"] = pred_sub["horse_id"].astype(str)
             res_sub = result_df[["horse_id", "着順"]].copy()
             res_sub["horse_id"] = res_sub["horse_id"].astype(str)
@@ -461,10 +476,14 @@ def get_horse_index_band_breakdown(df):
             continue
 
         for _, hrow in merged.iterrows():
-            score_val = _pd.to_numeric(hrow["score"], errors="coerce")
+            score_val = _pd.to_numeric(hrow[idx_col], errors="coerce")
             if _pd.isna(score_val):
                 continue
-            ai_idx = score_to_index(float(score_val))
+            # idx_mar は既に 0-100 スケール、score は変換が必要
+            if idx_col == "idx_mar":
+                ai_idx = int(round(float(score_val)))
+            else:
+                ai_idx = score_to_index(float(score_val))
             if ai_idx is None:
                 continue
             finish_str = str(hrow["着順"])

@@ -36,28 +36,23 @@ def weekday_label_html(day, fmt="%m/%d"):
 
 
 def extract_entry_sub(df_analysis):
-    """df_analysis から 馬番, rank, score（あればscore_hitrateも）を抽出して統合する
-
-    rank/score が存在しない場合は空列にする。score_hitrate（的中率重視モデルの
-    生スコア。バランス型ブレンドの正規化前の値）があれば一緒に運び、
-    表示側でScore列をそちらにフォールバックできるようにする。
-    """
+    """df_analysis から 馬番 と3戦略マルチモデル指数列を抽出して統合する"""
     df = df_analysis.copy()
 
     if "馬番" not in df.columns:
         df["馬番"] = None
 
-    if {"rank", "score"}.issubset(df.columns):
-        cols = ["馬番", "rank", "score"]
-        if "score_hitrate" in df.columns:
-            cols.append("score_hitrate")
-        entry_sub = df[cols].copy()
-        entry_sub["rank_score"] = entry_sub["rank"].astype(str) + "_" + entry_sub["score"].astype(str)
-    else:
-        entry_sub = df[["馬番"]].copy()
-        entry_sub["rank"] = None
-        entry_sub["score"] = None
-        entry_sub["rank_score"] = None
+    multi_cols = ["idx_hitrate", "rank_hitrate", "idx_value", "rank_value", "idx_mar", "rank_mar"]
+    base_cols  = ["馬番"]
+    carry = [c for c in multi_cols if c in df.columns]
+
+    entry_sub = df[base_cols + carry].copy()
+
+    # 旧 score/rank も残す（旧CSVのフォールバック用）
+    if "score" in df.columns:
+        entry_sub["score"] = df["score"]
+    if "rank" in df.columns:
+        entry_sub["rank"] = df["rank"]
 
     return entry_sub
 

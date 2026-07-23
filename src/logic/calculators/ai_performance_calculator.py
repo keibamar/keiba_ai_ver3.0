@@ -34,6 +34,46 @@ from src.managers import (
 )
 
 BET_TYPES = ("win", "place", "trio_box")
+_GRADED = {"G1", "G2", "G3"}
+
+# ── メインレース番号の手動オーバーライド ────────────────────────────────────
+# 重賞(G1/G2/G3)以外のレース（オープン特別等）が通常と異なるR番号に組まれている
+# 特殊開催期間に設定する。重賞が存在する場合は重賞が優先される。
+# 形式: { place_id: [(start_date, end_date, race_num), ...] }
+#   place_id: 1=札幌 2=函館 3=福島 4=新潟 5=東京 6=中山 7=中京 8=京都 9=阪神 10=小倉
+MAIN_RACE_NUM_OVERRIDES: dict = {
+    4: [(date(2026, 7, 26), date(2026, 8, 10), 7)],  # 新潟: 2026年夏開催
+    7: [(date(2026, 7, 26), date(2026, 8, 10), 7)],  # 中京: 2026年夏開催
+}
+
+
+def _get_override_race_num(place_id: int, race_day) -> int | None:
+    """place_id・race_dayに対応するメインレース番号オーバーライドを返す（なければNone）"""
+    for start, end, rnum in MAIN_RACE_NUM_OVERRIDES.get(place_id, []):
+        if start <= race_day <= end:
+            return rnum
+    return None
+
+
+def _best_main_race(candidates, place_id=None, race_day=None):
+    """開催場内の全レース候補から最もメインとなるレースを選出する。
+    優先順位: ① 重賞(G1/G2/G3) ② オーバーライド指定R番号 ③ R11 ④ 最大レース番号
+    candidates: [(row, race_num, is_graded), ...]
+    """
+    graded = [(r, n, g) for r, n, g in candidates if g]
+    if graded:
+        return sorted(graded, key=lambda x: x[1])[0]
+    # 手動オーバーライド（重賞なし時のみ適用）
+    if place_id is not None and race_day is not None:
+        override_rnum = _get_override_race_num(place_id, race_day)
+        if override_rnum is not None:
+            override = [(r, n, g) for r, n, g in candidates if n == override_rnum]
+            if override:
+                return override[0]
+    r11 = [(r, n, g) for r, n, g in candidates if n == 11]
+    if r11:
+        return r11[0]
+    return sorted(candidates, key=lambda x: x[1])[-1]
 
 
 def parse_race_id(race_id):
@@ -97,18 +137,23 @@ def calc_race_hit_returns(race_day, race_id, box_num=5):
             除外したい）はNoneを返す。
     """
     pred_df = race_card_dataset_manager.get_race_cards(race_day, race_id)
-    if "rank" not in pred_df.columns or "score" not in pred_df.columns:
-        return None
 
     returns_df = race_info_dataset_manager.get_race_return_csv_for_race(race_id)
     if returns_df.empty:
         return None
 
-    # rank列の値（1等）でAI本命馬を探すと、スコアが同値の馬が複数いる場合に
-    # 「本命馬」が1頭に決まらず、的中判定がゆるくなって的中率・回収率が
-    # 実態より高く出てしまう。score降順で並べ、常にちょうど1頭を本命馬として
-    # 確定させる（三連複BOXも同様にscore降順の上位box_num頭で固定する）。
-    sorted_df = pred_df.sort_values("score", ascending=False).reset_index(drop=True)
+    # MAR推奨（メインモデル）が利用可能であればそちらを優先、
+    # 古いCSV（idx_mar 列なし）の場合は旧 score 列にフォールバックする。
+    if "idx_mar" in pred_df.columns and pred_df["idx_mar"].notna().any():
+        sort_col = "idx_mar"
+    elif "score" in pred_df.columns:
+        sort_col = "score"
+    else:
+        return None
+
+    # 降順で並べ常に1頭を本命馬として確定させる
+    # （三連複BOXも上位 box_num 頭で固定する）
+    sorted_df = pred_df.sort_values(sort_col, ascending=False).reset_index(drop=True)
     sorted_nums = sorted_df["馬番"].astype(int).tolist()
     pick_num = sorted_nums[0] if sorted_nums else None
     box_nums = set(sorted_nums[:box_num])
@@ -241,12 +286,27 @@ def get_today_main_races_with_course(today=None):
     if time_id_df.empty:
         return []
 
-    main_df = time_id_df[
-        time_id_df["race_id"].apply(lambda rid: parse_race_id(rid)["race_num"] == 11)
-    ].sort_values("race_time")
+    # 開催場ごとにメインレースを選出:
+    # 優先順位 ① 重賞(G1/G2/G3) ② R11 ③ 最大レース番号
+    # （R12以降は通常R11後の小戦のため最大Rよりも重賞/R11を優先）
+    GRADED = {"G1", "G2", "G3"}
+    place_all = {}  # place_id -> [(row, rnum, is_graded), ...]
+    for _, row in time_id_df.iterrows():
+        pid = parse_race_id(row["race_id"])["place_id"]
+        rnum = parse_race_id(row["race_id"])["race_num"]
+        grade = row.get("grade")
+        grade = grade if pd.notna(grade) else None
+        is_graded = grade in GRADED
+        place_all.setdefault(pid, []).append((row, rnum, is_graded))
+
+    sorted_rows = sorted(
+        [_best_main_race(v, place_id=pid, race_day=today) for pid, v in place_all.items()],
+        key=lambda x: x[0]["race_time"]
+    )
+    main_df_rows = [r for r, _, _ in sorted_rows]
 
     races = []
-    for _, row in main_df.iterrows():
+    for row in main_df_rows:
         race_id = str(row["race_id"])
         race_type, course_len = None, None
         # grade（G1/G2/G3）はtime_id_df保存時点の値をまず使い、後段の取得で
@@ -511,11 +571,21 @@ def get_weekend_main_race_details(weekend_end_day):
         time_id_df = race_card_dataset_manager.get_race_time_id_list_df(race_day)
         if time_id_df.empty:
             continue
-        main_df = time_id_df[
-            time_id_df["race_id"].apply(lambda rid: parse_race_id(rid)["race_num"] == 11)
-        ].sort_values("race_time")
+        # 開催場ごとにメインレースを選出（重賞 > R11 > 最大R）
+        place_all_w = {}
+        for _, row in time_id_df.iterrows():
+            pid = parse_race_id(row["race_id"])["place_id"]
+            rnum = parse_race_id(row["race_id"])["race_num"]
+            grade = row.get("grade")
+            grade = grade if pd.notna(grade) else None
+            is_graded = grade in {"G1", "G2", "G3"}
+            place_all_w.setdefault(pid, []).append((row, rnum, is_graded))
+        main_rows = sorted(
+            [_best_main_race(v, place_id=pid, race_day=race_day) for pid, v in place_all_w.items()],
+            key=lambda x: x[0]["race_time"]
+        )
 
-        for _, row in main_df.iterrows():
+        for row, _, _ in main_rows:
             race_id = str(row["race_id"])
             detail = _race_detail_summary(race_day, race_id)
             if detail is None:

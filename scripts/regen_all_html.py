@@ -13,6 +13,10 @@ import sys
 import warnings
 from datetime import datetime, date
 
+# Windows cp932環境でのUnicodeEncodeError回避
+if sys.stdout.encoding and sys.stdout.encoding.lower() not in ("utf-8", "utf_8"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 warnings.simplefilter("ignore")
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -266,11 +266,12 @@ def recent_5_performances(horse_id, date_str):
 
     res = []
     count = 0
-    for _, row in df_sorted.iterrows():
+    for _idx, row in df_sorted.iterrows():
         if count >= 5:
             break
         count += 1
-        race_id = row.get("race_id", "")
+        # race_id はDataFrameのインデックスとして格納されている
+        race_id = str(_idx) if _idx is not None and str(_idx) not in ("nan", "") else row.get("race_id", "")
         date_raw = row.get("日付", "")
         waku = row.get("枠番", "")
         umaban = row.get("馬番", "")
@@ -329,6 +330,7 @@ def recent_5_performances(horse_id, date_str):
 
         res.append(
             {
+                "race_id": safe_value(race_id),
                 "date": safe_value(date_raw),
                 "date_parsed": safe_value(row.get("日付_parsed", None)),
                 "race_name": safe_value(race_name),
@@ -655,15 +657,49 @@ def _avg_pass1(surface_summary, race_type):
     return float(v) if v is not None else None
 
 
-def _horse_comment_html(report, ai_index, rank, popularity):
-    """各馬の総評文を生成する（データに特徴がある軸のみ言及、最大4文）
+_UP_THRESHOLDS = {
+    # (good_threshold, poor_threshold) by class rank index matching _CLASS_ORDER
+    "芝": [
+        (35.5, 37.0),  # 新馬
+        (35.5, 37.0),  # 未勝利
+        (35.0, 36.5),  # 1勝クラス
+        (34.5, 36.0),  # 2勝クラス
+        (34.0, 35.5),  # 3勝クラス
+        (33.5, 35.0),  # オープン
+        (33.5, 35.0),  # G3
+        (33.0, 34.5),  # G2
+        (33.0, 34.5),  # G1
+    ],
+    "ダート": [
+        (38.0, 39.5),  # 新馬
+        (38.0, 39.5),  # 未勝利
+        (37.5, 39.0),  # 1勝クラス
+        (37.0, 38.5),  # 2勝クラス
+        (36.5, 38.0),  # 3勝クラス
+        (36.0, 37.5),  # オープン
+        (36.0, 37.5),  # G3
+        (35.5, 37.0),  # G2
+        (35.5, 37.0),  # G1
+    ],
+}
 
-    以下の5軸を評価し、閾値を超えたもののみ文章化する：
+
+def _horse_comment_html(report, ai_index, rank, popularity,
+                        idx_mar=None, rank_mar=None,
+                        idx_hitrate=None, rank_hitrate=None,
+                        idx_value=None, rank_value=None):
+    """各馬の総評文を生成する（データに特徴がある軸のみ言及）
+
+    評価軸：
     1. AI指数の絶対水準
     2. 人気との乖離（穴候補判定）
     3. 前走からの条件変化（コース/距離/クラス）
-    4. 血統のコース適性
-    5. 脚質傾向
+    4. 血統のコース適性（少母数警告含む）
+    5. 脚質傾向（近走vs平均の傾向変化も）
+    6. 上り末脚の評価（クラス対応閾値）
+    7. 持ち時計（クラス平均比較）
+    8. 近5走の着順傾向
+    9. MM指数が高い理由説明（rank_mar/hitrate/value いずれかが5位以内）
     """
     sentences = []
 
@@ -776,47 +812,83 @@ def _horse_comment_html(report, ai_index, rank, popularity):
         elif not now_heavy and prev_heavy and not sentences:
             sentences.append("前走は道悪だったが今回は良馬場。本来の力を発揮できる条件かどうかに注目。")
 
-    # ④ 血統コース適性
+    # ④ 血統コース適性（少母数警告含む）
     if peds_results is not None and not peds_results.empty:
         all_row = peds_results[peds_results["クラス"] == "all"]
         if not all_row.empty:
             r = all_row.iloc[0]
             try:
-                win_r = float(r.get("勝率", 0))
-                fuku_r = float(r.get("複勝率", 0))
-                total_wins = int(r.get("1着", 0))
+                n1 = int(r.get("1着", 0))
+                n2 = int(r.get("2着", 0))
+                n3 = int(r.get("3着", 0))
+                nout = int(r.get("着外", 0))
+                total_n = n1 + n2 + n3 + nout
+                win_r = (n1 / total_n * 100) if total_n > 0 else 0.0
+                fuku_r = ((n1 + n2 + n3) / total_n * 100) if total_n > 0 else 0.0
+                small_n_note = f"（参考：母数{total_n}件と少ないため信頼性に注意）" if total_n < 10 else ""
                 if win_r >= 18:
                     sentences.append(
-                        f"父{report.get('peds0', '')}のこのコース勝率は{win_r:.1f}%（{total_wins}勝）と高く、"
-                        f"血統面での適性は申し分ない。"
+                        f"父{report.get('peds0', '')}のこのコース勝率は{win_r:.1f}%（{n1}勝/{total_n}走）と高く、"
+                        f"血統面での適性は申し分ない。{small_n_note}"
                     )
                 elif fuku_r >= 40:
                     sentences.append(
                         f"父{report.get('peds0', '')}の複勝率{fuku_r:.1f}%と安定感があり、"
-                        f"このコースとの血統的な相性は良い。"
+                        f"このコースとの血統的な相性は良い。{small_n_note}"
                     )
-                elif win_r > 0 and win_r <= 5 and total_wins <= 2:
+                elif win_r > 0 and win_r <= 5 and n1 <= 2:
                     sentences.append(
                         f"父{report.get('peds0', '')}のこのコース勝率は{win_r:.1f}%と低く、"
-                        f"血統面の適性には疑問が残る。"
+                        f"血統面の適性には疑問が残る。{small_n_note}"
+                    )
+                elif total_n < 5:
+                    sentences.append(
+                        f"父{report.get('peds0', '')}のこのコース出走数は{total_n}件と少なく、"
+                        f"血統面の適性を判断するにはデータ不足。"
                     )
             except (ValueError, TypeError):
                 pass
 
-    # ⑤ 脚質傾向（今回のコース種別での平均第1コーナー通過順）
+    # ⑤ 脚質傾向（今回の芝/ダートでの平均通過順＋近走の傾向変化）
+    surf_key = "芝" if race_type and "芝" in race_type else "ダート"
     p1 = _avg_pass1(surface_summary, race_type)
     if p1 is not None:
+        style_label = ""
         if p1 <= 3.5:
-            sentences.append(
-                f"平均{p1:.1f}番手と先行タイプ。今回のコース・距離での先行有利/不利との相性が焦点。"
-            )
+            style_label = f"平均{p1:.1f}番手と先行タイプ。今回のコース・距離での先行有利/不利との相性が焦点。"
         elif p1 >= 9.0:
-            sentences.append(
-                f"平均{p1:.1f}番手と後ろから競馬するタイプ。展開と上り勝負の質次第。"
-            )
+            style_label = f"平均{p1:.1f}番手と後ろから競馬するタイプ。展開と上り勝負の質次第。"
 
-    # ⑥ 上り末脚の評価（今回の芝/ダートでの過去実績）
-    surf_key = "芝" if race_type and "芝" in race_type else "ダート"
+        # 近走（最大3走）の第1コーナー通過順と全体平均を比較して傾向変化を検出
+        recent_pass1_list = []
+        for rc in recent5[:3]:
+            norm_v = rc.get("通過_norm")
+            try:
+                if isinstance(norm_v, list) and len(norm_v) > 0 and norm_v[0] is not None:
+                    recent_pass1_list.append(float(norm_v[0]))
+            except (ValueError, TypeError):
+                pass
+        if len(recent_pass1_list) >= 2:
+            recent_p1_avg = sum(recent_pass1_list) / len(recent_pass1_list)
+            diff = recent_p1_avg - p1
+            if diff <= -2.5:
+                trend_note = f"近走の平均通過順は{recent_p1_avg:.1f}番手と、全体平均（{p1:.1f}番手）より前で競馬するようになっている。"
+                if style_label:
+                    sentences.append(style_label + trend_note)
+                else:
+                    sentences.append(trend_note)
+            elif diff >= 2.5:
+                trend_note = f"近走の平均通過順は{recent_p1_avg:.1f}番手と、全体平均（{p1:.1f}番手）より後ろで競馬する傾向に変わっている。"
+                if style_label:
+                    sentences.append(style_label + trend_note)
+                else:
+                    sentences.append(trend_note)
+            elif style_label:
+                sentences.append(style_label)
+        elif style_label:
+            sentences.append(style_label)
+
+    # ⑥ 上り末脚の評価（クラス対応の閾値）
     surf = surface_summary.get(surf_key, {})
     avg_up = surf.get("avg_up")
     surf_count = surf.get("count", 0)
@@ -825,19 +897,25 @@ def _horse_comment_html(report, ai_index, rank, popularity):
     except (ValueError, TypeError):
         avg_up_f = None
     if avg_up_f is not None and surf_count >= 3:
-        if avg_up_f <= 33.5:
+        cr = _class_rank(race_class_now)
+        cr_idx = max(0, min(cr if cr >= 0 else 2, len(_UP_THRESHOLDS["芝"]) - 1))
+        up_good, up_poor = _UP_THRESHOLDS.get(surf_key, _UP_THRESHOLDS["芝"])[cr_idx]
+        if avg_up_f <= up_good:
             sentences.append(
-                f"過去の{surf_key}レースでの平均上り{avg_up_f:.1f}秒は優秀で、"
+                f"過去の{surf_key}レースでの平均上り{avg_up_f:.1f}秒は{race_class_now}水準では優秀で、"
                 f"末脚が武器になるタイプ。上りが問われる展開なら強み。"
             )
-        elif avg_up_f >= 35.5:
+        elif avg_up_f >= up_poor:
             sentences.append(
-                f"平均上り{avg_up_f:.1f}秒とやや時間がかかる傾向で、"
+                f"平均上り{avg_up_f:.1f}秒は{race_class_now}水準ではやや時間がかかる傾向で、"
                 f"瞬発力勝負になる展開では苦しくなりやすい。"
             )
 
-    # ⑦ 持ち時計・コース経験
+    # ⑦ 持ち時計・コース経験（同条件馬場での平均比較）
     scb = report.get("same_course_best")
+    place_id = report.get("place_id")
+    course_name_for_avg = NAME_LIST[place_id - 1] if place_id and 1 <= place_id <= len(NAME_LIST) else ""
+    avg_ms = np.nan
     if scb is None:
         sentences.append(
             f"このコース・距離での出走は初めてで持ち時計がなく、"
@@ -845,11 +923,45 @@ def _horse_comment_html(report, ai_index, rank, popularity):
         )
     else:
         t_str = scb.get("time_str", "-")
-        ground_str = scb.get("ground", "")
-        ground_note = f"（{ground_str}）" if ground_str else ""
-        sentences.append(
-            f"このコース・距離で{t_str}{ground_note}の持ち時計があり、コース経験は十分。"
-        )
+        scb_ground = scb.get("ground", "") or ground_now
+        scb_date = scb.get("date", "")
+        scb_race = scb.get("race_name", "")
+        # 日付を "M/D" 形式に変換
+        try:
+            parts = str(scb_date).split("/")
+            date_display = f"{int(parts[1])}/{int(parts[2])}"
+        except Exception:
+            date_display = scb_date
+        race_display = f"({scb_race})" if scb_race and str(scb_race) not in ("-", "nan", "") else ""
+        ground_note = f"({scb_ground})" if scb_ground else ""
+        # 同じ馬場条件のクラス平均と比較（持ち時計を記録した馬場）
+        if course_name_for_avg and race_type and race_class_now and course_len_now and scb_ground:
+            try:
+                avg_ms = get_avg_time(course_name_for_avg, race_type, race_class_now, course_len_now, scb_ground)
+            except Exception:
+                pass
+        if not np.isnan(avg_ms):
+            diff_sec = (scb["time_ms"] - avg_ms) / 1000
+            avg_str = ms_to_time_str(int(avg_ms))
+            if diff_sec <= -0.5:
+                sentences.append(
+                    f"{date_display}{race_display}で{t_str}{ground_note}の持ち時計。"
+                    f"{scb_ground}のクラス平均{avg_str}より{abs(diff_sec):.1f}秒速く、十分な水準。"
+                )
+            elif diff_sec <= 0.5:
+                sentences.append(
+                    f"{date_display}{race_display}で{t_str}{ground_note}の持ち時計。"
+                    f"{scb_ground}のクラス平均{avg_str}とほぼ同等。"
+                )
+            else:
+                sentences.append(
+                    f"{date_display}{race_display}で{t_str}{ground_note}の持ち時計があるが、"
+                    f"{scb_ground}のクラス平均{avg_str}より{diff_sec:.1f}秒遅く、タイムを縮める必要あり。"
+                )
+        else:
+            sentences.append(
+                f"{date_display}{race_display}で{t_str}{ground_note}の持ち時計があり、コース経験は十分。"
+            )
 
     # ⑧ 近5走の着順傾向（3走以上のデータで傾きが明確なときだけ）
     results_numeric = []
@@ -879,6 +991,106 @@ def _horse_comment_html(report, ai_index, rank, popularity):
                 f"近{n}走の着順が下降気味（平均{y_mean:.1f}着）で、"
                 f"フォームの立て直しが課題。今回の巻き返しに期待できるかが焦点。"
             )
+
+    # ⑨ MM指数高評価の理由説明（いずれかのモデルでrank ≤ 5）
+    high_ranks = []
+    if rank_mar is not None and rank_mar <= 5:
+        high_ranks.append(f"MAR({rank_mar}位)")
+    if rank_hitrate is not None and rank_hitrate <= 5:
+        high_ranks.append(f"的中率({rank_hitrate}位)")
+    if rank_value is not None and rank_value <= 5:
+        high_ranks.append(f"回収率({rank_value}位)")
+    if high_ranks:
+        reasons = []
+        # 血統適性（具体的な勝率と出走数）
+        if peds_results is not None and not peds_results.empty:
+            all_row = peds_results[peds_results["クラス"] == "all"]
+            if not all_row.empty:
+                rr = all_row.iloc[0]
+                try:
+                    rn1 = int(rr.get("1着", 0))
+                    rn_total = rn1 + int(rr.get("2着", 0)) + int(rr.get("3着", 0)) + int(rr.get("着外", 0))
+                    r_win = (rn1 / rn_total * 100) if rn_total > 0 else 0
+                    if r_win >= 15:
+                        reasons.append(f"父{report.get('peds0', '')}のコース勝率{r_win:.0f}%（{rn1}勝/{rn_total}走）")
+                except (ValueError, TypeError):
+                    pass
+        # 持ち時計（具体的な日付・馬場・クラス平均との比較）
+        if scb is not None:
+            try:
+                parts = str(scb.get("date", "")).split("/")
+                scb_date_disp = f"{int(parts[1])}/{int(parts[2])}"
+            except Exception:
+                scb_date_disp = scb.get("date", "")
+            scb_g = scb.get("ground", "") or ground_now
+            scb_rname = scb.get("race_name", "")
+            scb_rname_disp = f"({scb_rname})" if scb_rname and str(scb_rname) not in ("-", "nan", "") else ""
+            if not np.isnan(avg_ms) and (scb["time_ms"] - avg_ms) / 1000 <= -0.3:
+                diff_disp = abs((scb["time_ms"] - avg_ms) / 1000)
+                reasons.append(
+                    f"{scb_date_disp}{scb_rname_disp}で{scb['time_str']}({scb_g})の持ち時計"
+                    f"（クラス平均より{diff_disp:.1f}秒速い）"
+                )
+            elif not np.isnan(avg_ms) and (scb["time_ms"] - avg_ms) / 1000 <= 0.3:
+                reasons.append(
+                    f"{scb_date_disp}{scb_rname_disp}で{scb['time_str']}({scb_g})の持ち時計"
+                    f"（クラス平均並み）"
+                )
+        # 上り末脚（クラス基準値を明記、何走で使えているかを表示）
+        if avg_up_f is not None and surf_count >= 2:
+            cr2 = _class_rank(race_class_now)
+            cr2_idx = max(0, min(cr2 if cr2 >= 0 else 2, len(_UP_THRESHOLDS["芝"]) - 1))
+            thr_good, _ = _UP_THRESHOLDS.get(surf_key, _UP_THRESHOLDS["芝"])[cr2_idx]
+            # 近走で上りが良かったレース数
+            good_up_count = 0
+            for rc in recent5:
+                try:
+                    up_v = float(str(rc.get("上り", "")).replace("-", ""))
+                    if up_v <= thr_good:
+                        good_up_count += 1
+                except (ValueError, TypeError):
+                    pass
+            if avg_up_f <= thr_good:
+                reasons.append(
+                    f"{surf_key}平均上り{avg_up_f:.1f}秒"
+                    f"（{race_class_now}目安{thr_good:.1f}秒以下、近{len(recent5[:5])}走で{good_up_count}走が基準クリア）"
+                )
+        # 近走好成績（具体的な日付・着順）
+        good_recent_strs = []
+        for rc in recent5[:4]:
+            res = str(rc.get("result", "")).strip()
+            if res in ("1", "2", "3"):
+                d = rc.get("date", "")
+                rn = rc.get("race_name", "")
+                try:
+                    dp = d.split("/")
+                    d_disp = f"{int(dp[1])}/{int(dp[2])}"
+                except Exception:
+                    d_disp = d
+                rn_disp = f"({rn})" if rn and str(rn) not in ("-", "nan", "") else ""
+                good_recent_strs.append(f"{d_disp}{rn_disp}{res}着")
+        if len(good_recent_strs) >= 2:
+            reasons.append("近走好走：" + "、".join(good_recent_strs[:3]))
+        elif good_recent_strs:
+            reasons.append(f"近走{good_recent_strs[0]}")
+        # 理由がない場合でも手持ちのデータで具体的に説明
+        if not reasons:
+            fallback_parts = []
+            if avg_up_f is not None and surf_count >= 2:
+                cr2 = _class_rank(race_class_now)
+                cr2_idx = max(0, min(cr2 if cr2 >= 0 else 2, len(_UP_THRESHOLDS["芝"]) - 1))
+                thr_g, _ = _UP_THRESHOLDS.get(surf_key, _UP_THRESHOLDS["芝"])[cr2_idx]
+                fallback_parts.append(f"{surf_key}平均上り{avg_up_f:.1f}秒（目安{thr_g:.1f}秒、{surf_count}走実績）")
+            if scb is not None:
+                scb_g = scb.get("ground", "")
+                fallback_parts.append(f"持ち時計{scb['time_str']}（{scb_g}）")
+            if not fallback_parts:
+                fallback_parts.append("過去成績とタイムの総合評価")
+            reasons = fallback_parts
+        sentences.append(
+            f"{'・'.join(high_ranks)}でモデル高評価。"
+            f"主な要因：{'、'.join(reasons)}。"
+        )
 
     if not sentences:
         return ""
@@ -947,7 +1159,80 @@ def get_ground_state_color(ground_state):
     return ground_state_color
 
 
-def horse_report_to_html(report, ai_index=None, rank=None, popularity=None):
+def _lookup_recent_indices(race_id, umaban, race_date=None):
+    """近走レース(race_id)でのこの馬(umaban)のMAR/的中率/回収率指数を返す
+
+    race_date: "YYYY/MM/DD" 形式の実際のレース日（ディレクトリ探索に使用）
+               省略時は race_id[:8] から推測するが race_id がJRA形式の場合は不正確
+
+    Returns: (idx_mar, rank_mar, idx_hitrate, rank_hitrate, idx_value, rank_value) or all None
+    """
+    if not race_id or str(race_id) in ("-", "nan", ""):
+        return None, None, None, None, None, None
+    try:
+        rid = str(race_id).strip()
+        if len(rid) < 12:
+            return None, None, None, None, None, None
+        from datetime import datetime
+        # race_date が渡されていればそれを優先（race_id[:8]はJRA開催番号で実際の日付ではない）
+        if race_date and str(race_date) not in ("-", "nan", ""):
+            try:
+                race_day = datetime.strptime(str(race_date).strip(), "%Y/%m/%d").date()
+            except ValueError:
+                try:
+                    race_day = datetime.strptime(str(race_date).strip(), "%Y%m%d").date()
+                except ValueError:
+                    race_day = datetime.strptime(rid[:8], "%Y%m%d").date()
+        else:
+            race_day = datetime.strptime(rid[:8], "%Y%m%d").date()
+        card = race_card_dataset_manager.get_race_cards(race_day, rid)
+        if card.empty or "馬番" not in card.columns:
+            return None, None, None, None, None, None
+        mask = card["馬番"].astype(str) == str(umaban)
+        if not mask.any():
+            return None, None, None, None, None, None
+        row = card[mask].iloc[0]
+        def _f(col):
+            v = row.get(col, None)
+            try:
+                return float(v) if v is not None and str(v) not in ("nan", "") else None
+            except Exception:
+                return None
+        def _i(col):
+            v = row.get(col, None)
+            try:
+                return int(float(v)) if v is not None and str(v) not in ("nan", "") else None
+            except Exception:
+                return None
+        idx_mar = _f("idx_mar")
+        rank_mar = _i("rank_mar")
+        idx_hr = _f("idx_hitrate")
+        rank_hr = _i("rank_hitrate")
+        idx_val = _f("idx_value")
+        rank_val = _i("rank_value")
+        # multi-model列がなければ旧 score/rank を MAR 列にフォールバック
+        if idx_mar is None and idx_hr is None and idx_val is None:
+            idx_score = _f("score")
+            rank_score = _i("rank")
+            if idx_score is not None:
+                return idx_score, rank_score, None, None, None, None
+        return idx_mar, rank_mar, idx_hr, rank_hr, idx_val, rank_val
+    except Exception:
+        return None, None, None, None, None, None
+
+
+def _mini_rank(rnk):
+    """近走指数用の小さなランク表示"""
+    if rnk is None:
+        return ""
+    color = "#d32f2f" if rnk <= 5 else "#888"
+    return f'<sub style="font-size:0.65em;color:{color};font-weight:bold;">({rnk})</sub>'
+
+
+def horse_report_to_html(report, ai_index=None, rank=None, popularity=None,
+                          idx_mar=None, rank_mar=None,
+                          idx_hitrate=None, rank_hitrate=None,
+                          idx_value=None, rank_value=None):
     """build_horse_report の出力からスタイル付きHTMLを作る
 
     色付けロジック:
@@ -962,7 +1247,10 @@ def horse_report_to_html(report, ai_index=None, rank=None, popularity=None):
     html = []
     html.append("<div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>")
 
-    comment = _horse_comment_html(report, ai_index, rank, popularity)
+    comment = _horse_comment_html(report, ai_index, rank, popularity,
+                                  idx_mar=idx_mar, rank_mar=rank_mar,
+                                  idx_hitrate=idx_hitrate, rank_hitrate=rank_hitrate,
+                                  idx_value=idx_value, rank_value=rank_value)
     if comment:
         html.append('<div class="horse-comment-wrap">')
         html.append(comment)
@@ -988,26 +1276,43 @@ def horse_report_to_html(report, ai_index=None, rank=None, popularity=None):
         html.append("<div>血統データなし</div>")
     else:
         html.append(f"<h4>🧬 {place_num} {race_type}{course_len}m ({ground_state})</h4>")
-        html.append('<div class="table-wrap">')
-        html.append("<table style='border-collapse: collapse; text-align: center;'>")
-        html.append(
-            "<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th>"
-            "<th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>"
-        )
+        html.append('<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>')
+        html.append('<div class="chakudo-chart">')
 
         for _, row in pr.iterrows():
             class_name = row.get("クラス", "")
-            html.append(f"<td><strong>{class_name}</strong></td>")
-            html.append(f"<td>{extract_peds_name(row.get('血統', '-'))}</td>")
-            html.append(f"<td>{safe_value(row.get('1着'))}</td>")
-            html.append(f"<td>{safe_value(row.get('2着'))}</td>")
-            html.append(f"<td>{safe_value(row.get('3着'))}</td>")
-            html.append(f"<td>{safe_value(row.get('着外'))}</td>")
-            html.append(f"<td>{safe_value(row.get('勝率'))}</td>")
-            html.append(f"<td>{safe_value(row.get('複勝率'))}</td>")
-            html.append("</tr>")
-
-        html.append("</tbody></table>")
+            peds_name  = extract_peds_name(row.get("血統", "-"))
+            n1   = int(row.get("1着",  0) or 0)
+            n2   = int(row.get("2着",  0) or 0)
+            n3   = int(row.get("3着",  0) or 0)
+            nout = int(row.get("着外", 0) or 0)
+            total = n1 + n2 + n3 + nout
+            if total == 0:
+                continue
+            w1   = n1   / total * 100
+            w2   = n2   / total * 100
+            w3   = n3   / total * 100
+            wout = nout / total * 100
+            win_rate   = round(n1 / total * 100, 1)
+            cumul2     = round((n1 + n2) / total * 100, 1)
+            place_rate = round((n1 + n2 + n3) / total * 100, 1)
+            out_rate   = round(nout / total * 100, 1)
+            seg1   = (f'<span class="chakudo-segment seg-1st" style="width:{w1:.2f}%">{n1}'
+                      f'<span class="chakudo-tooltip">1着 {n1}回 ／ 勝率 {win_rate}%</span></span>')
+            seg2   = (f'<span class="chakudo-segment seg-2nd" style="width:{w2:.2f}%">{n2}'
+                      f'<span class="chakudo-tooltip">2着 {n2}回 ／ 累積 {cumul2}%</span></span>')
+            seg3   = (f'<span class="chakudo-segment seg-3rd" style="width:{w3:.2f}%">{n3}'
+                      f'<span class="chakudo-tooltip">3着 {n3}回 ／ 複勝率 {place_rate}%</span></span>')
+            segout = (f'<span class="chakudo-segment seg-out" style="width:{wout:.2f}%">{nout}'
+                      f'<span class="chakudo-tooltip">着外 {nout}回 ／ 着外率 {out_rate}%</span></span>')
+            html.append(
+                f'<div class="chakudo-row">'
+                f'<span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">{class_name}</span>'
+                f'<span class="chakudo-label peds-label">{peds_name}</span>'
+                f'<span class="chakudo-bar-track">{seg1}{seg2}{seg3}{segout}</span>'
+                f'<span class="chakudo-value">n={total}</span>'
+                f'</div>'
+            )
         html.append("</div>")
 
     html.append("<h4>📊 近5走成績</h4>")
@@ -1017,10 +1322,19 @@ def horse_report_to_html(report, ai_index=None, rank=None, popularity=None):
         html.append(
             "<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th>"
             "<th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th>"
-            "<th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>"
+            "<th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th>"
+            "<th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th>"
+            "<th style='background:#9c27b0;color:white;'>的中率</th>"
+            "<th style='background:#ce93d8;color:#4a148c;'>回収率</th>"
+            "</tr></thead><tbody>"
         )
 
         for r in report["recent5"]:
+            # 近走指数を race_card CSV から取得（race_dateはディレクトリ名に使うため必須）
+            _rid  = r.get("race_id", "")
+            _uban = r.get("umaban", "")
+            _rdate = r.get("date", "")
+            _im, _rm, _ih, _rh, _iv, _rv = _lookup_recent_indices(_rid, _uban, race_date=_rdate)
             finish = r.get("result", "-")
             finish_color = RANK_COLORS.get(finish, "#ffffff")
             finish_html = f'<td style="background-color: {finish_color}; font-weight: bold;">{finish}</td>'
@@ -1072,6 +1386,18 @@ def horse_report_to_html(report, ai_index=None, rank=None, popularity=None):
             html.append(f"<td>{r.get('上り', '-')}</td>")
             html.append(f"<td>{r.get('通過', '-')}</td>")
             html.append(f"<td>{r.get('馬体重', '-')}</td>")
+            # 近走AI指数セル
+            def _idx_cell(val, rnk, bg_main="#FFFDE7"):
+                if val is None:
+                    return "<td style='color:#ccc;'>-</td>"
+                bg = bg_main if rnk and rnk <= 3 else ""
+                bg_css = f"background-color:{bg};" if bg else ""
+                rc = "#d32f2f" if rnk and rnk <= 5 else "#888"
+                rs = f'<sub style="font-size:0.65em;color:{rc};font-weight:bold;">({rnk})</sub>' if rnk else ""
+                return f'<td style="{bg_css}font-weight:{"bold" if rnk and rnk<=3 else "normal"};">{val:.1f}{rs}</td>'
+            html.append(_idx_cell(_im, _rm, "#FFF176"))
+            html.append(_idx_cell(_ih, _rh, "#FFF176"))
+            html.append(_idx_cell(_iv, _rv, "#E0F7FA"))
             html.append("</tr>")
 
         html.append("</tbody></table>")

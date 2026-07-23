@@ -90,6 +90,46 @@
       color: white;
     }
 
+    /* 3戦略マルチモデル指数列 - 塗りつぶしなし、枠線で列グループを分割 */
+    /* サブ列（的中率/回収率）: 細い左区切り線のみ */
+    .mm-hitrate-col {
+      border-left: 1px solid #ce93d8;
+    }
+    .mm-value-col {
+      border-left: 1px solid #ce93d8;
+    }
+    /* MAR列: 両側に太めボーダーで主軸を明示（サブ列より目立つ枠） */
+    .mm-mar-col {
+      border-left: 2px solid #6a1b9a;
+      border-right: 2px solid #6a1b9a;
+    }
+    /* セル背景: 偶数行の標準ストライプに従う（個別背景なし） */
+    tbody tr td.mm-hitrate-col,
+    tbody tr td.mm-value-col,
+    tbody tr td.mm-mar-col {
+      text-align: center;
+    }
+    /* ヘッダー色（サブ=薄紫・MAR=濃紫） */
+    th.mm-hitrate-col {
+      background-color: #9c27b0;
+      color: white;
+      font-size: 0.70em;
+      white-space: nowrap;
+    }
+    th.mm-value-col {
+      background-color: #ce93d8;
+      color: #4a148c;
+      font-size: 0.70em;
+      white-space: nowrap;
+    }
+    th.mm-mar-col {
+      background-color: #6a1b9a;
+      color: white;
+      font-size: 0.85em;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
     /* コースリンク（レース名横）- 芝は緑、ダートは茶 */
     .course-link {
       font-size: 0.75em;
@@ -255,7 +295,7 @@
   <div id="todayRace"></div>
 </div>
 <script>window.CALENDAR_BASE_PATH = "../../";</script>
-<script src="../../assets/js/raceDays.js?v=1783595176"></script>
+<script src="../../assets/js/raceDays.js?v=1784199949"></script>
 <script src="../../assets/js/calendar.js?v=1782765283"></script>
 
   </div>
@@ -310,7 +350,7 @@
   <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "HOME", "item": "https://mar-keiba.com/"}, {"@type": "ListItem", "position": 2, "name": "レースカレンダー", "item": "https://mar-keiba.com/races/index.html"}, {"@type": "ListItem", "position": 3, "name": "2026/07/11", "item": "https://mar-keiba.com/races/20260711/index.html"}, {"@type": "ListItem", "position": 4, "name": "函館", "item": "https://mar-keiba.com/races/20260711/02_hakodateR3.html"}, {"@type": "ListItem", "position": 5, "name": "3R 3歳未勝利"}]}</script>
   <h2 class="race-page-title">2026/07/11　函館競馬場　第3R　3歳未勝利<a href="../../courses/02_hakodate/芝-1200.html" class="course-link turf">芝1200m</a></h2>
   <p class="race-page-time">発走時刻: 10:50</p>
-  <p class="race-page-info">天候:雨 馬場:稍重 クラス:未勝利</p>
+  <p class="race-page-info">天候:曇 馬場:稍重 クラス:未勝利</p>
   <p class="odds-update-label odds-update-label--confirmed">確定オッズ</p>
   <div class="table-wrap table-wrap--full">
   <table id="raceTable">
@@ -325,8 +365,9 @@
         <th>馬体重</th>
         <th>人気 ▼</th>
         <th>単勝オッズ</th>
-        <th class="ai-score-col">AI指数</th>
-        <th class="ai-rank-col">Rank ▼</th>
+        <th class="mm-hitrate-col" title="的中率重視モデル指数（単複:v11α0.6 / 三連複:v15α0.5）">的中率モデル ▼</th>
+        <th class="mm-value-col" title="回収率重視モデル指数（オッズ不使用・前日公開可）">回収率モデル ▼</th>
+        <th class="mm-mar-col" title="MAR推奨指数（バランス型メインモデル）">MAR指数 ▼</th>
       </tr>
     </thead>
     <tbody>
@@ -341,8 +382,9 @@
           <td style="">482(0)</td>
           <td style="background-color:#FFA07A;">3</td>
           <td style="color:#c62828; font-weight:bold;">5.9</td>
-          <td class="ai-score-col" title="AI指数 60〜64点帯（3,347頭の実績 単勝率10.3% / 複勝率28.6%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#c62828; font-weight:bold;">61.8</td>
-          <td class="ai-rank-col" style="background-color:#FFE0B2;">3</td>
+          <td class="mm-hitrate-col" data-sort="45.80" style="color:#333;font-size:0.82em;font-weight:normal;">45.8<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(9)</sub></td>
+          <td class="mm-value-col" data-sort="44.50" style="color:#333;font-size:0.82em;font-weight:normal;">44.5<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(12)</sub></td>
+          <td class="mm-mar-col" data-sort="46.40" style="color:#333;font-size:1.05em;font-weight:bold;">46.4<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(9)</sub></td>
         </tr>
         
         <tr>
@@ -355,8 +397,9 @@
           <td style="">418(-4)</td>
           <td style="background-color:#ffffff;">5</td>
           <td style="color:#c62828; font-weight:bold;">4.8</td>
-          <td class="ai-score-col" title="AI指数 65〜69点帯（1,701頭の実績 単勝率11.6% / 複勝率29.6%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#c62828; font-weight:bold;">65.1</td>
-          <td class="ai-rank-col" style="background-color:#B2EBF2;">2</td>
+          <td class="mm-hitrate-col" data-sort="48.40" style="color:#333;font-size:0.82em;font-weight:normal;">48.4<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(7)</sub></td>
+          <td class="mm-value-col" data-sort="50.20" style="color:#333;font-size:0.82em;font-weight:normal;">50.2<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+          <td class="mm-mar-col" data-sort="52.60" style="color:#333;font-size:1.05em;font-weight:bold;">52.6<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(5)</sub></td>
         </tr>
         
         <tr>
@@ -369,8 +412,9 @@
           <td style="">480(+4)</td>
           <td style="background-color:#ffffff;">9</td>
           <td style="color:#333;">28.5</td>
-          <td class="ai-score-col" title="AI指数: コース・距離別の絶対的な能力スコア（0〜100点、高いほど高評価）" style="color:#333;">44.5</td>
-          <td class="ai-rank-col" style="">11</td>
+          <td class="mm-hitrate-col" data-sort="46.30" style="color:#333;font-size:0.82em;font-weight:normal;">46.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(8)</sub></td>
+          <td class="mm-value-col" data-sort="43.90" style="color:#333;font-size:0.82em;font-weight:normal;">43.9<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(15)</sub></td>
+          <td class="mm-mar-col" data-sort="45.90" style="color:#333;font-size:1.05em;font-weight:bold;">45.9<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(10)</sub></td>
         </tr>
         
         <tr>
@@ -383,8 +427,9 @@
           <td style="">460(-4)</td>
           <td style="background-color:#ffffff;">11</td>
           <td style="color:#333;">28.2</td>
-          <td class="ai-score-col" title="AI指数 35〜39点帯（6,807頭の実績 単勝率5.7% / 複勝率19.5%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#1f4fd6; font-weight:bold;">35.9</td>
-          <td class="ai-rank-col" style="">16</td>
+          <td class="mm-hitrate-col" data-sort="45.00" style="color:#333;font-size:0.82em;font-weight:normal;">45.0<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(11)</sub></td>
+          <td class="mm-value-col" data-sort="49.50" style="color:#333;font-size:0.82em;font-weight:normal;">49.5<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(6)</sub></td>
+          <td class="mm-mar-col" data-sort="45.00" style="color:#333;font-size:1.05em;font-weight:bold;">45.0<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(11)</sub></td>
         </tr>
         
         <tr>
@@ -397,8 +442,9 @@
           <td style="">478(+4)</td>
           <td style="background-color:#ffffff;">8</td>
           <td style="color:#333;">31.6</td>
-          <td class="ai-score-col" title="AI指数 40〜44点帯（8,045頭の実績 単勝率6.9% / 複勝率20.7%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">40.2</td>
-          <td class="ai-rank-col" style="">14</td>
+          <td class="mm-hitrate-col" data-sort="55.50" style="background-color:#FFE0B2;color:#333;font-size:0.82em;font-weight:bold;">55.5<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+          <td class="mm-value-col" data-sort="59.20" style="background-color:#E0F7FA;color:#333;font-size:0.82em;font-weight:bold;">59.2<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+          <td class="mm-mar-col" data-sort="52.90" style="color:#333;font-size:1.05em;font-weight:bold;">52.9<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(4)</sub></td>
         </tr>
         
         <tr>
@@ -411,8 +457,9 @@
           <td style="">492(0)</td>
           <td style="background-color:#FFD700;">1</td>
           <td style="color:#c62828; font-weight:bold;">6.0</td>
-          <td class="ai-score-col" title="AI指数 55〜59点帯（5,326頭の実績 単勝率8.8% / 複勝率25.2%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">57.3</td>
-          <td class="ai-rank-col" style="">5</td>
+          <td class="mm-hitrate-col" data-sort="56.10" style="background-color:#E0F7FA;color:#333;font-size:0.82em;font-weight:bold;">56.1<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+          <td class="mm-value-col" data-sort="52.40" style="background-color:#FFE0B2;color:#333;font-size:0.82em;font-weight:bold;">52.4<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+          <td class="mm-mar-col" data-sort="56.40" style="background-color:#80DEEA;color:#333;font-size:1.05em;font-weight:bold;">56.4<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(2)</sub></td>
         </tr>
         
         <tr>
@@ -425,8 +472,9 @@
           <td style="">470(0)</td>
           <td style="background-color:#ffffff;">10</td>
           <td style="color:#333;">23.7</td>
-          <td class="ai-score-col" title="AI指数 50〜54点帯（6,872頭の実績 単勝率7.8% / 複勝率22.9%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">52.3</td>
-          <td class="ai-rank-col" style="">7</td>
+          <td class="mm-hitrate-col" data-sort="83.20" style="background-color:#FFFDE7;color:#c62828;font-size:0.82em;font-weight:bold;">83.2<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+          <td class="mm-value-col" data-sort="84.20" style="background-color:#FFFDE7;color:#c62828;font-size:0.82em;font-weight:bold;">84.2<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+          <td class="mm-mar-col" data-sort="84.00" style="background-color:#FFF176;color:#c62828;font-size:1.05em;font-weight:bold;">84.0<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(1)</sub></td>
         </tr>
         
         <tr>
@@ -439,8 +487,9 @@
           <td style="">422(+2)</td>
           <td style="background-color:#ffffff;">4</td>
           <td style="color:#c62828; font-weight:bold;">7.1</td>
-          <td class="ai-score-col" title="AI指数 60〜64点帯（3,347頭の実績 単勝率10.3% / 複勝率28.6%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#c62828; font-weight:bold;">60.8</td>
-          <td class="ai-rank-col" style="">4</td>
+          <td class="mm-hitrate-col" data-sort="51.50" style="color:#333;font-size:0.82em;font-weight:normal;">51.5<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(6)</sub></td>
+          <td class="mm-value-col" data-sort="46.30" style="color:#333;font-size:0.82em;font-weight:normal;">46.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(10)</sub></td>
+          <td class="mm-mar-col" data-sort="53.30" style="background-color:#FFA726;color:#333;font-size:1.05em;font-weight:bold;">53.3<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(3)</sub></td>
         </tr>
         
         <tr>
@@ -453,8 +502,9 @@
           <td style="">464(+8)</td>
           <td style="background-color:#ffffff;">7</td>
           <td style="color:#333;">18.4</td>
-          <td class="ai-score-col" title="AI指数: コース・距離別の絶対的な能力スコア（0〜100点、高いほど高評価）" style="color:#333;">44.7</td>
-          <td class="ai-rank-col" style="">10</td>
+          <td class="mm-hitrate-col" data-sort="52.90" style="color:#333;font-size:0.82em;font-weight:normal;">52.9<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+          <td class="mm-value-col" data-sort="47.20" style="color:#333;font-size:0.82em;font-weight:normal;">47.2<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(8)</sub></td>
+          <td class="mm-mar-col" data-sort="49.20" style="color:#333;font-size:1.05em;font-weight:bold;">49.2<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(7)</sub></td>
         </tr>
         
         <tr>
@@ -467,8 +517,9 @@
           <td style="">444(-2)</td>
           <td style="background-color:#B0E0E6;">2</td>
           <td style="color:#c62828; font-weight:bold;">4.4</td>
-          <td class="ai-score-col" title="AI指数 65〜69点帯（1,701頭の実績 単勝率11.6% / 複勝率29.6%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#c62828; font-weight:bold;">66.6</td>
-          <td class="ai-rank-col" style="background-color:#FFF9C4;">1</td>
+          <td class="mm-hitrate-col" data-sort="53.50" style="color:#333;font-size:0.82em;font-weight:normal;">53.5<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+          <td class="mm-value-col" data-sort="46.50" style="color:#333;font-size:0.82em;font-weight:normal;">46.5<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(9)</sub></td>
+          <td class="mm-mar-col" data-sort="49.60" style="color:#333;font-size:1.05em;font-weight:bold;">49.6<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(6)</sub></td>
         </tr>
         
         <tr>
@@ -481,8 +532,9 @@
           <td style="">438(+8)</td>
           <td style="background-color:#ffffff;">14</td>
           <td style="color:#1f4fd6; font-weight:bold;">107.8</td>
-          <td class="ai-score-col" title="AI指数: コース・距離別の絶対的な能力スコア（0〜100点、高いほど高評価）" style="color:#333;">54.5</td>
-          <td class="ai-rank-col" style="">6</td>
+          <td class="mm-hitrate-col" data-sort="43.30" style="color:#333;font-size:0.82em;font-weight:normal;">43.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(13)</sub></td>
+          <td class="mm-value-col" data-sort="44.10" style="color:#333;font-size:0.82em;font-weight:normal;">44.1<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(13)</sub></td>
+          <td class="mm-mar-col" data-sort="43.40" style="color:#333;font-size:1.05em;font-weight:bold;">43.4<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(15)</sub></td>
         </tr>
         
         <tr>
@@ -495,8 +547,9 @@
           <td style="">418(-6)</td>
           <td style="background-color:#ffffff;">15</td>
           <td style="color:#333;">91.5</td>
-          <td class="ai-score-col" title="AI指数 45〜49点帯（7,286頭の実績 単勝率7.6% / 複勝率22.5%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">47.3</td>
-          <td class="ai-rank-col" style="">8</td>
+          <td class="mm-hitrate-col" data-sort="43.30" style="color:#333;font-size:0.82em;font-weight:normal;">43.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(15)</sub></td>
+          <td class="mm-value-col" data-sort="43.20" style="color:#333;font-size:0.82em;font-weight:normal;">43.2<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(16)</sub></td>
+          <td class="mm-mar-col" data-sort="43.30" style="color:#333;font-size:1.05em;font-weight:bold;">43.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(16)</sub></td>
         </tr>
         
         <tr>
@@ -509,8 +562,9 @@
           <td style="">490(+2)</td>
           <td style="background-color:#ffffff;">16</td>
           <td style="color:#333;">98.0</td>
-          <td class="ai-score-col" title="AI指数 35〜39点帯（6,807頭の実績 単勝率5.7% / 複勝率19.5%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#1f4fd6; font-weight:bold;">36.0</td>
-          <td class="ai-rank-col" style="">15</td>
+          <td class="mm-hitrate-col" data-sort="43.40" style="color:#333;font-size:0.82em;font-weight:normal;">43.4<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(12)</sub></td>
+          <td class="mm-value-col" data-sort="44.00" style="color:#333;font-size:0.82em;font-weight:normal;">44.0<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(14)</sub></td>
+          <td class="mm-mar-col" data-sort="43.40" style="color:#333;font-size:1.05em;font-weight:bold;">43.4<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(14)</sub></td>
         </tr>
         
         <tr>
@@ -523,8 +577,9 @@
           <td style="">470(+2)</td>
           <td style="background-color:#ffffff;">13</td>
           <td style="color:#333;">73.4</td>
-          <td class="ai-score-col" title="AI指数 45〜49点帯（7,286頭の実績 単勝率7.6% / 複勝率22.5%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">46.8</td>
-          <td class="ai-rank-col" style="">9</td>
+          <td class="mm-hitrate-col" data-sort="43.30" style="color:#333;font-size:0.82em;font-weight:normal;">43.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(14)</sub></td>
+          <td class="mm-value-col" data-sort="46.10" style="color:#333;font-size:0.82em;font-weight:normal;">46.1<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(11)</sub></td>
+          <td class="mm-mar-col" data-sort="43.50" style="color:#333;font-size:1.05em;font-weight:bold;">43.5<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(13)</sub></td>
         </tr>
         
         <tr>
@@ -537,8 +592,9 @@
           <td style="">420(+8)</td>
           <td style="background-color:#ffffff;">6</td>
           <td style="color:#333;">13.3</td>
-          <td class="ai-score-col" title="AI指数 40〜44点帯（8,045頭の実績 単勝率6.9% / 複勝率20.7%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">43.2</td>
-          <td class="ai-rank-col" style="">12</td>
+          <td class="mm-hitrate-col" data-sort="45.00" style="color:#333;font-size:0.82em;font-weight:normal;">45.0<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(10)</sub></td>
+          <td class="mm-value-col" data-sort="48.30" style="color:#333;font-size:0.82em;font-weight:normal;">48.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(7)</sub></td>
+          <td class="mm-mar-col" data-sort="47.50" style="color:#333;font-size:1.05em;font-weight:bold;">47.5<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(8)</sub></td>
         </tr>
         
         <tr>
@@ -551,8 +607,9 @@
           <td style="">448(+4)</td>
           <td style="background-color:#ffffff;">12</td>
           <td style="color:#333;">33.3</td>
-          <td class="ai-score-col" title="AI指数 40〜44点帯（8,045頭の実績 単勝率6.9% / 複勝率20.7%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">43.0</td>
-          <td class="ai-rank-col" style="">13</td>
+          <td class="mm-hitrate-col" data-sort="43.30" style="color:#333;font-size:0.82em;font-weight:normal;">43.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(16)</sub></td>
+          <td class="mm-value-col" data-sort="50.20" style="color:#333;font-size:0.82em;font-weight:normal;">50.2<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+          <td class="mm-mar-col" data-sort="43.60" style="color:#333;font-size:1.05em;font-weight:bold;">43.6<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(12)</sub></td>
         </tr>
         
     </tbody>
@@ -579,7 +636,10 @@
           <th>着順</th><th>枠</th><th>馬番</th><th>馬名</th>
           <th>騎手</th><th>馬体重</th><th>タイム</th><th>着差</th>
           <th>人気</th><th>上り</th><th>通過</th>
-          <th>単勝オッズ</th><th class="ai-score-col">AI指数</th><th class="ai-rank-col">Rank</th>
+          <th>単勝オッズ</th>
+          <th class="mm-hitrate-col" title="的中率重視モデル指数">的中率モデル</th>
+          <th class="mm-value-col" title="回収率重視モデル指数">回収率モデル</th>
+          <th class="mm-mar-col" title="MAR推奨指数（メインモデル）">MAR指数</th>
         </tr>
       </thead>
       <tbody>
@@ -589,16 +649,17 @@
             <td style="background-color:red; color:#fff;">3</td>
             <td style="background-color:red; color:#fff;">6</td>
             <td>アルサック</td>
-            <td>丹内</td>
-            <td style="">492(0)</td>
+            <td>丹内祐次</td>
+            <td style="">492</td>
             <td>0:1:09.1</td>
             <td></td>
             <td style="background-color:#FFD700;">1</td>
             <td>35.5</td>
-            <td></td>
+            <td>1-1</td>
             <td>2.9</td>
-            <td class="ai-score-col" title="AI指数 55〜59点帯（5,326頭の実績 単勝率8.8% / 複勝率25.2%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">57.3</td>
-            <td class="ai-rank-col" style="">5</td>
+            <td class="mm-hitrate-col" data-sort="56.10" style="background-color:#E0F7FA;color:#333;font-size:0.82em;font-weight:bold;">56.1<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+            <td class="mm-value-col" data-sort="52.40" style="background-color:#FFE0B2;color:#333;font-size:0.82em;font-weight:bold;">52.4<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+            <td class="mm-mar-col" data-sort="56.40" style="background-color:#80DEEA;color:#333;font-size:1.05em;font-weight:bold;">56.4<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(2)</sub></td>
         </tr>
         
         <tr>
@@ -606,16 +667,17 @@
             <td style="background-color:red; color:#fff;">3</td>
             <td style="background-color:red; color:#fff;">5</td>
             <td>スノーガーネット</td>
-            <td>横山琉</td>
-            <td style="">478(+4)</td>
+            <td>横山琉人</td>
+            <td style="">478</td>
             <td>0:1:09.4</td>
             <td>1.1/2</td>
             <td style="background-color:#ffffff;">8</td>
             <td>35.5</td>
-            <td></td>
+            <td>2-2</td>
             <td>20.0</td>
-            <td class="ai-score-col" title="AI指数 40〜44点帯（8,045頭の実績 単勝率6.9% / 複勝率20.7%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">40.2</td>
-            <td class="ai-rank-col" style="">14</td>
+            <td class="mm-hitrate-col" data-sort="55.50" style="background-color:#FFE0B2;color:#333;font-size:0.82em;font-weight:bold;">55.5<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+            <td class="mm-value-col" data-sort="59.20" style="background-color:#E0F7FA;color:#333;font-size:0.82em;font-weight:bold;">59.2<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+            <td class="mm-mar-col" data-sort="52.90" style="color:#333;font-size:1.05em;font-weight:bold;">52.9<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(4)</sub></td>
         </tr>
         
         <tr>
@@ -623,16 +685,17 @@
             <td style="background-color:black; color:#fff;">2</td>
             <td style="background-color:black; color:#fff;">4</td>
             <td>ロンドンプライド</td>
-            <td>★河原田</td>
-            <td style="">460(-4)</td>
+            <td>河原田菜</td>
+            <td style="">460</td>
             <td>0:1:09.6</td>
             <td>1.1/2</td>
             <td style="background-color:#ffffff;">11</td>
             <td>35.5</td>
-            <td></td>
+            <td>5-4</td>
             <td>33.5</td>
-            <td class="ai-score-col" title="AI指数 35〜39点帯（6,807頭の実績 単勝率5.7% / 複勝率19.5%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#1f4fd6; font-weight:bold;">35.9</td>
-            <td class="ai-rank-col" style="">16</td>
+            <td class="mm-hitrate-col" data-sort="45.00" style="color:#333;font-size:0.82em;font-weight:normal;">45.0<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(11)</sub></td>
+            <td class="mm-value-col" data-sort="49.50" style="color:#333;font-size:0.82em;font-weight:normal;">49.5<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(6)</sub></td>
+            <td class="mm-mar-col" data-sort="45.00" style="color:#333;font-size:1.05em;font-weight:bold;">45.0<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(11)</sub></td>
         </tr>
         
         <tr>
@@ -640,16 +703,17 @@
             <td style="background-color:yellow; color:#000;">5</td>
             <td style="background-color:yellow; color:#000;">10</td>
             <td>クリオロゴールド</td>
-            <td>横山武</td>
-            <td style="">444(-2)</td>
+            <td>横山武史</td>
+            <td style="">444</td>
             <td>0:1:09.7</td>
             <td>1/2</td>
             <td style="background-color:#B0E0E6;">2</td>
             <td>35.9</td>
-            <td></td>
+            <td>2-2</td>
             <td>4.7</td>
-            <td class="ai-score-col" title="AI指数 65〜69点帯（1,701頭の実績 単勝率11.6% / 複勝率29.6%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#c62828; font-weight:bold;">66.6</td>
-            <td class="ai-rank-col" style="background-color:#FFF9C4;">1</td>
+            <td class="mm-hitrate-col" data-sort="53.50" style="color:#333;font-size:0.82em;font-weight:normal;">53.5<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+            <td class="mm-value-col" data-sort="46.50" style="color:#333;font-size:0.82em;font-weight:normal;">46.5<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(9)</sub></td>
+            <td class="mm-mar-col" data-sort="49.60" style="color:#333;font-size:1.05em;font-weight:bold;">49.6<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(6)</sub></td>
         </tr>
         
         <tr>
@@ -657,16 +721,17 @@
             <td style="background-color:green; color:#000;">6</td>
             <td style="background-color:green; color:#000;">11</td>
             <td>ユナダイヤ</td>
-            <td>小沢</td>
-            <td style="">438(+8)</td>
+            <td>小沢大仁</td>
+            <td style="">438</td>
             <td>0:1:09.8</td>
             <td>クビ</td>
             <td style="background-color:#ffffff;">14</td>
             <td>35.4</td>
-            <td></td>
+            <td>8-6</td>
             <td>183.1</td>
-            <td class="ai-score-col" title="AI指数: コース・距離別の絶対的な能力スコア（0〜100点、高いほど高評価）" style="color:#333;">54.5</td>
-            <td class="ai-rank-col" style="">6</td>
+            <td class="mm-hitrate-col" data-sort="43.30" style="color:#333;font-size:0.82em;font-weight:normal;">43.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(13)</sub></td>
+            <td class="mm-value-col" data-sort="44.10" style="color:#333;font-size:0.82em;font-weight:normal;">44.1<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(13)</sub></td>
+            <td class="mm-mar-col" data-sort="43.40" style="color:#333;font-size:1.05em;font-weight:bold;">43.4<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(15)</sub></td>
         </tr>
         
         <tr>
@@ -674,16 +739,17 @@
             <td style="background-color:white; color:#000;">1</td>
             <td style="background-color:white; color:#000;">1</td>
             <td>テンユウ</td>
-            <td>岩田康</td>
-            <td style="">482(0)</td>
+            <td>岩田康誠</td>
+            <td style="">482</td>
             <td>0:1:09.8</td>
             <td>クビ</td>
             <td style="background-color:#FFA07A;">3</td>
             <td>34.5</td>
-            <td></td>
+            <td>15-15</td>
             <td>6.7</td>
-            <td class="ai-score-col" title="AI指数 60〜64点帯（3,347頭の実績 単勝率10.3% / 複勝率28.6%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#c62828; font-weight:bold;">61.8</td>
-            <td class="ai-rank-col" style="background-color:#FFE0B2;">3</td>
+            <td class="mm-hitrate-col" data-sort="45.80" style="color:#333;font-size:0.82em;font-weight:normal;">45.8<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(9)</sub></td>
+            <td class="mm-value-col" data-sort="44.50" style="color:#333;font-size:0.82em;font-weight:normal;">44.5<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(12)</sub></td>
+            <td class="mm-mar-col" data-sort="46.40" style="color:#333;font-size:1.05em;font-weight:bold;">46.4<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(9)</sub></td>
         </tr>
         
         <tr>
@@ -691,16 +757,17 @@
             <td style="background-color:yellow; color:#000;">5</td>
             <td style="background-color:yellow; color:#000;">9</td>
             <td>ダノンルミエール</td>
-            <td>☆舟山</td>
-            <td style="">464(+8)</td>
+            <td>舟山瑠泉</td>
+            <td style="">464</td>
             <td>0:1:09.9</td>
             <td>1/2</td>
             <td style="background-color:#ffffff;">7</td>
             <td>35.7</td>
-            <td></td>
+            <td>5-5</td>
             <td>17.5</td>
-            <td class="ai-score-col" title="AI指数: コース・距離別の絶対的な能力スコア（0〜100点、高いほど高評価）" style="color:#333;">44.7</td>
-            <td class="ai-rank-col" style="">10</td>
+            <td class="mm-hitrate-col" data-sort="52.90" style="color:#333;font-size:0.82em;font-weight:normal;">52.9<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+            <td class="mm-value-col" data-sort="47.20" style="color:#333;font-size:0.82em;font-weight:normal;">47.2<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(8)</sub></td>
+            <td class="mm-mar-col" data-sort="49.20" style="color:#333;font-size:1.05em;font-weight:bold;">49.2<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(7)</sub></td>
         </tr>
         
         <tr>
@@ -708,16 +775,17 @@
             <td style="background-color:black; color:#fff;">2</td>
             <td style="background-color:black; color:#fff;">3</td>
             <td>スピットブレイク</td>
-            <td>池添</td>
-            <td style="">480(+4)</td>
+            <td>池添謙一</td>
+            <td style="">480</td>
             <td>0:1:09.9</td>
             <td>アタマ</td>
             <td style="background-color:#ffffff;">9</td>
             <td>35.0</td>
-            <td></td>
+            <td>13-12</td>
             <td>21.8</td>
-            <td class="ai-score-col" title="AI指数: コース・距離別の絶対的な能力スコア（0〜100点、高いほど高評価）" style="color:#333;">44.5</td>
-            <td class="ai-rank-col" style="">11</td>
+            <td class="mm-hitrate-col" data-sort="46.30" style="color:#333;font-size:0.82em;font-weight:normal;">46.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(8)</sub></td>
+            <td class="mm-value-col" data-sort="43.90" style="color:#333;font-size:0.82em;font-weight:normal;">43.9<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(15)</sub></td>
+            <td class="mm-mar-col" data-sort="45.90" style="color:#333;font-size:1.05em;font-weight:bold;">45.9<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(10)</sub></td>
         </tr>
         
         <tr>
@@ -725,16 +793,17 @@
             <td style="background-color:orange; color:#fff;">7</td>
             <td style="background-color:orange; color:#fff;">14</td>
             <td>ウインドトリック</td>
-            <td>▲和田陽</td>
-            <td style="">470(+2)</td>
+            <td>和田陽希</td>
+            <td style="">470</td>
             <td>0:1:10.1</td>
             <td>1.1/4</td>
             <td style="background-color:#ffffff;">13</td>
             <td>35.5</td>
-            <td></td>
+            <td>10-8</td>
             <td>148.9</td>
-            <td class="ai-score-col" title="AI指数 45〜49点帯（7,286頭の実績 単勝率7.6% / 複勝率22.5%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">46.8</td>
-            <td class="ai-rank-col" style="">9</td>
+            <td class="mm-hitrate-col" data-sort="43.30" style="color:#333;font-size:0.82em;font-weight:normal;">43.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(14)</sub></td>
+            <td class="mm-value-col" data-sort="46.10" style="color:#333;font-size:0.82em;font-weight:normal;">46.1<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(11)</sub></td>
+            <td class="mm-mar-col" data-sort="43.50" style="color:#333;font-size:1.05em;font-weight:bold;">43.5<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(13)</sub></td>
         </tr>
         
         <tr>
@@ -742,16 +811,17 @@
             <td style="background-color:blue; color:#fff;">4</td>
             <td style="background-color:blue; color:#fff;">7</td>
             <td>テイクマイハート</td>
-            <td>☆長浜</td>
-            <td style="">470(0)</td>
+            <td>長浜鴻緒</td>
+            <td style="">470</td>
             <td>0:1:10.2</td>
             <td>1/2</td>
             <td style="background-color:#ffffff;">10</td>
             <td>35.9</td>
-            <td></td>
+            <td>7-7</td>
             <td>25.3</td>
-            <td class="ai-score-col" title="AI指数 50〜54点帯（6,872頭の実績 単勝率7.8% / 複勝率22.9%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">52.3</td>
-            <td class="ai-rank-col" style="">7</td>
+            <td class="mm-hitrate-col" data-sort="83.20" style="background-color:#FFFDE7;color:#c62828;font-size:0.82em;font-weight:bold;">83.2<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+            <td class="mm-value-col" data-sort="84.20" style="background-color:#FFFDE7;color:#c62828;font-size:0.82em;font-weight:bold;">84.2<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+            <td class="mm-mar-col" data-sort="84.00" style="background-color:#FFF176;color:#c62828;font-size:1.05em;font-weight:bold;">84.0<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(1)</sub></td>
         </tr>
         
         <tr>
@@ -759,16 +829,17 @@
             <td style="background-color:pink; color:#000;">8</td>
             <td style="background-color:pink; color:#000;">15</td>
             <td>ルージュフローラ</td>
-            <td>古川吉</td>
-            <td style="">420(+8)</td>
+            <td>古川吉洋</td>
+            <td style="">420</td>
             <td>0:1:10.3</td>
             <td>1/2</td>
             <td style="background-color:#ffffff;">6</td>
             <td>35.6</td>
-            <td></td>
+            <td>12-12</td>
             <td>11.6</td>
-            <td class="ai-score-col" title="AI指数 40〜44点帯（8,045頭の実績 単勝率6.9% / 複勝率20.7%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">43.2</td>
-            <td class="ai-rank-col" style="">12</td>
+            <td class="mm-hitrate-col" data-sort="45.00" style="color:#333;font-size:0.82em;font-weight:normal;">45.0<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(10)</sub></td>
+            <td class="mm-value-col" data-sort="48.30" style="color:#333;font-size:0.82em;font-weight:normal;">48.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(7)</sub></td>
+            <td class="mm-mar-col" data-sort="47.50" style="color:#333;font-size:1.05em;font-weight:bold;">47.5<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(8)</sub></td>
         </tr>
         
         <tr>
@@ -776,16 +847,17 @@
             <td style="background-color:green; color:#000;">6</td>
             <td style="background-color:green; color:#000;">12</td>
             <td>トゥントゥントゥン</td>
-            <td>嶋田</td>
-            <td style="">418(-6)</td>
+            <td>嶋田純次</td>
+            <td style="">418</td>
             <td>0:1:10.4</td>
             <td>1</td>
             <td style="background-color:#ffffff;">15</td>
             <td>35.8</td>
-            <td></td>
+            <td>10-11</td>
             <td>184.9</td>
-            <td class="ai-score-col" title="AI指数 45〜49点帯（7,286頭の実績 単勝率7.6% / 複勝率22.5%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">47.3</td>
-            <td class="ai-rank-col" style="">8</td>
+            <td class="mm-hitrate-col" data-sort="43.30" style="color:#333;font-size:0.82em;font-weight:normal;">43.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(15)</sub></td>
+            <td class="mm-value-col" data-sort="43.20" style="color:#333;font-size:0.82em;font-weight:normal;">43.2<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(16)</sub></td>
+            <td class="mm-mar-col" data-sort="43.30" style="color:#333;font-size:1.05em;font-weight:bold;">43.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(16)</sub></td>
         </tr>
         
         <tr>
@@ -793,16 +865,17 @@
             <td style="background-color:orange; color:#fff;">7</td>
             <td style="background-color:orange; color:#fff;">13</td>
             <td>ブルーハーツ</td>
-            <td>黛</td>
-            <td style="">490(+2)</td>
+            <td>黛弘人</td>
+            <td style="">490</td>
             <td>0:1:10.6</td>
             <td>1.1/4</td>
             <td style="background-color:#ffffff;">16</td>
             <td>35.0</td>
-            <td></td>
+            <td>16-16</td>
             <td>189.2</td>
-            <td class="ai-score-col" title="AI指数 35〜39点帯（6,807頭の実績 単勝率5.7% / 複勝率19.5%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#1f4fd6; font-weight:bold;">36.0</td>
-            <td class="ai-rank-col" style="">15</td>
+            <td class="mm-hitrate-col" data-sort="43.40" style="color:#333;font-size:0.82em;font-weight:normal;">43.4<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(12)</sub></td>
+            <td class="mm-value-col" data-sort="44.00" style="color:#333;font-size:0.82em;font-weight:normal;">44.0<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(14)</sub></td>
+            <td class="mm-mar-col" data-sort="43.40" style="color:#333;font-size:1.05em;font-weight:bold;">43.4<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(14)</sub></td>
         </tr>
         
         <tr>
@@ -810,16 +883,17 @@
             <td style="background-color:pink; color:#000;">8</td>
             <td style="background-color:pink; color:#000;">16</td>
             <td>ナオミニオールイン</td>
-            <td>川又</td>
-            <td style="">448(+4)</td>
+            <td>川又賢治</td>
+            <td style="">448</td>
             <td>0:1:10.7</td>
             <td>1/2</td>
             <td style="background-color:#ffffff;">12</td>
             <td>36.3</td>
-            <td></td>
+            <td>8-8</td>
             <td>55.6</td>
-            <td class="ai-score-col" title="AI指数 40〜44点帯（8,045頭の実績 単勝率6.9% / 複勝率20.7%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#333;">43.0</td>
-            <td class="ai-rank-col" style="">13</td>
+            <td class="mm-hitrate-col" data-sort="43.30" style="color:#333;font-size:0.82em;font-weight:normal;">43.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(16)</sub></td>
+            <td class="mm-value-col" data-sort="50.20" style="color:#333;font-size:0.82em;font-weight:normal;">50.2<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+            <td class="mm-mar-col" data-sort="43.60" style="color:#333;font-size:1.05em;font-weight:bold;">43.6<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(12)</sub></td>
         </tr>
         
         <tr>
@@ -828,15 +902,16 @@
             <td style="background-color:white; color:#000;">2</td>
             <td>ハッピーローヴァー</td>
             <td>武豊</td>
-            <td style="">418(-4)</td>
+            <td style="">418</td>
             <td>0:1:10.8</td>
             <td>クビ</td>
             <td style="background-color:#ffffff;">5</td>
             <td>35.9</td>
-            <td></td>
+            <td>13-12</td>
             <td>9.6</td>
-            <td class="ai-score-col" title="AI指数 65〜69点帯（1,701頭の実績 単勝率11.6% / 複勝率29.6%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#c62828; font-weight:bold;">65.1</td>
-            <td class="ai-rank-col" style="background-color:#B2EBF2;">2</td>
+            <td class="mm-hitrate-col" data-sort="48.40" style="color:#333;font-size:0.82em;font-weight:normal;">48.4<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(7)</sub></td>
+            <td class="mm-value-col" data-sort="50.20" style="color:#333;font-size:0.82em;font-weight:normal;">50.2<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+            <td class="mm-mar-col" data-sort="52.60" style="color:#333;font-size:1.05em;font-weight:bold;">52.6<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(5)</sub></td>
         </tr>
         
         <tr>
@@ -844,16 +919,17 @@
             <td style="background-color:blue; color:#fff;">4</td>
             <td style="background-color:blue; color:#fff;">8</td>
             <td>アゲンストオッズ</td>
-            <td>斎藤</td>
-            <td style="">422(+2)</td>
+            <td>斎藤新</td>
+            <td style="">422</td>
             <td>0:1:13.7</td>
             <td>大</td>
             <td style="background-color:#ffffff;">4</td>
             <td>39.8</td>
-            <td></td>
+            <td>2-8</td>
             <td>9.4</td>
-            <td class="ai-score-col" title="AI指数 60〜64点帯（3,347頭の実績 単勝率10.3% / 複勝率28.6%） ※絶対評価スコア（コース・距離別の能力を0〜100点で表示）" style="color:#c62828; font-weight:bold;">60.8</td>
-            <td class="ai-rank-col" style="">4</td>
+            <td class="mm-hitrate-col" data-sort="51.50" style="color:#333;font-size:0.82em;font-weight:normal;">51.5<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(6)</sub></td>
+            <td class="mm-value-col" data-sort="46.30" style="color:#333;font-size:0.82em;font-weight:normal;">46.3<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(10)</sub></td>
+            <td class="mm-mar-col" data-sort="53.30" style="background-color:#FFA726;color:#333;font-size:1.05em;font-weight:bold;">53.3<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(3)</sub></td>
         </tr>
         
       </tbody>
@@ -885,7 +961,7 @@
           <td>複勝</td>
           <td>6<br>5<br>4</td>
           <td class="num">150円<br>440円<br>860円</td>
-          <td>1<br>8<br>11</td>
+          <td>1<br>7<br>11</td>
         </tr>
         
         <tr>
@@ -906,7 +982,7 @@
           <td>ワイド</td>
           <td>5-6<br>4-6<br>4-5</td>
           <td class="num">810円<br>1,830円<br>7,710円</td>
-          <td>7<br>20<br>62</td>
+          <td>7<br>19<br>62</td>
         </tr>
         
         <tr>
@@ -935,9 +1011,9 @@
     </div>
     
   <div class="book-recommendation">
-      <p class="book-recommendation-title">📚 亀谷敬正の競馬血統辞典</p>
-      <p class="book-recommendation-note">血統分析の定番シリーズ第1作。</p>
-      <p class="book-recommendation-links"><a href="https://www.amazon.co.jp/dp/4801490646?tag=markeiba-22" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--amazon">亀谷敬正の競馬血統辞典（Amazon）</a> / <a href="https://hb.afl.rakuten.co.jp/ichiba/5556cac6.a0533177.5556cac7.0a45b379/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fvaboo%2Fva0646149480u20%2F" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--rakuten">亀谷敬正の競馬血統辞典（楽天市場）</a></p>
+      <p class="book-recommendation-title">📚 東大式「確率統計」で競馬に勝つ方法</p>
+      <p class="book-recommendation-note">確率統計の基礎からオリジナル指数づくりまでを解説。</p>
+      <p class="book-recommendation-links"><a href="https://www.amazon.co.jp/dp/4584104115?tag=markeiba-22" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--amazon">東大式「確率統計」で競馬に勝つ方法（Amazon）</a> / <a href="https://hb.afl.rakuten.co.jp/ichiba/5556cac6.a0533177.5556cac7.0a45b379/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fvaboo%2Fva4115410458u30%2F" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--rakuten">東大式「確率統計」で競馬に勝つ方法（楽天市場）</a></p>
     </div>
 
   <div class="ad-unit">
@@ -975,27 +1051,27 @@
           <tr>
             <td rowspan="2">全クラス</td>
             <td>2026年平均</td>
-            <td>1:08.557</td>
-            <td>34.3</td>
-            <td><span style="color:black; font-weight:bold;">6.3</span>-<span style="color:black; font-weight:bold;">5.5</span></td>
+            <td>1:08.710</td>
+            <td>34.5</td>
+            <td><span style="color:black; font-weight:bold;">4.8</span>-<span style="color:black; font-weight:bold;">4.2</span></td>
           </tr>
           <tr>
             <td>TOTAL平均</td>
-            <td>1:10.032</td>
-            <td>35.2</td>
-            <td><span style="color:black; font-weight:bold;">5.3</span>-<span style="color:black; font-weight:bold;">4.8</span></td>
+            <td>1:09.993</td>
+            <td>35.3</td>
+            <td><span style="color:black; font-weight:bold;">5.1</span>-<span style="color:black; font-weight:bold;">4.6</span></td>
           </tr>
           <tr>
             <td rowspan="2">未勝利</td>
             <td>2026年平均</td>
-            <td>1:08.500</td>
-            <td>34.6</td>
+            <td>1:08.800</td>
+            <td>35.0</td>
             <td><span style="color:black; font-weight:bold;">1.2</span>-<span style="color:black; font-weight:bold;">1.2</span></td>
           </tr>
           <tr>
             <td>TOTAL平均</td>
-            <td>1:10.307</td>
-            <td>35.5</td>
+            <td>1:10.264</td>
+            <td>35.6</td>
             <td><span style="color:black; font-weight:bold;">4.2</span>-<span style="color:black; font-weight:bold;">3.7</span></td>
           </tr>
         </tbody>
@@ -1019,20 +1095,20 @@
           <tr>
             <td rowspan="2">全クラス</td>
             <td>2026年平均</td>
-            <td><span style="color:black; font-weight:bold;">458.3kg</span></td>
+            <td><span style="color:black; font-weight:bold;">465.8kg</span></td>
           </tr>
           <tr>
             <td>TOTAL平均</td>
-            <td><span style="color:black; font-weight:bold;">459.4kg</span></td>
+            <td><span style="color:black; font-weight:bold;">460.4kg</span></td>
           </tr>
           <tr>
             <td rowspan="2">未勝利</td>
             <td>2026年平均</td>
-            <td><span style="color:black; font-weight:bold;">478.0kg</span></td>
+            <td><span style="color:black; font-weight:bold;">485.0kg</span></td>
           </tr>
           <tr>
             <td>TOTAL平均</td>
-            <td><span style="color:black; font-weight:bold;">461.6kg</span></td>
+            <td><span style="color:black; font-weight:bold;">462.5kg</span></td>
           </tr>
         </tbody>
       </table>
@@ -1054,15 +1130,15 @@
           <tbody>
             <tr>
               <td>ロードカナロア</td>
-              <td>(5,3,2,29)</td>
-              <td>12.8%</td>
-              <td>25.6%</td>
+              <td>(5,3,2,30)</td>
+              <td>12.5%</td>
+              <td>25.0%</td>
             </tr>
             <tr>
               <td>モーリス</td>
-              <td>(5,2,1,18)</td>
-              <td>19.2%</td>
-              <td>30.8%</td>
+              <td>(5,2,1,19)</td>
+              <td>18.5%</td>
+              <td>29.6%</td>
             </tr>
             <tr>
               <td>キンシャサノキセキ</td>
@@ -1095,15 +1171,15 @@
           <tbody>
             <tr>
               <td>モーリス</td>
-              <td>(4,1,1,8)</td>
-              <td>28.6%</td>
-              <td>42.9%</td>
+              <td>(4,1,1,9)</td>
+              <td>26.7%</td>
+              <td>40.0%</td>
             </tr>
             <tr>
               <td>ロードカナロア</td>
-              <td>(2,0,1,8)</td>
-              <td>18.2%</td>
-              <td>27.3%</td>
+              <td>(2,0,1,9)</td>
+              <td>16.7%</td>
+              <td>25.0%</td>
             </tr>
             <tr>
               <td>キンシャサノキセキ</td>
@@ -1112,16 +1188,16 @@
               <td>38.5%</td>
             </tr>
             <tr>
+              <td>シルバーステート</td>
+              <td>(1,3,1,7)</td>
+              <td>8.3%</td>
+              <td>41.7%</td>
+            </tr>
+            <tr>
               <td>カレンブラックヒル</td>
               <td>(1,1,1,2)</td>
               <td>20.0%</td>
               <td>60.0%</td>
-            </tr>
-            <tr>
-              <td>キズナ</td>
-              <td>(1,0,1,1)</td>
-              <td>33.3%</td>
-              <td>66.7%</td>
             </tr></tbody>
         </table>
         </div>
@@ -1141,25 +1217,25 @@
               <td>66.7%</td>
             </tr>
             <tr>
-              <td>サートゥルナーリア</td>
-              <td>(1,0,1,1)</td>
+              <td>シルバーステート</td>
+              <td>(1,1,0,1)</td>
               <td>33.3%</td>
               <td>66.7%</td>
             </tr>
             <tr>
-              <td>Sottsass</td>
+              <td>サートゥルナーリア</td>
+              <td>(1,0,1,3)</td>
+              <td>20.0%</td>
+              <td>40.0%</td>
+            </tr>
+            <tr>
+              <td>Blue Point</td>
               <td>(1,0,0,0)</td>
               <td>100.0%</td>
               <td>100.0%</td>
             </tr>
             <tr>
-              <td>アジアエクスプレス</td>
-              <td>(1,0,0,0)</td>
-              <td>100.0%</td>
-              <td>100.0%</td>
-            </tr>
-            <tr>
-              <td>エフフォーリア</td>
+              <td>Good Magic</td>
               <td>(1,0,0,0)</td>
               <td>100.0%</td>
               <td>100.0%</td>
@@ -1176,34 +1252,34 @@
           </thead>
           <tbody>
             <tr>
+              <td>シルバーステート</td>
+              <td>(1,1,0,1)</td>
+              <td>33.3%</td>
+              <td>66.7%</td>
+            </tr>
+            <tr>
               <td>Sottsass</td>
               <td>(1,0,0,0)</td>
               <td>100.0%</td>
               <td>100.0%</td>
             </tr>
             <tr>
-              <td>シルバーステート</td>
+              <td>フィレンツェファイア</td>
               <td>(0,1,0,0)</td>
               <td>0.0%</td>
               <td>100.0%</td>
             </tr>
             <tr>
               <td>サートゥルナーリア</td>
-              <td>(0,0,1,1)</td>
+              <td>(0,0,1,3)</td>
               <td>0.0%</td>
-              <td>50.0%</td>
+              <td>25.0%</td>
             </tr>
             <tr>
-              <td>アドマイヤマーズ</td>
-              <td>(0,0,0,1)</td>
+              <td>リオンディーズ</td>
+              <td>(0,0,1,0)</td>
               <td>0.0%</td>
-              <td>0.0%</td>
-            </tr>
-            <tr>
-              <td>ウインブライト</td>
-              <td>(0,0,0,1)</td>
-              <td>0.0%</td>
-              <td>0.0%</td>
+              <td>100.0%</td>
             </tr></tbody>
         </table>
         </div>
@@ -1228,24 +1304,24 @@
           <tr>
             <td rowspan="2">全クラス</td>
             <td>2026年平均</td>
-            <td><span style="color:black; font-weight:bold;">4.8番人気</span></td>
-            <td><span style="color:black; font-weight:bold;">5.1番人気</span></td>
+            <td><span style="color:black; font-weight:bold;">3.9番人気</span></td>
+            <td><span style="color:black; font-weight:bold;">5.5番人気</span></td>
           </tr>
           <tr>
             <td>TOTAL平均</td>
-            <td><span style="color:black; font-weight:bold;">4.0番人気</span></td>
-            <td><span style="color:black; font-weight:bold;">5.7番人気</span></td>
+            <td><span style="color:black; font-weight:bold;">3.8番人気</span></td>
+            <td><span style="color:black; font-weight:bold;">5.8番人気</span></td>
           </tr>
           <tr>
             <td rowspan="2">未勝利</td>
             <td>2026年平均</td>
-            <td><span style="color:deepskyblue; font-weight:bold;">7.9番人気</span></td>
-            <td><span style="color:deepskyblue; font-weight:bold;">6.0番人気</span></td>
+            <td><span style="color:black; font-weight:bold;">4.5番人気</span></td>
+            <td><span style="color:deepskyblue; font-weight:bold;">6.8番人気</span></td>
           </tr>
           <tr>
             <td>TOTAL平均</td>
-            <td><span style="color:black; font-weight:bold;">5.0番人気</span></td>
-            <td><span style="color:black; font-weight:bold;">5.5番人気</span></td>
+            <td><span style="color:black; font-weight:bold;">4.6番人気</span></td>
+            <td><span style="color:black; font-weight:bold;">5.6番人気</span></td>
           </tr>
         </tbody>
       </table>
@@ -1271,32 +1347,32 @@
           <tr>
             <td rowspan="2">全クラス</td>
             <td>2026年平均</td>
-            <td><span style="color:black; font-weight:bold;">3.86</span></td>
-            <td><span style="color:black; font-weight:bold;">4.86</span></td>
-            <td><span style="color:black; font-weight:bold;">4.52</span></td>
-            <td><span style="color:black; font-weight:bold;">5.90</span></td>
+            <td><span style="color:black; font-weight:bold;">4.20</span></td>
+            <td><span style="color:black; font-weight:bold;">5.50</span></td>
+            <td><span style="color:black; font-weight:bold;">4.50</span></td>
+            <td><span style="color:black; font-weight:bold;">5.97</span></td>
           </tr>
           <tr>
             <td>TOTAL平均</td>
-            <td><span style="color:black; font-weight:bold;">4.36</span></td>
-            <td><span style="color:black; font-weight:bold;">6.19</span></td>
+            <td><span style="color:black; font-weight:bold;">4.40</span></td>
+            <td><span style="color:black; font-weight:bold;">6.27</span></td>
             <td><span style="color:black; font-weight:bold;">4.85</span></td>
-            <td><span style="color:black; font-weight:bold;">7.11</span></td>
+            <td><span style="color:black; font-weight:bold;">7.12</span></td>
           </tr>
           <tr>
             <td rowspan="2">未勝利</td>
             <td>2026年平均</td>
-            <td><span style="color:black; font-weight:bold;">5.00</span></td>
-            <td><span style="color:black; font-weight:bold;">10.00</span></td>
-            <td><span style="color:black; font-weight:bold;">5.67</span></td>
-            <td><span style="color:black; font-weight:bold;">10.67</span></td>
+            <td><span style="color:black; font-weight:bold;">4.00</span></td>
+            <td><span style="color:black; font-weight:bold;">8.00</span></td>
+            <td><span style="color:black; font-weight:bold;">4.17</span></td>
+            <td><span style="color:black; font-weight:bold;">7.83</span></td>
           </tr>
           <tr>
             <td>TOTAL平均</td>
-            <td><span style="color:black; font-weight:bold;">4.47</span></td>
-            <td><span style="color:black; font-weight:bold;">7.59</span></td>
-            <td><span style="color:black; font-weight:bold;">5.03</span></td>
-            <td><span style="color:black; font-weight:bold;">8.58</span></td>
+            <td><span style="color:black; font-weight:bold;">4.35</span></td>
+            <td><span style="color:black; font-weight:bold;">7.34</span></td>
+            <td><span style="color:black; font-weight:bold;">4.84</span></td>
+            <td><span style="color:black; font-weight:bold;">8.22</span></td>
           </tr>
         </tbody>
       </table>
@@ -1715,40 +1791,49 @@
     
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_0_1')">
-                <span>🐎 [1枠1番] テンユウ</span>
+                <span>🐎 [1枠1番] テンユウ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;46.4<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;45.8<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;44.5<sub style='font-size:0.65em;color:#888;'>(12)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_0_1">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>サートゥルナーリア</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>近走の平均通過順は8.7番手と、全体平均（4.6番手）より後ろで競馬する傾向に変わっている。</li><li>過去の芝レースでの平均上り34.6秒は未勝利水準では優秀で、末脚が武器になるタイプ。上りが問われる展開なら強み。</li><li>6/13(3歳未勝利)で1:09.0(稍重)の持ち時計。稍重のクラス平均1:10.3より1.3秒速く、十分な水準。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>サートゥルナーリア</strong> / 母父 <strong>ダイワメジャー</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>サートゥルナーリア</td>
-<td>2</td>
-<td>2</td>
-<td>2</td>
-<td>11</td>
-<td>11.8</td>
-<td>35.3</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>サートゥルナーリア</td>
-<td>0</td>
-<td>0</td>
-<td>2</td>
-<td>5</td>
-<td>0.0</td>
-<td>28.6</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">サートゥルナーリア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:9.09%">2<span class="chakudo-tooltip">1着 2回 ／ 勝率 9.1%</span></span><span class="chakudo-segment seg-2nd" style="width:13.64%">3<span class="chakudo-tooltip">2着 3回 ／ 累積 22.7%</span></span><span class="chakudo-segment seg-3rd" style="width:9.09%">2<span class="chakudo-tooltip">3着 2回 ／ 複勝率 31.8%</span></span><span class="chakudo-segment seg-out" style="width:68.18%">15<span class="chakudo-tooltip">着外 15回 ／ 着外率 68.2%</span></span></span><span class="chakudo-value">n=22</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">サートゥルナーリア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:10.00%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 10.0%</span></span><span class="chakudo-segment seg-3rd" style="width:20.00%">2<span class="chakudo-tooltip">3着 2回 ／ 複勝率 30.0%</span></span><span class="chakudo-segment seg-out" style="width:70.00%">7<span class="chakudo-tooltip">着外 7回 ／ 着外率 70.0%</span></span></span><span class="chakudo-value">n=10</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
+<tr>
+<td>2026/06/13</td>
+<td>函館</td>
+<td>01</td>
+<td>3歳未勝利</td>
+<td style="background-color:#fff0f0; padding: 2px 4px; border-radius: 3px;">未勝利</td>
+<td style="background-color: #FFA07A; font-weight: bold;">3</td>
+<td style="background-color: #ffffff; font-weight: bold;">5</td>
+<td style="background-color:pink; color:#000;">8</td>
+<td style="background-color:pink; color:#000;">15</td>
+<td style="background-color:#32CD32;font-weight: bold;">芝</td>
+<td style="background-color:#32CD32; font-weight: bold;">1200</td>
+<td style="background-color:#e8e8e8;">稍重</td>
+<td>1:09.0</td>
+<td>0.5</td>
+<td style="color: red; font-weight: bold;">-1.26</td>
+<td>33.7</td>
+<td>12-10</td>
+<td>482</td>
+<td style="font-weight:normal;">45.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
+<td style="font-weight:normal;">45.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
+<td style="font-weight:normal;">44.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(14)</sub></td>
+</tr>
 <tr>
 <td>2026/04/11</td>
 <td>中山</td>
@@ -1768,6 +1853,9 @@
 <td>35.3</td>
 <td>5-7-6</td>
 <td>478</td>
+<td style="font-weight:normal;">49.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
+<td style="font-weight:normal;">47.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
+<td style="font-weight:normal;">45.5<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
 </tr>
 <tr>
 <td>2026/02/07</td>
@@ -1788,6 +1876,9 @@
 <td>34.5</td>
 <td>5-5</td>
 <td>494</td>
+<td style="font-weight:normal;">48.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">53.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
+<td style="font-weight:normal;">51.5<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
 </tr>
 <tr>
 <td>2025/10/12</td>
@@ -1808,6 +1899,9 @@
 <td>33.8</td>
 <td>8-8</td>
 <td>480</td>
+<td style="font-weight:normal;">-1.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 <tr>
 <td>2025/09/13</td>
@@ -1828,26 +1922,9 @@
 <td>35.3</td>
 <td>2-2-2</td>
 <td>478</td>
-</tr>
-<tr>
-<td>2025/06/07</td>
-<td>東京</td>
-<td>05</td>
-<td>2歳新馬</td>
-<td style="background-color:#ffe6e6; padding: 2px 4px; border-radius: 3px;">新馬</td>
-<td style="background-color: #ffffff; font-weight: bold;">7</td>
-<td style="background-color: #ffffff; font-weight: bold;">4</td>
-<td style="background-color:yellow; color:#000;">5</td>
-<td style="background-color:yellow; color:#000;">5</td>
-<td style="background-color:#32CD32;font-weight: bold;">芝</td>
-<td style="background-color:#32CD32; font-weight: bold;">1600</td>
-<td style="background-color:#ffffff;">良</td>
-<td>1:36.3</td>
-<td>1.9</td>
-<td style="color: black; font-weight: bold;">0.42</td>
-<td>35.2</td>
-<td>8-7</td>
-<td>474</td>
+<td style="font-weight:normal;">-1.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -1869,10 +1946,10 @@
 
             <tr>
             <td>芝</td>
-            <td><strong>33.8</strong> <br> 2025/10/12: 2歳未勝利 (東京 1600m 良)</td>
-            <td><strong>34.82</strong></td>
-            <td>[4.6, 9.5, 8.9]</td>
-            <td>5</td>
+            <td><strong>33.7</strong> <br> 2026/06/13: 3歳未勝利 (函館 1200m 稍重)</td>
+            <td><strong>34.63</strong></td>
+            <td>[4.6, 10.3, 9.4]</td>
+            <td>6</td>
             </tr>
             
 
@@ -1887,47 +1964,36 @@
 </tbody></table>
 </div>
 <h4>⏱️ 函館 芝1200m 持ち時計</h4>
-<div>同コース出走データなし</div>
+<ul>
+<li>2026/06/13: 3歳未勝利 </li>
+<li>タイム: <strong>1:09.0</strong>(馬場: 稍重)</li>
+</ul>
 </div>
               </div>
             </div>
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_1_2')">
-                <span>🐎 [1枠2番] ハッピーローヴァー</span>
+                <span>🐎 [1枠2番] ハッピーローヴァー<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;52.6<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;48.4<sub style='font-size:0.65em;color:#888;'>(7)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;50.2<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_1_2">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>リアルスティール</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>近走の平均通過順は9.5番手と、全体平均（6.4番手）より後ろで競馬する傾向に変わっている。</li><li>過去の芝レースでの平均上り34.7秒は未勝利水準では優秀で、末脚が武器になるタイプ。上りが問われる展開なら強み。</li><li>6/20(3歳未勝利)で1:09.1(良)の持ち時計。良のクラス平均1:09.4とほぼ同等。</li><li>MAR(5位)・回収率(4位)でモデル高評価。主な要因：6/20(3歳未勝利)で1:09.1(良)の持ち時計（クラス平均より0.3秒速い）、芝平均上り34.7秒（未勝利目安35.5秒以下、近5走で5走が基準クリア）、近走好走：4/26(3歳未勝利)2着、2/8(3歳未勝利)2着。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>リアルスティール</strong> / 母父 <strong>キンシャサノキセキ</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>リアルスティール</td>
-<td>3</td>
-<td>0</td>
-<td>3</td>
-<td>21</td>
-<td>11.1</td>
-<td>22.2</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>リアルスティール</td>
-<td>0</td>
-<td>0</td>
-<td>1</td>
-<td>12</td>
-<td>0.0</td>
-<td>7.7</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">リアルスティール</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:10.71%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 10.7%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 10.7%</span></span><span class="chakudo-segment seg-3rd" style="width:10.71%">3<span class="chakudo-tooltip">3着 3回 ／ 複勝率 21.4%</span></span><span class="chakudo-segment seg-out" style="width:78.57%">22<span class="chakudo-tooltip">着外 22回 ／ 着外率 78.6%</span></span></span><span class="chakudo-value">n=28</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">リアルスティール</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 0.0%</span></span><span class="chakudo-segment seg-3rd" style="width:7.14%">1<span class="chakudo-tooltip">3着 1回 ／ 複勝率 7.1%</span></span><span class="chakudo-segment seg-out" style="width:92.86%">13<span class="chakudo-tooltip">着外 13回 ／ 着外率 92.9%</span></span></span><span class="chakudo-value">n=14</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/06/20</td>
 <td>函館</td>
@@ -1943,10 +2009,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.1</td>
 <td>0.5</td>
-<td style="color: red; font-weight: bold;">-0.34</td>
+<td style="color: red; font-weight: bold;">-0.33</td>
 <td>34.3</td>
 <td>15-13</td>
 <td>422</td>
+<td style="background-color:#FFF176;font-weight:bold;">54.1<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">55.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="font-weight:normal;">48.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
 </tr>
 <tr>
 <td>2026/04/26</td>
@@ -1963,10 +2032,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.4</td>
 <td>0.0</td>
-<td style="color: red; font-weight: bold;">-0.32</td>
+<td style="color: red; font-weight: bold;">-0.31</td>
 <td>34.5</td>
 <td>4-2</td>
 <td>420</td>
+<td style="background-color:#FFF176;font-weight:bold;">60.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">82.4<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="font-weight:normal;">48.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
 </tr>
 <tr>
 <td>2026/02/21</td>
@@ -1983,10 +2055,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.2</td>
 <td>0.4</td>
-<td style="color: black; font-weight: bold;">0.47</td>
+<td style="color: black; font-weight: bold;">0.48</td>
 <td>34.8</td>
 <td>7-8</td>
 <td>422</td>
+<td style="background-color:#FFF176;font-weight:bold;">60.5<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">59.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="font-weight:normal;">44.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
 </tr>
 <tr>
 <td>2026/02/08</td>
@@ -2003,10 +2078,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.0</td>
 <td>0.1</td>
-<td style="color: black; font-weight: bold;">0.27</td>
+<td style="color: black; font-weight: bold;">0.28</td>
 <td>34.5</td>
 <td>9-9</td>
 <td>420</td>
+<td style="font-weight:normal;">51.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
+<td style="font-weight:normal;">56.1<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="font-weight:normal;">46.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
 </tr>
 <tr>
 <td>2025/12/21</td>
@@ -2027,6 +2105,9 @@
 <td>35.2</td>
 <td>5-5</td>
 <td>418</td>
+<td style="font-weight:normal;">-3.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -2076,40 +2157,26 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_2_3')">
-                <span>🐎 [2枠3番] スピットブレイク</span>
+                <span>🐎 [2枠3番] スピットブレイク<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;45.9<sub style='font-size:0.65em;color:#888;'>(10)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;46.3<sub style='font-size:0.65em;color:#888;'>(8)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;43.9<sub style='font-size:0.65em;color:#888;'>(15)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_2_3">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>モズアスコット</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>近走の平均通過順は8.7番手と、全体平均（5.6番手）より後ろで競馬する傾向に変わっている。</li><li>過去の芝レースでの平均上り35.3秒は未勝利水準では優秀で、末脚が武器になるタイプ。上りが問われる展開なら強み。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li><li>近5走の着順が下降気味（平均5.6着）で、フォームの立て直しが課題。今回の巻き返しに期待できるかが焦点。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>モズアスコット</strong> / 母父 <strong>Storm Cat</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>モズアスコット</td>
-<td>1</td>
-<td>3</td>
-<td>1</td>
-<td>11</td>
-<td>6.2</td>
-<td>31.2</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>モズアスコット</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>3</td>
-<td>0.0</td>
-<td>0.0</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">モズアスコット</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:9.52%">2<span class="chakudo-tooltip">1着 2回 ／ 勝率 9.5%</span></span><span class="chakudo-segment seg-2nd" style="width:23.81%">5<span class="chakudo-tooltip">2着 5回 ／ 累積 33.3%</span></span><span class="chakudo-segment seg-3rd" style="width:4.76%">1<span class="chakudo-tooltip">3着 1回 ／ 複勝率 38.1%</span></span><span class="chakudo-segment seg-out" style="width:61.90%">13<span class="chakudo-tooltip">着外 13回 ／ 着外率 61.9%</span></span></span><span class="chakudo-value">n=21</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">モズアスコット</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:20.00%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 20.0%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 20.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 20.0%</span></span><span class="chakudo-segment seg-out" style="width:80.00%">4<span class="chakudo-tooltip">着外 4回 ／ 着外率 80.0%</span></span></span><span class="chakudo-value">n=5</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/05/30</td>
 <td>東京</td>
@@ -2129,6 +2196,9 @@
 <td>34.6</td>
 <td>8-6</td>
 <td>476</td>
+<td style="background-color:#FFF176;font-weight:bold;">52.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">57.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="font-weight:normal;">46.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
 </tr>
 <tr>
 <td>2026/02/22</td>
@@ -2145,10 +2215,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.1</td>
 <td>1.2</td>
-<td style="color: black; font-weight: bold;">0.37</td>
+<td style="color: black; font-weight: bold;">0.39</td>
 <td>35.5</td>
 <td>6-7</td>
 <td>486</td>
+<td style="font-weight:normal;">50.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">49.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
+<td style="font-weight:normal;">45.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(15)</sub></td>
 </tr>
 <tr>
 <td>2026/02/07</td>
@@ -2165,10 +2238,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.7</td>
 <td>0.8</td>
-<td style="color: black; font-weight: bold;">0.97</td>
+<td style="color: black; font-weight: bold;">0.98</td>
 <td>35.5</td>
 <td>12-12</td>
 <td>484</td>
+<td style="font-weight:normal;">55.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
+<td style="font-weight:normal;">56.2<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="font-weight:normal;">45.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(13)</sub></td>
 </tr>
 <tr>
 <td>2025/12/21</td>
@@ -2189,6 +2265,9 @@
 <td>36.6</td>
 <td>5-4-3</td>
 <td>484</td>
+<td style="background-color:#FFF176;font-weight:bold;">-0.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 <tr>
 <td>2025/11/29</td>
@@ -2209,6 +2288,9 @@
 <td>34.2</td>
 <td>7-9</td>
 <td>480</td>
+<td style="font-weight:normal;">-2.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(18)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -2255,40 +2337,26 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_3_4')">
-                <span>🐎 [2枠4番] ロンドンプライド</span>
+                <span>🐎 [2枠4番] ロンドンプライド<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;45.0<sub style='font-size:0.65em;color:#888;'>(11)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;45.0<sub style='font-size:0.65em;color:#888;'>(11)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;49.5<sub style='font-size:0.65em;color:#888;'>(6)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_3_4">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>リオンディーズ</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>前走はダート（1400m）からの芝転向。過去の芝成績と血統適性がカギになる。</li><li>近走の平均通過順は2.0番手と、全体平均（5.4番手）より前で競馬するようになっている。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>リオンディーズ</strong> / 母父 <strong>ディープインパクト</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>リオンディーズ</td>
-<td>5</td>
-<td>5</td>
-<td>9</td>
-<td>48</td>
-<td>7.5</td>
-<td>28.4</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>リオンディーズ</td>
-<td>3</td>
-<td>2</td>
-<td>6</td>
-<td>20</td>
-<td>9.7</td>
-<td>35.5</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">リオンディーズ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:7.14%">5<span class="chakudo-tooltip">1着 5回 ／ 勝率 7.1%</span></span><span class="chakudo-segment seg-2nd" style="width:8.57%">6<span class="chakudo-tooltip">2着 6回 ／ 累積 15.7%</span></span><span class="chakudo-segment seg-3rd" style="width:14.29%">10<span class="chakudo-tooltip">3着 10回 ／ 複勝率 30.0%</span></span><span class="chakudo-segment seg-out" style="width:70.00%">49<span class="chakudo-tooltip">着外 49回 ／ 着外率 70.0%</span></span></span><span class="chakudo-value">n=70</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">リオンディーズ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:8.82%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 8.8%</span></span><span class="chakudo-segment seg-2nd" style="width:8.82%">3<span class="chakudo-tooltip">2着 3回 ／ 累積 17.6%</span></span><span class="chakudo-segment seg-3rd" style="width:20.59%">7<span class="chakudo-tooltip">3着 7回 ／ 複勝率 38.2%</span></span><span class="chakudo-segment seg-out" style="width:61.76%">21<span class="chakudo-tooltip">着外 21回 ／ 着外率 61.8%</span></span></span><span class="chakudo-value">n=34</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/05/10</td>
 <td>東京</td>
@@ -2308,6 +2376,9 @@
 <td>39.1</td>
 <td>1-1</td>
 <td>464</td>
+<td style="font-weight:normal;">45.1<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
+<td style="font-weight:normal;">44.5<sub style="font-size:0.65em;color:#888;font-weight:bold;">(12)</sub></td>
+<td style="font-weight:normal;">46.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
 </tr>
 <tr>
 <td>2026/04/25</td>
@@ -2328,6 +2399,9 @@
 <td>42.9</td>
 <td>1-1</td>
 <td>466</td>
+<td style="font-weight:normal;">43.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
+<td style="font-weight:normal;">44.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
+<td style="font-weight:normal;">46.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
 </tr>
 <tr>
 <td>2025/10/13</td>
@@ -2348,6 +2422,9 @@
 <td>-</td>
 <td>3-8</td>
 <td>428</td>
+<td style="background-color:#FFF176;font-weight:bold;">-0.2<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 <tr>
 <td>2025/07/12</td>
@@ -2364,10 +2441,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:53.3</td>
 <td>2.4</td>
-<td style="color: black; font-weight: bold;">3.97</td>
+<td style="color: black; font-weight: bold;">4.05</td>
 <td>38.9</td>
 <td>3-3-4-2</td>
 <td>454</td>
+<td style="background-color:#FFF176;font-weight:bold;">0.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 <tr>
 <td>2025/06/22</td>
@@ -2388,6 +2468,9 @@
 <td>35.5</td>
 <td>10-10</td>
 <td>456</td>
+<td style="font-weight:normal;">-0.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -2434,40 +2517,26 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_4_5')">
-                <span>🐎 [3枠5番] スノーガーネット</span>
+                <span>🐎 [3枠5番] スノーガーネット<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;52.9<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span><span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;55.5<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;59.2<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_4_5">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>フィレンツェファイア</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>前走は道悪だったが今回は良馬場。本来の力を発揮できる条件かどうかに注目。</li><li>父フィレンツェファイアのこのコース勝率は25.0%（3勝/12走）と高く、血統面での適性は申し分ない。</li><li>平均14.6番手と後ろから競馬するタイプ。展開と上り勝負の質次第。近走の平均通過順は8.9番手と、全体平均（14.6番手）より前で競馬するようになっている。</li><li>6/27(3歳未勝利)で1:09.8(重)の持ち時計。重のクラス平均1:10.5より0.7秒速く、十分な水準。</li><li>近4走の着順が上向き傾向（平均7.5着）で、充実期にある可能性が高い。</li><li>MAR(4位)・的中率(3位)・回収率(2位)でモデル高評価。主な要因：父フィレンツェファイアのコース勝率25%（3勝/12走）、6/27(3歳未勝利)で1:09.8(重)の持ち時計（クラス平均より0.7秒速い）。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>フィレンツェファイア</strong> / 母父 <strong>アドマイヤムーン</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>フィレンツェファイア</td>
-<td>3</td>
-<td>0</td>
-<td>0</td>
-<td>6</td>
-<td>33.3</td>
-<td>33.3</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>フィレンツェファイア</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>3</td>
-<td>25.0</td>
-<td>25.0</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">フィレンツェファイア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:25.00%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 25.0%</span></span><span class="chakudo-segment seg-2nd" style="width:8.33%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 33.3%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 33.3%</span></span><span class="chakudo-segment seg-out" style="width:66.67%">8<span class="chakudo-tooltip">着外 8回 ／ 着外率 66.7%</span></span></span><span class="chakudo-value">n=12</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">フィレンツェファイア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:16.67%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 16.7%</span></span><span class="chakudo-segment seg-2nd" style="width:16.67%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 33.3%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 33.3%</span></span><span class="chakudo-segment seg-out" style="width:66.67%">4<span class="chakudo-tooltip">着外 4回 ／ 着外率 66.7%</span></span></span><span class="chakudo-value">n=6</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/06/27</td>
 <td>函館</td>
@@ -2483,10 +2552,13 @@
 <td style="background-color:#b0b0b0;">重</td>
 <td>1:09.8</td>
 <td>0.6</td>
-<td style="color: red; font-weight: bold;">-0.4</td>
+<td style="color: red; font-weight: bold;">-0.7</td>
 <td>34.5</td>
 <td>13-11</td>
 <td>474</td>
+<td style="font-weight:normal;">52.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">54.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="background-color:#E0F7FA;font-weight:bold;">62.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
 </tr>
 <tr>
 <td>2026/03/21</td>
@@ -2507,6 +2579,9 @@
 <td>38.6</td>
 <td>5-4</td>
 <td>476</td>
+<td style="font-weight:normal;">48.5<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
+<td style="font-weight:normal;">46.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">47.4<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
 </tr>
 <tr>
 <td>2025/11/22</td>
@@ -2527,6 +2602,9 @@
 <td>37.2</td>
 <td>5-4</td>
 <td>474</td>
+<td style="font-weight:normal;">-2.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 <tr>
 <td>2025/10/25</td>
@@ -2547,6 +2625,9 @@
 <td>40.0</td>
 <td>1-1</td>
 <td>478</td>
+<td style="font-weight:normal;">-1.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -2596,40 +2677,26 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_5_6')">
-                <span>🐎 [3枠6番] アルサック</span>
+                <span>🐎 [3枠6番] アルサック<span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;56.4<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;56.1<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;52.4<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_5_6">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>シルバーステート</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>前走は道悪だったが今回は良馬場。本来の力を発揮できる条件かどうかに注目。</li><li>平均3.5番手と先行タイプ。今回のコース・距離での先行有利/不利との相性が焦点。</li><li>6/13(3歳未勝利)で1:08.7(稍重)の持ち時計。稍重のクラス平均1:10.3より1.6秒速く、十分な水準。</li><li>MAR(2位)・的中率(2位)・回収率(3位)でモデル高評価。主な要因：6/13(3歳未勝利)で1:08.7(稍重)の持ち時計（クラス平均より1.6秒速い）、芝平均上り34.6秒（未勝利目安35.5秒以下、近5走で2走が基準クリア）、近走好走：6/27(3歳未勝利)3着、6/13(3歳未勝利)2着、2/21(3歳未勝利)2着。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>シルバーステート</strong> / 母父 <strong>キングカメハメハ</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>シルバーステート</td>
-<td>2</td>
-<td>7</td>
-<td>9</td>
-<td>50</td>
-<td>2.9</td>
-<td>26.5</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>シルバーステート</td>
-<td>2</td>
-<td>6</td>
-<td>5</td>
-<td>17</td>
-<td>6.7</td>
-<td>43.3</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">シルバーステート</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:4.29%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 4.3%</span></span><span class="chakudo-segment seg-2nd" style="width:10.00%">7<span class="chakudo-tooltip">2着 7回 ／ 累積 14.3%</span></span><span class="chakudo-segment seg-3rd" style="width:12.86%">9<span class="chakudo-tooltip">3着 9回 ／ 複勝率 27.1%</span></span><span class="chakudo-segment seg-out" style="width:72.86%">51<span class="chakudo-tooltip">着外 51回 ／ 着外率 72.9%</span></span></span><span class="chakudo-value">n=70</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">シルバーステート</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:9.38%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 9.4%</span></span><span class="chakudo-segment seg-2nd" style="width:18.75%">6<span class="chakudo-tooltip">2着 6回 ／ 累積 28.1%</span></span><span class="chakudo-segment seg-3rd" style="width:15.62%">5<span class="chakudo-tooltip">3着 5回 ／ 複勝率 43.8%</span></span><span class="chakudo-segment seg-out" style="width:56.25%">18<span class="chakudo-tooltip">着外 18回 ／ 着外率 56.2%</span></span></span><span class="chakudo-value">n=32</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/06/27</td>
 <td>函館</td>
@@ -2645,10 +2712,13 @@
 <td style="background-color:#b0b0b0;">重</td>
 <td>1:09.4</td>
 <td>0.2</td>
-<td style="color: red; font-weight: bold;">-0.8</td>
+<td style="color: red; font-weight: bold;">-1.1</td>
 <td>34.9</td>
 <td>3-3</td>
 <td>492</td>
+<td style="font-weight:normal;">55.7<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">53.1<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="font-weight:normal;">53.2<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
 </tr>
 <tr>
 <td>2026/06/13</td>
@@ -2665,10 +2735,13 @@
 <td style="background-color:#e8e8e8;">稍重</td>
 <td>1:08.7</td>
 <td>0.2</td>
-<td style="color: red; font-weight: bold;">-1.61</td>
+<td style="color: red; font-weight: bold;">-1.56</td>
 <td>34.4</td>
 <td>3-2</td>
 <td>490</td>
+<td style="background-color:#FFF176;font-weight:bold;">60.5<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">77.7<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="font-weight:normal;">52.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
 </tr>
 <tr>
 <td>2026/03/01</td>
@@ -2685,10 +2758,13 @@
 <td style="background-color:#e8e8e8;">稍重</td>
 <td>0:59.5</td>
 <td>1.7</td>
-<td style="color: black; font-weight: bold;">0.69</td>
+<td style="color: black; font-weight: bold;">0.7</td>
 <td>37.0</td>
 <td>2-2</td>
 <td>486</td>
+<td style="background-color:#FFF176;font-weight:bold;">79.1<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="font-weight:normal;">50.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="background-color:#E0F7FA;font-weight:bold;">79.1<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
 </tr>
 <tr>
 <td>2026/02/21</td>
@@ -2709,6 +2785,9 @@
 <td>38.2</td>
 <td>4-4</td>
 <td>490</td>
+<td style="background-color:#FFF176;font-weight:bold;">80.2<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">79.2<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="background-color:#E0F7FA;font-weight:bold;">83.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
 </tr>
 <tr>
 <td>2026/02/10</td>
@@ -2729,6 +2808,9 @@
 <td>39.0</td>
 <td>1-1</td>
 <td>490</td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -2778,40 +2860,26 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_6_7')">
-                <span>🐎 [4枠7番] テイクマイハート</span>
+                <span>🐎 [4枠7番] テイクマイハート<span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;84.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span><span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;83.2<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;84.2<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_6_7">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>サートゥルナーリア</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>6/20(3歳未勝利)で1:09.1(良)の持ち時計。良のクラス平均1:09.4とほぼ同等。</li><li>MAR(1位)・的中率(1位)・回収率(1位)でモデル高評価。主な要因：6/20(3歳未勝利)で1:09.1(良)の持ち時計（クラス平均より0.3秒速い）。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>サートゥルナーリア</strong> / 母父 <strong>スウェプトオーヴァーボード</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>サートゥルナーリア</td>
-<td>2</td>
-<td>2</td>
-<td>2</td>
-<td>11</td>
-<td>11.8</td>
-<td>35.3</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>サートゥルナーリア</td>
-<td>0</td>
-<td>0</td>
-<td>2</td>
-<td>5</td>
-<td>0.0</td>
-<td>28.6</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">サートゥルナーリア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:9.09%">2<span class="chakudo-tooltip">1着 2回 ／ 勝率 9.1%</span></span><span class="chakudo-segment seg-2nd" style="width:13.64%">3<span class="chakudo-tooltip">2着 3回 ／ 累積 22.7%</span></span><span class="chakudo-segment seg-3rd" style="width:9.09%">2<span class="chakudo-tooltip">3着 2回 ／ 複勝率 31.8%</span></span><span class="chakudo-segment seg-out" style="width:68.18%">15<span class="chakudo-tooltip">着外 15回 ／ 着外率 68.2%</span></span></span><span class="chakudo-value">n=22</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">サートゥルナーリア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:10.00%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 10.0%</span></span><span class="chakudo-segment seg-3rd" style="width:20.00%">2<span class="chakudo-tooltip">3着 2回 ／ 複勝率 30.0%</span></span><span class="chakudo-segment seg-out" style="width:70.00%">7<span class="chakudo-tooltip">着外 7回 ／ 着外率 70.0%</span></span></span><span class="chakudo-value">n=10</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/06/20</td>
 <td>函館</td>
@@ -2827,10 +2895,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.1</td>
 <td>0.5</td>
-<td style="color: red; font-weight: bold;">-0.34</td>
+<td style="color: red; font-weight: bold;">-0.33</td>
 <td>35.9</td>
 <td>2-2</td>
 <td>470</td>
+<td style="background-color:#FFF176;font-weight:bold;">83.4<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">83.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="background-color:#E0F7FA;font-weight:bold;">86.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
 </tr>
 <tr>
 <td>2026/03/14</td>
@@ -2851,6 +2922,9 @@
 <td>39.2</td>
 <td>3-4</td>
 <td>456</td>
+<td style="background-color:#FFF176;font-weight:bold;">60.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">82.5<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="font-weight:normal;">46.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(13)</sub></td>
 </tr>
 <tr>
 <td>2026/02/15</td>
@@ -2871,6 +2945,9 @@
 <td>35.9</td>
 <td>13-12</td>
 <td>458</td>
+<td style="font-weight:normal;">50.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
+<td style="font-weight:normal;">54.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="font-weight:normal;">45.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
 </tr>
 <tr>
 <td>2026/01/25</td>
@@ -2891,6 +2968,9 @@
 <td>35.2</td>
 <td>6-7</td>
 <td>458</td>
+<td style="background-color:#FFF176;font-weight:bold;">52.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">58.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="font-weight:normal;">47.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
 </tr>
 </tbody></table>
 </div>
@@ -2940,40 +3020,49 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_7_8')">
-                <span>🐎 [4枠8番] アゲンストオッズ</span>
+                <span>🐎 [4枠8番] アゲンストオッズ<span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;53.3<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;51.5<sub style='font-size:0.65em;color:#888;'>(6)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;46.3<sub style='font-size:0.65em;color:#888;'>(10)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_7_8">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>キタサンブラック</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>平均2.2番手と先行タイプ。今回のコース・距離での先行有利/不利との相性が焦点。</li><li>6/14(3歳未勝利)で1:10.0(良)の持ち時計があるが、良のクラス平均1:09.4より0.6秒遅く、タイムを縮める必要あり。</li><li>近4走の着順が下降気味（平均11.5着）で、フォームの立て直しが課題。今回の巻き返しに期待できるかが焦点。</li><li>MAR(3位)でモデル高評価。主な要因：近走10/19(2歳新馬)2着。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>キタサンブラック</strong> / 母父 <strong>アドマイヤムーン</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>キタサンブラック</td>
-<td>5</td>
-<td>6</td>
-<td>2</td>
-<td>19</td>
-<td>15.6</td>
-<td>40.6</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>キタサンブラック</td>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>9</td>
-<td>9.1</td>
-<td>18.2</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">キタサンブラック</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:14.29%">5<span class="chakudo-tooltip">1着 5回 ／ 勝率 14.3%</span></span><span class="chakudo-segment seg-2nd" style="width:17.14%">6<span class="chakudo-tooltip">2着 6回 ／ 累積 31.4%</span></span><span class="chakudo-segment seg-3rd" style="width:5.71%">2<span class="chakudo-tooltip">3着 2回 ／ 複勝率 37.1%</span></span><span class="chakudo-segment seg-out" style="width:62.86%">22<span class="chakudo-tooltip">着外 22回 ／ 着外率 62.9%</span></span></span><span class="chakudo-value">n=35</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">キタサンブラック</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:7.69%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 7.7%</span></span><span class="chakudo-segment seg-2nd" style="width:7.69%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 15.4%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 15.4%</span></span><span class="chakudo-segment seg-out" style="width:84.62%">11<span class="chakudo-tooltip">着外 11回 ／ 着外率 84.6%</span></span></span><span class="chakudo-value">n=13</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
+<tr>
+<td>2026/06/14</td>
+<td>函館</td>
+<td>01</td>
+<td>3歳未勝利</td>
+<td style="background-color:#fff0f0; padding: 2px 4px; border-radius: 3px;">未勝利</td>
+<td style="background-color: #ffffff; font-weight: bold;">15</td>
+<td style="background-color: #FFD700; font-weight: bold;">1</td>
+<td style="background-color:white; color:#000;">1</td>
+<td style="background-color:white; color:#000;">2</td>
+<td style="background-color:#32CD32;font-weight: bold;">芝</td>
+<td style="background-color:#32CD32; font-weight: bold;">1200</td>
+<td style="background-color:#ffffff;">良</td>
+<td>1:10.0</td>
+<td>1.5</td>
+<td style="color: black; font-weight: bold;">0.57</td>
+<td>36.1</td>
+<td>2-2</td>
+<td>420</td>
+<td style="font-weight:normal;">54.2<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+<td style="font-weight:normal;">51.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="font-weight:normal;">50.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+</tr>
 <tr>
 <td>2026/03/22</td>
 <td>中京</td>
@@ -2993,6 +3082,9 @@
 <td>36.5</td>
 <td>2-2-2</td>
 <td>424</td>
+<td style="font-weight:normal;">45.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">46.1<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
+<td style="font-weight:normal;">44.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(12)</sub></td>
 </tr>
 <tr>
 <td>2026/01/12</td>
@@ -3013,6 +3105,9 @@
 <td>42.8</td>
 <td>1-2</td>
 <td>428</td>
+<td style="background-color:#FFF176;font-weight:bold;">60.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">80.0<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="font-weight:normal;">48.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
 </tr>
 <tr>
 <td>2025/10/19</td>
@@ -3033,6 +3128,9 @@
 <td>35.0</td>
 <td>5-4</td>
 <td>426</td>
+<td style="background-color:#FFF176;font-weight:bold;">2.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -3055,9 +3153,9 @@
             <tr>
             <td>芝</td>
             <td><strong>35.0</strong> <br> 2025/10/19: 2歳新馬 (京都 1400m 良)</td>
-            <td><strong>35.75</strong></td>
-            <td>[2.2, 3.8, 3.2]</td>
-            <td>2</td>
+            <td><strong>35.87</strong></td>
+            <td>[2.2, 3.3, 2.9]</td>
+            <td>3</td>
             </tr>
             
 
@@ -3072,47 +3170,36 @@
 </tbody></table>
 </div>
 <h4>⏱️ 函館 芝1200m 持ち時計</h4>
-<div>同コース出走データなし</div>
+<ul>
+<li>2026/06/14: 3歳未勝利 </li>
+<li>タイム: <strong>1:10.0</strong>(馬場: 良)</li>
+</ul>
 </div>
               </div>
             </div>
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_8_9')">
-                <span>🐎 [5枠9番] ダノンルミエール</span>
+                <span>🐎 [5枠9番] ダノンルミエール<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;49.2<sub style='font-size:0.65em;color:#888;'>(7)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;52.9<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;47.2<sub style='font-size:0.65em;color:#888;'>(8)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_8_9">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>ダノンスマッシュ</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>過去の芝レースでの平均上り34.9秒は未勝利水準では優秀で、末脚が武器になるタイプ。上りが問われる展開なら強み。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li><li>近5走の着順が下降気味（平均5.4着）で、フォームの立て直しが課題。今回の巻き返しに期待できるかが焦点。</li><li>的中率(5位)でモデル高評価。主な要因：芝平均上り34.9秒（未勝利目安35.5秒以下、近5走で4走が基準クリア）、近走4/11(3歳未勝利)3着。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>ダノンスマッシュ</strong> / 母父 <strong>ダイワメジャー</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>ダノンスマッシュ</td>
-<td>1</td>
-<td>1</td>
-<td>0</td>
-<td>8</td>
-<td>10.0</td>
-<td>20.0</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>ダノンスマッシュ</td>
-<td>0</td>
-<td>1</td>
-<td>0</td>
-<td>7</td>
-<td>0.0</td>
-<td>12.5</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ダノンスマッシュ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:8.33%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 8.3%</span></span><span class="chakudo-segment seg-2nd" style="width:8.33%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 16.7%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 16.7%</span></span><span class="chakudo-segment seg-out" style="width:83.33%">10<span class="chakudo-tooltip">着外 10回 ／ 着外率 83.3%</span></span></span><span class="chakudo-value">n=12</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">ダノンスマッシュ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:10.00%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 10.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 10.0%</span></span><span class="chakudo-segment seg-out" style="width:90.00%">9<span class="chakudo-tooltip">着外 9回 ／ 着外率 90.0%</span></span></span><span class="chakudo-value">n=10</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/05/23</td>
 <td>新潟</td>
@@ -3132,6 +3219,9 @@
 <td>36.5</td>
 <td>10-11</td>
 <td>456</td>
+<td style="font-weight:normal;">53.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
+<td style="font-weight:normal;">54.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+<td style="font-weight:normal;">47.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
 </tr>
 <tr>
 <td>2026/04/26</td>
@@ -3148,10 +3238,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.9</td>
 <td>0.5</td>
-<td style="color: orange; font-weight: bold;">0.18</td>
+<td style="color: orange; font-weight: bold;">0.19</td>
 <td>35.0</td>
 <td>4-5</td>
 <td>464</td>
+<td style="background-color:#FFF176;font-weight:bold;">56.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">59.2<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="font-weight:normal;">53.4<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
 </tr>
 <tr>
 <td>2026/04/11</td>
@@ -3168,10 +3261,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.0</td>
 <td>0.4</td>
-<td style="color: red; font-weight: bold;">-0.72</td>
+<td style="color: red; font-weight: bold;">-0.71</td>
 <td>34.3</td>
 <td>7-5</td>
 <td>468</td>
+<td style="background-color:#FFF176;font-weight:bold;">59.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">62.4<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="font-weight:normal;">54.5<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
 </tr>
 <tr>
 <td>2025/09/28</td>
@@ -3192,6 +3288,9 @@
 <td>34.2</td>
 <td>6-5</td>
 <td>458</td>
+<td style="font-weight:normal;">-1.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 <tr>
 <td>2025/09/06</td>
@@ -3212,6 +3311,9 @@
 <td>34.7</td>
 <td>1-1</td>
 <td>460</td>
+<td style="font-weight:normal;">-1.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -3258,40 +3360,26 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_9_10')">
-                <span>🐎 [5枠10番] クリオロゴールド</span>
+                <span>🐎 [5枠10番] クリオロゴールド<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;49.6<sub style='font-size:0.65em;color:#888;'>(6)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;53.5<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;46.5<sub style='font-size:0.65em;color:#888;'>(9)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_9_10">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>ロードカナロア</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>過去の芝レースでの平均上り34.8秒は未勝利水準では優秀で、末脚が武器になるタイプ。上りが問われる展開なら強み。</li><li>6/20(3歳未勝利)で1:08.9(良)の持ち時計。良のクラス平均1:09.4より0.5秒速く、十分な水準。</li><li>的中率(4位)でモデル高評価。主な要因：6/20(3歳未勝利)で1:08.9(良)の持ち時計（クラス平均より0.5秒速い）、芝平均上り34.8秒（未勝利目安35.5秒以下、近5走で2走が基準クリア）、近走好走：4/4(3歳未勝利)2着、1/18(3歳未勝利)3着。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>ロードカナロア</strong> / 母父 <strong>オルフェーヴル</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>ロードカナロア</td>
-<td>31</td>
-<td>29</td>
-<td>16</td>
-<td>163</td>
-<td>13.0</td>
-<td>31.8</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>ロードカナロア</td>
-<td>11</td>
-<td>6</td>
-<td>10</td>
-<td>45</td>
-<td>15.3</td>
-<td>37.5</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ロードカナロア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:13.06%">32<span class="chakudo-tooltip">1着 32回 ／ 勝率 13.1%</span></span><span class="chakudo-segment seg-2nd" style="width:11.84%">29<span class="chakudo-tooltip">2着 29回 ／ 累積 24.9%</span></span><span class="chakudo-segment seg-3rd" style="width:6.53%">16<span class="chakudo-tooltip">3着 16回 ／ 複勝率 31.4%</span></span><span class="chakudo-segment seg-out" style="width:68.57%">168<span class="chakudo-tooltip">着外 168回 ／ 着外率 68.6%</span></span></span><span class="chakudo-value">n=245</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">ロードカナロア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:14.67%">11<span class="chakudo-tooltip">1着 11回 ／ 勝率 14.7%</span></span><span class="chakudo-segment seg-2nd" style="width:8.00%">6<span class="chakudo-tooltip">2着 6回 ／ 累積 22.7%</span></span><span class="chakudo-segment seg-3rd" style="width:13.33%">10<span class="chakudo-tooltip">3着 10回 ／ 複勝率 36.0%</span></span><span class="chakudo-segment seg-out" style="width:64.00%">48<span class="chakudo-tooltip">着外 48回 ／ 着外率 64.0%</span></span></span><span class="chakudo-value">n=75</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/06/20</td>
 <td>函館</td>
@@ -3307,10 +3395,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:08.9</td>
 <td>0.3</td>
-<td style="color: red; font-weight: bold;">-0.54</td>
+<td style="color: red; font-weight: bold;">-0.53</td>
 <td>34.9</td>
 <td>8-8</td>
 <td>446</td>
+<td style="font-weight:normal;">49.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
+<td style="font-weight:normal;">52.2<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+<td style="font-weight:normal;">47.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
 </tr>
 <tr>
 <td>2026/04/18</td>
@@ -3331,6 +3422,9 @@
 <td>37.5</td>
 <td>4-4</td>
 <td>438</td>
+<td style="background-color:#FFF176;font-weight:bold;">58.7<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">75.7<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="background-color:#E0F7FA;font-weight:bold;">58.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
 </tr>
 <tr>
 <td>2026/04/04</td>
@@ -3351,6 +3445,9 @@
 <td>37.5</td>
 <td>3-4</td>
 <td>436</td>
+<td style="background-color:#FFF176;font-weight:bold;">58.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">76.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="font-weight:normal;">49.5<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
 </tr>
 <tr>
 <td>2026/01/18</td>
@@ -3371,6 +3468,9 @@
 <td>39.4</td>
 <td>6-6</td>
 <td>436</td>
+<td style="background-color:#FFF176;font-weight:bold;">58.5<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">58.0<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="background-color:#E0F7FA;font-weight:bold;">60.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
 </tr>
 <tr>
 <td>2025/12/28</td>
@@ -3391,6 +3491,9 @@
 <td>35.2</td>
 <td>6-6</td>
 <td>436</td>
+<td style="font-weight:normal;">-1.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -3440,40 +3543,26 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_10_11')">
-                <span>🐎 [6枠11番] ユナダイヤ</span>
+                <span>🐎 [6枠11番] ユナダイヤ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;43.4<sub style='font-size:0.65em;color:#888;'>(15)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;43.3<sub style='font-size:0.65em;color:#888;'>(13)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;44.1<sub style='font-size:0.65em;color:#888;'>(13)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_10_11">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>サトノクラウン</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>前走はダート（1200m）からの芝転向。過去の芝成績と血統適性がカギになる。</li><li>平均9.8番手と後ろから競馬するタイプ。展開と上り勝負の質次第。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>サトノクラウン</strong> / 母父 <strong>ダイワメジャー</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>サトノクラウン</td>
-<td>3</td>
-<td>1</td>
-<td>1</td>
-<td>17</td>
-<td>13.6</td>
-<td>22.7</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>サトノクラウン</td>
-<td>2</td>
-<td>0</td>
-<td>0</td>
-<td>9</td>
-<td>18.2</td>
-<td>18.2</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">サトノクラウン</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:11.54%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 11.5%</span></span><span class="chakudo-segment seg-2nd" style="width:3.85%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 15.4%</span></span><span class="chakudo-segment seg-3rd" style="width:3.85%">1<span class="chakudo-tooltip">3着 1回 ／ 複勝率 19.2%</span></span><span class="chakudo-segment seg-out" style="width:80.77%">21<span class="chakudo-tooltip">着外 21回 ／ 着外率 80.8%</span></span></span><span class="chakudo-value">n=26</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">サトノクラウン</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:15.38%">2<span class="chakudo-tooltip">1着 2回 ／ 勝率 15.4%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 15.4%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 15.4%</span></span><span class="chakudo-segment seg-out" style="width:84.62%">11<span class="chakudo-tooltip">着外 11回 ／ 着外率 84.6%</span></span></span><span class="chakudo-value">n=13</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/05/10</td>
 <td>京都</td>
@@ -3493,6 +3582,9 @@
 <td>37.5</td>
 <td>11-10</td>
 <td>430</td>
+<td style="font-weight:normal;">44.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
+<td style="font-weight:normal;">45.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
+<td style="font-weight:normal;">46.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
 </tr>
 <tr>
 <td>2026/04/25</td>
@@ -3513,6 +3605,9 @@
 <td>37.8</td>
 <td>6-7</td>
 <td>426</td>
+<td style="font-weight:normal;">44.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">44.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">45.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
 </tr>
 <tr>
 <td>2026/03/28</td>
@@ -3533,6 +3628,9 @@
 <td>37.6</td>
 <td>10-8</td>
 <td>430</td>
+<td style="font-weight:normal;">46.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">48.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">44.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(15)</sub></td>
 </tr>
 <tr>
 <td>2025/12/06</td>
@@ -3553,6 +3651,9 @@
 <td>39.1</td>
 <td>5-5</td>
 <td>426</td>
+<td style="background-color:#FFF176;font-weight:bold;">1.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 <tr>
 <td>2025/11/15</td>
@@ -3573,6 +3674,9 @@
 <td>37.9</td>
 <td>5-5</td>
 <td>428</td>
+<td style="font-weight:normal;">-0.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -3619,40 +3723,26 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_11_12')">
-                <span>🐎 [6枠12番] トゥントゥントゥン</span>
+                <span>🐎 [6枠12番] トゥントゥントゥン<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;43.3<sub style='font-size:0.65em;color:#888;'>(16)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;43.3<sub style='font-size:0.65em;color:#888;'>(15)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;43.2<sub style='font-size:0.65em;color:#888;'>(16)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_11_12">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>ダノンバラード</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>前走はダート（1400m）からの芝転向。過去の芝成績と血統適性がカギになる。</li><li>平均14.0番手と後ろから競馬するタイプ。展開と上り勝負の質次第。近走の平均通過順は4.1番手と、全体平均（14.0番手）より前で競馬するようになっている。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>ダノンバラード</strong> / 母父 <strong>ロードカナロア</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>ダノンバラード</td>
-<td>0</td>
-<td>5</td>
-<td>4</td>
-<td>19</td>
-<td>0.0</td>
-<td>32.1</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>ダノンバラード</td>
-<td>0</td>
-<td>3</td>
-<td>1</td>
-<td>10</td>
-<td>0.0</td>
-<td>28.6</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ダノンバラード</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:17.24%">5<span class="chakudo-tooltip">2着 5回 ／ 累積 17.2%</span></span><span class="chakudo-segment seg-3rd" style="width:13.79%">4<span class="chakudo-tooltip">3着 4回 ／ 複勝率 31.0%</span></span><span class="chakudo-segment seg-out" style="width:68.97%">20<span class="chakudo-tooltip">着外 20回 ／ 着外率 69.0%</span></span></span><span class="chakudo-value">n=29</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">ダノンバラード</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:20.00%">3<span class="chakudo-tooltip">2着 3回 ／ 累積 20.0%</span></span><span class="chakudo-segment seg-3rd" style="width:6.67%">1<span class="chakudo-tooltip">3着 1回 ／ 複勝率 26.7%</span></span><span class="chakudo-segment seg-out" style="width:73.33%">11<span class="chakudo-tooltip">着外 11回 ／ 着外率 73.3%</span></span></span><span class="chakudo-value">n=15</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/06/20</td>
 <td>東京</td>
@@ -3672,6 +3762,9 @@
 <td>37.4</td>
 <td>4-4</td>
 <td>424</td>
+<td style="font-weight:normal;">43.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
+<td style="font-weight:normal;">46.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">43.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
 </tr>
 <tr>
 <td>2026/05/02</td>
@@ -3692,6 +3785,9 @@
 <td>42.2</td>
 <td>4-4</td>
 <td>420</td>
+<td style="font-weight:normal;">45.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
+<td style="font-weight:normal;">45.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+<td style="font-weight:normal;">45.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
 </tr>
 <tr>
 <td>2026/02/28</td>
@@ -3712,6 +3808,9 @@
 <td>41.3</td>
 <td>2-3-4-4</td>
 <td>414</td>
+<td style="font-weight:normal;">46.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
+<td style="font-weight:normal;">48.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
+<td style="font-weight:normal;">45.5<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
 </tr>
 <tr>
 <td>2026/02/07</td>
@@ -3732,6 +3831,9 @@
 <td>34.6</td>
 <td>13-11</td>
 <td>416</td>
+<td style="font-weight:normal;">41.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(14)</sub></td>
+<td style="font-weight:normal;">37.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(14)</sub></td>
+<td style="font-weight:normal;">42.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
 </tr>
 <tr>
 <td>2025/10/19</td>
@@ -3752,6 +3854,9 @@
 <td>33.9</td>
 <td>14-15-15</td>
 <td>404</td>
+<td style="font-weight:normal;">-0.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -3798,40 +3903,26 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_12_13')">
-                <span>🐎 [7枠13番] ブルーハーツ</span>
+                <span>🐎 [7枠13番] ブルーハーツ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;43.4<sub style='font-size:0.65em;color:#888;'>(14)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;43.4<sub style='font-size:0.65em;color:#888;'>(12)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;44.0<sub style='font-size:0.65em;color:#888;'>(14)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_12_13">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>エポカドーロ</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>父エポカドーロのこのコース出走数は4件と少なく、血統面の適性を判断するにはデータ不足。</li><li>平均9.0番手と後ろから競馬するタイプ。展開と上り勝負の質次第。近走の平均通過順は13.5番手と、全体平均（9.0番手）より後ろで競馬する傾向に変わっている。</li><li>過去の芝レースでの平均上り35.0秒は未勝利水準では優秀で、末脚が武器になるタイプ。上りが問われる展開なら強み。</li><li>6/20(3歳未勝利)で1:09.3(良)の持ち時計。良のクラス平均1:09.4とほぼ同等。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>エポカドーロ</strong> / 母父 <strong>ネオユニヴァース</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>エポカドーロ</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>3</td>
-<td>0.0</td>
-<td>0.0</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>エポカドーロ</td>
-<td>0</td>
-<td>0</td>
-<td>0</td>
-<td>3</td>
-<td>0.0</td>
-<td>0.0</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">エポカドーロ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 0.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 0.0%</span></span><span class="chakudo-segment seg-out" style="width:100.00%">4<span class="chakudo-tooltip">着外 4回 ／ 着外率 100.0%</span></span></span><span class="chakudo-value">n=4</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">エポカドーロ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 0.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 0.0%</span></span><span class="chakudo-segment seg-out" style="width:100.00%">4<span class="chakudo-tooltip">着外 4回 ／ 着外率 100.0%</span></span></span><span class="chakudo-value">n=4</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/06/20</td>
 <td>函館</td>
@@ -3847,10 +3938,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.3</td>
 <td>0.7</td>
-<td style="color: red; font-weight: bold;">-0.14</td>
+<td style="color: red; font-weight: bold;">-0.13</td>
 <td>34.9</td>
 <td>12-13</td>
 <td>488</td>
+<td style="font-weight:normal;">43.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
+<td style="font-weight:normal;">43.4<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
+<td style="font-weight:normal;">45.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(14)</sub></td>
 </tr>
 <tr>
 <td>2026/04/25</td>
@@ -3867,10 +3961,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.8</td>
 <td>1.1</td>
-<td style="color: orange; font-weight: bold;">0.08</td>
+<td style="color: orange; font-weight: bold;">0.09</td>
 <td>34.7</td>
 <td>12-11</td>
 <td>480</td>
+<td style="font-weight:normal;">53.1<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
+<td style="font-weight:normal;">48.5<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
+<td style="font-weight:normal;">43.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(12)</sub></td>
 </tr>
 <tr>
 <td>2026/04/12</td>
@@ -3887,10 +3984,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.8</td>
 <td>0.5</td>
-<td style="color: orange; font-weight: bold;">0.08</td>
+<td style="color: orange; font-weight: bold;">0.09</td>
 <td>34.8</td>
 <td>12-10</td>
 <td>484</td>
+<td style="font-weight:normal;">49.1<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
+<td style="font-weight:normal;">50.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+<td style="font-weight:normal;">47.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
 </tr>
 <tr>
 <td>2026/02/07</td>
@@ -3907,10 +4007,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.7</td>
 <td>0.8</td>
-<td style="color: black; font-weight: bold;">0.97</td>
+<td style="color: black; font-weight: bold;">0.98</td>
 <td>34.5</td>
 <td>18-17</td>
 <td>480</td>
+<td style="font-weight:normal;">39.4<sub style="font-size:0.65em;color:#888;font-weight:bold;">(17)</sub></td>
+<td style="font-weight:normal;">38.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
+<td style="font-weight:normal;">47.1<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
 </tr>
 <tr>
 <td>2026/01/10</td>
@@ -3931,6 +4034,9 @@
 <td>36.5</td>
 <td>8-4-3</td>
 <td>478</td>
+<td style="font-weight:normal;">43.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
+<td style="font-weight:normal;">44.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
+<td style="font-weight:normal;">46.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
 </tr>
 </tbody></table>
 </div>
@@ -3980,40 +4086,26 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_13_14')">
-                <span>🐎 [7枠14番] ウインドトリック</span>
+                <span>🐎 [7枠14番] ウインドトリック<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;43.5<sub style='font-size:0.65em;color:#888;'>(13)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;43.3<sub style='font-size:0.65em;color:#888;'>(14)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;46.1<sub style='font-size:0.65em;color:#888;'>(11)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_13_14">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>エイシンヒカリ</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>近走の平均通過順は11.9番手と、全体平均（8.0番手）より後ろで競馬する傾向に変わっている。</li><li>過去の芝レースでの平均上り35.3秒は未勝利水準では優秀で、末脚が武器になるタイプ。上りが問われる展開なら強み。</li><li>6/20(3歳未勝利)で1:09.5(良)の持ち時計。良のクラス平均1:09.4とほぼ同等。</li><li>近5走の着順が下降気味（平均7.8着）で、フォームの立て直しが課題。今回の巻き返しに期待できるかが焦点。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>エイシンヒカリ</strong> / 母父 <strong>ローレルゲレイロ</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>エイシンヒカリ</td>
-<td>3</td>
-<td>1</td>
-<td>1</td>
-<td>18</td>
-<td>13.0</td>
-<td>21.7</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>エイシンヒカリ</td>
-<td>1</td>
-<td>0</td>
-<td>0</td>
-<td>4</td>
-<td>20.0</td>
-<td>20.0</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">エイシンヒカリ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:12.50%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 12.5%</span></span><span class="chakudo-segment seg-2nd" style="width:4.17%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 16.7%</span></span><span class="chakudo-segment seg-3rd" style="width:4.17%">1<span class="chakudo-tooltip">3着 1回 ／ 複勝率 20.8%</span></span><span class="chakudo-segment seg-out" style="width:79.17%">19<span class="chakudo-tooltip">着外 19回 ／ 着外率 79.2%</span></span></span><span class="chakudo-value">n=24</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">エイシンヒカリ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:16.67%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 16.7%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 16.7%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 16.7%</span></span><span class="chakudo-segment seg-out" style="width:83.33%">5<span class="chakudo-tooltip">着外 5回 ／ 着外率 83.3%</span></span></span><span class="chakudo-value">n=6</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/06/20</td>
 <td>函館</td>
@@ -4029,10 +4121,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.5</td>
 <td>0.9</td>
-<td style="color: orange; font-weight: bold;">0.06</td>
+<td style="color: orange; font-weight: bold;">0.07</td>
 <td>35.5</td>
 <td>8-8</td>
 <td>468</td>
+<td style="font-weight:normal;">46.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
+<td style="font-weight:normal;">44.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">45.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(12)</sub></td>
 </tr>
 <tr>
 <td>2026/03/29</td>
@@ -4053,6 +4148,9 @@
 <td>35.3</td>
 <td>12-12</td>
 <td>464</td>
+<td style="font-weight:normal;">54.5<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">55.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="font-weight:normal;">45.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
 </tr>
 <tr>
 <td>2026/02/28</td>
@@ -4073,6 +4171,9 @@
 <td>34.9</td>
 <td>14-11</td>
 <td>462</td>
+<td style="background-color:#FFF176;font-weight:bold;">58.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">57.5<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="font-weight:normal;">49.5<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
 </tr>
 <tr>
 <td>2026/02/14</td>
@@ -4089,10 +4190,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.0</td>
 <td>0.4</td>
-<td style="color: black; font-weight: bold;">0.27</td>
+<td style="color: black; font-weight: bold;">0.28</td>
 <td>35.7</td>
 <td>5-3</td>
 <td>470</td>
+<td style="background-color:#FFF176;font-weight:bold;">59.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">81.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="background-color:#E0F7FA;font-weight:bold;">86.2<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
 </tr>
 <tr>
 <td>2026/01/25</td>
@@ -4109,10 +4213,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:08.5</td>
 <td>0.5</td>
-<td style="color: red; font-weight: bold;">-0.23</td>
+<td style="color: red; font-weight: bold;">-0.21</td>
 <td>34.0</td>
 <td>8-6</td>
 <td>464</td>
+<td style="background-color:#FFF176;font-weight:bold;">59.7<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="font-weight:normal;">56.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="background-color:#E0F7FA;font-weight:bold;">50.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
 </tr>
 </tbody></table>
 </div>
@@ -4162,40 +4269,26 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_14_15')">
-                <span>🐎 [8枠15番] ルージュフローラ</span>
+                <span>🐎 [8枠15番] ルージュフローラ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;47.5<sub style='font-size:0.65em;color:#888;'>(8)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;45.0<sub style='font-size:0.65em;color:#888;'>(10)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;48.3<sub style='font-size:0.65em;color:#888;'>(7)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_14_15">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>モーリス</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>近走の平均通過順は12.0番手と、全体平均（3.9番手）より後ろで競馬する傾向に変わっている。</li><li>過去の芝レースでの平均上り35.2秒は未勝利水準では優秀で、末脚が武器になるタイプ。上りが問われる展開なら強み。</li><li>6/21(3歳未勝利)で1:08.8(良)の持ち時計。良のクラス平均1:09.4より0.6秒速く、十分な水準。</li><li>近5走の着順が上向き傾向（平均6.4着）で、充実期にある可能性が高い。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>モーリス</strong> / 母父 <strong>ディープインパクト</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>モーリス</td>
-<td>13</td>
-<td>7</td>
-<td>5</td>
-<td>75</td>
-<td>13.0</td>
-<td>25.0</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>モーリス</td>
-<td>4</td>
-<td>3</td>
-<td>2</td>
-<td>36</td>
-<td>8.9</td>
-<td>20.0</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">モーリス</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:13.59%">14<span class="chakudo-tooltip">1着 14回 ／ 勝率 13.6%</span></span><span class="chakudo-segment seg-2nd" style="width:6.80%">7<span class="chakudo-tooltip">2着 7回 ／ 累積 20.4%</span></span><span class="chakudo-segment seg-3rd" style="width:4.85%">5<span class="chakudo-tooltip">3着 5回 ／ 複勝率 25.2%</span></span><span class="chakudo-segment seg-out" style="width:74.76%">77<span class="chakudo-tooltip">着外 77回 ／ 着外率 74.8%</span></span></span><span class="chakudo-value">n=103</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">モーリス</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:8.51%">4<span class="chakudo-tooltip">1着 4回 ／ 勝率 8.5%</span></span><span class="chakudo-segment seg-2nd" style="width:6.38%">3<span class="chakudo-tooltip">2着 3回 ／ 累積 14.9%</span></span><span class="chakudo-segment seg-3rd" style="width:4.26%">2<span class="chakudo-tooltip">3着 2回 ／ 複勝率 19.1%</span></span><span class="chakudo-segment seg-out" style="width:80.85%">38<span class="chakudo-tooltip">着外 38回 ／ 着外率 80.9%</span></span></span><span class="chakudo-value">n=47</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/07/05</td>
 <td>函館</td>
@@ -4211,10 +4304,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:09.1</td>
 <td>0.3</td>
-<td style="color: red; font-weight: bold;">-0.34</td>
+<td style="color: red; font-weight: bold;">-0.33</td>
 <td>34.6</td>
 <td>8-10</td>
 <td>412</td>
+<td style="font-weight:normal;">51.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
+<td style="font-weight:normal;">44.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">48.7<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
 </tr>
 <tr>
 <td>2026/06/21</td>
@@ -4231,10 +4327,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:08.8</td>
 <td>0.5</td>
-<td style="color: red; font-weight: bold;">-0.64</td>
+<td style="color: red; font-weight: bold;">-0.63</td>
 <td>34.9</td>
 <td>10-10</td>
 <td>408</td>
+<td style="font-weight:normal;">53.7<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="font-weight:normal;">47.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">49.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
 </tr>
 <tr>
 <td>2026/03/29</td>
@@ -4255,6 +4354,9 @@
 <td>34.0</td>
 <td>15-12</td>
 <td>404</td>
+<td style="font-weight:normal;">47.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">44.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
+<td style="font-weight:normal;">46.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
 </tr>
 <tr>
 <td>2026/01/18</td>
@@ -4275,6 +4377,9 @@
 <td>36.7</td>
 <td>5-8-9</td>
 <td>412</td>
+<td style="font-weight:normal;">41.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(12)</sub></td>
+<td style="font-weight:normal;">42.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(11)</sub></td>
+<td style="font-weight:normal;">45.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(12)</sub></td>
 </tr>
 <tr>
 <td>2025/12/27</td>
@@ -4295,6 +4400,9 @@
 <td>35.7</td>
 <td>2-3-3</td>
 <td>412</td>
+<td style="font-weight:normal;">-0.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -4344,40 +4452,26 @@
             
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_15_16')">
-                <span>🐎 [8枠16番] ナオミニオールイン</span>
+                <span>🐎 [8枠16番] ナオミニオールイン<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;43.6<sub style='font-size:0.65em;color:#888;'>(12)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">的中率&nbsp;43.3<sub style='font-size:0.65em;color:#888;'>(16)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">回収率&nbsp;50.2<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_15_16">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
-<h4>血統 (父) : <strong>シルバーステート</strong></h4>
+<div class="horse-comment-wrap">
+<ul class="horse-comment"><li>6/20(3歳未勝利)で1:10.5(良)の持ち時計があるが、良のクラス平均1:09.4より1.1秒遅く、タイムを縮める必要あり。</li><li>近4走の着順が下降気味（平均9.5着）で、フォームの立て直しが課題。今回の巻き返しに期待できるかが焦点。</li><li>回収率(5位)でモデル高評価。主な要因：近走10/11(2歳新馬)2着。</li></ul>
+
+</div>
+<h4>血統: 父 <strong>シルバーステート</strong> / 母父 <strong>Eltish</strong></h4>
 <h4>🧬 函館 芝1200m (稍重)</h4>
-<div class="table-wrap">
-<table style='border-collapse: collapse; text-align: center;'>
-<thead><tr style='background:#f2f2f2;'><th>クラス</th><th>血統</th><th>1着</th><th>2着</th><th>3着</th><th>着外</th><th>勝率</th><th>複勝率</th></tr></thead><tbody>
-<td><strong>all</strong></td>
-<td>シルバーステート</td>
-<td>2</td>
-<td>7</td>
-<td>9</td>
-<td>50</td>
-<td>2.9</td>
-<td>26.5</td>
-</tr>
-<td><strong>未勝利</strong></td>
-<td>シルバーステート</td>
-<td>2</td>
-<td>6</td>
-<td>5</td>
-<td>17</td>
-<td>6.7</td>
-<td>43.3</td>
-</tr>
-</tbody></table>
+<p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
+<div class="chakudo-chart">
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">シルバーステート</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:4.29%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 4.3%</span></span><span class="chakudo-segment seg-2nd" style="width:10.00%">7<span class="chakudo-tooltip">2着 7回 ／ 累積 14.3%</span></span><span class="chakudo-segment seg-3rd" style="width:12.86%">9<span class="chakudo-tooltip">3着 9回 ／ 複勝率 27.1%</span></span><span class="chakudo-segment seg-out" style="width:72.86%">51<span class="chakudo-tooltip">着外 51回 ／ 着外率 72.9%</span></span></span><span class="chakudo-value">n=70</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">未勝利</span><span class="chakudo-label peds-label">シルバーステート</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:9.38%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 9.4%</span></span><span class="chakudo-segment seg-2nd" style="width:18.75%">6<span class="chakudo-tooltip">2着 6回 ／ 累積 28.1%</span></span><span class="chakudo-segment seg-3rd" style="width:15.62%">5<span class="chakudo-tooltip">3着 5回 ／ 複勝率 43.8%</span></span><span class="chakudo-segment seg-out" style="width:56.25%">18<span class="chakudo-tooltip">着外 18回 ／ 着外率 56.2%</span></span></span><span class="chakudo-value">n=32</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
 <table style='border-collapse: collapse; text-align: center; font-size: 12px;'>
-<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均時計との差</th><th>上り</th><th>通過</th><th>馬体重</th></tr></thead><tbody>
+<thead><tr style='background:#f2f2f2;'><th>日付</th><th>開催</th><th>R</th><th>レース名</th><th>クラス</th><th>着順</th><th>人気</th><th>枠</th><th>馬番</th><th>種別</th><th>距離</th><th>馬場</th><th>タイム</th><th>着差</th><th>平均差</th><th>上り</th><th>通過</th><th>馬体重</th><th style='background:#6a1b9a;color:white;' title='MAR推奨指数（2025以前は旧スコア）'>MAR</th><th style='background:#9c27b0;color:white;'>的中率</th><th style='background:#ce93d8;color:#4a148c;'>回収率</th></tr></thead><tbody>
 <tr>
 <td>2026/06/20</td>
 <td>函館</td>
@@ -4393,10 +4487,13 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:10.5</td>
 <td>1.9</td>
-<td style="color: black; font-weight: bold;">1.06</td>
+<td style="color: black; font-weight: bold;">1.07</td>
 <td>37.4</td>
 <td>1-1</td>
 <td>444</td>
+<td style="font-weight:normal;">53.1<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="font-weight:normal;">52.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="background-color:#E0F7FA;font-weight:bold;">53.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
 </tr>
 <tr>
 <td>2026/01/12</td>
@@ -4417,6 +4514,9 @@
 <td>35.7</td>
 <td>14-14</td>
 <td>434</td>
+<td style="font-weight:normal;">47.5<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
+<td style="font-weight:normal;">47.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
+<td style="font-weight:normal;">43.5<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
 </tr>
 <tr>
 <td>2025/10/25</td>
@@ -4437,6 +4537,9 @@
 <td>37.5</td>
 <td>1-1</td>
 <td>436</td>
+<td style="font-weight:normal;">-3.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 <tr>
 <td>2025/10/11</td>
@@ -4457,6 +4560,9 @@
 <td>34.0</td>
 <td>1-1</td>
 <td>432</td>
+<td style="font-weight:normal;">-4.1<sub style="font-size:0.65em;color:#888;font-weight:bold;">(17)</sub></td>
+<td style='color:#ccc;'>-</td>
+<td style='color:#ccc;'>-</td>
 </tr>
 </tbody></table>
 </div>
@@ -4535,24 +4641,25 @@
   document.addEventListener("DOMContentLoaded", () => {
     // ======== スタイル設定部分 ========
     // 列順: 枠[0] 馬番[1] 馬名[2] 性齢[3] 斤量[4] 騎手[5] 馬体重[6]
-    //       人気[7] 単勝オッズ[8] AI指数[9] Rank[10]
+    //       人気[7] 単勝オッズ[8] 的中率[9] 回収率[10] MAR[11]
     const rows = document.querySelectorAll("#raceTable tbody tr");
     rows.forEach(row => {
       const waku = parseInt(row.children[0].innerText);
       row.children[0].classList.add(`waku-${waku}`);
       row.children[1].classList.add(`waku-${waku}`);
-      const rank = parseInt(row.children[10].innerText);
-      if (rank === 1) row.children[10].classList.add("rank-1");
-      if (rank === 2) row.children[10].classList.add("rank-2");
-      if (rank === 3) row.children[10].classList.add("rank-3");
     });
     // ======== ソート機能部分 ========
     const table = document.getElementById("raceTable");
     const headers = table.querySelectorAll("th");
 
     function getCellValue(tr, idx) {
-      const val = tr.children[idx].innerText.trim();
-      return isNaN(val) ? val : Number(val);
+      const td = tr.children[idx];
+      // data-sort 属性があれば数値として優先使用（指数列の確実なソート用）
+      if (td && td.dataset.sort !== undefined && td.dataset.sort !== "") {
+        return Number(td.dataset.sort);
+      }
+      const val = td ? td.innerText.trim() : "";
+      return isNaN(val) || val === "" ? val : Number(val);
     }
 
     function clearSortIndicators() {
@@ -4603,8 +4710,8 @@
     }
 
     // ======== 対象列にクリックイベントを追加 ========
-    // 馬番[1]、人気[7]、Rank[10] をソート可能に
-    [1, 7, 10].forEach(idx => {
+    // 馬番[1]、人気[7]、的中率[9]、回収率[10]、MAR[11] をソート可能に
+    [1, 7, 9, 10, 11].forEach(idx => {
       const th = headers[idx];
       if (th) {
         th.style.cursor = "pointer";
@@ -4621,7 +4728,7 @@
   <footer>
     <p class="site-footer-brand">&copy; MAR(まーる) 競馬AIデータサイト</p>
     <p class="site-footer-disclaimer">本サイトの予想・データは参考情報です。的中や回収を保証するものではありません。実際の購入は自己責任でお願いします。</p>
-    <p class="site-footer-updated">データ最終更新: 2026/07/11</p>
+    <p class="site-footer-updated">データ最終更新: 2026/07/23</p>
     <div class="a8-program-recommendation">
       <p class="a8-program-title">🔗 おすすめサービス</p>
       <p class="a8-program-item"><a href="https://px.a8.net/svt/ejp?a8mat=4B684D+EPADKI+50+2HGLCX" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--a8">お名前.com</a> <span class="a8-program-note">国内シェアNo.1の独自ドメイン取得サービス。</span></p>

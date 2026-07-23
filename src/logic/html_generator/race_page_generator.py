@@ -13,8 +13,13 @@ import pandas as pd
 
 from src.config.constants import NAME_LIST, PLACE_LIST, RANK_COLORS, WAKU_COLORS
 
-# AI予想Rank用の配色（人気と同系色だが薄め、視覚的に区別しやすくする）
-PRED_RANK_COLORS = {"1": "#FFF9C4", "2": "#B2EBF2", "3": "#FFE0B2"}
+# MM指数ランクハイライト用背景色 (main=MAR用濃め, sub=サブモデル用薄め)
+# 人気1=金(#FFD700)/2=粉青(#B0E0E6)/3=サーモン(#FFA07A) とは別系統で判別しやすくする
+MM_RANK_BG = {
+    1: ("#FFF176", "#FFFDE7"),   # main / sub: 黄緑がかった黄色（金色と区別）
+    2: ("#80DEEA", "#E0F7FA"),   # main / sub: ティールシアン（粉青と区別）
+    3: ("#FFA726", "#FFE0B2"),   # main / sub: アンバーオレンジ（サーモンと区別）
+}
 from src.logic.html_generator import affiliate_html, horse_report_generator
 from src.logic.prediction.race_prediction_engine import score_to_index
 from src.managers import score_calibration_manager as scm
@@ -230,9 +235,9 @@ def _ai_index_cell_html(ai_index):
 def _mm_index_cell_html(ai_index, rank, css_class, is_main=False):
     """マルチモデル指数の表示用TD HTML
 
-    is_main=True（MAR列）はメイン指数として大きめフォント・強いランク色付け。
-    is_main=False（的中率/回収率）はサブ指数として小さめ・薄いランク色付け。
-    data-sort 属性に数値を持たせてJSソートを確実に動作させる。
+    ランク1/2/3: 背景色塗りつぶし（黄/シアン/オレンジ系、人気色と区別）。
+    ランク1〜5のサブスクリプト数字は赤色で強調。
+    is_main=True（MAR列）はより濃い背景色・大きめフォント。
     """
     if ai_index is None or ai_index == "" or (isinstance(ai_index, float) and pd.isna(ai_index)):
         return f'<td class="{css_class}" data-sort="0"></td>'
@@ -245,16 +250,6 @@ def _mm_index_cell_html(ai_index, rank, css_class, is_main=False):
     except (ValueError, TypeError):
         rank_int = None
 
-    # ランク別背景色
-    if rank_int == 1:
-        bg = "#FFD700" if is_main else "#FFF9C4"   # 金 / 薄金
-    elif rank_int == 2:
-        bg = "#B0BEC5" if is_main else "#E0F7FA"   # 銀 / 薄水色
-    elif rank_int == 3:
-        bg = "#FFAB76" if is_main else "#FFE0B2"   # 銅 / 薄橙
-    else:
-        bg = ""
-
     # 指数値の文字色
     if val >= 70:
         fg = "#c62828"
@@ -265,13 +260,22 @@ def _mm_index_cell_html(ai_index, rank, css_class, is_main=False):
     else:
         fg = "#333"
 
-    font_size = "1.15em" if is_main else "0.9em"
+    font_size = "1.05em" if is_main else "0.82em"
     fw = "bold" if is_main or (rank_int and rank_int <= 3) else "normal"
-    bg_css = f"background-color:{bg};" if bg else ""
+
+    # ランク1〜3: 塗りつぶし背景（main/sub で濃淡を変える）
+    if rank_int in MM_RANK_BG:
+        bg = MM_RANK_BG[rank_int][0] if is_main else MM_RANK_BG[rank_int][1]
+        bg_css = f"background-color:{bg};"
+    else:
+        bg_css = ""
+
     style = f"{bg_css}color:{fg};font-size:{font_size};font-weight:{fw};"
 
+    # ランク1〜5は赤字、6位以下はグレー
+    rank_color = "#d32f2f" if rank_int and rank_int <= 5 else "#888"
     rank_str = (
-        f'<sup style="font-size:0.72em;margin-left:2px;color:#555;">({rank_int})</sup>'
+        f'<sub style="font-size:0.70em;margin-left:2px;color:{rank_color};font-weight:bold;">({rank_int})</sub>'
         if rank_int else ""
     )
     return f'<td class="{css_class}" data-sort="{val:.2f}" style="{style}">{val:.1f}{rank_str}</td>'
@@ -498,55 +502,44 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
       color: white;
     }}
 
-    /* 3戦略マルチモデル指数列 */
-    /* サブ指数（的中率・回収率）: 控えめな左ボーダーのみ */
+    /* 3戦略マルチモデル指数列 - 塗りつぶしなし、枠線で列グループを分割 */
+    /* サブ列（的中率/回収率）: 細い左区切り線のみ */
     .mm-hitrate-col {{
-      border-left: 3px solid #1565c0;
+      border-left: 1px solid #ce93d8;
     }}
     .mm-value-col {{
-      border-left: 2px solid #2e7d32;
+      border-left: 1px solid #ce93d8;
     }}
-    /* メイン指数（MAR）: 両側ボーダーで囲って強調 */
+    /* MAR列: 両側に太めボーダーで主軸を明示（サブ列より目立つ枠） */
     .mm-mar-col {{
-      border-left: 3px solid #6a1b9a;
-      border-right: 3px solid #6a1b9a;
+      border-left: 2px solid #6a1b9a;
+      border-right: 2px solid #6a1b9a;
     }}
-    /* サブ指数の既定セル背景（ランク色で上書きされる場合あり） */
-    tbody tr td.mm-hitrate-col {{
-      background-color: #f0f4ff;
-    }}
-    tbody tr td.mm-value-col {{
-      background-color: #f0fff4;
-    }}
-    tbody tr:nth-child(even) td.mm-hitrate-col {{
-      background-color: #e3ecff;
-    }}
-    tbody tr:nth-child(even) td.mm-value-col {{
-      background-color: #e3f5e8;
-    }}
-    /* MAR既定セル背景: やや濃いめ */
+    /* セル背景: 偶数行の標準ストライプに従う（個別背景なし） */
+    tbody tr td.mm-hitrate-col,
+    tbody tr td.mm-value-col,
     tbody tr td.mm-mar-col {{
-      background-color: #f5edff;
+      text-align: center;
     }}
-    tbody tr:nth-child(even) td.mm-mar-col {{
-      background-color: #ead9ff;
-    }}
-    /* ヘッダー色 */
+    /* ヘッダー色（サブ=薄紫・MAR=濃紫） */
     th.mm-hitrate-col {{
-      background-color: #1565c0;
+      background-color: #9c27b0;
       color: white;
-      font-size: 0.85em;
+      font-size: 0.70em;
+      white-space: nowrap;
     }}
     th.mm-value-col {{
-      background-color: #2e7d32;
-      color: white;
-      font-size: 0.85em;
+      background-color: #ce93d8;
+      color: #4a148c;
+      font-size: 0.70em;
+      white-space: nowrap;
     }}
     th.mm-mar-col {{
       background-color: #6a1b9a;
       color: white;
-      font-size: 1.0em;
+      font-size: 0.85em;
       font-weight: bold;
+      white-space: nowrap;
     }}
 
     /* コースリンク（レース名横）- 芝は緑、ダートは茶 */
@@ -707,9 +700,9 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
         <th>馬体重</th>
         <th>人気 ▼</th>
         <th>単勝オッズ</th>
-        <th class="mm-hitrate-col">的中率 ▼</th>
-        <th class="mm-value-col">回収率 ▼</th>
-        <th class="mm-mar-col">MAR ▼</th>
+        <th class="mm-hitrate-col" title="的中率重視モデル指数（単複:v11α0.6 / 三連複:v15α0.5）">的中率モデル ▼</th>
+        <th class="mm-value-col" title="回収率重視モデル指数（オッズ不使用・前日公開可）">回収率モデル ▼</th>
+        <th class="mm-mar-col" title="MAR推奨指数（バランス型メインモデル）">MAR指数 ▼</th>
       </tr>
     </thead>
     <tbody>
@@ -932,11 +925,6 @@ def generate_result_table(df):
         last_3f = row["上り"] if "上り" in row and pd.notna(row["上り"]) else ""
         race_position = row["通過"] if "通過" in row and pd.notna(row["通過"]) else ""
         odds = row["単勝"] if pd.notna(row["単勝"]) else ""
-        # build_table_race_cardsと同じ理由でScore/Rankは常にバランス型（score/rank列）
-        # を表示する（別の計算結果を混ぜるとScoreとRankの不整合が起きるため）
-        score = row.get("score", "")
-        pred_rank = row.get("rank", "")
-
         # --- 枠順背景色 ---
         waku_color = WAKU_COLORS.get(waku, "#ffffff")
         waku_style = f'background-color:{waku_color}; color:{"#fff" if waku in ["2","3","4","7"] else "#000"};'
@@ -945,15 +933,16 @@ def generate_result_table(df):
         pop_color = RANK_COLORS.get(pop, "#ffffff")
         pop_style = f'background-color:{pop_color};'
 
-        # --- Rank上位3頭色付け（人気と同系色だが薄いパステル系） ---
-        pred_rank_color = PRED_RANK_COLORS.get(str(pred_rank), "")
-        pred_rank_style = f'background-color:{pred_rank_color};' if pred_rank_color else ""
-
-        # --- AI指数（score列は廃止、AI指数に統一）---
-        ai_index = score_to_index(score) if isinstance(score, (int, float)) and pd.notna(score) else None
-
         # --- 馬体重の増減が大きい馬を強調 ---
         weight_style = _weight_change_style(horse_weight)
+
+        # --- 3戦略マルチモデル指数 ---
+        idx_hitrate  = row.get("idx_hitrate", "")
+        rank_hitrate = row.get("rank_hitrate", "")
+        idx_value    = row.get("idx_value", "")
+        rank_value   = row.get("rank_value", "")
+        idx_mar      = row.get("idx_mar", "")
+        rank_mar     = row.get("rank_mar", "")
 
         result_rows += f"""
         <tr>
@@ -969,8 +958,9 @@ def generate_result_table(df):
             <td>{last_3f}</td>
             <td>{race_position}</td>
             <td>{odds}</td>
-            {_ai_index_cell_html(ai_index)}
-            <td class="ai-rank-col" style="{pred_rank_style}">{pred_rank}</td>
+            {_mm_index_cell_html(idx_hitrate, rank_hitrate, "mm-hitrate-col", is_main=False)}
+            {_mm_index_cell_html(idx_value,   rank_value,   "mm-value-col",   is_main=False)}
+            {_mm_index_cell_html(idx_mar,     rank_mar,     "mm-mar-col",     is_main=True)}
         </tr>
         """
 
@@ -983,7 +973,10 @@ def generate_result_table(df):
           <th>着順</th><th>枠</th><th>馬番</th><th>馬名</th>
           <th>騎手</th><th>馬体重</th><th>タイム</th><th>着差</th>
           <th>人気</th><th>上り</th><th>通過</th>
-          <th>単勝オッズ</th><th class="ai-score-col">AI指数</th><th class="ai-rank-col">Rank</th>
+          <th>単勝オッズ</th>
+          <th class="mm-hitrate-col" title="的中率重視モデル指数">的中率モデル</th>
+          <th class="mm-value-col" title="回収率重視モデル指数">回収率モデル</th>
+          <th class="mm-mar-col" title="MAR推奨指数（メインモデル）">MAR指数</th>
         </tr>
       </thead>
       <tbody>
@@ -1808,23 +1801,21 @@ def make_race_card_html(date_str, place_id, target_id):
 
     is_confirmed = not result_df.empty
 
-    # 確定結果がある場合、race_card の人気・オッズが未取得なら result_df から補完する
+    # 確定結果がある場合、人気・オッズを結果データで全馬上書き（重複防止）
+    # 人気は中途半端なスクレイプで重複値が入ることがあるため、確定結果がある場合は必ず上書き
     if is_confirmed and "馬番" in df.columns:
+        df = df.copy()
         if "人気" in result_df.columns:
             pop_map = result_df.set_index(result_df["馬番"].astype(str))["人気"].to_dict()
-            current_pop = df["人気"] if "人気" in df.columns else pd.Series([""] * len(df), index=df.index)
-            needs_pop = current_pop.apply(lambda v: str(v) not in [str(i) for i in range(1, 19)])
-            if needs_pop.any():
-                df = df.copy()
-                if "人気" not in df.columns:
-                    df["人気"] = ""
-                df.loc[needs_pop, "人気"] = df.loc[needs_pop, "馬番"].astype(str).map(pop_map)
+            if "人気" not in df.columns:
+                df["人気"] = ""
+            mapped = df["馬番"].astype(str).map(pop_map)
+            df["人気"] = mapped.where(mapped.notna(), df["人気"])
         if "単勝" in result_df.columns:
             odds_map = result_df.set_index(result_df["馬番"].astype(str))["単勝"].to_dict()
             current_odds = df["オッズ"] if "オッズ" in df.columns else pd.Series([""] * len(df), index=df.index)
             needs_odds = current_odds.apply(lambda v: str(v).strip() in ["", "---.-", "nan"])
             if needs_odds.any():
-                df = df.copy()
                 if "オッズ" not in df.columns:
                     df["オッズ"] = ""
                 df.loc[needs_odds, "オッズ"] = df.loc[needs_odds, "馬番"].astype(str).map(odds_map)
@@ -1915,29 +1906,58 @@ def make_race_card_html(date_str, place_id, target_id):
                 target_id,
                 date_str
             )
-            # AI指数・rank・人気を rowから取得して総評に渡す
-            _score_raw = row.get("score", "")
-            try:
-                _ai_idx = score_to_index(float(_score_raw)) if _score_raw != "" and pd.notna(_score_raw) else None
-            except Exception:
-                _ai_idx = None
-            try:
-                _rank = int(row.get("rank", "")) if pd.notna(row.get("rank", "")) else None
-            except Exception:
-                _rank = None
+            # AI指数・rank・人気を row から取得
             try:
                 _pop = int(float(row.get("人気", ""))) if pd.notna(row.get("人気", "")) else None
             except Exception:
                 _pop = None
+
+            def _safe_float(v):
+                try:
+                    return float(v) if v != "" and pd.notna(v) else None
+                except Exception:
+                    return None
+
+            def _safe_int(v):
+                try:
+                    return int(float(v)) if v != "" and pd.notna(v) else None
+                except Exception:
+                    return None
+
+            _idx_mar     = _safe_float(row.get("idx_mar", ""))
+            _rank_mar    = _safe_int(row.get("rank_mar", ""))
+            _idx_hitrate = _safe_float(row.get("idx_hitrate", ""))
+            _rank_hitrate= _safe_int(row.get("rank_hitrate", ""))
+            _idx_value   = _safe_float(row.get("idx_value", ""))
+            _rank_value  = _safe_int(row.get("rank_value", ""))
+
             # 🧩 HTML化
-            report_html = horse_report_generator.horse_report_to_html(report, _ai_idx, _rank, _pop)
+            report_html = horse_report_generator.horse_report_to_html(
+                report, popularity=_pop,
+                idx_mar=_idx_mar, rank_mar=_rank_mar,
+                idx_hitrate=_idx_hitrate, rank_hitrate=_rank_hitrate,
+                idx_value=_idx_value, rank_value=_rank_value,
+            )
+
+            # 馬名横の指数バッジ
+            def _idx_badge(label, val, rnk, bg_main, bg_sub):
+                if val is None:
+                    return ""
+                r_str = f"<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>({rnk})</sub>" if rnk and rnk <= 5 else (f"<sub style='font-size:0.65em;color:#888;'>({rnk})</sub>" if rnk else "")
+                bg = bg_main if rnk and rnk <= 3 else "#f0f0f0"
+                return f'<span style="background:{bg};border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">{label}&nbsp;{val:.1f}{r_str}</span>'
+
+            mar_badge     = _idx_badge("MAR",    _idx_mar,     _rank_mar,    "#FFF176", "#FFFDE7")
+            hitrate_badge = _idx_badge("的中率",  _idx_hitrate, _rank_hitrate,"#FFF176", "#FFFDE7")
+            value_badge   = _idx_badge("回収率",  _idx_value,   _rank_value,  "#80DEEA", "#E0F7FA")
+            index_badges  = mar_badge + hitrate_badge + value_badge
 
             # 折りたたみセクションでラップ
             unique_id = f"horse_report_{idx}_{umaban}"
             horse_reports_html += f"""
             <div class="horse-report-card">
               <div class="horse-report-toggle" onclick="toggleHorseReport('{unique_id}')">
-                <span>🐎 [{waku}枠{umaban}番] {horse_name}</span>
+                <span>🐎 [{waku}枠{umaban}番] {horse_name}{index_badges}</span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="{unique_id}">

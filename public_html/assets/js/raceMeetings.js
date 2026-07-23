@@ -1388,5 +1388,57 @@ window.raceMeetings = {
       "race_card_url": "races/20260719/10_kokuraR11.html",
       "grade": null
     }
+  ],
+  "20260725": [
+    {
+      "place_name": "札幌",
+      "race_name": "TVh賞",
+      "times": 1,
+      "day_number": 1,
+      "race_card_url": "races/20260725/01_sapporoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "中京",
+      "race_name": "3歳以上1勝クラス",
+      "times": 2,
+      "day_number": 1,
+      "race_card_url": "races/20260725/07_chukyoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "新潟",
+      "race_name": "3歳未勝利",
+      "times": 2,
+      "day_number": 1,
+      "race_card_url": "races/20260725/04_nigataR11.html",
+      "grade": null
+    }
+  ],
+  "20260726": [
+    {
+      "place_name": "札幌",
+      "race_name": "札幌日経賞",
+      "times": 1,
+      "day_number": 2,
+      "race_card_url": "races/20260726/01_sapporoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "中京",
+      "race_name": "3歳以上1勝クラス",
+      "times": 2,
+      "day_number": 2,
+      "race_card_url": "races/20260726/07_chukyoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "新潟",
+      "race_name": "3歳以上1勝クラス",
+      "times": 2,
+      "day_number": 2,
+      "race_card_url": "races/20260726/04_nigataR11.html",
+      "grade": null
+    }
   ]
 };
