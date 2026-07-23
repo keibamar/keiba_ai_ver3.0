@@ -57,7 +57,7 @@
   <div id="todayRace"></div>
 </div>
 <script>window.CALENDAR_BASE_PATH = "";</script>
-<script src="assets/js/raceDays.js?v=1784199949"></script>
+<script src="assets/js/raceDays.js?v=1784804879"></script>
 <script src="assets/js/calendar.js?v=1782765283"></script>
 
   </div>
@@ -106,7 +106,7 @@
   データと現地観戦、両方で競馬を楽しんでいます。</p>
 
   <h2>AIの仕組み</h2>
-  <p>当サイトのAIは、<strong>LightGBM（勾配ブースティング）のランキング学習（LambdaRank）</strong>を採用しています。
+  <p>当サイトのAIは、<strong>LightGBM（勾配ブースティング）</strong>をベースに構築しています。
   2020年〜2025年のJRAレース結果（全10競馬場、全コース）を学習データとして使用し、
   100以上の特徴量から各馬のスコアを算出しています。</p>
   <ul>
@@ -114,20 +114,29 @@
     <li><strong>騎手成績</strong>：当該コースにおける騎手の勝率・複勝率</li>
     <li><strong>血統情報</strong>：父・母父・父方祖父の3世代分</li>
     <li><strong>枠順・馬番</strong>：コースごとの枠番・馬番傾向</li>
-    <li><strong>オッズ</strong>：市場のオッズ情報（AIスコアに組み合わせて回収率を最適化）</li>
+    <li><strong>オッズ</strong>：市場のオッズ情報（回収率最適化に活用）</li>
     <li><strong>ペース適性</strong>：上り3Fタイムのコース平均との差（末脚の安定性・先行・追い込み適性）</li>
     <li><strong>馬体重</strong>：前走からの増減・絶対値</li>
   </ul>
   <p>AIのスコアが高い馬ほど「このコースでこの条件なら好走しやすい」と判断された馬です。
   ただし、競馬は多くの不確定要素を含むため、スコアが高くても必ず勝つわけではありません。</p>
 
+  <h3>MARモデルファミリーについて</h3>
+  <p>当サイトでは、目的関数の異なる3種類のモデルを <strong>MARファミリー</strong> として運用しています。</p>
+  <ul>
+    <li><strong>MAR</strong>（メインモデル）：的中率と回収率を総合的に評価するバランス型。出馬表の「MAR」列がこのスコアです。</li>
+    <li><strong>MAR-hit</strong>（的中率重視）：より高い確率で本命馬が馬券に絡むことを優先して学習したモデル。</li>
+    <li><strong>MAR-val</strong>（回収率重視）：高配当・高回収率を狙う本命選定を優先して学習したモデル。</li>
+  </ul>
+  <p>3モデルの成績はすべて<a href="performance/index.html">AI成績レポート</a>で公開しています。</p>
+
   <div class="about-ai-stats">
-  <h3>AIの現在の通算成績（2024〜2026年、5154R集計）</h3>
+  <h3>AIの現在の通算成績（2024〜2026年、5152R集計）</h3>
   <table>
     <thead><tr><th>券種</th><th>的中率</th><th>回収率</th></tr></thead>
     <tbody>
-      <tr><td>単勝</td><td>12.8%</td><td>81%</td></tr>
-      <tr><td>複勝</td><td>32.4%</td><td>81%</td></tr>
+      <tr><td>単勝</td><td>15.8%</td><td>97%</td></tr>
+      <tr><td>複勝</td><td>37.9%</td><td>90%</td></tr>
     </tbody>
   </table>
   <p class="about-ai-stats-note">成績は毎週更新しています。詳細は<a href="performance/index.html">AI成績レポート</a>をご覧ください。</p>
@@ -135,9 +144,9 @@
 
   <h2>モデルの改善について</h2>
   <p>AIモデルは継続的に改善しており、特徴量の追加・目的関数の変更・ハイパーパラメータの最適化を
-  定期的に行っています。新旧モデルは同じ2026年の直近レースデータで比較評価し、
+  定期的に行っています。新旧モデルは同じ直近レースデータで比較評価し、
   成績が改善したと確認できた場合のみ本番環境へ切り替えています。
-  モデルの版は内部的に管理しており、現在は<strong>v7（オッズ重み付き二値分類）</strong>を採用しています。</p>
+  現在は <strong>MARモデルファミリー（MAR / MAR-hit / MAR-val）</strong> を本番運用しています。</p>
 
   <h2>掲載コンテンツ</h2>
   <ul>
@@ -163,7 +172,7 @@
   <footer>
     <p class="site-footer-brand">&copy; MAR(まーる) 競馬AIデータサイト</p>
     <p class="site-footer-disclaimer">本サイトの予想・データは参考情報です。的中や回収を保証するものではありません。実際の購入は自己責任でお願いします。</p>
-    <p class="site-footer-updated">データ最終更新: 2026/07/22</p>
+    <p class="site-footer-updated">データ最終更新: 2026/07/24</p>
     <div class="a8-program-recommendation">
       <p class="a8-program-title">🔗 おすすめサービス</p>
       <p class="a8-program-item"><a href="https://px.a8.net/svt/ejp?a8mat=4B684D+EPADKI+50+2HGLCX" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--a8">お名前.com</a> <span class="a8-program-note">国内シェアNo.1の独自ドメイン取得サービス。</span></p>
