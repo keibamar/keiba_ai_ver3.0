@@ -170,7 +170,8 @@ def _week_main_races_html(races):
         else:
             course_link = f'<a href="courses/{place_key}/index.html">{place_name}</a>'
         race_day_str = race["race_day"].strftime("%Y%m%d")
-        race_card_file = f"{place_key}R11.html"
+        race_num = int(str(race["race_id"])[10:12]) if race.get("race_id") else 11
+        race_card_file = f"{place_key}R{race_num}.html"
         if html_manager.race_page_exists(race_day_str, race_card_file):
             race_name_html = f'<a href="races/{race_day_str}/{race_card_file}">{race["race_name"]}</a>'
         else:
@@ -178,7 +179,7 @@ def _week_main_races_html(races):
         grade_html = grade_badge_html(race.get("grade"))
         if grade_html:
             race_name_html = f"{grade_html} {race_name_html}"
-        race_cell = _sub_main_cell_html(f"{place_name}11R", race_name_html)
+        race_cell = _sub_main_cell_html(f"{place_name}{race_num}R", race_name_html)
         rows += (
             f"<tr><td>{date_str} {time_disp}</td><td>{race_cell}</td>"
             f"<td>{course_link}</td></tr>\n"
@@ -217,7 +218,8 @@ def _weekend_results_html(races):
         else:
             pick_finish = f"{race['pick_finish']}着"
         race_day_str = race["race_day"].strftime("%Y%m%d")
-        race_card_file = f"{place_key}R11.html"
+        race_num = int(str(race["race_id"])[10:12]) if race.get("race_id") else 11
+        race_card_file = f"{place_key}R{race_num}.html"
         if html_manager.race_page_exists(race_day_str, race_card_file):
             race_name_html = f'<a href="races/{race_day_str}/{race_card_file}">{race["race_name"]}</a>'
         else:
@@ -225,7 +227,7 @@ def _weekend_results_html(races):
         grade_html = grade_badge_html(race.get("grade"))
         if grade_html:
             race_name_html = f"{grade_html} {race_name_html}"
-        race_cell = _sub_main_cell_html(f"{place_name}11R", race_name_html)
+        race_cell = _sub_main_cell_html(f"{place_name}{race_num}R", race_name_html)
         rows += (
             f"<tr><td>{date_str}</td><td>{race_cell}</td>"
             f"<td>{race['winner_name'] or '-'}</td>"
