@@ -203,8 +203,10 @@ def about_template():
   <h1>このサイトについて</h1>
 
   <h2>MARとは</h2>
+  <p class="about-mar-concept">「<strong>血統データ</strong>と<strong>走破時計</strong>から勝ち馬を導く」競馬予想AI</p>
   <p>MAR（まーる）は、機械学習AIを活用した競馬予想・データ分析サイトです。
-  JRAの過去レースデータをもとに構築したAIモデルが出馬表を分析し、各馬のスコアと予想順位を提供します。
+  <strong>血統（父・母父・祖父系）</strong>と<strong>過去の走破時計・コース適性</strong>を核に、
+  JRAの過去レースデータで学習したAIが各馬をスコアリングし、予想順位を提供します。
   AIによる予想成績（的中率・回収率）や、競馬場・コース別の傾向データをすべて無料で公開しています。</p>
 
   <div class="about-content-grid">
@@ -243,22 +245,31 @@ def about_template():
   <p>当サイトのAIは、<strong>LightGBM（勾配ブースティング）</strong>をベースに構築しています。
   2020年〜2025年のJRAレース結果（全10競馬場・全コース）を学習データとして使用し、
   100以上の特徴量から各馬のスコアを算出しています。</p>
+  <p>MARのコアとなるのは<strong>血統データ</strong>と<strong>走破時計</strong>の2軸です。
+  そこに騎手・枠順・オッズなどの補助データを加えることで、より精度の高い予想を実現しています。</p>
 
-  <ul class="about-feature-badges">
-    <li><strong>過去成績</strong>：直近5走の着順・タイム・コース適性</li>
-    <li><strong>騎手成績</strong>：当該コースの勝率・複勝率</li>
-    <li><strong>血統情報</strong>：父・母父・父方祖父の3世代</li>
-    <li><strong>枠順・馬番</strong>：コースごとの傾向</li>
-    <li><strong>オッズ</strong>：市場情報（回収率最適化に活用）</li>
-    <li><strong>ペース適性</strong>：上り3Fタイムのコース平均との差</li>
-    <li><strong>馬体重</strong>：前走からの増減・絶対値</li>
-  </ul>
+  <div class="about-feature-section">
+    <h4 class="about-feature-group-label">コアデータ（メイン）</h4>
+    <ul class="about-feature-badges">
+      <li><strong>血統情報</strong>：父・母父・父方祖父の3世代</li>
+      <li><strong>走破時計・過去成績</strong>：直近5走のタイム・コース適性・着順</li>
+    </ul>
+    <h4 class="about-feature-group-label">補助データ（サブ）</h4>
+    <ul class="about-feature-badges about-feature-badges--sub">
+      <li><strong>騎手成績</strong>：当該コースの勝率・複勝率</li>
+      <li><strong>枠順・馬番</strong>：コースごとの傾向</li>
+      <li><strong>オッズ</strong>：市場情報（回収率最適化に活用）</li>
+      <li><strong>ペース適性</strong>：上り3Fタイムのコース平均との差</li>
+      <li><strong>馬体重</strong>：前走からの増減・絶対値</li>
+    </ul>
+  </div>
 
   <p>スコアが高い馬ほど「このコース・この条件で好走しやすい」と判断された馬です。
   ただし競馬は不確定要素を多く含み、スコアが高くても必ず勝つわけではありません。</p>
 
   <h3>MARモデルファミリー</h3>
-  <p>当サイトでは、最適化の目的関数が異なる3種類のモデルを <strong>MARファミリー</strong> として運用しています。</p>
+  <p>当サイトでは、学習データ・目的関数の異なる3種類のモデルを <strong>MARファミリー</strong> として運用しています。
+  それぞれ「当レースのオッズ・人気情報をどう使うか」が異なり、的中率・回収率のバランスが変わります。</p>
 
   <div class="about-model-grid">
     <div class="about-model-card about-model-card-main">
@@ -266,21 +277,41 @@ def about_template():
         <span class="model-tag model-tag-main">MAR</span>
         <strong>メインモデル</strong>
       </div>
-      <p>的中率と回収率を総合的に評価するバランス型。出馬表の「MAR」列がこのスコアです。</p>
+      <p>AIスコアと市場オッズを組み合わせたブレンドモデル。
+      的中率・回収率のバランスが最も安定しており、当サイトの看板指数です。</p>
+      <ul class="about-model-detail">
+        <li>2026年実績：単勝29.9% / 回収率167%</li>
+        <li>予想更新：レース当日（オッズ確定後に再計算）</li>
+      </ul>
     </div>
     <div class="about-model-card about-model-card-hit">
       <div class="about-model-card-name">
         <span class="model-tag model-tag-hit">MAR-hit</span>
         <strong>的中率重視</strong>
       </div>
-      <p>より高い確率で本命馬が馬券に絡むことを優先して学習したモデル。</p>
+      <p>当レースのオッズ・人気を特徴量として<strong>使わない</strong>モデル。
+      血統・走破時計・騎手成績など「馬の実力」だけでスコアリングするため、
+      市場の評価に左右されない純粋な能力予測になります。
+      3モデル中、単勝的中率が最も高くなっています。</p>
+      <ul class="about-model-detail">
+        <li>2026年実績：単勝32.6% / 回収率128%</li>
+        <li>予想更新：<strong>前日</strong>から安定した予想を提供（人気情報が不要なため）</li>
+      </ul>
     </div>
     <div class="about-model-card about-model-card-val">
       <div class="about-model-card-name">
         <span class="model-tag model-tag-val">MAR-val</span>
         <strong>回収率重視</strong>
       </div>
-      <p>高配当・高回収率を狙う本命選定を優先して学習したモデル。</p>
+      <p>当レースの<strong>確定人気を特徴量として使用</strong>し、さらに学習ラベルに
+      「高配当での好走ほど高評価」というオッズボーナスを付与して学習したモデル。
+      「AIが高評価しているのに市場人気が低い馬＝市場が見落としている穴馬」を
+      重点的に本命選択することで、高い回収率を狙います。
+      3モデル中、単勝回収率が最も高くなっています。</p>
+      <ul class="about-model-detail">
+        <li>2026年実績：単勝29.5% / 回収率192%</li>
+        <li>予想更新：レース当日（確定人気が出た後にスコアが確定）</li>
+      </ul>
     </div>
   </div>
 

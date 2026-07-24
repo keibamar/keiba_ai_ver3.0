@@ -257,23 +257,35 @@ def regenerate_race_meetings_js(min_year=None):
     min_year = min_year if min_year is not None else date.today().year
     day_strs = [d for d in list_race_day_dirs() if int(d[:4]) >= min_year]
 
+    from src.logic.calculators.ai_performance_calculator import _best_main_race
+
+    _GRADED = {"G1", "G2", "G3"}
     meetings_by_day = {}
     for day_str in day_strs:
         race_day = datetime.strptime(day_str, "%Y%m%d").date()
         time_id_df = race_card_dataset_manager.get_race_time_id_list_df(race_day)
         if time_id_df.empty:
             continue
-        main_df = time_id_df[
-            time_id_df["race_id"].apply(lambda rid: int(str(rid)[10:12]) == 11)
-        ].sort_values("race_time")
-        if main_df.empty:
+
+        # 開催場ごとに候補を集めて _best_main_race でメインレースを選出
+        place_all: dict = {}
+        for _, row in time_id_df.iterrows():
+            place_id = int(str(row["race_id"])[4:6])
+            race_num = int(str(row["race_id"])[10:12])
+            grade = row.get("grade")
+            grade = grade if pd.notna(grade) else None
+            is_graded = grade in _GRADED
+            place_all.setdefault(place_id, []).append((row, race_num, is_graded))
+
+        if not place_all:
             continue
+
         meetings = []
-        for _, row in main_df.iterrows():
+        for place_id, candidates in place_all.items():
+            row, race_num, _ = _best_main_race(candidates, place_id=place_id, race_day=race_day)
             race_id = str(row["race_id"])
-            place_id = int(race_id[4:6])
             place_key = PLACE_LIST[place_id - 1]
-            race_card_file = f"{place_key}R11.html"
+            race_card_file = f"{place_key}R{race_num}.html"
             race_card_url = (
                 f"races/{day_str}/{race_card_file}" if race_page_exists(day_str, race_card_file) else None
             )
@@ -282,12 +294,17 @@ def regenerate_race_meetings_js(min_year=None):
                 {
                     "place_name": NAME_LIST[place_id - 1],
                     "race_name": row["race_name"],
+                    "race_time": str(row.get("race_time", "")),
                     "times": int(race_id[6:8]),
                     "day_number": int(race_id[8:10]),
                     "race_card_url": race_card_url,
                     "grade": grade if pd.notna(grade) else None,
                 }
             )
+        meetings.sort(key=lambda m: m["race_time"])
+        # race_timeは出力JSONに含めない
+        for m in meetings:
+            m.pop("race_time", None)
         meetings_by_day[day_str] = meetings
 
     os.makedirs(os.path.dirname(RACE_MEETINGS_JS_PATH), exist_ok=True)

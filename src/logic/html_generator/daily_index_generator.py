@@ -387,7 +387,8 @@ def _today_meetings_html(races, base_path=""):
         place_name = NAME_LIST[race["place_id"] - 1]
         place_key = PLACE_LIST[race["place_id"] - 1]
         day_str = race["race_day"].strftime("%Y%m%d")
-        race_card_file = f"{place_key}R11.html"
+        race_num = int(str(race["race_id"])[10:12]) if race.get("race_id") else 11
+        race_card_file = f"{place_key}R{race_num}.html"
         if html_manager.race_page_exists(day_str, race_card_file):
             race_link = f'<a href="{base_path}races/{day_str}/{race_card_file}">{race["race_name"]}</a>'
         else:

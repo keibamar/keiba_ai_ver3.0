@@ -139,6 +139,69 @@ td a:hover {
   color: var(--mar-accent);
 }
 
+/* --- Home コンセプトヒーロー --- */
+
+.home-concept {
+  background: var(--mar-bg-accent);
+  border-left: 5px solid var(--mar-accent);
+  border-radius: 0 8px 8px 0;
+  padding: 22px 24px 18px;
+  margin: 8px 0 26px;
+}
+
+.home-concept-tagline {
+  font-size: 1.6em;
+  font-weight: 700;
+  color: var(--mar-primary);
+  line-height: 1.35;
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
+}
+
+.home-concept-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.concept-chip {
+  display: inline-block;
+  background: var(--mar-primary);
+  color: #fff;
+  font-size: 0.76em;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.home-concept-desc {
+  font-size: 0.88em;
+  color: #555;
+  margin: 0;
+}
+
+.home-concept-desc a {
+  color: var(--mar-primary);
+  font-weight: 600;
+}
+
+/* カード説明文 */
+.card-desc {
+  font-size: 0.87em;
+  color: #555;
+  line-height: 1.6;
+  margin: 4px 0 10px;
+}
+
+.card-desc-sm {
+  font-size: 0.82em;
+  color: #888;
+  margin: 0 0 6px;
+}
+
 /* --- カード型レイアウト --- */
 
 .card-grid {
@@ -173,6 +236,48 @@ td a:hover {
   font-weight: bold;
   color: var(--mar-primary);
 }
+
+/* カード内セカンダリセクション（補助情報） */
+.card-secondary {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #eee;
+}
+
+.card-secondary h4 {
+  font-size: 0.8em;
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+/* カード内折りたたみセクション（週別推移など） */
+details.card-detail {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #eee;
+}
+
+details.card-detail > summary {
+  font-size: 0.8em;
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+details.card-detail > summary::-webkit-details-marker { display: none; }
+
+details.card-detail > summary::after { content: " ▼"; font-size: 0.75em; }
+
+details.card-detail[open] > summary::after { content: " ▲"; }
+
+details.card-detail > summary:hover { color: var(--mar-primary); }
 
 /* --- 的中率・回収率の大きい数字表示 --- */
 
@@ -481,6 +586,16 @@ td a:hover {
 }
 
 @media (prefers-color-scheme: dark) {
+  .site-nav { background: #1a1a1a; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); }
+  .home-concept { background: transparent; }
+  .home-concept-desc { color: #aaa; }
+  .card { background: transparent; border-color: #444; }
+  .card-desc { color: #aaa; }
+  .card-desc-sm { color: #777; }
+  .card-secondary { border-top-color: #444; }
+  .card-secondary h4 { color: #666; }
+  details.card-detail { border-top-color: #444; }
+  details.card-detail > summary { color: #666; }
   .model-primary-desc { color: #aaa; }
   .model-tag-val { background: #7b1fa2; color: #f3e5f5; }
   .sub-model-card { border-color: #444; }
@@ -489,6 +604,17 @@ td a:hover {
   .sub-model-card-header-val { background: #2a1535; }
   .sub-model-card-desc { color: #aaa; }
 }
+:root[data-theme="dark"] .site-nav { background: #1a1a1a; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); }
+:root[data-theme="light"] .site-nav { background: #fff; }
+:root[data-theme="dark"] .home-concept { background: transparent; }
+:root[data-theme="dark"] .home-concept-desc { color: #aaa; }
+:root[data-theme="dark"] .card { background: transparent; border-color: #444; }
+:root[data-theme="dark"] .card-desc { color: #aaa; }
+:root[data-theme="dark"] .card-desc-sm { color: #777; }
+:root[data-theme="dark"] .card-secondary { border-top-color: #444; }
+:root[data-theme="dark"] .card-secondary h4 { color: #666; }
+:root[data-theme="dark"] details.card-detail { border-top-color: #444; }
+:root[data-theme="dark"] details.card-detail > summary { color: #666; }
 :root[data-theme="dark"] .model-primary-desc { color: #aaa; }
 :root[data-theme="dark"] .model-tag-val { background: #7b1fa2; color: #f3e5f5; }
 :root[data-theme="dark"] .sub-model-card { border-color: #444; }
@@ -790,6 +916,38 @@ p.data-insight {
   line-height: 1.8;
 }
 
+/* MARコンセプトタグライン */
+.about-mar-concept {
+  font-size: 1.08em;
+  font-weight: 600;
+  color: var(--mar-primary);
+  border-left: 4px solid var(--mar-accent);
+  padding: 6px 14px;
+  margin: 0 0 14px;
+  background: var(--mar-bg-accent);
+  border-radius: 0 6px 6px 0;
+}
+
+/* 特徴量グループ（メイン/サブ） */
+.about-feature-section {
+  margin: 14px 0 18px;
+}
+
+.about-feature-group-label {
+  font-size: 0.82em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mar-accent);
+  margin: 14px 0 6px;
+  padding: 0;
+  border: none;
+}
+
+.about-feature-badges--sub li {
+  opacity: 0.85;
+}
+
 /* AI特徴量バッジリスト */
 .about-feature-badges {
   display: flex;
@@ -848,10 +1006,18 @@ p.data-insight {
 }
 
 .about-model-card p {
-  margin: 0;
+  margin: 0 0 8px;
   font-size: 0.88em;
   color: #555;
 }
+.about-model-detail {
+  margin: 6px 0 0;
+  padding-left: 16px;
+  font-size: 0.82em;
+  color: #666;
+  line-height: 1.7;
+}
+.about-model-detail li { margin: 0; }
 
 /* 運営方針ボックス */
 .about-policy-box {
@@ -890,6 +1056,7 @@ p.data-insight {
 }
 
 @media (prefers-color-scheme: dark) {
+  .about-mar-concept { background: transparent; }
   .about-content-card { border-color: #555; background: transparent; }
   .about-content-card p { color: inherit; }
   .about-author-box { background: transparent; border-color: #555; }
@@ -897,9 +1064,11 @@ p.data-insight {
   .about-model-card { border-color: #555; background: transparent; }
   .about-model-card-main { background: transparent; }
   .about-model-card p { color: inherit; }
+  .about-model-detail { color: inherit; }
   .about-policy-box { background: transparent; }
   .about-contact-box { background: transparent; }
 }
+:root[data-theme="dark"] .about-mar-concept { background: transparent; }
 :root[data-theme="dark"] .about-content-card { border-color: #555; background: transparent; }
 :root[data-theme="dark"] .about-content-card p { color: inherit; }
 :root[data-theme="dark"] .about-author-box { background: transparent; border-color: #555; }
@@ -907,6 +1076,7 @@ p.data-insight {
 :root[data-theme="dark"] .about-model-card { border-color: #555; background: transparent; }
 :root[data-theme="dark"] .about-model-card-main { background: transparent; }
 :root[data-theme="dark"] .about-model-card p { color: inherit; }
+:root[data-theme="dark"] .about-model-detail { color: inherit; }
 :root[data-theme="dark"] .about-policy-box { background: transparent; }
 :root[data-theme="dark"] .about-contact-box { background: transparent; }
 :root[data-theme="light"] .about-content-card { border-color: #ddd; background: #fff; }
@@ -1272,8 +1442,13 @@ details.breakdown summary:hover {
   flex-wrap: wrap;
   gap: 8px 20px;
   margin-bottom: 20px;
-  padding-bottom: 12px;
+  padding: 10px 0 12px;
   border-bottom: 2px solid var(--mar-primary);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .site-nav a {

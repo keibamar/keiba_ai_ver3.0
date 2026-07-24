@@ -56,7 +56,7 @@ def read_race_csv(date_str, target_id):
         return None
     cols = [
         "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "馬体重(増減)", "オッズ", "人気",
-        "idx_hitrate", "rank_hitrate", "idx_value", "rank_value", "idx_mar", "rank_mar",
+        "idx_mar", "rank_mar", "idx_hitrate", "rank_hitrate", "idx_value", "rank_value",
     ]
     existing = list(dict.fromkeys([c for c in cols if c in df.columns]))
     return df[existing]
@@ -343,9 +343,9 @@ def build_table_race_cards(df):
           <td style="{weight_style}">{body}</td>
           <td style="{pop_style}">{popularity}</td>
           {_odds_cell_html(odds_raw)}
+          {_mm_index_cell_html(idx_mar,     rank_mar,     "mm-mar-col",     is_main=True)}
           {_mm_index_cell_html(idx_hitrate, rank_hitrate, "mm-hitrate-col", is_main=False)}
           {_mm_index_cell_html(idx_value,   rank_value,   "mm-value-col",   is_main=False)}
-          {_mm_index_cell_html(idx_mar,     rank_mar,     "mm-mar-col",     is_main=True)}
         </tr>
         """
     return rows
@@ -700,9 +700,9 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
         <th>馬体重</th>
         <th>人気 ▼</th>
         <th>単勝オッズ</th>
+        <th class="mm-mar-col" title="MAR: バランス型メインモデル指数">MAR ▼</th>
         <th class="mm-hitrate-col" title="MAR-hit: 的中率重視モデル指数">MAR-hit ▼</th>
         <th class="mm-value-col" title="MAR-val: 回収率重視モデル指数">MAR-val ▼</th>
-        <th class="mm-mar-col" title="MAR: バランス型メインモデル指数">MAR ▼</th>
       </tr>
     </thead>
     <tbody>
@@ -958,9 +958,9 @@ def generate_result_table(df):
             <td>{last_3f}</td>
             <td>{race_position}</td>
             <td>{odds}</td>
+            {_mm_index_cell_html(idx_mar,     rank_mar,     "mm-mar-col",     is_main=True)}
             {_mm_index_cell_html(idx_hitrate, rank_hitrate, "mm-hitrate-col", is_main=False)}
             {_mm_index_cell_html(idx_value,   rank_value,   "mm-value-col",   is_main=False)}
-            {_mm_index_cell_html(idx_mar,     rank_mar,     "mm-mar-col",     is_main=True)}
         </tr>
         """
 
@@ -974,9 +974,9 @@ def generate_result_table(df):
           <th>騎手</th><th>馬体重</th><th>タイム</th><th>着差</th>
           <th>人気</th><th>上り</th><th>通過</th>
           <th>単勝オッズ</th>
+          <th class="mm-mar-col" title="MAR: バランス型メインモデル指数">MAR</th>
           <th class="mm-hitrate-col" title="MAR-hit: 的中率重視モデル指数">MAR-hit</th>
           <th class="mm-value-col" title="MAR-val: 回収率重視モデル指数">MAR-val</th>
-          <th class="mm-mar-col" title="MAR: バランス型メインモデル指数">MAR</th>
         </tr>
       </thead>
       <tbody>
@@ -1940,16 +1940,22 @@ def make_race_card_html(date_str, place_id, target_id):
             )
 
             # 馬名横の指数バッジ
-            def _idx_badge(label, val, rnk, bg_main, bg_sub):
+            def _idx_badge(label, val, rnk):
                 if val is None:
                     return ""
-                r_str = f"<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>({rnk})</sub>" if rnk and rnk <= 5 else (f"<sub style='font-size:0.65em;color:#888;'>({rnk})</sub>" if rnk else "")
-                bg = bg_main if rnk and rnk <= 3 else "#f0f0f0"
+                r_str = (
+                    f"<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>({rnk})</sub>"
+                    if rnk and rnk <= 5
+                    else (f"<sub style='font-size:0.65em;color:#888;'>({rnk})</sub>" if rnk else "")
+                )
+                # ランク1=黄, 2=シアン, 3=オレンジ に統一（出馬表テーブルと同じMM_RANK_BG基準）
+                rank_bgs = {1: "#FFF176", 2: "#80DEEA", 3: "#FFA726"}
+                bg = rank_bgs.get(rnk, "#f0f0f0") if rnk else "#f0f0f0"
                 return f'<span style="background:{bg};border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">{label}&nbsp;{val:.1f}{r_str}</span>'
 
-            mar_badge     = _idx_badge("MAR",    _idx_mar,     _rank_mar,    "#FFF176", "#FFFDE7")
-            hitrate_badge = _idx_badge("的中率",  _idx_hitrate, _rank_hitrate,"#FFF176", "#FFFDE7")
-            value_badge   = _idx_badge("回収率",  _idx_value,   _rank_value,  "#80DEEA", "#E0F7FA")
+            mar_badge     = _idx_badge("MAR",   _idx_mar,     _rank_mar)
+            hitrate_badge = _idx_badge("hit",   _idx_hitrate, _rank_hitrate)
+            value_badge   = _idx_badge("val",   _idx_value,   _rank_value)
             index_badges  = mar_badge + hitrate_badge + value_badge
 
             # 折りたたみセクションでラップ

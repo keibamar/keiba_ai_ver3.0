@@ -38,7 +38,7 @@ from src.utils import format_data
 BET_TYPE_LABELS = {"win": "単勝", "place": "複勝", "trio_box": "三連複(5頭BOX)"}
 
 HOME_DESCRIPTION = (
-    "競馬AIによるレース予想・コース別データ分析サイト「MAR(まーる)」。"
+    "血統データと走破時計から勝ち馬を導く競馬予想AI「MAR(まーる)」。"
     "レースカレンダー、AI予想成績、競馬場・コース別の傾向データを公開中。"
 )
 
@@ -321,11 +321,16 @@ def home_template(target_date=None):
 <body>
   <main>
     {site_nav_html(base_path="", current_path="index.html")}
-    <h1>{SITE_TITLE}</h1>
-    <p>MAR（まーる）は、<strong>機械学習AIを活用した競馬予想・データ分析サイト</strong>です。
-    JRAの過去レースデータで学習したAIが毎週土日のレースを予想し、成績をすべてオープンに公開しています。
-    AIの予想成績（的中率・回収率）や競馬場・コース別の傾向データを無料でご利用いただけます。
-    <a href="about.html">詳しくはこちら &rarr;</a></p>
+
+    <div class="home-concept">
+      <p class="home-concept-tagline">血統データと走破時計から勝ち馬を導く競馬予想AI</p>
+      <div class="home-concept-chips">
+        <span class="concept-chip">毎週土日 更新</span>
+        <span class="concept-chip">全成績 公開</span>
+        <span class="concept-chip">3モデル 搭載</span>
+      </div>
+      <p class="home-concept-desc">JRAの過去レースデータで学習したAIが出馬表を分析。予想成績・コース傾向データを無料公開しています。<a href="about.html">AIの仕組みを見る &rarr;</a></p>
+    </div>
 
     <h2>今週の開催</h2>
     {_weekly_meeting_summary_html(weekly_meetings)}
@@ -335,20 +340,27 @@ def home_template(target_date=None):
     <div class="card-grid">
       <div class="card">
         <h3>AI予想成績</h3>
+        <p class="card-desc">MAR が最も高く評価した馬（本命）を1点買いした場合の単勝・複勝成績です。回収率 100% 以上が長期プラスの目安になります。</p>
         {_performance_table_html(overall_performance, bet_types=("win", "place"))}
-        <h4>開催中の競馬場の成績</h4>
-        {_current_meetings_html(current_meetings, df)}
-        <h4>週別推移（直近8週）</h4>
-        {_weekly_trend_html(list(reversed(trend)))}
+        <div class="card-secondary">
+          <h4>開催中の競馬場</h4>
+          <p class="card-desc-sm">競馬場ごとの直近成績。場所名から詳細ページへ移動できます。</p>
+          {_current_meetings_html(current_meetings, df)}
+        </div>
+        <details class="card-detail">
+          <summary>週別推移（直近8週）</summary>
+          {_weekly_trend_html(list(reversed(trend)))}
+        </details>
         <a class="card-link" href="performance/index.html">AI成績の詳細を見る &rarr;</a>
       </div>
 
       <div class="card">
         <h3>メインレース</h3>
-        <h4>今週のメインレース</h4>
         {_week_main_races_html(week_main_races)}
-        <h4>先週の結果</h4>
-        {_weekend_results_html(last_week_races)}
+        <div class="card-secondary">
+          <h4>先週の結果</h4>
+          {_weekend_results_html(last_week_races)}
+        </div>
         <a class="card-link" href="races/index.html">レースカレンダーを見る &rarr;</a>
       </div>
     </div>
