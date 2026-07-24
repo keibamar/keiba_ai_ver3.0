@@ -47,13 +47,40 @@ from src.managers import (
 from src.utils.format_data import format_date, merge_rank_score
 
 
+def _zscore_series(s):
+    """レース内 z-score（標準偏差0ならゼロ埋め）"""
+    s = pd.to_numeric(s, errors="coerce")
+    std = s.std()
+    if not std or pd.isna(std):
+        return pd.Series([0.0] * len(s), index=s.index)
+    return (s - s.mean()) / std
+
+
 def read_race_csv(date_str, target_id):
-    """出馬表+score/rankを読み込んで必要列を返す。失敗時はNoneを返す"""
+    """出馬表+score/rankを読み込んで必要列を返す。失敗時はNoneを返す。
+    idx_* 列が CSV に存在しない場合は score_* から変換して補完する。"""
     race_day = datetime.strptime(date_str, "%Y%m%d").date()
     df = race_card_dataset_manager.get_race_cards(race_day, target_id)
     if df.empty:
         print(f"ℹ️ [スキップ/エラーではありません] レースカード未生成: race_day={date_str}, target_id={target_id}")
         return None
+
+    # idx_* が存在しない場合は score_* から変換して補完（multi_model_rank_prediction 未実行時のフォールバック）
+    # MAR-hit は人気・オッズ不使用なので前日から表示。MAR / MAR-val はオッズ・人気が確定する当日のみ表示。
+    is_race_day = (race_day <= date.today())
+    df = df.copy()
+    if "idx_hitrate" not in df.columns and "score_hitrate" in df.columns:
+        z = _zscore_series(df["score_hitrate"])
+        df["idx_hitrate"] = z.apply(score_to_index)
+    if is_race_day:
+        if "idx_value" not in df.columns and "score_value" in df.columns:
+            z = _zscore_series(df["score_value"])
+            df["idx_value"] = z.apply(score_to_index)
+        if "idx_mar" not in df.columns and "score" in df.columns:
+            df["idx_mar"] = pd.to_numeric(df["score"], errors="coerce").apply(score_to_index)
+            if "rank" in df.columns and "rank_mar" not in df.columns:
+                df["rank_mar"] = df["rank"]
+
     cols = [
         "枠", "馬番", "馬名", "性齢", "斤量", "騎手", "馬体重(増減)", "オッズ", "人気",
         "idx_mar", "rank_mar", "idx_hitrate", "rank_hitrate", "idx_value", "rank_value",
