@@ -120,18 +120,28 @@ def _commit_and_upload_race_day():
     WinSCPのsynchronize（差分のみ転送）のため、レースごとに呼んでも負荷は小さい。
     1日の最後に1回だけアップロードする旧来の作りだと、レース中はサイトの
     予想・人気が更新されないため、レースごとに反映されるようにする。
+
+    タイムアウトを設定してWinSCPの遅延がメインループをブロックしないようにする。
+    commit は120秒、upload は300秒を超えたら強制終了して次のレース処理に進む。
     """
     try:
         subprocess.run(
             [os.path.join(paths.PROJECT_ROOT, "bat", "Commit", "commit_for_race_cards.bat")],
-            shell=True, check=False,
+            shell=True, check=False, timeout=120,
         )
+    except subprocess.TimeoutExpired:
+        print("commit timeout — skipped")
+    except Exception as e:
+        print(f"commit error: {e}")
+    try:
         subprocess.run(
             [os.path.join(paths.PROJECT_ROOT, "bat", "Deploy", "upload_to_conoha_auto.bat")],
-            shell=True, check=False,
+            shell=True, check=False, timeout=300,
         )
+    except subprocess.TimeoutExpired:
+        print("upload timeout — skipped")
     except Exception as e:
-        print(f"commit/upload error: {e}")
+        print(f"upload error: {e}")
 
 
 def _extract_race_time(info):
