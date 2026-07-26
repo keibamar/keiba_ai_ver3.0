@@ -162,7 +162,8 @@ def send_gmail(msg):
     try:
         server = smtplib.SMTP_SSL(
             "smtp.gmail.com", 465,
-            context=ssl.create_default_context()
+            context=ssl.create_default_context(),
+            timeout=30,
         )
         server.set_debuglevel(0)
         server.login(GMAIL_ACCOUNT, GMAIL_APP_PASSWORD)
