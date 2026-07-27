@@ -29,8 +29,8 @@ PLACE_NAME = {str(i+1).zfill(2): name for i, name in enumerate(constants.NAME_LI
 WEEKDAY_JP = ["月", "火", "水", "木", "金", "土", "日"]
 
 STRATEGIES = {
-    "ダート良":  dict(rtype="ダート", muddy=False, ap_lo=0.18, ap_hi=0.20, roi_ref="499%"),
-    "芝良":      dict(rtype="芝",     muddy=False, ap_lo=0.30, ap_hi=1.01, roi_ref="236%"),
+    "ダート良":  dict(rtype="ダート", muddy=False, ap_lo=0.18, ap_hi=0.20, roi_ref="455%"),
+    "芝良":      dict(rtype="芝",     muddy=False, ap_lo=0.25, ap_hi=1.01, roi_ref="174%"),
     "道悪":      dict(rtype=None,     muddy=True,  ap_lo=0.00, ap_hi=1.01, roi_ref=" 83%"),
 }
 MUDDY = {"稍重", "重", "不良"}
