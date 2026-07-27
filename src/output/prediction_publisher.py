@@ -197,6 +197,167 @@ def send_race_pred(race_day, race_id):
     send_email(text_path)
 
 
+# ── 馬券推奨付きメール ───────────────────────────────────────────
+
+_MUDDY_GROUNDS = {"稍重", "重", "不良"}
+_STRATEGY_FILTER = {
+    "ダート良": (0.18, 0.20),
+    "芝良":     (0.30, 1.01),
+    "道悪":     (0.00, 1.01),
+}
+_STRATEGY_ROI = {
+    "ダート良": "499%",
+    "芝良":     "236%",
+    "道悪":      "83%",
+}
+
+
+def _make_betting_text(race_card_df, race_info_df):
+    """馬券推奨テキストを生成して返す。推奨なし・エラーは「推奨馬券なし」行を含む文字列。"""
+    import pandas as pd
+    from src.logic.betting.ticket_advisor import (
+        recommend_score_based, SB_B_PARAMS, SB_GOOD_PARAMS, SB_MUDDY_PARAMS,
+    )
+
+    if race_info_df is None or race_info_df.empty:
+        return "推奨馬券なし（race_info 未取得）"
+    if race_card_df is None or race_card_df.empty:
+        return "推奨馬券なし（race_card 未取得）"
+    if "score_hitrate" not in race_card_df.columns:
+        return "推奨馬券なし（スコア未計算）"
+    if pd.to_numeric(race_card_df["score_hitrate"], errors="coerce").isna().all():
+        return "推奨馬券なし（スコア未計算）"
+
+    row0   = race_info_df.iloc[0]
+    rtype  = str(row0.get("race_type",    "?")).strip()
+    ground = str(row0.get("ground_state", "?")).strip()
+    clen   = str(row0.get("course_len",   "")).strip()
+
+    if ground == "良":
+        sname = "ダート良" if rtype == "ダート" else "芝良"
+    elif ground in _MUDDY_GROUNDS:
+        sname = "道悪"
+    else:
+        return f"推奨馬券なし（馬場状態不明: {ground}）"
+
+    # axis_prob 取得
+    try:
+        rec_base = recommend_score_based(race_card_df, win_odds_col=None, **SB_B_PARAMS)
+    except Exception:
+        return "推奨馬券なし（予測エラー）"
+    if not rec_base:
+        return "推奨馬券なし"
+
+    ap = rec_base.get("_meta", {}).get("axis_prob", 0)
+    lo, hi = _STRATEGY_FILTER[sname]
+    if not (lo <= ap < hi):
+        if sname == "道悪":
+            reason = f"axis={ap*100:.0f}%"
+        else:
+            reason = f"axis={ap*100:.0f}% ({lo*100:.0f}%〜{hi*100:.0f}%外)"
+        return f"推奨馬券なし（{sname} — {reason}）"
+
+    # 戦略別パラメータで推奨
+    params = SB_MUDDY_PARAMS if sname == "道悪" else SB_GOOD_PARAMS
+    try:
+        rec = recommend_score_based(race_card_df, win_odds_col=None, **params)
+    except Exception:
+        return "推奨馬券なし（推奨計算エラー）"
+    if not rec:
+        return "推奨馬券なし"
+    rec.setdefault("_meta", {})["axis_prob"] = ap
+
+    um_tickets = rec.get("馬連",  {}).get("tickets", [])
+    tp_tickets = rec.get("3連複", {}).get("tickets", [])
+    if not um_tickets and not tp_tickets:
+        return "推奨馬券なし"
+
+    # 馬番→馬名マップ
+    uma_map = {}
+    for _, row in race_card_df.iterrows():
+        try:
+            no = int(pd.to_numeric(row["馬番"], errors="coerce"))
+            uma_map[no] = str(row["馬名"])
+        except Exception:
+            pass
+
+    mark = "★" if sname != "道悪" else "⚠"
+    lines = [f"── 馬券推奨 [{mark}{sname}  axis={ap*100:.0f}%] ──────────────"]
+
+    ax_list = (rec.get("馬連") or rec.get("3連複") or {}).get("軸", [])
+    if ax_list:
+        ax_str = " + ".join(f"#{n} {uma_map.get(n, '?')}" for n in ax_list)
+        lines.append(f"軸: {ax_str}")
+
+    if um_tickets:
+        method = rec.get("馬連", {}).get("選択方式", "")
+        combos = [f"{t['組合せ'][0]}-{t['組合せ'][1]}" for t in um_tickets]
+        lines.append(f"馬連({method}): {', '.join(combos)}")
+
+    if tp_tickets:
+        method = rec.get("3連複", {}).get("選択方式", "")
+        combos = ["-".join(map(str, t["組合せ"])) for t in tp_tickets]
+        lines.append(f"3連複({method}): {', '.join(combos)}")
+
+    cost = (len(um_tickets) + len(tp_tickets)) * 100
+    lines.append(f"支出: {cost}円")
+
+    roi_ref = _STRATEGY_ROI[sname]
+    if sname == "道悪":
+        lines.append(f"参考ROI: {roi_ref}（道悪 — 参考のみ、買い控え推奨）")
+    else:
+        lines.append(f"参考ROI: {roi_ref}（{sname} 良馬場 {rtype}{clen}m）")
+
+    return "\n".join(lines)
+
+
+def send_race_pred_with_betting(race_day, race_id, race_card_df, race_info_df):
+    """AI予想 + 馬券推奨を組み合わせてメール送信する。
+
+    make_race_text で生成済みの予想テキストに馬券推奨を付加する。
+    推奨なしの場合もその旨を本文に含める。
+
+    Args:
+        race_day (date): レース開催日
+        race_id (str): race_id
+        race_card_df (pd.DataFrame): make_race_card の戻り値
+        race_info_df (pd.DataFrame): make_race_card の戻り値
+    """
+    # ── 予想テキスト ────────────────────────────────────────────
+    text_path = os.path.join(
+        paths.RACE_PREDICTION_TEXT_PATH, race_day.strftime("%Y%m%d"), f"{race_id}.txt"
+    )
+    pred_text = read_txt_file(text_path)
+
+    # ── 馬券推奨テキスト ─────────────────────────────────────────
+    try:
+        betting_text = _make_betting_text(race_card_df, race_info_df)
+    except Exception as e:
+        betting_text = f"推奨馬券なし（エラー: {e}）"
+
+    has_rec = "推奨馬券なし" not in betting_text
+
+    # ── 件名 ──────────────────────────────────────────────────────
+    place_id = int(str(race_id)[4:6])
+    race_no  = int(str(race_id)[10:12])
+    venue    = NAME_LIST[place_id - 1]
+    try:
+        time_id_df = race_card_dataset_manager.get_race_time_id_list_df(race_day)
+        row = time_id_df[time_id_df["race_id"] == str(race_id)]
+        race_name = row.iloc[0]["race_name"] if not row.empty else ""
+    except Exception:
+        race_name = ""
+
+    tag = "[推奨あり]" if has_rec else "[推奨なし]"
+    subject = f"【競馬AI】{venue}{race_no}R {race_name} {tag}"
+
+    body = pred_text + "\n\n" + betting_text
+
+    msg = make_mime_text(mail_to=GMAIL_SEND_TO, subject=subject, body=body)
+    send_gmail(msg)
+    print(f"メール送信: {subject}")
+
+
 _POST_ERROR_LOG = os.path.join(paths.PROJECT_ROOT, "logs", "post_errors.log")
 
 

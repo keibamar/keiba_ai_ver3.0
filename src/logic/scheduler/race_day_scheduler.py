@@ -467,8 +467,10 @@ def post_daily_race_pred(race_day=date.today()):
                 except Exception:
                     print("post_error (SNS):" + str(race_time + ":" + str(race_id)))
                     print(sys.exc_info())
-                # mail送信（ポスト失敗でも送信する）
-                prediction_publisher.send_race_pred(race_day, race_id)
+                # mail送信（AI予想 + 馬券推奨）
+                prediction_publisher.send_race_pred_with_betting(
+                    race_day, race_id, race_card_df, race_info_df,
+                )
             except Exception:
                 print("post_error:" + str(race_time + ":" + str(race_id)))
                 print(sys.exc_info())
