@@ -61,7 +61,7 @@ def get_payout(race_id, bet_type, combo):
     df = race_info_dataset_manager.get_race_return_csv_for_race(race_id)
     if df.empty:
         return 0
-    type_map = {"馬連": "馬連", "3連複": "三連複"}
+    type_map = {"馬連": "馬連", "3連複": "三連複", "3連単": "三連単"}
     rows = df[df["式別"] == type_map.get(bet_type, "")]
     if rows.empty:
         return 0
@@ -69,6 +69,8 @@ def get_payout(race_id, bet_type, combo):
         target = f"{min(combo)}-{max(combo)}"
     elif bet_type == "3連複":
         target = "-".join(map(str, sorted(combo)))
+    elif bet_type == "3連単":
+        target = "→".join(map(str, combo))
     else:
         return 0
     m = rows[rows["馬番"].astype(str) == target]
@@ -80,6 +82,8 @@ def is_hit(bet_type, combo, top3):
         return set(combo) == set(top3[:2])
     if bet_type == "3連複":
         return set(combo) == set(top3)
+    if bet_type == "3連単":
+        return tuple(combo) == tuple(top3)
     return False
 
 

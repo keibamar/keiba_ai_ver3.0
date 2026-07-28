@@ -391,6 +391,22 @@ def recommend_best_tickets(df: pd.DataFrame) -> dict:
             "軸": [], "tickets": tickets, "_meta": meta}
 
 
+def recommend_trifecta_strategy(df: pd.DataFrame, max_tkt: int = 6) -> dict | None:
+    """戦略対象レース（良馬場+ap条件）専用の3連単独立推奨。
+
+    recommend_best_tickets が3連単を選択した場合のみ返す（馬連BOX は除外）。
+    バックテスト実績: 良馬場戦略対象228R / 7的中 / 的中率3.1% / ROI 1731%（max_tkt=6）
+
+    Returns:
+        None  — 条件を満たさない場合
+        dict  — {"bet_type":"3連単", "選択方式":"1着固定", "軸":list, "tickets":list}
+    """
+    rec = recommend_best_tickets(df)
+    if not rec or rec.get("bet_type") != "3連単":
+        return None
+    return {**rec, "tickets": rec["tickets"][:max_tkt]}
+
+
 # ───────────────────────────────────────────
 #  的中率重視モード (recommend_hitrate_tickets)
 # ───────────────────────────────────────────

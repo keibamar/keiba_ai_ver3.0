@@ -204,6 +204,7 @@ def _make_betting_text(race_card_df, race_info_df):
     import pandas as pd
     from src.logic.betting.ticket_advisor import (
         recommend_score_based, SB_B_PARAMS, get_strategy, STRATEGY_ROI_REF,
+        recommend_trifecta_strategy,
     )
 
     if race_info_df is None or race_info_df.empty:
@@ -250,6 +251,15 @@ def _make_betting_text(race_card_df, race_info_df):
     if not um_tickets and not tp_tickets:
         return "推奨馬券なし"
 
+    # 3連単独立推奨（道悪以外の戦略対象のみ）
+    tfc_rec = None
+    if sname != "道悪":
+        try:
+            tfc_rec = recommend_trifecta_strategy(race_card_df)
+        except Exception:
+            tfc_rec = None
+    tfc_tickets = tfc_rec.get("tickets", []) if tfc_rec else []
+
     # 馬番→馬名マップ
     uma_map = {}
     for _, row in race_card_df.iterrows():
@@ -277,14 +287,26 @@ def _make_betting_text(race_card_df, race_info_df):
         combos = ["-".join(map(str, t["組合せ"])) for t in tp_tickets]
         lines.append(f"3連複({method}): {', '.join(combos)}")
 
-    cost = (len(um_tickets) + len(tp_tickets)) * 100
-    lines.append(f"支出: {cost}円")
+    if tfc_tickets:
+        tfc_ax = tfc_rec.get("軸", [])
+        ax_str = " + ".join(f"#{n} {uma_map.get(n, '?')}" for n in tfc_ax)
+        combos = ["→".join(map(str, t["組合せ"])) for t in tfc_tickets]
+        lines.append(f"3連単(1着固定 軸{ax_str}): {', '.join(combos)}")
+
+    main_cost = (len(um_tickets) + len(tp_tickets)) * 100
+    tfc_cost  = len(tfc_tickets) * 100
+    total_cost = main_cost + tfc_cost
+    if tfc_cost:
+        lines.append(f"支出: {main_cost}円(馬連+3連複) + {tfc_cost}円(3連単) = {total_cost}円")
+    else:
+        lines.append(f"支出: {total_cost}円")
 
     roi_ref = STRATEGY_ROI_REF.get(sname, "?")
     if sname == "道悪":
         lines.append(f"参考ROI: {roi_ref}（道悪 — 参考のみ、買い控え推奨）")
     else:
-        lines.append(f"参考ROI: {roi_ref}（{sname} {rtype}{clen}m）")
+        tfc_note = "  3連単ROI参考: 1731%（戦略対象良馬場）" if tfc_tickets else ""
+        lines.append(f"参考ROI: {roi_ref}（{sname} {rtype}{clen}m）{tfc_note}")
 
     return "\n".join(lines)
 

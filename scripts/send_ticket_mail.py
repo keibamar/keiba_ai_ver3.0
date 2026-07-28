@@ -25,6 +25,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.config import constants, paths
 from src.logic.betting.ticket_advisor import (
     recommend_score_based, SB_B_PARAMS, get_strategy, STRATEGY_ROI_REF,
+    recommend_trifecta_strategy,
 )
 from src.managers import race_card_dataset_manager
 from src.output.prediction_publisher import make_mime_text, send_gmail
@@ -42,6 +43,8 @@ def _fmt_tickets(bet_type: str, tickets: list) -> list[str]:
             c = f"{combo[0]}-{combo[1]}"
         elif bet_type == "3連複":
             c = "-".join(map(str, combo))
+        elif bet_type == "3連単":
+            c = "→".join(map(str, combo))
         else:
             c = str(combo)
         lines.append(c)
@@ -49,7 +52,8 @@ def _fmt_tickets(bet_type: str, tickets: list) -> list[str]:
 
 
 def build_race_block(race_id: str, date_str: str, time_map: dict, strategy: str,
-                     rec: dict, df: pd.DataFrame) -> tuple[str, int]:
+                     rec: dict, df: pd.DataFrame,
+                     tfc_rec: dict | None = None) -> tuple[str, int]:
     """1レース分のテキストブロックを返す。(text, 支出額)"""
 
     place_id = race_id[4:6]
@@ -68,6 +72,7 @@ def build_race_block(race_id: str, date_str: str, time_map: dict, strategy: str,
     tp_tickets = tp_rec.get("tickets", [])
     um_method  = um_rec.get("選択方式", "")
     tp_method  = tp_rec.get("選択方式", "")
+    tfc_tickets = tfc_rec.get("tickets", []) if tfc_rec else []
 
     ax_list = um_rec.get("軸") or tp_rec.get("軸") or []
 
@@ -82,7 +87,9 @@ def build_race_block(race_id: str, date_str: str, time_map: dict, strategy: str,
 
     header_mark  = "◎" if strategy != "道悪" else "△"
     strategy_tag = f"★{strategy}" if strategy != "道悪" else "道悪"
-    cost = (len(um_tickets) + len(tp_tickets)) * 100
+    main_cost = (len(um_tickets) + len(tp_tickets)) * 100
+    tfc_cost  = len(tfc_tickets) * 100
+    total_cost = main_cost + tfc_cost
 
     lines = []
     lines.append(
@@ -102,9 +109,21 @@ def build_race_block(race_id: str, date_str: str, time_map: dict, strategy: str,
         combos = _fmt_tickets("3連複", tp_tickets)
         lines.append(f"  3連複({tp_method}): {', '.join(combos)}")
 
-    lines.append(f"  支出 {cost}円  ({len(um_tickets)}点馬連 / {len(tp_tickets)}点3連複)")
+    if tfc_tickets:
+        tfc_ax = tfc_rec.get("軸", [])
+        ax_str_tfc = "+".join(f"#{n}" for n in tfc_ax)
+        combos = _fmt_tickets("3連単", tfc_tickets)
+        lines.append(f"  3連単(1着固定 軸{ax_str_tfc}): {', '.join(combos)}")
 
-    return "\n".join(lines), cost
+    if tfc_cost:
+        lines.append(
+            f"  支出 {total_cost}円  "
+            f"({len(um_tickets)}点馬連/{len(tp_tickets)}点3連複 + 3連単{len(tfc_tickets)}点)"
+        )
+    else:
+        lines.append(f"  支出 {total_cost}円  ({len(um_tickets)}点馬連 / {len(tp_tickets)}点3連複)")
+
+    return "\n".join(lines), total_cost
 
 
 def build_mail_body(date_str: str, all_races: list[dict]) -> str:
@@ -131,9 +150,12 @@ def build_mail_body(date_str: str, all_races: list[dict]) -> str:
     lines = []
     lines.append(f"競馬AI 馬券提案 — {date_label}")
     lines.append("=" * 52)
-    lines.append("【良馬場】ダート短(818%)/ダート中(349%)/ダート低短(202%)/ダート低中(165%)")
+    tfc_count = sum(1 for r in all_races if r.get("has_tfc"))
+    lines.append("【良馬場】ダート短(1625%)/ダート中(349%)/ダート低短(202%)/ダート低中(165%)")
     lines.append("         芝マイル低(385%)/芝マイル(135%)/芝中距離(663%)")
     lines.append("【道悪】稍重/重/不良は全提案（実績ROI 87% 参考のみ — 買い控え推奨）")
+    if tfc_count:
+        lines.append(f"【3連単】{tfc_count}R で3連単推奨あり（参考ROI 1731% 良馬場戦略対象）")
     lines.append("")
 
     # 良馬場分
@@ -280,7 +302,15 @@ def run(date_str: str, dry_run: bool = False):
         else:
             time_map[race_id] = {"race_time": "", "race_name": course_label}
 
-        block_text, cost = build_race_block(race_id, date_str, time_map, strategy, rec, df)
+        # 3連単独立推奨（道悪以外の戦略対象のみ）
+        tfc_rec = None
+        if strategy != "道悪":
+            try:
+                tfc_rec = recommend_trifecta_strategy(df)
+            except Exception:
+                tfc_rec = None
+
+        block_text, cost = build_race_block(race_id, date_str, time_map, strategy, rec, df, tfc_rec)
 
         all_races.append({
             "venue":      venue,
@@ -289,6 +319,7 @@ def run(date_str: str, dry_run: bool = False):
             "strategy":   strategy,
             "block_text": block_text,
             "cost":       cost,
+            "has_tfc":    tfc_rec is not None,
         })
 
     if not all_races:
