@@ -199,24 +199,11 @@ def send_race_pred(race_day, race_id):
 
 # ── 馬券推奨付きメール ───────────────────────────────────────────
 
-_MUDDY_GROUNDS = {"稍重", "重", "不良"}
-_STRATEGY_FILTER = {
-    "ダート良": (0.18, 0.20),
-    "芝良":     (0.25, 1.01),
-    "道悪":     (0.00, 1.01),
-}
-_STRATEGY_ROI = {
-    "ダート良": "455%",
-    "芝良":     "174%",
-    "道悪":      "83%",
-}
-
-
 def _make_betting_text(race_card_df, race_info_df):
     """馬券推奨テキストを生成して返す。推奨なし・エラーは「推奨馬券なし」行を含む文字列。"""
     import pandas as pd
     from src.logic.betting.ticket_advisor import (
-        recommend_score_based, SB_B_PARAMS, SB_GOOD_PARAMS, SB_MUDDY_PARAMS,
+        recommend_score_based, SB_B_PARAMS, get_strategy, STRATEGY_ROI_REF,
     )
 
     if race_info_df is None or race_info_df.empty:
@@ -231,16 +218,13 @@ def _make_betting_text(race_card_df, race_info_df):
     row0   = race_info_df.iloc[0]
     rtype  = str(row0.get("race_type",    "?")).strip()
     ground = str(row0.get("ground_state", "?")).strip()
-    clen   = str(row0.get("course_len",   "")).strip()
+    clen_s = str(row0.get("course_len",   "0")).strip()
+    try:
+        clen = int(clen_s)
+    except ValueError:
+        clen = 0
 
-    if ground == "良":
-        sname = "ダート良" if rtype == "ダート" else "芝良"
-    elif ground in _MUDDY_GROUNDS:
-        sname = "道悪"
-    else:
-        return f"推奨馬券なし（馬場状態不明: {ground}）"
-
-    # axis_prob 取得
+    # 軸スコア取得
     try:
         rec_base = recommend_score_based(race_card_df, win_odds_col=None, **SB_B_PARAMS)
     except Exception:
@@ -249,16 +233,10 @@ def _make_betting_text(race_card_df, race_info_df):
         return "推奨馬券なし"
 
     ap = rec_base.get("_meta", {}).get("axis_prob", 0)
-    lo, hi = _STRATEGY_FILTER[sname]
-    if not (lo <= ap < hi):
-        if sname == "道悪":
-            reason = f"axis={ap*100:.0f}%"
-        else:
-            reason = f"axis={ap*100:.0f}% ({lo*100:.0f}%〜{hi*100:.0f}%外)"
-        return f"推奨馬券なし（{sname} — {reason}）"
 
-    # 戦略別パラメータで推奨
-    params = SB_MUDDY_PARAMS if sname == "道悪" else SB_GOOD_PARAMS
+    sname, params = get_strategy(rtype, ground, clen, ap)
+    if sname is None:
+        return f"推奨馬券なし（{rtype}{clen}m {ground} axis={ap*100:.0f}% — 対象外）"
     try:
         rec = recommend_score_based(race_card_df, win_odds_col=None, **params)
     except Exception:
@@ -302,11 +280,11 @@ def _make_betting_text(race_card_df, race_info_df):
     cost = (len(um_tickets) + len(tp_tickets)) * 100
     lines.append(f"支出: {cost}円")
 
-    roi_ref = _STRATEGY_ROI[sname]
+    roi_ref = STRATEGY_ROI_REF.get(sname, "?")
     if sname == "道悪":
         lines.append(f"参考ROI: {roi_ref}（道悪 — 参考のみ、買い控え推奨）")
     else:
-        lines.append(f"参考ROI: {roi_ref}（{sname} 良馬場 {rtype}{clen}m）")
+        lines.append(f"参考ROI: {roi_ref}（{sname} {rtype}{clen}m）")
 
     return "\n".join(lines)
 

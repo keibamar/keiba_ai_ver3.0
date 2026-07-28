@@ -632,38 +632,96 @@ SB_B_PARAMS = {
     "tp_box_max":     20.0,
 }
 
-# 良馬場専用パラメータ（ダート良×[0.18,0.20) ROI 499% / 芝良×>=0.30 ROI 236%）
-# 相手閾値を上げて絞り込む戦略。axis_prob フィルターと組み合わせて使う。
-SB_GOOD_PARAMS = {
-    "um_axis_min":    0.12,
-    "um_box_gap":     0.04,
-    "um_partner_min": 0.10,   # 0.05 → 0.10
-    "tp_axis_min":    0.12,
-    "tp_dual_min":    0.09,
-    "tp_box_gap":     0.04,
-    "tp_partner_min": 0.07,   # 0.04 → 0.07
-    "um_1jiku_max":   20.0,
-    "um_box_max":     15.0,
-    "tp_1jiku_max":   30.0,
-    "tp_2jiku_max":   30.0,
-    "tp_box_max":     15.0,   # 20 → 15
+_FIXED = {
+    "um_axis_min": 0.12, "um_box_gap":  0.04,
+    "tp_axis_min": 0.12, "tp_dual_min": 0.09,
+    "tp_box_gap":  0.04, "tp_2jiku_max": 30.0,
 }
 
-# 道悪用パラメータ（最良でもROI 82%: 参考提案のみ）
-SB_MUDDY_PARAMS = {
-    "um_axis_min":    0.12,
-    "um_box_gap":     0.04,
-    "um_partner_min": 0.10,
-    "tp_axis_min":    0.12,
-    "tp_dual_min":    0.09,
-    "tp_box_gap":     0.04,
-    "tp_partner_min": 0.05,
-    "um_1jiku_max":   20.0,
-    "um_box_max":     20.0,
-    "tp_1jiku_max":   30.0,
-    "tp_2jiku_max":   30.0,
-    "tp_box_max":     20.0,
+def _p(**kw):
+    return {**_FIXED, **kw}
+
+# ── ダート良 [0.18,0.20) ──────────────────────────────
+# 短距離(〜1400m): ROI 1625% (tp_1jiku_max=40 で3連複を解放)
+SB_DART_HIGH_SHORT = _p(um_partner_min=0.10, um_1jiku_max=20, um_box_max=15,
+                         tp_partner_min=0.07, tp_1jiku_max=40, tp_2jiku_max=40, tp_box_max=15)
+# 中距離(1500〜2000m): ROI 349%  um_partner を緩めるのが鍵
+SB_DART_HIGH_MID   = _p(um_partner_min=0.03, um_1jiku_max=20, um_box_max=15,
+                         tp_partner_min=0.07, tp_1jiku_max=30, tp_box_max=15)
+
+# ── ダート良(低) [0.16,0.18) ─────────────────────────
+# 短距離(〜1400m): ROI 202%
+SB_DART_LOW_SHORT  = _p(um_partner_min=0.07, um_1jiku_max=30, um_box_max=12,
+                         tp_partner_min=0.03, tp_1jiku_max=30, tp_box_max=15)
+# 中距離(1500〜2000m): ROI 165%
+SB_DART_LOW_MID    = _p(um_partner_min=0.03, um_1jiku_max=30, um_box_max=12,
+                         tp_partner_min=0.03, tp_1jiku_max=30, tp_box_max=15)
+
+# ── 芝良 ─────────────────────────────────────────────
+# マイル(1500〜1800m) × [0.25,0.28): ROI 385%
+SB_SHIBA_MILE_LOW  = _p(um_partner_min=0.10, um_1jiku_max=20, um_box_max=12,
+                         tp_partner_min=0.07, tp_1jiku_max=30, tp_box_max=15)
+# マイル(1500〜1800m) × >=0.30: ROI 135%
+SB_SHIBA_MILE_HIGH = _p(um_partner_min=0.07, um_1jiku_max=20, um_box_max=12,
+                         tp_partner_min=0.05, tp_1jiku_max=30, tp_box_max=25)
+# 中距離(1801〜2200m) × >=0.30: ROI 663%
+SB_SHIBA_MID_HIGH  = _p(um_partner_min=0.10, um_1jiku_max=20, um_box_max=12,
+                         tp_partner_min=0.07, tp_1jiku_max=30, tp_box_max=15)
+
+# 後方互換エイリアス（旧コードが参照している場合に備えて残す）
+SB_GOOD_PARAMS     = SB_DART_HIGH_SHORT
+SB_DART_LOW_PARAMS = SB_DART_LOW_MID
+
+# 道悪用パラメータ（最良でもROI 87%: 参考提案のみ）
+SB_MUDDY_PARAMS = _p(um_partner_min=0.10, um_1jiku_max=20, um_box_max=20,
+                      tp_partner_min=0.05, tp_1jiku_max=30, tp_box_max=20)
+
+_MUDDY_GROUNDS = {"稍重", "重", "不良"}
+
+# ── 戦略ルーティング（距離対応版）────────────────────────────────
+# ROI参考値（バックテスト実績）
+STRATEGY_ROI_REF = {
+    "ダート良短距離":   "1625%",
+    "ダート良中距離":   "349%",
+    "ダート低短距離":   "202%",
+    "ダート低中距離":   "165%",
+    "芝良マイル(低)":  "385%",
+    "芝良マイル":      "135%",
+    "芝良中距離":      "663%",
+    "道悪":             "87%",
 }
+
+
+def get_strategy(rtype: str, ground: str, clen: int, ap: float):
+    """馬場・距離・axis_prob から (戦略名, パラメータ辞書) を返す。
+
+    対象外のレースは (None, None) を返す。
+    """
+    if ground == "良":
+        if rtype == "ダート":
+            is_short = clen <= 1400
+            if 0.18 <= ap < 0.20:
+                if is_short:
+                    return "ダート良短距離", SB_DART_HIGH_SHORT
+                elif clen <= 2000:
+                    return "ダート良中距離", SB_DART_HIGH_MID
+            elif 0.16 <= ap < 0.18:
+                if is_short:
+                    return "ダート低短距離", SB_DART_LOW_SHORT
+                elif clen <= 2000:
+                    return "ダート低中距離", SB_DART_LOW_MID
+        else:  # 芝
+            if ap >= 0.30:
+                if 1401 <= clen <= 1800:
+                    return "芝良マイル",   SB_SHIBA_MILE_HIGH
+                elif 1801 <= clen <= 2200:
+                    return "芝良中距離",  SB_SHIBA_MID_HIGH
+            elif 0.25 <= ap < 0.28:
+                if 1401 <= clen <= 1800:
+                    return "芝良マイル(低)", SB_SHIBA_MILE_LOW
+    elif ground in _MUDDY_GROUNDS:
+        return "道悪", SB_MUDDY_PARAMS
+    return None, None
 
 
 def recommend_score_based(

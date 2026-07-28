@@ -20,7 +20,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import constants, paths
 from src.logic.betting.ticket_advisor import (
-    recommend_score_based, SB_B_PARAMS, SB_GOOD_PARAMS, SB_MUDDY_PARAMS,
+    recommend_score_based, SB_B_PARAMS, get_strategy, STRATEGY_ROI_REF,
 )
 from src.managers import race_card_dataset_manager
 from scripts.explore_score_based import get_top3_and_odds, get_payout, is_hit
@@ -28,25 +28,7 @@ from scripts.explore_score_based import get_top3_and_odds, get_payout, is_hit
 PLACE_NAME = {str(i+1).zfill(2): name for i, name in enumerate(constants.NAME_LIST)}
 WEEKDAY_JP = ["月", "火", "水", "木", "金", "土", "日"]
 
-STRATEGIES = {
-    "ダート良":  dict(rtype="ダート", muddy=False, ap_lo=0.18, ap_hi=0.20, roi_ref="455%"),
-    "芝良":      dict(rtype="芝",     muddy=False, ap_lo=0.25, ap_hi=1.01, roi_ref="174%"),
-    "道悪":      dict(rtype=None,     muddy=True,  ap_lo=0.00, ap_hi=1.01, roi_ref=" 83%"),
-}
-MUDDY = {"稍重", "重", "不良"}
-
-
-def _get_strategy(rtype, ground):
-    if ground == "良":
-        return "ダート良" if rtype == "ダート" else "芝良"
-    if ground in MUDDY:
-        return "道悪"
-    return None
-
-
-def _axis_passes(ap, sname):
-    s = STRATEGIES[sname]
-    return s["ap_lo"] <= ap < s["ap_hi"]
+MUDDY_STRATEGIES = {"道悪"}
 
 
 def _fmt_combo(bet_type, combo):
@@ -75,8 +57,8 @@ def run_date(date_str):
             "race_name": str(row.get("race_name", "")),
         }
 
-    totals = {s: {"cost": 0, "ret": 0, "races": 0, "hits": 0} for s in STRATEGIES}
-    race_blocks = {s: [] for s in STRATEGIES}
+    totals     = {}
+    race_blocks = {}
 
     for fname in sorted(f for f in os.listdir(day_dir) if f.endswith(".csv")):
         race_id = fname.replace(".csv", "")
@@ -99,21 +81,24 @@ def run_date(date_str):
         rtype  = str(row0.get("race_type",    "?")).strip()
         ground = str(row0.get("ground_state", "?")).strip()
         clen   = str(row0.get("course_len",   "")).strip()
+        try:
+            clen_int = int(clen)
+        except ValueError:
+            clen_int = 0
 
-        sname = _get_strategy(rtype, ground)
-        if sname is None:
-            continue
-
-        # axis_prob チェック（SB_B_PARAMS ベース）
+        # axis_prob 取得（SB_B_PARAMS ベース）
         rec_base = recommend_score_based(df, win_odds_col=None, **SB_B_PARAMS)
         if not rec_base:
             continue
         ap = rec_base.get("_meta", {}).get("axis_prob", 0)
-        if not _axis_passes(ap, sname):
-            continue
 
-        # 戦略別パラメータで推奨
-        params = SB_MUDDY_PARAMS if sname == "道悪" else SB_GOOD_PARAMS
+        sname, params = get_strategy(rtype, ground, clen_int, ap)
+        if sname is None:
+            continue
+        # 初回登場の戦略名を動的に追加
+        if sname not in totals:
+            totals[sname]      = {"cost": 0, "ret": 0, "races": 0, "hits": 0}
+            race_blocks[sname] = []
         rec = recommend_score_based(df, win_odds_col=None, **params)
         if not rec:
             continue
@@ -191,12 +176,12 @@ def run_date(date_str):
     print(f"{'='*W}")
 
     for sname, blocks in race_blocks.items():
-        sdef = STRATEGIES[sname]
         if not blocks:
             continue
         t = totals[sname]
         roi = t["ret"] / t["cost"] * 100 if t["cost"] else 0
-        print(f"\n── {sname}  (実績参考ROI {sdef['roi_ref']}) ─────────────")
+        roi_ref = STRATEGY_ROI_REF.get(sname, "?")
+        print(f"\n── {sname}  (実績参考ROI {roi_ref}) ─────────────")
         for b in blocks:
             print(b)
 
@@ -224,18 +209,20 @@ def run_date(date_str):
           f"PL{'+' if grand_pnl>=0 else ''}{grand_pnl:,}円  ROI{grand_roi:.0f}%")
     print()
 
-    return {s: totals[s] for s in STRATEGIES}
+    return totals
 
 
 def run(dates):
-    all_totals = {s: {"cost": 0, "ret": 0, "races": 0, "hits": 0} for s in STRATEGIES}
+    all_totals = {}
 
     for d in dates:
         day_totals = run_date(d)
         if day_totals:
-            for s in STRATEGIES:
+            for s, t in day_totals.items():
+                if s not in all_totals:
+                    all_totals[s] = {"cost": 0, "ret": 0, "races": 0, "hits": 0}
                 for k in ("cost", "ret", "races", "hits"):
-                    all_totals[s][k] += day_totals[s][k]
+                    all_totals[s][k] += t[k]
 
     if len(dates) > 1:
         W = 60

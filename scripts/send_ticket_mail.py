@@ -24,40 +24,14 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import constants, paths
 from src.logic.betting.ticket_advisor import (
-    recommend_score_based, SB_B_PARAMS, SB_GOOD_PARAMS, SB_MUDDY_PARAMS,
+    recommend_score_based, SB_B_PARAMS, get_strategy, STRATEGY_ROI_REF,
 )
 from src.managers import race_card_dataset_manager
 from src.output.prediction_publisher import make_mime_text, send_gmail
 
-# ── 場所名マップ ─────────────────────────────────────────────────
 PLACE_NAME = {str(i+1).zfill(2): name for i, name in enumerate(constants.NAME_LIST)}
-
-# ── 戦略別フィルター定義 ─────────────────────────────────────────
-# (lo, hi) : hi=1.0 は上限なし扱い
-STRATEGY = {
-    "ダート良":  (0.18, 0.20),
-    "芝良":      (0.25, 1.01),
-    "道悪":      (0.00, 1.01),
-}
-
-STRATEGY_ROI = {
-    "ダート良": "455%",
-    "芝良":     "174%",
-    "道悪":      "83%",
-}
-
 WEEKDAY_JP = ["月", "火", "水", "木", "金", "土", "日"]
-
-
-def _get_strategy(rtype: str, ground: str) -> str:
-    if ground == "良":
-        return "ダート良" if rtype == "ダート" else "芝良"
-    return "道悪"
-
-
-def _axis_passes(ap: float, strategy: str) -> bool:
-    lo, hi = STRATEGY[strategy]
-    return lo <= ap < hi
+MUDDY_STRATEGIES = {"道悪"}
 
 
 def _fmt_tickets(bet_type: str, tickets: list) -> list[str]:
@@ -142,10 +116,12 @@ def build_mail_body(date_str: str, all_races: list[dict]) -> str:
     weekday = WEEKDAY_JP[dt.weekday()]
     date_label = f"{dt.year}/{dt.month:02d}/{dt.day:02d}({weekday})"
 
-    # カテゴリ別集計
-    stats: dict[str, dict] = {s: {"races": 0, "cost": 0} for s in STRATEGY}
+    # カテゴリ別集計（戦略名は動的）
+    stats: dict[str, dict] = {}
     for r in all_races:
         s = r["strategy"]
+        if s not in stats:
+            stats[s] = {"races": 0, "cost": 0}
         stats[s]["races"] += 1
         stats[s]["cost"]  += r["cost"]
 
@@ -155,8 +131,9 @@ def build_mail_body(date_str: str, all_races: list[dict]) -> str:
     lines = []
     lines.append(f"競馬AI 馬券提案 — {date_label}")
     lines.append("=" * 52)
-    lines.append("【戦略】ダート良: axis 18-20% (実績499%)  芝良: axis 30%+ (実績236%)")
-    lines.append("【道悪】稍重/重/不良は全提案（実績ROI 83% 参考のみ — 買い控え推奨）")
+    lines.append("【良馬場】ダート短(818%)/ダート中(349%)/ダート低短(202%)/ダート低中(165%)")
+    lines.append("         芝マイル低(385%)/芝マイル(135%)/芝中距離(663%)")
+    lines.append("【道悪】稍重/重/不良は全提案（実績ROI 87% 参考のみ — 買い控え推奨）")
     lines.append("")
 
     # 良馬場分
@@ -205,11 +182,11 @@ def build_mail_body(date_str: str, all_races: list[dict]) -> str:
     lines.append("")
     lines.append("【まとめ】")
     lines.append("-" * 40)
-    for s, roi in STRATEGY_ROI.items():
-        st = stats[s]
+    for s, st in stats.items():
+        roi = STRATEGY_ROI_REF.get(s, "?")
         if st["races"] == 0:
             continue
-        mark = "⚠" if s == "道悪" else "★"
+        mark = "⚠" if s in MUDDY_STRATEGIES else "★"
         lines.append(
             f"  {mark}{s}  (実績ROI {roi}): "
             f"{st['races']}R  {st['cost']:,}円"
@@ -257,26 +234,24 @@ def run(date_str: str, dry_run: bool = False):
         if info.empty:
             continue
         row0     = info.iloc[0]
-        rtype    = str(row0.get("race_type",    "?")).strip()
-        ground   = str(row0.get("ground_state", "?")).strip()
-        course_len = str(row0.get("course_len",  "")).strip()
-        cls      = str(row0.get("class",        "")).strip()
+        rtype      = str(row0.get("race_type",    "?")).strip()
+        ground     = str(row0.get("ground_state", "?")).strip()
+        course_len = str(row0.get("course_len",   "")).strip()
+        try:
+            clen_int = int(course_len)
+        except ValueError:
+            clen_int = 0
 
-        strategy = _get_strategy(rtype, ground)
-
-        # axis_prob 確認のため標準パラメータで1回実行
+        # axis_prob 取得（SB_B_PARAMS ベース）
         rec_base = recommend_score_based(df, win_odds_col=None, **SB_B_PARAMS)
         if not rec_base:
             continue
 
         axis_prob = rec_base.get("_meta", {}).get("axis_prob", 0)
 
-        # axis_prob フィルター適用
-        if not _axis_passes(axis_prob, strategy):
+        strategy, params = get_strategy(rtype, ground, clen_int, axis_prob)
+        if strategy is None:
             continue
-
-        # 戦略別パラメータで本番実行
-        params = SB_MUDDY_PARAMS if strategy == "道悪" else SB_GOOD_PARAMS
         rec = recommend_score_based(df, win_odds_col=None, **params)
         if not rec:
             continue
