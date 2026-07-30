@@ -1448,5 +1448,57 @@ window.raceMeetings = {
       "race_card_url": "races/20260726/04_nigataR7.html",
       "grade": "G3"
     }
+  ],
+  "20260801": [
+    {
+      "place_name": "札幌",
+      "race_name": "STV賞",
+      "times": 1,
+      "day_number": 3,
+      "race_card_url": "races/20260801/01_sapporoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "中京",
+      "race_name": "豊橋S",
+      "times": 2,
+      "day_number": 3,
+      "race_card_url": "races/20260801/07_chukyoR7.html",
+      "grade": null
+    },
+    {
+      "place_name": "新潟",
+      "race_name": "柳都S",
+      "times": 2,
+      "day_number": 3,
+      "race_card_url": "races/20260801/04_nigataR7.html",
+      "grade": null
+    }
+  ],
+  "20260802": [
+    {
+      "place_name": "札幌",
+      "race_name": "クイーンS",
+      "times": 1,
+      "day_number": 4,
+      "race_card_url": "races/20260802/01_sapporoR11.html",
+      "grade": "G3"
+    },
+    {
+      "place_name": "中京",
+      "race_name": "名鉄杯",
+      "times": 2,
+      "day_number": 4,
+      "race_card_url": "races/20260802/07_chukyoR7.html",
+      "grade": null
+    },
+    {
+      "place_name": "新潟",
+      "race_name": "アイビスSD",
+      "times": 2,
+      "day_number": 4,
+      "race_card_url": "races/20260802/04_nigataR7.html",
+      "grade": "G3"
+    }
   ]
 };
