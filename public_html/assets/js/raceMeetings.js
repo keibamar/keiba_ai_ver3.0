@@ -1501,6 +1501,58 @@ window.raceMeetings = {
       "grade": "G3"
     }
   ],
+  "20260808": [
+    {
+      "place_name": "札幌",
+      "race_name": "エルムS",
+      "times": 1,
+      "day_number": 5,
+      "race_card_url": "races/20260808/01_sapporoR11.html",
+      "grade": "G3"
+    },
+    {
+      "place_name": "新潟",
+      "race_name": "関越S",
+      "times": 2,
+      "day_number": 5,
+      "race_card_url": "races/20260808/04_nigataR7.html",
+      "grade": null
+    },
+    {
+      "place_name": "中京",
+      "race_name": "三河S",
+      "times": 2,
+      "day_number": 5,
+      "race_card_url": "races/20260808/07_chukyoR7.html",
+      "grade": null
+    }
+  ],
+  "20260809": [
+    {
+      "place_name": "札幌",
+      "race_name": "UHB賞",
+      "times": 1,
+      "day_number": 6,
+      "race_card_url": "races/20260809/01_sapporoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "新潟",
+      "race_name": "レパードS",
+      "times": 2,
+      "day_number": 6,
+      "race_card_url": "races/20260809/04_nigataR7.html",
+      "grade": "G3"
+    },
+    {
+      "place_name": "中京",
+      "race_name": "CBC賞",
+      "times": 2,
+      "day_number": 6,
+      "race_card_url": "races/20260809/07_chukyoR7.html",
+      "grade": "G3"
+    }
+  ],
   "20260815": [
     {
       "place_name": "札幌",
