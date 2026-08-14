@@ -1500,5 +1500,57 @@ window.raceMeetings = {
       "race_card_url": "races/20260802/04_nigataR7.html",
       "grade": "G3"
     }
+  ],
+  "20260815": [
+    {
+      "place_name": "札幌",
+      "race_name": "大雪HC",
+      "times": 1,
+      "day_number": 7,
+      "race_card_url": "races/20260815/01_sapporoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "新潟",
+      "race_name": "3歳未勝利",
+      "times": 2,
+      "day_number": 7,
+      "race_card_url": "races/20260815/04_nigataR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "中京",
+      "race_name": "3歳以上1勝クラス",
+      "times": 2,
+      "day_number": 7,
+      "race_card_url": "races/20260815/07_chukyoR11.html",
+      "grade": null
+    }
+  ],
+  "20260816": [
+    {
+      "place_name": "中京",
+      "race_name": "中京記念",
+      "times": 2,
+      "day_number": 8,
+      "race_card_url": "races/20260816/07_chukyoR7.html",
+      "grade": "G3"
+    },
+    {
+      "place_name": "札幌",
+      "race_name": "札幌記念",
+      "times": 1,
+      "day_number": 8,
+      "race_card_url": "races/20260816/01_sapporoR11.html",
+      "grade": "G2"
+    },
+    {
+      "place_name": "新潟",
+      "race_name": "3歳以上1勝クラス",
+      "times": 2,
+      "day_number": 8,
+      "race_card_url": "races/20260816/04_nigataR11.html",
+      "grade": null
+    }
   ]
 };
