@@ -315,8 +315,10 @@ def build_table_race_cards(df):
     rows = ""
     for idx, (_, row) in enumerate(df.iterrows()):
         # 安全に値を取り出す
-        waku = int(row['枠']) if '枠' in row and pd.notna(row['枠']) else ""
-        umaban = int(row['馬番']) if '馬番' in row and pd.notna(row['馬番']) else ""
+        _waku_v = pd.to_numeric(row.get('枠', ''), errors='coerce')
+        waku = int(_waku_v) if pd.notna(_waku_v) else ""
+        _umaban_v = pd.to_numeric(row.get('馬番', ''), errors='coerce')
+        umaban = int(_umaban_v) if pd.notna(_umaban_v) else ""
         name = row.get('馬名', '')
         # 性齢・斤量・騎手・馬体重は確定前はNaNのことがあり、そのままf-stringに
         # 渡すと文字どおり"nan"が表示されてしまうため、未確定時は空欄にする
@@ -1919,8 +1921,10 @@ def make_race_card_html(date_str, place_id, target_id):
         # しまう（開発者目線の値でユーザーには不具合に見えるため、未確定は"-"にする）
         waku_raw = row.get("枠", "")
         umaban_raw = row.get("馬番", "")
-        waku = str(int(float(waku_raw))) if pd.notna(waku_raw) and str(waku_raw).strip() != "" else "-"
-        umaban = str(int(float(umaban_raw))) if pd.notna(umaban_raw) and str(umaban_raw).strip() != "" else "-"
+        _waku_n = pd.to_numeric(waku_raw, errors='coerce')
+        waku = str(int(_waku_n)) if pd.notna(_waku_n) else "-"
+        _umaban_n = pd.to_numeric(umaban_raw, errors='coerce')
+        umaban = str(int(_umaban_n)) if pd.notna(_umaban_n) else "-"
         horse_name = str(row.get("馬名", "")).strip()
         if not horse_name:
             continue
