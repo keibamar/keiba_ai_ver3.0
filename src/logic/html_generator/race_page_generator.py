@@ -455,9 +455,13 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     ad_unit_1 = ad_unit_html(AD_SLOT_IN_CONTENT_1)
     ad_unit_2 = ad_unit_html(AD_SLOT_IN_CONTENT_2)
     ad_unit_3 = ad_unit_html(AD_SLOT_IN_CONTENT_3)
-    # 配当結果を見終えたタイミングで、補足コンテンツとして書籍紹介を1つだけ置く
-    # （広告の手前に挟むことで、広告色を強めずに済む）。
     book_html = affiliate_html.daily_book_recommendation_html()
+    from src.config import paths
+    _css_path = os.path.join(paths.PUBLIC_HTML_ASSETS_PATH, "css", "styles.css")
+    try:
+        _css_ver = int(os.path.getmtime(_css_path))
+    except OSError:
+        _css_ver = 0
     return """
 <!DOCTYPE html>
 <html lang="ja">
@@ -469,7 +473,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
   {adsense}
   {ga4}
   <title>{date_display} {place_name}競馬場 第{race_num}R {race_name}</title>
-  <link rel="stylesheet" href="../../assets/css/styles.css">
+  <link rel="stylesheet" href="../../assets/css/styles.css?v={_css_ver}">
   <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
   <style>
     body {{
@@ -929,6 +933,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     result_table_html=result_table_html,
     payout_table_html=payout_table_html,
     book_html=book_html,
+    _css_ver=_css_ver,
 )
 
 
