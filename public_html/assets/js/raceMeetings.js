@@ -1604,5 +1604,57 @@ window.raceMeetings = {
       "race_card_url": "races/20260816/04_nigataR11.html",
       "grade": null
     }
+  ],
+  "20260822": [
+    {
+      "place_name": "札幌",
+      "race_name": "WASJ第2戦",
+      "times": 2,
+      "day_number": 1,
+      "race_card_url": "races/20260822/01_sapporoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "新潟",
+      "race_name": "3歳未勝利",
+      "times": 3,
+      "day_number": 1,
+      "race_card_url": "races/20260822/04_nigataR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "中京",
+      "race_name": "3歳未勝利",
+      "times": 3,
+      "day_number": 1,
+      "race_card_url": "races/20260822/07_chukyoR11.html",
+      "grade": null
+    }
+  ],
+  "20260823": [
+    {
+      "place_name": "新潟",
+      "race_name": "新潟2歳S",
+      "times": 3,
+      "day_number": 2,
+      "race_card_url": "races/20260823/04_nigataR7.html",
+      "grade": "G3"
+    },
+    {
+      "place_name": "札幌",
+      "race_name": "キーンランドC",
+      "times": 2,
+      "day_number": 2,
+      "race_card_url": "races/20260823/01_sapporoR11.html",
+      "grade": "G3"
+    },
+    {
+      "place_name": "中京",
+      "race_name": "3歳以上1勝クラス",
+      "times": 3,
+      "day_number": 2,
+      "race_card_url": null,
+      "grade": null
+    }
   ]
 };

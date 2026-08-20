@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(curl -s -A \"Mozilla/5.0\" \"https://www.jra.go.jp/keiba/calendar2025/oct.html\")",
-      "Bash(iconv -f SHIFT_JIS -t UTF-8 -c)"
+      "Bash(iconv -f SHIFT_JIS -t UTF-8 -c)",
+      "Bash(python -c \"import pandas as pd; df = pd.read_csv\\('c:/keiba_ai/keiba_ai_ver3.0/data/ai_performance/ai_performance.csv'\\); print\\(df.columns.tolist\\(\\)\\); print\\(df.head\\(2\\)\\)\")"
     ]
   }
 }
