@@ -18,6 +18,7 @@
   --mar-section-calendar: #2f6690;
   --mar-section-courses: #7a3d6e;
   --mar-section-performance: #9c4a2f;
+  --mar-section-trend: #2d7a4a;
 }
 
 body {
@@ -2308,6 +2309,15 @@ body.section-calendar .calendar-widget {
   border-left-color: var(--mar-section-performance);
 }
 
+.page-calendar-tab-location li.nav-color-trend > a,
+.page-calendar-tab-location li.nav-color-trend > span.page-calendar-tab-current {
+  color: var(--mar-section-trend);
+}
+
+.page-calendar-tab-location li.nav-color-trend .page-calendar-tab-sublevel {
+  border-left-color: var(--mar-section-trend);
+}
+
 @media (max-width: 800px) {
   /* スマホ幅では常時の本文埋め込み（float）ではなく、ボタンで開く
      ポップアップ（ドロワー）にする。階層リストが長いページ（兄弟レース・
@@ -2471,6 +2481,13 @@ body.section-calendar .calendar-widget {
 .trend-stats-table td { padding: 4px 14px; text-align: center; border: 1px solid #ddd; }
 .roi-plus { color: #1b5e20; font-weight: 700; }
 .roi-minus { color: #b71c1c; font-weight: 700; }
+
+/* HOME傾向日記カードのリスト */
+.trend-recent-list { list-style: none; padding: 0; margin: 0.5rem 0 1rem; }
+.trend-recent-list li { padding: 0.3rem 0; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+.trend-recent-list li:last-child { border-bottom: none; }
+.trend-recent-list a { color: var(--mar-section-trend); text-decoration: none; }
+.trend-recent-list a:hover { text-decoration: underline; }
 
 /* 本文 */
 .trend-text-body { line-height: 1.85; }

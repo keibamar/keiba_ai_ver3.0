@@ -363,6 +363,7 @@ def home_template(target_date=None):
         </div>
         <a class="card-link" href="races/index.html">レースカレンダーを見る &rarr;</a>
       </div>
+
     </div>
 
     {ad_unit_html(AD_SLOT_IN_CONTENT_2)}

@@ -25,6 +25,14 @@ from src.logic.html_generator import (  # noqa: E402
 )
 from src.managers import ai_performance_dataset_manager  # noqa: E402
 
+# generate_weekly_trend.py の run() を直接呼び出す
+import importlib.util as _ilu
+import os as _os
+_wt_path = _os.path.join(PROJECT_ROOT, "scripts", "generate_weekly_trend.py")
+_wt_spec = _ilu.spec_from_file_location("generate_weekly_trend", _wt_path)
+_wt_mod = _ilu.module_from_spec(_wt_spec)
+_wt_spec.loader.exec_module(_wt_mod)
+
 
 def _prev_weekend_days(today: date) -> list[date]:
     """今日を基準に直前の土曜・日曜を返す（水曜実行想定）"""
@@ -53,5 +61,13 @@ if __name__ == "__main__":
     for race_day in _prev_weekend_days(date.today()):
         print(f"前週出馬表HTML再生成: {race_day}")
         race_page_generator.make_daily_race_card_html(race_day)
+
+    # 前週の週次傾向振り返りを生成
+    prev_sat, _ = _prev_weekend_days(date.today())
+    print(f"週次傾向振り返り生成: {prev_sat}")
+    try:
+        _wt_mod.run(prev_sat)
+    except Exception as e:
+        print(f"週次傾向振り返り生成エラー: {e}")
 
     print("Weekly Update Html Done")

@@ -15,8 +15,10 @@ Home・AI成績・コース詳細データの各ページ群を横断して同�
 """
 
 import json
+import os
 from datetime import date
 
+from src.config import paths
 from src.logic.html_generator import affiliate_html, daily_index_generator
 
 # サイト名（HOMEのタイトル・各ページのヘッダー・フッターで共通して使う）。
@@ -135,6 +137,7 @@ NAV_LINKS = [
     ("レースカレンダー", "races/index.html"),
     ("コース詳細データ", "courses/index.html"),
     ("AI成績", "performance/index.html"),
+    ("傾向分析日記", "trend/index.html"),
 ]
 
 # レースカレンダー/コース詳細データ/AI成績を、サイドバー上で色とアイコンで区別する。
@@ -143,11 +146,13 @@ NAV_ICONS = {
     "レースカレンダー": "📅",
     "コース詳細データ": "🏟️",
     "AI成績": "📊",
+    "傾向分析日記": "📓",
 }
 NAV_COLOR_CLASSES = {
     "レースカレンダー": "nav-color-calendar",
     "コース詳細データ": "nav-color-courses",
     "AI成績": "nav-color-performance",
+    "傾向分析日記": "nav-color-trend",
 }
 
 
@@ -352,6 +357,33 @@ def _nested_crumbs_html(items, base_path="", current_class="page-calendar-tab-cu
     return rows
 
 
+def _get_trend_nav_links(base_path: str, n: int = 8) -> list:
+    """public_html/trend/ から最新n件の（ラベル, パス）リストを返す"""
+    trend_dir = os.path.join(paths.PUBLIC_HTML_PATH, "trend")
+    try:
+        files = [
+            f for f in os.listdir(trend_dir)
+            if f.endswith(".html") and f not in ("index.html",)
+        ]
+    except FileNotFoundError:
+        return []
+    links = []
+    for fname in sorted(files, reverse=True)[:n]:
+        is_weekly = fname.startswith("weekly_")
+        date_key = fname.replace("weekly_", "").replace(".html", "")
+        if len(date_key) != 8:
+            continue
+        try:
+            y, m, d_num = int(date_key[:4]), int(date_key[4:6]), int(date_key[6:8])
+            weekday = date(y, m, d_num).weekday()
+            wd = ["月", "火", "水", "木", "金", "土", "日"][weekday]
+            label = f"{m}/{d_num} 週次振り返り" if is_weekly else f"{m}/{d_num}（{wd}）"
+        except (ValueError, IndexError):
+            continue
+        links.append((label, f"trend/{fname}"))
+    return links
+
+
 def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
     """HOMEを根に、NAV_LINKSの3項目を1段下にネストした、常時表示用の階層ツリーを返す
 
@@ -380,6 +412,19 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
             crumb = _crumb_item_html(label, head_path, base_path)
             nested_html = _nested_crumbs_html(breadcrumb_items[1:], base_path)
             is_active = True
+        elif label == "傾向分析日記":
+            is_current = breadcrumb_items is None and current_path == path
+            crumb = _crumb_item_html(label, None if is_current else path, base_path)
+            is_active = is_current
+            trend_links = _get_trend_nav_links(base_path)
+            if trend_links:
+                inner = "".join(
+                    f"<li>{_crumb_item_html(tl, tp, base_path)}</li>\n"
+                    for tl, tp in trend_links
+                )
+                nested_html = inner
+            else:
+                nested_html = ""
         else:
             is_current = breadcrumb_items is None and current_path == path
             crumb = _crumb_item_html(label, None if is_current else path, base_path)
