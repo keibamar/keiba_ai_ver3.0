@@ -2502,13 +2502,15 @@ body.section-calendar .calendar-widget {
   padding-left: 8px; border-left: 4px solid #1565c0;
 }
 .trend-text-body h3.trend-section-title {
-  font-size: 1rem; margin: 1.2rem 0 0.4rem; color: var(--text-secondary, #444);
+  font-size: 1rem; margin: 1.2rem 0 0.4rem;
+  color: var(--mar-section-trend);
+  padding-left: 8px; border-left: 3px solid var(--mar-section-trend);
 }
 .trend-text-body h4.trend-section-title {
-  font-size: 0.95rem; margin: 1rem 0 0.3rem; color: var(--text-secondary, #444);
+  font-size: 0.95rem; margin: 1rem 0 0.3rem; color: var(--mar-section-trend);
 }
 .trend-text-body h5.trend-section-title {
-  font-size: 0.9rem; margin: 0.8rem 0 0.2rem; color: var(--text-muted, #666);
+  font-size: 0.9rem; margin: 0.8rem 0 0.2rem; color: #2a6640;
 }
 .trend-text-body p { margin: 0.5rem 0; }
 .trend-md-list { margin: 0.5rem 0 0.5rem 1.2rem; padding: 0; }
@@ -2534,8 +2536,14 @@ body.section-calendar .calendar-widget {
 .entry-badge.weekly { background: #6a1b9a; }
 
 /* 週次ページ */
-.trend-day-section { margin: 1.5rem 0; padding: 1rem; background: #e8f4ed; border-radius: 6px; }
-.trend-day-title { font-size: 1.05rem; margin: 0 0 0.8rem; color: var(--text, #333); }
+.trend-day-section {
+  margin: 1.5rem 0; padding: 1rem;
+  background: #fff;
+  border: 1px solid #b0d8be;
+  border-left: 4px solid var(--mar-section-trend);
+  border-radius: 6px;
+}
+.trend-day-title { font-size: 1.05rem; margin: 0 0 0.8rem; color: #2a2a2a; }
 .trend-pace-block { display: flex; align-items: center; gap: 8px; margin: 1rem 0; }
 .trend-pace-badge {
   display: inline-block; font-size: 0.85em; font-weight: 700;
@@ -2553,7 +2561,7 @@ body.section-calendar .calendar-widget {
   :root:not([data-theme="light"]) .trend-course-table td.cs-upset { color: #bbb; }
   :root:not([data-theme="light"]) .trend-course-table tbody tr:nth-child(even) { background: transparent; }
   :root:not([data-theme="light"]) .trend-index-entry { border-color: #444; }
-  :root:not([data-theme="light"]) .trend-day-section { background: #2a4234; }
+  :root:not([data-theme="light"]) .trend-day-section { background: #1a1a1a; border-color: #3a5a46; border-left-color: #4caf79; }
   :root:not([data-theme="light"]) .trend-day-title { color: #ddd; }
   :root:not([data-theme="light"]) .trend-indicator-label { color: #bbb; }
   :root:not([data-theme="light"]) .trend-indicator-sub { color: #999; }
@@ -2561,9 +2569,9 @@ body.section-calendar .calendar-widget {
   :root:not([data-theme="light"]) .trend-stats-table td { background: transparent; color: #ddd; border-color: #555; }
   :root:not([data-theme="light"]) .trend-stats-table tbody tr:nth-child(even) { background: #2a2a2a; }
   :root:not([data-theme="light"]) .trend-stats-table tbody tr:hover { background: #333; }
-  :root:not([data-theme="light"]) .trend-text-body h3.trend-section-title { color: #ccc; }
-  :root:not([data-theme="light"]) .trend-text-body h4.trend-section-title { color: #ccc; }
-  :root:not([data-theme="light"]) .trend-text-body h5.trend-section-title { color: #aaa; }
+  :root:not([data-theme="light"]) .trend-text-body h3.trend-section-title { color: #5ec98a; border-left-color: #5ec98a; }
+  :root:not([data-theme="light"]) .trend-text-body h4.trend-section-title { color: #5ec98a; }
+  :root:not([data-theme="light"]) .trend-text-body h5.trend-section-title { color: #4aaa70; }
   :root:not([data-theme="light"]) .trend-md-table th { background: #333; color: #ddd; border-color: #555; }
   :root:not([data-theme="light"]) .trend-md-table td { background: transparent; color: #ddd; border-color: #555; }
   :root:not([data-theme="light"]) .trend-md-table tbody tr:nth-child(even) { background: #2a2a2a; }
@@ -2578,7 +2586,7 @@ body.section-calendar .calendar-widget {
 :root[data-theme="dark"] .trend-course-table td.cs-upset { color: #999; }
 :root[data-theme="dark"] .trend-course-table tbody tr:nth-child(even) { background: transparent; }
 :root[data-theme="dark"] .trend-index-entry { border-color: #444; }
-:root[data-theme="dark"] .trend-day-section { background: #2a4234; }
+:root[data-theme="dark"] .trend-day-section { background: #1a1a1a; border-color: #3a5a46; border-left-color: #4caf79; }
 :root[data-theme="dark"] .trend-day-title { color: #ddd; }
 :root[data-theme="dark"] .trend-indicator-label { color: #bbb; }
 :root[data-theme="dark"] .trend-indicator-sub { color: #999; }
@@ -2586,9 +2594,9 @@ body.section-calendar .calendar-widget {
 :root[data-theme="dark"] .trend-stats-table td { background: transparent; color: #ddd; border-color: #555; }
 :root[data-theme="dark"] .trend-stats-table tbody tr:nth-child(even) { background: #2a2a2a; }
 :root[data-theme="dark"] .trend-stats-table tbody tr:hover { background: #333; }
-:root[data-theme="dark"] .trend-text-body h3.trend-section-title { color: #ccc; }
-:root[data-theme="dark"] .trend-text-body h4.trend-section-title { color: #ccc; }
-:root[data-theme="dark"] .trend-text-body h5.trend-section-title { color: #aaa; }
+:root[data-theme="dark"] .trend-text-body h3.trend-section-title { color: #5ec98a; border-left-color: #5ec98a; }
+:root[data-theme="dark"] .trend-text-body h4.trend-section-title { color: #5ec98a; }
+:root[data-theme="dark"] .trend-text-body h5.trend-section-title { color: #4aaa70; }
 :root[data-theme="dark"] .trend-md-table th { background: #333; color: #ddd; border-color: #555; }
 :root[data-theme="dark"] .trend-md-table td { background: transparent; color: #ddd; border-color: #555; }
 :root[data-theme="dark"] .trend-md-table tbody tr:nth-child(even) { background: #2a2a2a; }
