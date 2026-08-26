@@ -365,7 +365,50 @@ def get_day_stats(target_date: date) -> dict:
         "win_times": win_times,
         "ai_perf": ai_perf,
         "race_count": int(df["race_id"].nunique()) if "race_id" in df.columns else len(df),
+        "up3f_baselines": get_venue_up3f_baselines(),
     }
+
+
+_UP3F_BASELINES_CACHE: dict | None = None
+
+
+def get_venue_up3f_baselines(years: int = 3) -> dict:
+    """過去N年の年次CSVから競馬場・コース種別ごとの上り3F平均を計算する。
+
+    プロセス内でキャッシュされるため、複数回呼ばれても1度しか計算しない。
+
+    Returns:
+        dict: {place_name: {race_type: avg_seconds_float}}
+              例: {"札幌": {"芝": 35.82, "ダート": 39.12}, ...}
+    """
+    global _UP3F_BASELINES_CACHE
+    if _UP3F_BASELINES_CACHE is not None:
+        return _UP3F_BASELINES_CACHE
+
+    current_year = date.today().year
+    result: dict = {}
+
+    for place_id, place_dir in enumerate(PLACE_LIST, start=1):
+        place_name = NAME_LIST[place_id - 1]
+        all_dfs = []
+        for y_offset in range(years):
+            year = current_year - y_offset
+            df = rr_mgr.get_race_results_csv(place_id, year)
+            if df.empty or "上り" not in df.columns or "race_type" not in df.columns:
+                continue
+            all_dfs.append(df[["race_type", "上り"]].copy())
+        if not all_dfs:
+            continue
+        combined = pd.concat(all_dfs, ignore_index=True)
+        for rt in ["芝", "ダート"]:
+            sub = pd.to_numeric(
+                combined[combined["race_type"] == rt]["上り"], errors="coerce"
+            ).dropna()
+            if len(sub) >= 10:
+                result.setdefault(place_name, {})[rt] = round(float(sub.mean()), 2)
+
+    _UP3F_BASELINES_CACHE = result
+    return result
 
 
 def get_week_stats(sat_date: date, sun_date: date) -> dict:
@@ -376,7 +419,7 @@ def get_week_stats(sat_date: date, sun_date: date) -> dict:
         sun_date: 日曜の日付
 
     Returns:
-        dict: sat_stats, sun_stats, combined の3キー
+        dict: sat_stats, sun_stats, combined, up3f_baselines の4キー
     """
     sat_stats = get_day_stats(sat_date)
     sun_stats = get_day_stats(sun_date)
@@ -398,4 +441,6 @@ def get_week_stats(sat_date: date, sun_date: date) -> dict:
         "combined": combined,
         "sat_date": sat_date.strftime("%Y%m%d"),
         "sun_date": sun_date.strftime("%Y%m%d"),
+        # sat/sun それぞれの up3f_baselines と同じもの（キャッシュ済み）
+        "up3f_baselines": get_venue_up3f_baselines(),
     }

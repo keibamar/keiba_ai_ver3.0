@@ -164,7 +164,37 @@ def _text_to_html(text: str) -> str:
     return "\n".join(paragraphs)
 
 
-def _stats_summary_html(stats: dict) -> str:
+def _up3f_speed_label(up3f_val: float, place: str, race_type: str,
+                       baselines: dict | None) -> str:
+    """上り3Fの速度ラベルを返す。
+
+    baselines が与えられた場合は競馬場・コース種別の過去平均と比較し、
+    なければ固定閾値にフォールバックする。
+    """
+    baseline = (baselines or {}).get(place, {}).get(race_type)
+    if baseline is not None:
+        diff = up3f_val - baseline
+        if diff <= -0.8:
+            spd = "速"
+        elif diff <= -0.3:
+            spd = "やや速"
+        elif diff >= 0.8:
+            spd = "遅"
+        elif diff >= 0.3:
+            spd = "やや遅"
+        else:
+            spd = "標準"
+        sign = "+" if diff >= 0 else ""
+        return f'{spd}<span class="cs-baseline">avg{baseline:.1f}比{sign}{diff:.1f}s</span>'
+    # フォールバック: 固定閾値
+    if race_type == "芝":
+        spd = "速" if up3f_val <= 34.5 else ("やや速" if up3f_val <= 35.2 else ("標準" if up3f_val <= 35.8 else "遅"))
+    else:
+        spd = "速" if up3f_val <= 38.0 else ("標準" if up3f_val <= 39.5 else "遅")
+    return spd
+
+
+def _stats_summary_html(stats: dict, baselines: dict | None = None) -> str:
     """開催場ごと・芝ダート別のデータサマリHTMLを生成する"""
     if not stats or "error" in stats:
         return ""
@@ -186,14 +216,9 @@ def _stats_summary_html(stats: dict) -> str:
             if not cs:
                 continue
             up = f"{cs['up3f']}秒" if cs.get("up3f") else "—"
-            # 上り速さラベル
             if cs.get("up3f"):
-                u = cs["up3f"]
-                if rt == "芝":
-                    spd = "速" if u <= 34.5 else ("▲速" if u <= 35.2 else ("標準" if u <= 35.8 else "遅"))
-                else:
-                    spd = "速" if u <= 38.0 else ("標準" if u <= 39.5 else "遅")
-                up = f"{up}<small>（{spd}）</small>"
+                spd_label = _up3f_speed_label(cs["up3f"], place, rt, baselines)
+                up = f"{up}<small>（{spd_label}）</small>"
             upset_n = cs.get("upset_count", 0)
             r_c = cs.get("race_count", 0)
             upset_str = f"{upset_n}/{r_c}R" if r_c else "—"
@@ -283,7 +308,7 @@ def make_daily_trend_page(target_date: date, stats: dict, comment_text: str) -> 
     description = f"{title_date}のJRA競馬傾向分析。馬場状態・荒れ度・AI予想成績をまとめた短評です。"
 
     css_ver = _css_version()
-    stats_html = _stats_summary_html(stats)
+    stats_html = _stats_summary_html(stats, stats.get("up3f_baselines"))
     comment_html = _text_to_html(comment_text)
 
     venue_names = "・".join(stats.get("ground_by_place", {}).keys())
@@ -342,8 +367,9 @@ def make_weekly_trend_page(sat_date: date, sun_date: date,
     description = f"{sat_label}〜{sun_label}のJRA競馬週次傾向振り返り。展開傾向・馬場変化・来週末予測。"
 
     css_ver = _css_version()
-    sat_stats_html = _stats_summary_html(week_stats.get("sat", {}))
-    sun_stats_html = _stats_summary_html(week_stats.get("sun", {}))
+    baselines = week_stats.get("up3f_baselines")
+    sat_stats_html = _stats_summary_html(week_stats.get("sat", {}), baselines)
+    sun_stats_html = _stats_summary_html(week_stats.get("sun", {}), baselines)
     comment_html = _text_to_html(comment_text)
 
     # 展開傾向バッジ
