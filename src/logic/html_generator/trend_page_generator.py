@@ -92,29 +92,74 @@ def _head_html(title: str, description: str, url: str, css_ver: int) -> str:
 </head>"""
 
 
+def _inline_md(text: str) -> str:
+    """インラインMarkdown（太字・イタリック）をHTMLに変換する"""
+    text = re.sub(r"\*\*\*(.+?)\*\*\*", r"<strong><em>\1</em></strong>", text)
+    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+    text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
+    return text
+
+
+def _md_table_to_html(block: str) -> str:
+    """Markdownテーブルブロックを <table> に変換する"""
+    lines = [l.strip() for l in block.splitlines() if l.strip()]
+    rows = []
+    for line in lines:
+        if re.match(r"^\|[-:| ]+\|$", line):
+            continue  # 区切り行スキップ
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        rows.append(cells)
+    if not rows:
+        return ""
+    thead = "".join(f"<th>{_inline_md(c)}</th>" for c in rows[0])
+    tbody_rows = ""
+    for row in rows[1:]:
+        tbody_rows += "<tr>" + "".join(f"<td>{_inline_md(c)}</td>" for c in row) + "</tr>"
+    return (
+        '<div class="trend-md-table-wrap">'
+        f'<table class="trend-md-table"><thead><tr>{thead}</tr></thead>'
+        f"<tbody>{tbody_rows}</tbody></table></div>"
+    )
+
+
 def _text_to_html(text: str) -> str:
-    """生成テキストをHTML段落に変換する（見出し ##、段落 \n\n対応）"""
+    """生成テキストをHTML段落に変換する（Markdown見出し・リスト・テーブル・太字対応）"""
     text = text.strip()
     paragraphs = []
     for block in re.split(r"\n{2,}", text):
         block = block.strip()
         if not block:
             continue
-        # Markdown見出し・■ 見出し
-        if block.startswith("## "):
-            content = block[3:].strip()
-            paragraphs.append(f'<h3 class="trend-section-title">{content}</h3>')
+        # 水平線
+        if re.match(r"^-{3,}$|^\*{3,}$", block):
+            continue  # 区切り線は非表示
+        # Markdown見出し（#〜####）
+        if block.startswith("#### "):
+            paragraphs.append(f'<h5 class="trend-section-title">{_inline_md(block[5:].strip())}</h5>')
+        elif block.startswith("### "):
+            paragraphs.append(f'<h4 class="trend-section-title">{_inline_md(block[4:].strip())}</h4>')
+        elif block.startswith("## "):
+            paragraphs.append(f'<h3 class="trend-section-title">{_inline_md(block[3:].strip())}</h3>')
         elif block.startswith("# "):
-            content = block[2:].strip()
-            paragraphs.append(f'<h2 class="trend-section-title">{content}</h2>')
-        elif block.startswith("■ "):
-            content = block[2:].strip()
-            paragraphs.append(f'<h2 class="trend-section-title">■ {content}</h2>')
+            paragraphs.append(f'<h2 class="trend-section-title">{_inline_md(block[2:].strip())}</h2>')
         elif block.startswith("■"):
-            content = block[1:].strip()
-            paragraphs.append(f'<h2 class="trend-section-title">■ {content}</h2>')
+            content = block.lstrip("■").strip()
+            paragraphs.append(f'<h2 class="trend-section-title">■ {_inline_md(content)}</h2>')
+        # Markdownテーブル（|で始まる複数行）
+        elif "|" in block and block.startswith("|"):
+            paragraphs.append(_md_table_to_html(block))
+        # リスト（- または * で始まる行の連続）
+        elif re.match(r"^[-*] ", block):
+            items = []
+            for line in block.splitlines():
+                line = line.strip()
+                if re.match(r"^[-*] ", line):
+                    items.append(f"<li>{_inline_md(line[2:].strip())}</li>")
+                elif line:
+                    items[-1] = items[-1][:-5] + "<br>" + _inline_md(line) + "</li>" if items else f"<li>{_inline_md(line)}</li>"
+            paragraphs.append(f'<ul class="trend-md-list">{"".join(items)}</ul>')
         else:
-            inner = block.replace("\n", "<br>")
+            inner = _inline_md(block.replace("\n", "<br>"))
             paragraphs.append(f"<p>{inner}</p>")
     return "\n".join(paragraphs)
 
