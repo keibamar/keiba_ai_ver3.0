@@ -2454,13 +2454,16 @@ body.section-calendar .calendar-widget {
 .ground-heavy { background: #6d4c41; }
 .ground-bad   { background: #b71c1c; }
 
-/* コース別テーブル（各競馬場カード内） */
-.trend-course-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
-.trend-course-table th { color: #888; font-weight: 600; text-align: left; padding: 2px 6px; border-bottom: 1px solid #eee; }
-.trend-course-table td { padding: 3px 6px; }
+/* コース別テーブル（各競馬場カード内）— グローバルth/trスタイルをリセット */
+.trend-course-table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin-bottom: 0; }
+.trend-course-table th,
+.trend-course-table td { border: none; text-align: left; }
+.trend-course-table th { background: transparent; color: #888; font-weight: 600; padding: 2px 6px; border-bottom: 1px solid #ddd; }
+.trend-course-table td { background: transparent; padding: 3px 6px; color: inherit; }
+.trend-course-table tbody tr:nth-child(even) { background: transparent; }
+.trend-course-table tbody tr:hover { background: transparent; }
 .trend-course-table td.cs-type { font-weight: 700; width: 3em; }
-.trend-course-table td.cs-up3f { }
-.trend-course-table td.cs-upset { color: var(--text-muted, #555); }
+.trend-course-table td.cs-upset { color: #777; }
 
 /* 全体指標バー */
 .trend-indicators { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 1rem; align-items: center; }
@@ -2475,10 +2478,12 @@ body.section-calendar .calendar-widget {
 .upset-mid  { background: #e65100; }
 .upset-low  { background: #1565c0; }
 
-/* AI成績テーブル */
-.trend-stats-table { border-collapse: collapse; font-size: 0.88em; margin-top: 0.5rem; }
-.trend-stats-table th { background: var(--bg-subtle, #f5f5f5); color: var(--text, #111); padding: 4px 14px; text-align: center; border: 1px solid var(--border, #ddd); }
-.trend-stats-table td { padding: 4px 14px; text-align: center; border: 1px solid var(--border, #ddd); color: var(--text, #111); }
+/* AI成績テーブル — グローバルth/trスタイルをリセット */
+.trend-stats-table { border-collapse: collapse; font-size: 0.88em; margin-top: 0.5rem; margin-bottom: 0; }
+.trend-stats-table th { background: #f0f0f0; color: #333; padding: 5px 14px; text-align: center; border: 1px solid #ccc; font-weight: 600; }
+.trend-stats-table td { background: transparent; color: #222; padding: 5px 14px; text-align: center; border: 1px solid #ccc; }
+.trend-stats-table tbody tr:nth-child(even) { background: #f8f8f8; }
+.trend-stats-table tbody tr:hover { background: #f0f0f0; }
 .roi-plus { color: #1b5e20; font-weight: 700; }
 .roi-minus { color: #b71c1c; font-weight: 700; }
 
@@ -2508,9 +2513,11 @@ body.section-calendar .calendar-widget {
 .trend-md-list { margin: 0.5rem 0 0.5rem 1.2rem; padding: 0; }
 .trend-md-list li { margin: 0.2rem 0; }
 .trend-md-table-wrap { overflow-x: auto; margin: 0.8rem 0; }
-.trend-md-table { border-collapse: collapse; font-size: 0.9em; min-width: 300px; }
-.trend-md-table th { background: var(--bg-subtle, #f5f5f5); color: var(--text, #111); padding: 5px 12px; text-align: left; border: 1px solid var(--border, #ddd); font-weight: 600; }
-.trend-md-table td { padding: 4px 12px; border: 1px solid var(--border, #ddd); color: var(--text, #111); }
+.trend-md-table { border-collapse: collapse; font-size: 0.9em; min-width: 300px; margin-bottom: 0; }
+.trend-md-table th { background: #f0f0f0; color: #333; padding: 5px 12px; text-align: left; border: 1px solid #ccc; font-weight: 600; }
+.trend-md-table td { background: transparent; color: #222; padding: 4px 12px; border: 1px solid #ccc; }
+.trend-md-table tbody tr:nth-child(even) { background: #f8f8f8; }
+.trend-md-table tbody tr:hover { background: #f0f0f0; }
 
 /* ナビ */
 .trend-nav-bottom { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border, #eee); }
@@ -2539,36 +2546,48 @@ body.section-calendar .calendar-widget {
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .trend-venue-card2 { border-color: #444; }
-  :root:not([data-theme="light"]) .trend-course-table th { color: #aaa; border-color: #444; }
-  :root:not([data-theme="light"]) .trend-course-table td.cs-upset { color: #aaa; }
+  :root:not([data-theme="light"]) .trend-venue-meta { color: #999; }
+  :root:not([data-theme="light"]) .trend-course-table th { background: transparent; color: #aaa; border-color: #555; }
+  :root:not([data-theme="light"]) .trend-course-table td { background: transparent; color: #ddd; }
+  :root:not([data-theme="light"]) .trend-course-table td.cs-upset { color: #999; }
+  :root:not([data-theme="light"]) .trend-course-table tbody tr:nth-child(even) { background: transparent; }
   :root:not([data-theme="light"]) .trend-index-entry { border-color: #444; }
-  :root:not([data-theme="light"]) .trend-day-section { background: #1e1e1e; }
+  :root:not([data-theme="light"]) .trend-day-section { background: #252525; }
   :root:not([data-theme="light"]) .trend-day-title { color: #ddd; }
-  :root:not([data-theme="light"]) .trend-indicator-label { color: #aaa; }
-  :root:not([data-theme="light"]) .trend-indicator-sub { color: #888; }
-  :root:not([data-theme="light"]) .trend-stats-table th { background: #2a2a2a; color: #ddd; border-color: #444; }
-  :root:not([data-theme="light"]) .trend-stats-table td { color: #ddd; border-color: #444; }
+  :root:not([data-theme="light"]) .trend-indicator-label { color: #bbb; }
+  :root:not([data-theme="light"]) .trend-indicator-sub { color: #999; }
+  :root:not([data-theme="light"]) .trend-stats-table th { background: #333; color: #ddd; border-color: #555; }
+  :root:not([data-theme="light"]) .trend-stats-table td { background: transparent; color: #ddd; border-color: #555; }
+  :root:not([data-theme="light"]) .trend-stats-table tbody tr:nth-child(even) { background: #2a2a2a; }
+  :root:not([data-theme="light"]) .trend-stats-table tbody tr:hover { background: #333; }
   :root:not([data-theme="light"]) .trend-text-body h3.trend-section-title { color: #ccc; }
   :root:not([data-theme="light"]) .trend-text-body h4.trend-section-title { color: #ccc; }
   :root:not([data-theme="light"]) .trend-text-body h5.trend-section-title { color: #aaa; }
-  :root:not([data-theme="light"]) .trend-md-table th { background: #2a2a2a; color: #ddd; border-color: #444; }
-  :root:not([data-theme="light"]) .trend-md-table td { color: #ddd; border-color: #444; }
+  :root:not([data-theme="light"]) .trend-md-table th { background: #333; color: #ddd; border-color: #555; }
+  :root:not([data-theme="light"]) .trend-md-table td { background: transparent; color: #ddd; border-color: #555; }
+  :root:not([data-theme="light"]) .trend-md-table tbody tr:nth-child(even) { background: #2a2a2a; }
   :root:not([data-theme="light"]) .trend-nav-bottom { border-top-color: #444; }
 }
 
 :root[data-theme="dark"] .trend-venue-card2 { border-color: #444; }
-:root[data-theme="dark"] .trend-course-table th { color: #aaa; border-color: #444; }
-:root[data-theme="dark"] .trend-course-table td.cs-upset { color: #aaa; }
+:root[data-theme="dark"] .trend-venue-meta { color: #999; }
+:root[data-theme="dark"] .trend-course-table th { background: transparent; color: #aaa; border-color: #555; }
+:root[data-theme="dark"] .trend-course-table td { background: transparent; color: #ddd; }
+:root[data-theme="dark"] .trend-course-table td.cs-upset { color: #999; }
+:root[data-theme="dark"] .trend-course-table tbody tr:nth-child(even) { background: transparent; }
 :root[data-theme="dark"] .trend-index-entry { border-color: #444; }
-:root[data-theme="dark"] .trend-day-section { background: #1e1e1e; }
+:root[data-theme="dark"] .trend-day-section { background: #252525; }
 :root[data-theme="dark"] .trend-day-title { color: #ddd; }
-:root[data-theme="dark"] .trend-indicator-label { color: #aaa; }
-:root[data-theme="dark"] .trend-indicator-sub { color: #888; }
-:root[data-theme="dark"] .trend-stats-table th { background: #2a2a2a; color: #ddd; border-color: #444; }
-:root[data-theme="dark"] .trend-stats-table td { color: #ddd; border-color: #444; }
+:root[data-theme="dark"] .trend-indicator-label { color: #bbb; }
+:root[data-theme="dark"] .trend-indicator-sub { color: #999; }
+:root[data-theme="dark"] .trend-stats-table th { background: #333; color: #ddd; border-color: #555; }
+:root[data-theme="dark"] .trend-stats-table td { background: transparent; color: #ddd; border-color: #555; }
+:root[data-theme="dark"] .trend-stats-table tbody tr:nth-child(even) { background: #2a2a2a; }
+:root[data-theme="dark"] .trend-stats-table tbody tr:hover { background: #333; }
 :root[data-theme="dark"] .trend-text-body h3.trend-section-title { color: #ccc; }
 :root[data-theme="dark"] .trend-text-body h4.trend-section-title { color: #ccc; }
 :root[data-theme="dark"] .trend-text-body h5.trend-section-title { color: #aaa; }
-:root[data-theme="dark"] .trend-md-table th { background: #2a2a2a; color: #ddd; border-color: #444; }
-:root[data-theme="dark"] .trend-md-table td { color: #ddd; border-color: #444; }
+:root[data-theme="dark"] .trend-md-table th { background: #333; color: #ddd; border-color: #555; }
+:root[data-theme="dark"] .trend-md-table td { background: transparent; color: #ddd; border-color: #555; }
+:root[data-theme="dark"] .trend-md-table tbody tr:nth-child(even) { background: #2a2a2a; }
 :root[data-theme="dark"] .trend-nav-bottom { border-top-color: #444; }
