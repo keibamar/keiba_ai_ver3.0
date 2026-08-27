@@ -1653,8 +1653,60 @@ window.raceMeetings = {
       "race_name": "3歳以上1勝クラス",
       "times": 3,
       "day_number": 2,
-      "race_card_url": null,
+      "race_card_url": "races/20260823/07_chukyoR11.html",
       "grade": null
+    }
+  ],
+  "20260829": [
+    {
+      "place_name": "札幌",
+      "race_name": "札幌日刊スポーツ杯",
+      "times": 2,
+      "day_number": 3,
+      "race_card_url": "races/20260829/01_sapporoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "新潟",
+      "race_name": "3歳未勝利",
+      "times": 3,
+      "day_number": 3,
+      "race_card_url": "races/20260829/04_nigataR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "中京",
+      "race_name": "3歳以上1勝クラス",
+      "times": 3,
+      "day_number": 3,
+      "race_card_url": "races/20260829/07_chukyoR11.html",
+      "grade": null
+    }
+  ],
+  "20260830": [
+    {
+      "place_name": "札幌",
+      "race_name": "日高S",
+      "times": 2,
+      "day_number": 4,
+      "race_card_url": "races/20260830/01_sapporoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "中京",
+      "race_name": "中京2歳S",
+      "times": 3,
+      "day_number": 4,
+      "race_card_url": "races/20260830/07_chukyoR7.html",
+      "grade": "G3"
+    },
+    {
+      "place_name": "新潟",
+      "race_name": "新潟記念",
+      "times": 3,
+      "day_number": 4,
+      "race_card_url": "races/20260830/04_nigataR8.html",
+      "grade": "G3"
     }
   ]
 };
