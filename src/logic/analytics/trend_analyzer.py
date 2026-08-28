@@ -221,6 +221,65 @@ def _compute_win_time_stats(df: pd.DataFrame) -> dict:
     return result
 
 
+def _compute_finisher_tendency(df: pd.DataFrame, ranks: tuple = ("1",)) -> dict:
+    """指定着順の馬の脚質（前/差し）・人気傾向を集計する"""
+    sub = df[df[COL_RANK].isin(ranks)].copy()
+    if sub.empty or COL_TUKA not in sub.columns:
+        return {}
+
+    front_count = 0
+    closer_count = 0
+    valid = 0
+
+    for _, row in sub.iterrows():
+        tuka = str(row.get(COL_TUKA, ""))
+        if not tuka or tuka in ("", "nan"):
+            continue
+        parts = tuka.replace(" ", "").split("-")
+        if len(parts) < 2:
+            continue
+        try:
+            last_corner = int(parts[-1])
+            valid += 1
+            if last_corner <= 3:
+                front_count += 1
+            elif last_corner >= 6:
+                closer_count += 1
+        except (ValueError, TypeError):
+            continue
+
+    result: dict = {}
+    if valid > 0:
+        result["front_rate"] = round(front_count / valid, 3)
+        result["closer_rate"] = round(closer_count / valid, 3)
+        result["valid_races"] = valid
+
+    if COL_NINKI in sub.columns:
+        try:
+            vals = pd.to_numeric(sub[COL_NINKI], errors="coerce").dropna()
+            if len(vals) > 0:
+                result["avg_popularity"] = round(float(vals.mean()), 1)
+        except Exception:
+            pass
+
+    return result
+
+
+def _compute_horse_tendencies(df: pd.DataFrame) -> dict:
+    """勝ち馬・3着内馬の脚質・人気傾向を集計する
+
+    Returns:
+        dict: {
+            "winner": {front_rate, closer_rate, avg_popularity, valid_races},
+            "top3": {front_rate, closer_rate, avg_popularity, valid_races},
+        }
+    """
+    return {
+        "winner": _compute_finisher_tendency(df, ranks=("1",)),
+        "top3": _compute_finisher_tendency(df, ranks=("1", "2", "3")),
+    }
+
+
 def _compute_pace_bias(df: pd.DataFrame) -> dict:
     """通過順データから前残り率・差し馬勝率を計算する（週次用）
 
@@ -356,6 +415,7 @@ def get_day_stats(target_date: date) -> dict:
                 ai_perf[f"{bet}_return"] = round(float(valid.mean()), 3) if len(valid) > 0 else None
 
     win_times = _compute_win_time_stats(df)
+    horse_tendencies = _compute_horse_tendencies(df)
 
     return {
         "date": target_date.strftime("%Y%m%d"),
@@ -364,6 +424,7 @@ def get_day_stats(target_date: date) -> dict:
         "up3f": up3f,
         "win_times": win_times,
         "ai_perf": ai_perf,
+        "horse_tendencies": horse_tendencies,
         "race_count": int(df["race_id"].nunique()) if "race_id" in df.columns else len(df),
         "up3f_baselines": get_venue_up3f_baselines(),
     }
@@ -434,6 +495,7 @@ def get_week_stats(sat_date: date, sun_date: date) -> dict:
         combined["pace_bias"] = _compute_pace_bias(combined_df)
         combined["up3f"] = _compute_up3f_stats(combined_df)
         combined["upset"] = _compute_upset_index(combined_df)
+        combined["horse_tendencies"] = _compute_horse_tendencies(combined_df)
 
     return {
         "sat": sat_stats,

@@ -136,6 +136,25 @@ def _format_stats_for_prompt(stats: dict, prev_day_stats: dict = None, prev_week
         up_parts = [f"{rt}{t}秒" for rt, t in up3f.items()]
         lines.append(f"【全体上り3F平均】{' / '.join(up_parts)}")
 
+    # 勝ち馬・3着内の傾向
+    horse_tend = stats.get("horse_tendencies", {})
+    winner_tend = horse_tend.get("winner", {})
+    top3_tend = horse_tend.get("top3", {})
+    if winner_tend or top3_tend:
+        lines.append("\n【勝ち馬・3着内の傾向】")
+        if winner_tend.get("front_rate") is not None:
+            w_front = winner_tend["front_rate"] * 100
+            w_closer = winner_tend["closer_rate"] * 100
+            w_pop = winner_tend.get("avg_popularity")
+            pop_str = f" / 平均{w_pop:.1f}番人気" if w_pop else ""
+            lines.append(f"  勝ち馬（{winner_tend.get('valid_races',0)}R）: 前残り{w_front:.0f}% / 差し追込{w_closer:.0f}%{pop_str}")
+        if top3_tend.get("front_rate") is not None:
+            t_front = top3_tend["front_rate"] * 100
+            t_closer = top3_tend["closer_rate"] * 100
+            t_pop = top3_tend.get("avg_popularity")
+            pop_str = f" / 平均{t_pop:.1f}番人気" if t_pop else ""
+            lines.append(f"  3着内馬（{top3_tend.get('valid_races',0)}頭）: 前残り{t_front:.0f}% / 差し追込{t_closer:.0f}%{pop_str}")
+
     # AI成績
     ai = stats.get("ai_perf", {})
     if ai:
@@ -173,17 +192,74 @@ def _format_weekly_for_prompt(week_stats: dict, prev_week_stats: dict = None) ->
         lines.append(f"  前残り（4角3番手以内）: {front_pct:.1f}%")
         lines.append(f"  差し・追込（4角6番手以降）: {closer_pct:.1f}%")
 
-    # 前週比較
+    # 土日合算の勝ち馬・3着内の傾向
+    horse_tend = combined.get("horse_tendencies", {})
+    winner_tend = horse_tend.get("winner", {})
+    top3_tend = horse_tend.get("top3", {})
+    if winner_tend or top3_tend:
+        lines.append("\n【土日合算：勝ち馬・3着内の傾向】")
+        if winner_tend.get("front_rate") is not None:
+            w_front = winner_tend["front_rate"] * 100
+            w_closer = winner_tend["closer_rate"] * 100
+            w_pop = winner_tend.get("avg_popularity")
+            pop_str = f" / 平均{w_pop:.1f}番人気" if w_pop else ""
+            lines.append(f"  勝ち馬（{winner_tend.get('valid_races',0)}R）: 前残り{w_front:.0f}% / 差し追込{w_closer:.0f}%{pop_str}")
+        if top3_tend.get("front_rate") is not None:
+            t_front = top3_tend["front_rate"] * 100
+            t_closer = top3_tend["closer_rate"] * 100
+            t_pop = top3_tend.get("avg_popularity")
+            pop_str = f" / 平均{t_pop:.1f}番人気" if t_pop else ""
+            lines.append(f"  3着内馬（{top3_tend.get('valid_races',0)}頭）: 前残り{t_front:.0f}% / 差し追込{t_closer:.0f}%{pop_str}")
+
+    # 前週比較（展開・馬傾向・荒れ度）
     if prev_week_stats:
         lines.append("\n--- 前週との比較 ---")
-        prev_sat = prev_week_stats.get("sat", {})
-        prev_sun = prev_week_stats.get("sun", {})
-        prev_upset = prev_week_stats.get("combined", {}).get("upset", {})
+        prev_combined = prev_week_stats.get("combined", {})
+
+        # 荒れ度
+        prev_upset = prev_combined.get("upset", {})
         curr_upset = combined.get("upset", {})
         if prev_upset and curr_upset:
             diff = curr_upset.get("upset_ratio", 0) - prev_upset.get("upset_ratio", 0)
             sign = "+" if diff > 0 else ""
             lines.append(f"  荒れ度: {prev_upset.get('label')}→{curr_upset.get('label')} （{sign}{diff*100:.1f}pt変化）")
+
+        # 展開傾向
+        prev_pace = prev_combined.get("pace_bias", {})
+        curr_pace = combined.get("pace_bias", {})
+        if prev_pace and curr_pace:
+            prev_front = prev_pace.get("front_rate", 0) * 100
+            curr_front = curr_pace.get("front_rate", 0) * 100
+            diff_front = curr_front - prev_front
+            sign = "+" if diff_front > 0 else ""
+            lines.append(f"  前残り率: {prev_front:.1f}%→{curr_front:.1f}% （{sign}{diff_front:.1f}pt変化）")
+            prev_closer = prev_pace.get("closer_rate", 0) * 100
+            curr_closer = curr_pace.get("closer_rate", 0) * 100
+            diff_closer = curr_closer - prev_closer
+            sign = "+" if diff_closer > 0 else ""
+            lines.append(f"  差し追込率: {prev_closer:.1f}%→{curr_closer:.1f}% （{sign}{diff_closer:.1f}pt変化）")
+
+        # 勝ち馬・3着内傾向
+        prev_horse = prev_combined.get("horse_tendencies", {})
+        curr_horse = combined.get("horse_tendencies", {})
+        prev_winner = prev_horse.get("winner", {})
+        curr_winner = curr_horse.get("winner", {})
+        if prev_winner and curr_winner:
+            prev_pop = prev_winner.get("avg_popularity")
+            curr_pop = curr_winner.get("avg_popularity")
+            if prev_pop and curr_pop:
+                diff_pop = curr_pop - prev_pop
+                sign = "+" if diff_pop > 0 else ""
+                lines.append(f"  勝ち馬平均人気: {prev_pop:.1f}番→{curr_pop:.1f}番 （{sign}{diff_pop:.1f}）")
+        prev_top3 = prev_horse.get("top3", {})
+        curr_top3 = curr_horse.get("top3", {})
+        if prev_top3 and curr_top3:
+            prev_t3pop = prev_top3.get("avg_popularity")
+            curr_t3pop = curr_top3.get("avg_popularity")
+            if prev_t3pop and curr_t3pop:
+                diff = curr_t3pop - prev_t3pop
+                sign = "+" if diff > 0 else ""
+                lines.append(f"  3着内平均人気: {prev_t3pop:.1f}番→{curr_t3pop:.1f}番 （{sign}{diff:.1f}）")
 
     return "\n".join(lines)
 
@@ -206,7 +282,7 @@ def _call_claude(prompt: str) -> str:
     client = anthropic.Anthropic(api_key=api_key)
     message = client.messages.create(
         model="claude-haiku-4-5",
-        max_tokens=2000,
+        max_tokens=6000,
         messages=[{"role": "user", "content": prompt}],
     )
     return message.content[0].text
@@ -311,29 +387,57 @@ def generate_weekly_comment(week_stats: dict, prev_week_stats: dict = None,
     prompt = f"""あなたはJRA競馬の傾向分析専門家です。
 以下の土日2日間のデータを元に、週次振り返りレポートを日本語で作成してください。
 
-【競馬の基礎知識（文中で必要に応じて言及してください）】
+【競馬の基礎知識（参考）】
 - 上り3F：最後の600mのタイム。芝では34秒台が速め、35秒台が普通、36秒超が遅め。ダートでは38秒台が速め、39秒台が普通
-- 勝ち時計：1着馬の走破タイム（コース全体のタイム）。前週同条件と比べて速い/遅いで馬場傾向を判断できる
-- 雨と馬場の関係（重要）：
-  ・芝は雨が降ると馬場が緩んで走りにくくなり、タイムが遅くなりやすく、荒れやすくなる傾向がある
-  ・ダートは適度な雨で砂が締まり、走りやすくなってタイムが速くなることがある（稍重・重が高速化のサイン）
-  ・ただし雨が降りすぎると芝もダートも走りにくくなり、タイムが極端に遅くなることがある
-  ・逆に良馬場でも日照りが続いた場合、芝は力がいる馬場になり、ダートはパサパサになってタイムが遅くなることもある
-  ・馬場状態（良/稍重/重/不良）と天気を組み合わせて、タイムの速い/遅いの背景を推測してください
+- 勝ち時計：前週同条件と比べて速い/遅いで馬場傾向を判断できる
+- 馬場と天気の関係：芝は雨で緩みやすく、ダートは適度な雨で締まりやすい。ただし例外も多い
 
-【執筆方針】
-1. 土日の馬場・天気の変化を開催場別にまとめる（稍重→良に改善した、など）
-   - 天気・馬場状態と勝ち時計・上り3Fを組み合わせて、「雨でダートが速くなった」などの推測を交える
-2. 展開傾向について、前残り率・差し率から「前有利/後ろ有利/互角」を判定してコメント
-3. 上り3Fの速さについて、芝/ダートそれぞれ前週比でコメント（馬場・天気との因果関係も言及）
-4. 荒れ度の前週比較：「今週は前週より荒れた/堅かった」
-5. AI予想（MAR）の成績振り返り：回収率が高かった・低かったコース/条件を具体的に言及
-6. コース別の傾向まとめ（芝/ダートそれぞれで顕著な傾向）
-7. 最後に「来週末の展望」セクション：天気・コース変更（AコースBコースなど）の情報があれば
-   それをベースに「馬場状態が改善/悪化しそうか」「今週の傾向が続きそうか/変わりそうか」を分析
-   （情報がない場合は一般的な傾向継続を述べる）
+【執筆で絶対に守ること（重要）】
 
-文体：読みやすい文章形式。セクションごとに見出しを付けてOK。総文字数1500〜3000字。
+❶ 一般論を発見のように書かない
+  - 「前有利になりやすい」「雨でダートが速くなる」などは競馬の常識。これを今週の特徴として書いても意味がない
+  - 重要なのは「今週は前週や平均と比べてどうだったか」。データが一般論通りなら通り、例外なら例外として評価する
+
+❷ 全開催場の傾向まとめは基本的に書かない
+  - 各競馬場は場所・コース・使用条件が異なるため、「全体として前有利だった」などのまとめは情報が薄い
+  - 例外は「今週は全3場に共通する特徴があった」と言える場合のみ（例：「全場で荒れ度が前週比で増加」「全場で差し馬の台頭が目立った」など）
+
+❸ 前週比較を分析の軸にする
+  - データには前週との比較が含まれる。これを使って「先週と比べて何が変わったか」を競馬場ごとに語ること
+  - 前週データがない場合は、各場の土曜→日曜の変化を中心に語る
+
+❹ 勝ち馬・3着内の比較でオリジナリティを出す
+  - 勝ち馬の傾向と3着内の傾向の差を語ること
+  - 「勝つこと」と「上位入着すること」の違いを浮き彫りにできると深みが出る
+
+【構成（必ずこの順で書くこと）】
+
+### 1. 今週のポイント（冒頭3行以内）
+「今週何が特徴的だったか」を一言で。前週と比べて何が変わったか・変わらなかったかを含めてよい
+
+### 2. 開催場ごとの馬場・傾向分析
+各開催場について：
+- 土曜→日曜の馬場状態の変化、勝ち時計・上り3Fの動き
+- 前週と比べてどうだったか（データがあれば必ず言及）
+- その場特有の傾向（例：「札幌は前週比で差し馬の比率が増えた」）
+- 各場の荒れ度（波乱件数）も触れる
+
+### 3. 勝ち馬・3着内の傾向（最重要）
+- 今週の勝ち馬にはどんな特徴があったか（前残り率・平均人気の前週比を使うこと）
+- 勝ち馬と3着内馬の傾向の差を語る
+  → 「勝ち馬は〇〇傾向だったが、3着内には〇〇な馬も含まれ、差がある/ない」
+- 土曜と日曜で傾向が変化していれば言及
+
+### 4. AI予想（MAR）成績
+土曜・日曜それぞれの的中率・回収率。良かった条件・悪かった条件があれば具体的に
+
+### 5. 来週末の展望
+今週の傾向が続きそうか変化しそうか。天気・コース変更の情報があれば使う
+
+【文体・フォーマット】
+- 読みやすい文章形式。各セクションに見出し付き（Markdown可）
+- 「〜でした」「〜といったところ」など自然な語尾
+- 総文字数1500〜2500字。コンパクトに、でも密度濃く
 
 【データ】
 {data_text}{next_hint_section}
