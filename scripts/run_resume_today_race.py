@@ -29,7 +29,7 @@ from src.managers import (
     race_info_dataset_manager,
 )
 from src.logic.html_generator import race_page_generator, daily_index_generator
-from src.scraping import netkeiba_scraper
+from src.logic.scraping import netkeiba_scraper
 from src.logic.scheduler.race_day_scheduler import (
     _scrape_with_retry,
     _update_race_card_from_result,
