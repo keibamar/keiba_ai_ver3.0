@@ -87,16 +87,18 @@ def scrape_race_results(race_id):
                 )
 
         # 馬ID、騎手IDをスクレイピング
+        # db.netkeiba.comは相対URL(/horse/)から絶対URL(https://db.netkeiba.com/horse/)に
+        # 変更されたため、両方にマッチするパターンを使用する
         horse_id_list = []
         horse_a_list = soup.find("table", attrs={"summary": "レース結果"}).find_all(
-            "a", attrs={"href": re.compile("^/horse")}
+            "a", attrs={"href": re.compile(r"/horse/\d")}
         )
         for a in horse_a_list:
             horse_id = re.findall(r"\d+", a["href"])
             horse_id_list.append(horse_id[0])
         jockey_id_list = []
         jockey_a_list = soup.find("table", attrs={"summary": "レース結果"}).find_all(
-            "a", attrs={"href": re.compile("^/jockey")}
+            "a", attrs={"href": re.compile(r"/jockey/result/recent/")}
         )
         for a in jockey_a_list:
             jockey_id = re.findall(r"\d+", a["href"])
