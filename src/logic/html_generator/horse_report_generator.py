@@ -1210,12 +1210,36 @@ def _lookup_recent_indices(race_id, umaban, race_date=None):
         rank_hr = _i("rank_hitrate")
         idx_val = _f("idx_value")
         rank_val = _i("rank_value")
-        # multi-model列がなければ旧 score/rank を MAR 列にフォールバック
+        # multi-model列がなければ旧 score_*/rank_* から変換してフォールバック
+        # score列はレース内でz-score済み(mean=0,std=1)なので score_to_index で直接変換可能。
+        # score_hitrate/score_value は未正規化のためレース全体でz-score化してから変換する。
         if idx_mar is None and idx_hr is None and idx_val is None:
-            idx_score = _f("score")
-            rank_score = _i("rank")
-            if idx_score is not None:
-                return idx_score, rank_score, None, None, None, None
+            from src.logic.prediction.race_prediction_engine import score_to_index
+
+            raw_score = _f("score")
+            if raw_score is not None and not pd.isna(raw_score):
+                idx_mar = score_to_index(raw_score)
+            rank_mar = _i("rank")
+
+            def _zscore_convert(col_name, rank_col):
+                if col_name not in card.columns:
+                    return None, None
+                series = pd.to_numeric(card[col_name], errors="coerce")
+                if series.isna().all():
+                    return None, None
+                std = series.std()
+                mean = series.mean()
+                if not std or pd.isna(std):
+                    z_series = pd.Series([0.0] * len(series), index=series.index)
+                else:
+                    z_series = (series - mean) / std
+                horse_z = z_series[mask].iloc[0] if mask.any() else None
+                if horse_z is None or pd.isna(horse_z):
+                    return None, None
+                return score_to_index(float(horse_z)), _i(rank_col)
+
+            idx_hr, rank_hr = _zscore_convert("score_hitrate", "rank_hitrate")
+            idx_val, rank_val = _zscore_convert("score_value", "rank_value")
         return idx_mar, rank_mar, idx_hr, rank_hr, idx_val, rank_val
     except Exception:
         return None, None, None, None, None, None
