@@ -1708,5 +1708,57 @@ window.raceMeetings = {
       "race_card_url": "races/20260830/04_nigataR8.html",
       "grade": "G3"
     }
+  ],
+  "20260905": [
+    {
+      "place_name": "札幌",
+      "race_name": "札幌2歳S",
+      "times": 2,
+      "day_number": 5,
+      "race_card_url": "races/20260905/01_sapporoR11.html",
+      "grade": "G3"
+    },
+    {
+      "place_name": "阪神",
+      "race_name": "エニフS",
+      "times": 4,
+      "day_number": 1,
+      "race_card_url": "races/20260905/09_hanshinR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "中山",
+      "race_name": "京成杯AH",
+      "times": 4,
+      "day_number": 1,
+      "race_card_url": "races/20260905/06_nakayamaR11.html",
+      "grade": "G3"
+    }
+  ],
+  "20260906": [
+    {
+      "place_name": "札幌",
+      "race_name": "丹頂S",
+      "times": 2,
+      "day_number": 6,
+      "race_card_url": "races/20260906/01_sapporoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "阪神",
+      "race_name": "セントウルS",
+      "times": 4,
+      "day_number": 2,
+      "race_card_url": "races/20260906/09_hanshinR11.html",
+      "grade": "G2"
+    },
+    {
+      "place_name": "中山",
+      "race_name": "紫苑S",
+      "times": 4,
+      "day_number": 2,
+      "race_card_url": "races/20260906/06_nakayamaR11.html",
+      "grade": "G2"
+    }
   ]
 };
