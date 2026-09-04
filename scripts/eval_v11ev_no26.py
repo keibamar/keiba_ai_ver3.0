@@ -197,8 +197,15 @@ def collect_v11ev_records(vocab):
 
                 s_v11ev = grp["_score"].values
 
-                order   = np.argsort(-s_v11ev)
-                top5    = [umabans[i] for i in order[:5] if i < len(umabans)]
+                # 着順ソート済みデータのタイブレーキングバグを回避するため
+                # レース内の行をシードつきでシャッフルしてから採点
+                rng = np.random.default_rng(seed=int(rid))
+                perm = rng.permutation(len(grp))
+                s_shuffled   = s_v11ev[perm]
+                umb_shuffled = [umabans[i] for i in perm]
+
+                order   = np.argsort(-s_shuffled)
+                top5    = [umb_shuffled[i] for i in order[:5] if i < len(umb_shuffled)]
                 san_combs = list(itertools.combinations(top5, 3))
 
                 race_records.append({
@@ -212,8 +219,8 @@ def collect_v11ev_records(vocab):
                     "san_odds":   san_odds,
                     "tan_ret":    tan_ret,
                     "fuku_rets":  fuku_rets,
-                    "umabans":    umabans,
-                    "s_v11ev":    s_v11ev,
+                    "umabans":    umb_shuffled,
+                    "s_v11ev":    s_shuffled,
                 })
                 processed += 1
 

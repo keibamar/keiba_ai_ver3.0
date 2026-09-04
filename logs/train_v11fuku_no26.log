@@ -1,0 +1,562 @@
+=======================================================
+v11fuku_no26  学習年: 2020〜2025
+特徴量: v11（114列 = v10 + trainer/same_cond/ground_delta）
+目的関数: 複勝EV専用回帰（単勝成分なし）
+  target = is_top3 × fuku_payout_odds（上限30.0倍）
+評価指標: 複勝ROI（Optuna / early-stopping）
+=======================================================
+
+=======================================================
+[学習] 01_sapporo
+=======================================================
+  複勝ルックアップ構築中 ...
+  ルックアップ完了: 329 レース
+
+  芝1000m ...
+    train=1,765行 / val=428行 / top3=389 / 複勝データ有=157 / 平均複勝倍率=3.84
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\turf1000_lambdarank_model_v11fuku_no26.txt
+
+  芝1200m ...
+    train=1,765行 / val=428行 / top3=389 / 複勝データ有=157 / 平均複勝倍率=3.84
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\turf1200_lambdarank_model_v11fuku_no26.txt
+
+  芝1500m ...
+    train=2,273行 / val=569行 / top3=591 / 複勝データ有=185 / 平均複勝倍率=3.51
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\turf1500_lambdarank_model_v11fuku_no26.txt
+
+  芝1800m ...
+    train=2,273行 / val=569行 / top3=591 / 複勝データ有=185 / 平均複勝倍率=3.51
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\turf1800_lambdarank_model_v11fuku_no26.txt
+
+  芝2000m ...
+    train=1,425行 / val=356行 / top3=324 / 複勝データ有=99 / 平均複勝倍率=4.11
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\turf2000_lambdarank_model_v11fuku_no26.txt
+
+  芝2600m ...
+    train=537行 / val=122行 / top3=129 / 複勝データ有=47 / 平均複勝倍率=2.99
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\turf2600_lambdarank_model_v11fuku_no26.txt
+
+  ダート1000m ...
+    train=983行 / val=240行 / top3=255 / 複勝データ有=91 / 平均複勝倍率=3.26
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\dirt1000_lambdarank_model_v11fuku_no26.txt
+
+  ダート1700m ...
+    train=3,124行 / val=767行 / top3=712 / 複勝データ有=238 / 平均複勝倍率=3.67
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\dirt1700_lambdarank_model_v11fuku_no26.txt
+
+  ダート2400m ...
+    train=118行 / val=21行 / top3=30 / 複勝データ有=10 / 平均複勝倍率=2.22
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 7, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\01_sapporo\dirt2400_lambdarank_model_v11fuku_no26.txt
+
+=======================================================
+[学習] 02_hakodate
+=======================================================
+  複勝ルックアップ構築中 ...
+  ルックアップ完了: 287 レース
+
+  芝1000m ...
+    train=2,685行 / val=669行 / top3=637 / 複勝データ有=210 / 平均複勝倍率=3.41
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\turf1000_lambdarank_model_v11fuku_no26.txt
+
+  芝1200m ...
+    train=2,685行 / val=669行 / top3=637 / 複勝データ有=210 / 平均複勝倍率=3.41
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\turf1200_lambdarank_model_v11fuku_no26.txt
+
+  芝1800m ...
+    train=1,243行 / val=300行 / top3=300 / 複勝データ有=102 / 平均複勝倍率=3.55
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\turf1800_lambdarank_model_v11fuku_no26.txt
+
+  芝2000m ...
+    train=873行 / val=213行 / top3=208 / 複勝データ有=76 / 平均複勝倍率=3.91
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\turf2000_lambdarank_model_v11fuku_no26.txt
+
+  芝2600m ...
+    train=362行 / val=88行 / top3=87 / 複勝データ有=33 / 平均複勝倍率=3.32
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\turf2600_lambdarank_model_v11fuku_no26.txt
+
+  ダート1000m ...
+    train=1,081行 / val=265行 / top3=285 / 複勝データ有=92 / 平均複勝倍率=2.96
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\dirt1000_lambdarank_model_v11fuku_no26.txt
+
+  ダート1700m ...
+    train=2,253行 / val=555行 / top3=537 / 複勝データ有=196 / 平均複勝倍率=3.49
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\dirt1700_lambdarank_model_v11fuku_no26.txt
+
+  ダート2400m ...
+    train=128行 / val=23行 / top3=36 / 複勝データ有=11 / 平均複勝倍率=3.24
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 7, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\02_hakodate\dirt2400_lambdarank_model_v11fuku_no26.txt
+
+=======================================================
+[学習] 03_fukushima
+=======================================================
+  複勝ルックアップ構築中 ...
+  ルックアップ完了: 380 レース
+
+  芝1200m ...
+    train=3,664行 / val=907行 / top3=748 / 複勝データ有=218 / 平均複勝倍率=3.40
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\turf1200_lambdarank_model_v11fuku_no26.txt
+
+  芝1800m ...
+    train=2,036行 / val=500行 / top3=429 / 複勝データ有=132 / 平均複勝倍率=4.08
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\turf1800_lambdarank_model_v11fuku_no26.txt
+
+  芝2000m ...
+    train=1,680行 / val=419行 / top3=351 / 複勝データ有=99 / 平均複勝倍率=3.72
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\turf2000_lambdarank_model_v11fuku_no26.txt
+
+  芝2600m ...
+    train=747行 / val=181行 / top3=162 / 複勝データ有=40 / 平均複勝倍率=3.44
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\turf2600_lambdarank_model_v11fuku_no26.txt
+
+  ダート1150m ...
+    train=2,516行 / val=625行 / top3=498 / 複勝データ有=154 / 平均複勝倍率=3.93
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\dirt1150_lambdarank_model_v11fuku_no26.txt
+
+  ダート1700m ...
+    train=3,789行 / val=936行 / top3=786 / 複勝データ有=232 / 平均複勝倍率=3.71
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\03_fukushima\dirt1700_lambdarank_model_v11fuku_no26.txt
+
+  ダート2400m ...
+    train=117行 / val=27行 / top3=27 / 複勝データ有=8 / 平均複勝倍率=2.42
+    複勝データ不足: スキップ
+
+=======================================================
+[学習] 04_nigata
+=======================================================
+  複勝ルックアップ構築中 ...
+  ルックアップ完了: 720 レース
+
+  芝1000m ...
+    train=3,124行 / val=770行 / top3=573 / 複勝データ有=231 / 平均複勝倍率=4.48
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf1000_lambdarank_model_v11fuku_no26.txt
+
+  芝1200m ...
+    train=3,124行 / val=770行 / top3=573 / 複勝データ有=231 / 平均複勝倍率=4.48
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf1200_lambdarank_model_v11fuku_no26.txt
+
+  芝1400m ...
+    train=6,018行 / val=1,487行 / top3=1214 / 複勝データ有=366 / 平均複勝倍率=3.93
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf1400_lambdarank_model_v11fuku_no26.txt
+
+  芝1600m ...
+    train=6,018行 / val=1,487行 / top3=1214 / 複勝データ有=366 / 平均複勝倍率=3.93
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf1600_lambdarank_model_v11fuku_no26.txt
+
+  芝1800m ...
+    train=6,018行 / val=1,487行 / top3=1214 / 複勝データ有=366 / 平均複勝倍率=3.93
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf1800_lambdarank_model_v11fuku_no26.txt
+
+  芝2000m ...
+    train=1,736行 / val=431行 / top3=385 / 複勝データ有=115 / 平均複勝倍率=3.75
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf2000_lambdarank_model_v11fuku_no26.txt
+
+  芝2200m ...
+    train=984行 / val=246行 / top3=219 / 複勝データ有=75 / 平均複勝倍率=4.05
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf2200_lambdarank_model_v11fuku_no26.txt
+
+  芝2400m ...
+    train=984行 / val=246行 / top3=219 / 複勝データ有=75 / 平均複勝倍率=4.05
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\turf2400_lambdarank_model_v11fuku_no26.txt
+
+  ダート1200m ...
+    train=4,314行 / val=1,078行 / top3=895 / 複勝データ有=329 / 平均複勝倍率=4.05
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\dirt1200_lambdarank_model_v11fuku_no26.txt
+
+  ダート1800m ...
+    train=5,083行 / val=1,265行 / top3=1094 / 複勝データ有=389 / 平均複勝倍率=4.06
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\04_nigata\dirt1800_lambdarank_model_v11fuku_no26.txt
+
+  ダート2500m ...
+    train=90行 / val=15行 / top3=24 / 複勝データ有=9 / 平均複勝倍率=4.54
+    複勝データ不足: スキップ
+
+=======================================================
+[学習] 05_tokyo
+=======================================================
+  複勝ルックアップ構築中 ...
+  ルックアップ完了: 1,001 レース
+
+  芝1400m ...
+    train=12,082行 / val=3,010行 / top3=2622 / 複勝データ有=686 / 平均複勝倍率=3.90
+    params: {'learning_rate': 0.020730295911611695, 'num_leaves': 45, 'max_depth': 7, 'min_child_samples': 29, 'reg_alpha': 0.23483988223052538, 'reg_lambda': 0.017784946468432317, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf1400_lambdarank_model_v11fuku_no26.txt
+
+  芝1600m ...
+    train=12,082行 / val=3,010行 / top3=2622 / 複勝データ有=686 / 平均複勝倍率=3.90
+    params: {'learning_rate': 0.020730295911611695, 'num_leaves': 45, 'max_depth': 7, 'min_child_samples': 29, 'reg_alpha': 0.23483988223052538, 'reg_lambda': 0.017784946468432317, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf1600_lambdarank_model_v11fuku_no26.txt
+
+  芝1800m ...
+    train=12,082行 / val=3,010行 / top3=2622 / 複勝データ有=686 / 平均複勝倍率=3.90
+    params: {'learning_rate': 0.020730295911611695, 'num_leaves': 45, 'max_depth': 7, 'min_child_samples': 29, 'reg_alpha': 0.23483988223052538, 'reg_lambda': 0.017784946468432317, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf1800_lambdarank_model_v11fuku_no26.txt
+
+  芝2000m ...
+    train=2,363行 / val=591行 / top3=612 / 複勝データ有=141 / 平均複勝倍率=3.72
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf2000_lambdarank_model_v11fuku_no26.txt
+
+  芝2300m ...
+    train=2,034行 / val=508行 / top3=490 / 複勝データ有=134 / 平均複勝倍率=3.65
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf2300_lambdarank_model_v11fuku_no26.txt
+
+  芝2400m ...
+    train=2,034行 / val=508行 / top3=490 / 複勝データ有=134 / 平均複勝倍率=3.65
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf2400_lambdarank_model_v11fuku_no26.txt
+
+  芝2500m ...
+    train=2,034行 / val=508行 / top3=490 / 複勝データ有=134 / 平均複勝倍率=3.65
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\turf2500_lambdarank_model_v11fuku_no26.txt
+
+  芝3400m ...
+    train=72行 / val=16行 / top3=15 / 複勝データ有=4 / 平均複勝倍率=5.15
+    複勝データ不足: スキップ
+
+  ダート1300m ...
+    train=1,788行 / val=436行 / top3=345 / 複勝データ有=91 / 平均複勝倍率=4.57
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\dirt1300_lambdarank_model_v11fuku_no26.txt
+
+  ダート1400m ...
+    train=15,083行 / val=3,764行 / top3=2966 / 複勝データ有=833 / 平均複勝倍率=4.33
+    params: {'learning_rate': 0.01662716957700292, 'num_leaves': 36, 'max_depth': 5, 'min_child_samples': 24, 'reg_alpha': 0.03855582634068694, 'reg_lambda': 0.09473572117188851, 'n_estimators': 107}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\dirt1400_lambdarank_model_v11fuku_no26.txt
+
+  ダート1600m ...
+    train=15,083行 / val=3,764行 / top3=2966 / 複勝データ有=833 / 平均複勝倍率=4.33
+    params: {'learning_rate': 0.01662716957700292, 'num_leaves': 36, 'max_depth': 5, 'min_child_samples': 24, 'reg_alpha': 0.03855582634068694, 'reg_lambda': 0.09473572117188851, 'n_estimators': 107}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\dirt1600_lambdarank_model_v11fuku_no26.txt
+
+  ダート2100m ...
+    train=2,646行 / val=662行 / top3=543 / 複勝データ有=157 / 平均複勝倍率=3.75
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\05_tokyo\dirt2100_lambdarank_model_v11fuku_no26.txt
+
+  ダート2400m ...
+    データなし: スキップ
+
+=======================================================
+[学習] 06_nakayama
+=======================================================
+  複勝ルックアップ構築中 ...
+  ルックアップ完了: 962 レース
+
+  芝1200m ...
+    train=2,431行 / val=596行 / top3=502 / 複勝データ有=146 / 平均複勝倍率=4.33
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf1200_lambdarank_model_v11fuku_no26.txt
+
+  芝1600m ...
+    train=6,611行 / val=1,653行 / top3=1418 / 複勝データ有=414 / 平均複勝倍率=4.19
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf1600_lambdarank_model_v11fuku_no26.txt
+
+  芝1800m ...
+    train=6,611行 / val=1,653行 / top3=1418 / 複勝データ有=414 / 平均複勝倍率=4.19
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf1800_lambdarank_model_v11fuku_no26.txt
+
+  芝2000m ...
+    train=3,375行 / val=831行 / top3=723 / 複勝データ有=185 / 平均複勝倍率=3.99
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf2000_lambdarank_model_v11fuku_no26.txt
+
+  芝2200m ...
+    train=1,821行 / val=456行 / top3=406 / 複勝データ有=101 / 平均複勝倍率=4.12
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf2200_lambdarank_model_v11fuku_no26.txt
+
+  芝2500m ...
+    train=1,821行 / val=456行 / top3=406 / 複勝データ有=101 / 平均複勝倍率=4.12
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\turf2500_lambdarank_model_v11fuku_no26.txt
+
+  芝3600m ...
+    train=72行 / val=14行 / top3=15 / 複勝データ有=4 / 平均複勝倍率=2.40
+    複勝データ不足: スキップ
+
+  ダート1200m ...
+    train=9,401行 / val=2,345行 / top3=1808 / 複勝データ有=518 / 平均複勝倍率=4.17
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\dirt1200_lambdarank_model_v11fuku_no26.txt
+
+  ダート1800m ...
+    train=9,808行 / val=2,448行 / top3=2017 / 複勝データ有=563 / 平均複勝倍率=4.29
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\dirt1800_lambdarank_model_v11fuku_no26.txt
+
+  ダート2400m ...
+    train=674行 / val=167行 / top3=150 / 複勝データ有=40 / 平均複勝倍率=4.42
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\dirt2400_lambdarank_model_v11fuku_no26.txt
+
+  ダート2500m ...
+    train=674行 / val=167行 / top3=150 / 複勝データ有=40 / 平均複勝倍率=4.42
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\06_nakayama\dirt2500_lambdarank_model_v11fuku_no26.txt
+
+=======================================================
+[学習] 07_chukyo
+=======================================================
+  複勝ルックアップ構築中 ...
+  ルックアップ完了: 1,009 レース
+
+  芝1200m ...
+    train=1,678行 / val=414行 / top3=333 / 複勝データ有=122 / 平均複勝倍率=4.50
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\turf1200_lambdarank_model_v11fuku_no26.txt
+
+  芝1400m ...
+    train=5,049行 / val=1,253行 / top3=1099 / 複勝データ有=332 / 平均複勝倍率=4.27
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\turf1400_lambdarank_model_v11fuku_no26.txt
+
+  芝1600m ...
+    train=5,049行 / val=1,253行 / top3=1099 / 複勝データ有=332 / 平均複勝倍率=4.27
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\turf1600_lambdarank_model_v11fuku_no26.txt
+
+  芝2000m ...
+    train=3,317行 / val=821行 / top3=822 / 複勝データ有=261 / 平均複勝倍率=3.80
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\turf2000_lambdarank_model_v11fuku_no26.txt
+
+  芝2200m ...
+    train=1,354行 / val=337行 / top3=342 / 複勝データ有=122 / 平均複勝倍率=3.92
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\turf2200_lambdarank_model_v11fuku_no26.txt
+
+  ダート1200m ...
+    train=3,253行 / val=814行 / top3=655 / 複勝データ有=265 / 平均複勝倍率=4.97
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\dirt1200_lambdarank_model_v11fuku_no26.txt
+
+  ダート1400m ...
+    train=10,035行 / val=2,497行 / top3=2203 / 複勝データ有=808 / 平均複勝倍率=4.18
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\dirt1400_lambdarank_model_v11fuku_no26.txt
+
+  ダート1800m ...
+    train=10,035行 / val=2,497行 / top3=2203 / 複勝データ有=808 / 平均複勝倍率=4.18
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\dirt1800_lambdarank_model_v11fuku_no26.txt
+
+  ダート1900m ...
+    train=1,841行 / val=451行 / top3=420 / 複勝データ有=173 / 平均複勝倍率=3.80
+    params: {'learning_rate': 0.03148680311563485, 'num_leaves': 38, 'max_depth': 9, 'min_child_samples': 5, 'reg_alpha': 0.16791248331372585, 'reg_lambda': 0.003151060651827965, 'n_estimators': 478}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\07_chukyo\dirt1900_lambdarank_model_v11fuku_no26.txt
+
+=======================================================
+[学習] 08_kyoto
+=======================================================
+  複勝ルックアップ構築中 ...
+  ルックアップ完了: 12 レース
+
+  芝1200m ...
+    train=1,030行 / val=256行 / top3=207 / 複勝データ有=0 / 平均複勝倍率=0.00
+    複勝データ不足: スキップ
+
+  芝1400m ...
+    train=5,192行 / val=1,288行 / top3=1171 / 複勝データ有=6 / 平均複勝倍率=7.72
+    複勝データ不足: スキップ
+
+  芝1600m ...
+    train=5,192行 / val=1,288行 / top3=1171 / 複勝データ有=6 / 平均複勝倍率=7.72
+    複勝データ不足: スキップ
+
+  芝1800m ...
+    train=5,192行 / val=1,288行 / top3=1171 / 複勝データ有=6 / 平均複勝倍率=7.72
+    複勝データ不足: スキップ
+
+  芝2000m ...
+    train=1,448行 / val=356行 / top3=378 / 複勝データ有=0 / 平均複勝倍率=0.00
+    複勝データ不足: スキップ
+
+  芝2200m ...
+    train=1,060行 / val=261行 / top3=278 / 複勝データ有=0 / 平均複勝倍率=0.00
+    複勝データ不足: スキップ
+
+  芝2400m ...
+    train=1,060行 / val=261行 / top3=278 / 複勝データ有=0 / 平均複勝倍率=0.00
+    複勝データ不足: スキップ
+
+  芝3000m ...
+    train=173行 / val=28行 / top3=33 / 複勝データ有=0 / 平均複勝倍率=0.00
+    複勝データ不足: スキップ
+
+  芝3200m ...
+    train=173行 / val=28行 / top3=33 / 複勝データ有=0 / 平均複勝倍率=0.00
+    複勝データ不足: スキップ
+
+  ダート1200m ...
+    train=2,435行 / val=608行 / top3=495 / 複勝データ有=0 / 平均複勝倍率=0.00
+    複勝データ不足: スキップ
+
+  ダート1400m ...
+    train=7,229行 / val=1,800行 / top3=1573 / 複勝データ有=4 / 平均複勝倍率=11.82
+    複勝データ不足: スキップ
+
+  ダート1800m ...
+    train=7,229行 / val=1,800行 / top3=1573 / 複勝データ有=4 / 平均複勝倍率=11.82
+    複勝データ不足: スキップ
+
+  ダート1900m ...
+    train=1,073行 / val=262行 / top3=246 / 複勝データ有=0 / 平均複勝倍率=0.00
+    複勝データ不足: スキップ
+
+=======================================================
+[学習] 09_hanshin
+=======================================================
+  複勝ルックアップ構築中 ...
+  ルックアップ完了: 1,156 レース
+
+  芝1200m ...
+    train=1,390行 / val=335行 / top3=316 / 複勝データ有=81 / 平均複勝倍率=4.36
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf1200_lambdarank_model_v11fuku_no26.txt
+
+  芝1400m ...
+    train=8,113行 / val=2,018行 / top3=1832 / 複勝データ有=535 / 平均複勝倍率=4.25
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf1400_lambdarank_model_v11fuku_no26.txt
+
+  芝1600m ...
+    train=8,113行 / val=2,018行 / top3=1832 / 複勝データ有=535 / 平均複勝倍率=4.25
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf1600_lambdarank_model_v11fuku_no26.txt
+
+  芝1800m ...
+    train=8,113行 / val=2,018行 / top3=1832 / 複勝データ有=535 / 平均複勝倍率=4.25
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf1800_lambdarank_model_v11fuku_no26.txt
+
+  芝2000m ...
+    train=2,267行 / val=567行 / top3=594 / 複勝データ有=155 / 平均複勝倍率=4.24
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf2000_lambdarank_model_v11fuku_no26.txt
+
+  芝2200m ...
+    train=1,582行 / val=395行 / top3=414 / 複勝データ有=106 / 平均複勝倍率=3.07
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf2200_lambdarank_model_v11fuku_no26.txt
+
+  芝2400m ...
+    train=1,582行 / val=395行 / top3=414 / 複勝データ有=106 / 平均複勝倍率=3.07
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf2400_lambdarank_model_v11fuku_no26.txt
+
+  芝2600m ...
+    train=1,582行 / val=395行 / top3=414 / 複勝データ有=106 / 平均複勝倍率=3.07
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf2600_lambdarank_model_v11fuku_no26.txt
+
+  芝3000m ...
+    train=151行 / val=21行 / top3=33 / 複勝データ有=13 / 平均複勝倍率=5.10
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 9, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\turf3000_lambdarank_model_v11fuku_no26.txt
+
+  ダート1200m ...
+    train=4,395行 / val=1,087行 / top3=899 / 複勝データ有=331 / 平均複勝倍率=4.27
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\dirt1200_lambdarank_model_v11fuku_no26.txt
+
+  ダート1400m ...
+    train=12,576行 / val=3,137行 / top3=2782 / 複勝データ有=901 / 平均複勝倍率=4.25
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\dirt1400_lambdarank_model_v11fuku_no26.txt
+
+  ダート1800m ...
+    train=12,576行 / val=3,137行 / top3=2782 / 複勝データ有=901 / 平均複勝倍率=4.25
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\dirt1800_lambdarank_model_v11fuku_no26.txt
+
+  ダート2000m ...
+    train=1,255行 / val=303行 / top3=300 / 複勝データ有=97 / 平均複勝倍率=3.75
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\09_hanshin\dirt2000_lambdarank_model_v11fuku_no26.txt
+
+=======================================================
+[学習] 10_kokura
+=======================================================
+  複勝ルックアップ構築中 ...
+  ルックアップ完了: 697 レース
+
+  芝1200m ...
+    train=5,497行 / val=1,362行 / top3=1053 / 複勝データ有=413 / 平均複勝倍率=4.85
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\turf1200_lambdarank_model_v11fuku_no26.txt
+
+  芝1700m ...
+    train=2,729行 / val=680行 / top3=613 / 複勝データ有=215 / 平均複勝倍率=3.43
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\turf1700_lambdarank_model_v11fuku_no26.txt
+
+  芝1800m ...
+    train=2,729行 / val=680行 / top3=613 / 複勝データ有=215 / 平均複勝倍率=3.43
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\turf1800_lambdarank_model_v11fuku_no26.txt
+
+  芝2000m ...
+    train=2,468行 / val=615行 / top3=569 / 複勝データ有=185 / 平均複勝倍率=3.45
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\turf2000_lambdarank_model_v11fuku_no26.txt
+
+  芝2600m ...
+    train=632行 / val=156行 / top3=159 / 複勝データ有=61 / 平均複勝倍率=3.32
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\turf2600_lambdarank_model_v11fuku_no26.txt
+
+  ダート1000m ...
+    train=1,944行 / val=479行 / top3=436 / 複勝データ有=168 / 平均複勝倍率=4.21
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\dirt1000_lambdarank_model_v11fuku_no26.txt
+
+  ダート1700m ...
+    train=4,740行 / val=1,168行 / top3=972 / 複勝データ有=361 / 平均複勝倍率=4.22
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 17, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\dirt1700_lambdarank_model_v11fuku_no26.txt
+
+  ダート2400m ...
+    train=117行 / val=27行 / top3=33 / 複勝データ有=12 / 平均複勝倍率=4.34
+    params: {'learning_rate': 0.01769226795453276, 'num_leaves': 51, 'max_depth': 7, 'min_child_samples': 7, 'reg_alpha': 0.029723442531939294, 'reg_lambda': 0.17613763016070647, 'n_estimators': 275}
+    保存: C:\keiba_ai\keiba_ai_ver3.0\data\prediction\models\10_kokura\dirt2400_lambdarank_model_v11fuku_no26.txt
+
+=======================================================
+完了
+=======================================================
