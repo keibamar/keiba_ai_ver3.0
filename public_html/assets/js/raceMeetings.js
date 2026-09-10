@@ -1760,5 +1760,41 @@ window.raceMeetings = {
       "race_card_url": "races/20260906/06_nakayamaR11.html",
       "grade": "G2"
     }
+  ],
+  "20260912": [
+    {
+      "place_name": "中山",
+      "race_name": "ラジオ日本賞",
+      "times": 4,
+      "day_number": 3,
+      "race_card_url": "races/20260912/06_nakayamaR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "阪神",
+      "race_name": "チャレンジC",
+      "times": 4,
+      "day_number": 3,
+      "race_card_url": "races/20260912/09_hanshinR11.html",
+      "grade": "G3"
+    }
+  ],
+  "20260913": [
+    {
+      "place_name": "阪神",
+      "race_name": "ローズS",
+      "times": 4,
+      "day_number": 4,
+      "race_card_url": "races/20260913/09_hanshinR11.html",
+      "grade": "G2"
+    },
+    {
+      "place_name": "中山",
+      "race_name": "セントライト記念",
+      "times": 4,
+      "day_number": 4,
+      "race_card_url": "races/20260913/06_nakayamaR11.html",
+      "grade": "G2"
+    }
   ]
 };
