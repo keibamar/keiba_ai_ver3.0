@@ -740,6 +740,90 @@ def get_strategy(rtype: str, ground: str, clen: int, ap: float):
     return None, None
 
 
+# ───────────────────────────────────────────
+#  複数モデル合意信頼度 (compute_consensus_confidence)
+# ───────────────────────────────────────────
+#
+# v3_score を本命軸にして、他3スコア(score_hitrate / score_value / p_ai)が
+# 同じ馬を1位に選んでいる数を合意数(n_agree)とする。
+#
+# 単勝信頼度:
+#   大: n_agree>=2 AND conf_v3>=0.20
+#   中: n_agree>=2 (差小) OR n_agree<2 AND conf_v3>=0.40
+#   小: それ以外
+#
+# 複勝信頼度:
+#   大: n_agree>=2
+#   中: n_agree<2 AND conf_v3>=0.20
+#   小: それ以外
+#
+# バックテスト実績(9/5〜9/6 70R):
+#   単勝大(9R): ROI 350%  複勝大(18R): ROI 143%
+
+_CONSENSUS_SCORE_COLS = ["v3_score", "score_hitrate", "score_value", "p_ai"]
+
+
+def compute_consensus_confidence(df: pd.DataFrame) -> dict:
+    """複数モデル合意数・信頼度レベルを計算して返す。
+
+    Returns:
+        {
+          "n_agree":          int,   # v3_score本命と一致するモデル数 (0〜3)
+          "n_total":          int,   # 比較対象モデル数 (v3_score以外)
+          "conf_v3":          float, # v3_score の 1位-2位スコア差
+          "tan_lv":           str,   # 単勝信頼度 "大"/"中"/"小"
+          "fuku_lv":          str,   # 複勝信頼度 "大"/"中"/"小"
+          "honmei":           str|None,  # v3_score本命の馬番(文字列)
+          "rank1_per_model":  dict,  # {col: 馬番str}
+        }
+    """
+    avail = [c for c in _CONSENSUS_SCORE_COLS if c in df.columns]
+    _empty = {"n_agree": 0, "n_total": 0, "conf_v3": 0.0,
+              "tan_lv": "小", "fuku_lv": "小", "honmei": None, "rank1_per_model": {}}
+    if "v3_score" not in avail:
+        return _empty
+
+    rank1_per_model = {}
+    for col in avail:
+        vals = pd.to_numeric(df[col], errors="coerce")
+        if vals.isna().all():
+            continue
+        best_idx = vals.idxmax()
+        rank1_per_model[col] = str(int(float(df.loc[best_idx, "馬番"])))
+
+    if "v3_score" not in rank1_per_model:
+        return _empty
+
+    honmei  = rank1_per_model["v3_score"]
+    n_agree = sum(1 for c, u in rank1_per_model.items()
+                  if c != "v3_score" and u == honmei)
+    n_total = len([c for c in avail if c != "v3_score"])
+
+    v3_vals = pd.to_numeric(df["v3_score"], errors="coerce").fillna(0).values
+    order   = np.argsort(-v3_vals)
+    conf_v3 = float(v3_vals[order[0]] - v3_vals[order[1]]) if len(v3_vals) >= 2 else 0.0
+
+    if n_agree >= 2 and conf_v3 >= 0.20:
+        tan_lv = "大"
+    elif n_agree >= 2 or conf_v3 >= 0.40:
+        tan_lv = "中"
+    else:
+        tan_lv = "小"
+
+    if n_agree >= 2:
+        fuku_lv = "大"
+    elif conf_v3 >= 0.20:
+        fuku_lv = "中"
+    else:
+        fuku_lv = "小"
+
+    return {
+        "n_agree": n_agree, "n_total": n_total, "conf_v3": conf_v3,
+        "tan_lv": tan_lv, "fuku_lv": fuku_lv,
+        "honmei": honmei, "rank1_per_model": rank1_per_model,
+    }
+
+
 def recommend_score_based(
     df: pd.DataFrame,
     # ── 軸・相手・BOX 判定パラメータ ──

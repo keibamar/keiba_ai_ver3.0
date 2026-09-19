@@ -79,8 +79,17 @@ def make_race_text(race_day, race_id):
         print("not rank:" + str(race_id))
         return
     try:
+        from src.logic.betting.ticket_advisor import compute_consensus_confidence
+
         # 予想結果から上位5頭を抽出
         pred_list = extract_top5_pred(race_data_df)
+
+        # 複数モデル合意信頼度
+        conf = compute_consensus_confidence(race_data_df)
+        tan_lv  = conf["tan_lv"]
+        fuku_lv = conf["fuku_lv"]
+        n_agree = conf["n_agree"]
+        n_total = conf["n_total"]
 
         # テキストファイルの準備
         folder_path = os.path.join(paths.RACE_PREDICTION_TEXT_PATH, race_day.strftime("%Y%m%d"))
@@ -110,6 +119,10 @@ def make_race_text(race_day, race_id):
         for rank in range(5):
             if rank < len(pred_list):
                 f.write(" " + SYMBOL_LIST[rank] + " " + str(pred_list[rank][0]) + " " + pred_list[rank][1] + "\n")
+        # 信頼度の出力
+        tan_stars  = {"大": "★★★", "中": "★★", "小": "★"}.get(tan_lv, "")
+        fuku_stars = {"大": "★★★", "中": "★★", "小": "★"}.get(fuku_lv, "")
+        f.write(f"\n単勝信頼度:{tan_lv}{tan_stars}  複勝信頼度:{fuku_lv}{fuku_stars}  (合意{n_agree}/{n_total})\n")
         # タグの出力
         f.write("#MAR競馬予想\n")
         f.write("#競馬予想AI\n")
@@ -200,11 +213,18 @@ def send_race_pred(race_day, race_id):
 # ── 馬券推奨付きメール ───────────────────────────────────────────
 
 def _make_betting_text(race_card_df, race_info_df):
-    """馬券推奨テキストを生成して返す。推奨なし・エラーは「推奨馬券なし」行を含む文字列。"""
+    """馬券推奨テキストを生成して返す。推奨なし・エラーは「推奨馬券なし」行を含む文字列。
+
+    信頼度 大/中/小 を先頭に表示し、単勝・複勝推奨もレベルに応じて付加する。
+      単勝「大」: 単勝★★★ + 複勝★★★ + 馬連/3連複
+      単勝「中」: 単勝★★  + 馬連/3連複  (複勝は見送り)
+      単勝「小」/ 複勝「大」: 複勝★ + 馬連/3連複
+      単勝「小」/ 複勝「中」以下: 馬連/3連複のみ
+    """
     import pandas as pd
     from src.logic.betting.ticket_advisor import (
         recommend_score_based, SB_B_PARAMS, get_strategy, STRATEGY_ROI_REF,
-        recommend_trifecta_strategy,
+        recommend_trifecta_strategy, compute_consensus_confidence,
     )
 
     if race_info_df is None or race_info_df.empty:
@@ -216,49 +236,14 @@ def _make_betting_text(race_card_df, race_info_df):
     if pd.to_numeric(race_card_df["score_hitrate"], errors="coerce").isna().all():
         return "推奨馬券なし（スコア未計算）"
 
-    row0   = race_info_df.iloc[0]
-    rtype  = str(row0.get("race_type",    "?")).strip()
-    ground = str(row0.get("ground_state", "?")).strip()
-    clen_s = str(row0.get("course_len",   "0")).strip()
-    try:
-        clen = int(clen_s)
-    except ValueError:
-        clen = 0
-
-    # 軸スコア取得
-    try:
-        rec_base = recommend_score_based(race_card_df, win_odds_col=None, **SB_B_PARAMS)
-    except Exception:
-        return "推奨馬券なし（予測エラー）"
-    if not rec_base:
-        return "推奨馬券なし"
-
-    ap = rec_base.get("_meta", {}).get("axis_prob", 0)
-
-    sname, params = get_strategy(rtype, ground, clen, ap)
-    if sname is None:
-        return f"推奨馬券なし（{rtype}{clen}m {ground} axis={ap*100:.0f}% — 対象外）"
-    try:
-        rec = recommend_score_based(race_card_df, win_odds_col=None, **params)
-    except Exception:
-        return "推奨馬券なし（推奨計算エラー）"
-    if not rec:
-        return "推奨馬券なし"
-    rec.setdefault("_meta", {})["axis_prob"] = ap
-
-    um_tickets = rec.get("馬連",  {}).get("tickets", [])
-    tp_tickets = rec.get("3連複", {}).get("tickets", [])
-    if not um_tickets and not tp_tickets:
-        return "推奨馬券なし"
-
-    # 3連単独立推奨（道悪以外の戦略対象のみ）
-    tfc_rec = None
-    if sname != "道悪":
-        try:
-            tfc_rec = recommend_trifecta_strategy(race_card_df)
-        except Exception:
-            tfc_rec = None
-    tfc_tickets = tfc_rec.get("tickets", []) if tfc_rec else []
+    # ── 複数モデル合意信頼度 ────────────────────────────────────
+    conf = compute_consensus_confidence(race_card_df)
+    tan_lv  = conf["tan_lv"]
+    fuku_lv = conf["fuku_lv"]
+    n_agree = conf["n_agree"]
+    n_total = conf["n_total"]
+    conf_v3 = conf["conf_v3"]
+    honmei_uma = conf.get("honmei")
 
     # 馬番→馬名マップ
     uma_map = {}
@@ -269,8 +254,83 @@ def _make_betting_text(race_card_df, race_info_df):
         except Exception:
             pass
 
+    # 信頼度ヘッダー
+    tan_icon  = {"大": "★★★", "中": "★★", "小": "★"}[tan_lv]
+    fuku_icon = {"大": "★★★", "中": "★★", "小": "★"}[fuku_lv]
+    conf_header = (
+        f"── 信頼度  単勝:{tan_lv}{tan_icon}  複勝:{fuku_lv}{fuku_icon}"
+        f"  [合意{n_agree}/{n_total}  v3差={conf_v3:.3f}] ──"
+    )
+
+    lines = [conf_header]
+
+    # ── 単勝・複勝推奨 ─────────────────────────────────────────
+    if honmei_uma:
+        honmei_no   = int(honmei_uma) if honmei_uma.isdigit() else None
+        honmei_name = uma_map.get(honmei_no, "?") if honmei_no else "?"
+        if tan_lv == "大":
+            lines.append(f"◎ 単勝推奨 ★★★: {honmei_uma}番 {honmei_name}  (単勝ROI参考: 350%)")
+            lines.append(f"◎ 複勝推奨 ★★★: {honmei_uma}番 {honmei_name}  (複勝ROI参考: 151%)")
+        elif tan_lv == "中":
+            lines.append(f"◎ 単勝推奨 ★★: {honmei_uma}番 {honmei_name}  (単勝ROI参考: 137%  複勝は見送り)")
+        elif fuku_lv == "大":
+            lines.append(f"◎ 複勝推奨 ★: {honmei_uma}番 {honmei_name}  (複勝ROI参考: 143%  単勝は見送り)")
+        else:
+            lines.append(f"単複: 見送り（信頼度 単勝{tan_lv}/複勝{fuku_lv}）")
+
+    row0   = race_info_df.iloc[0]
+    rtype  = str(row0.get("race_type",    "?")).strip()
+    ground = str(row0.get("ground_state", "?")).strip()
+    clen_s = str(row0.get("course_len",   "0")).strip()
+    try:
+        clen = int(clen_s)
+    except ValueError:
+        clen = 0
+
+    # ── 馬連/3連複 推奨（従来ロジック）────────────────────────
+    try:
+        rec_base = recommend_score_based(race_card_df, win_odds_col=None, **SB_B_PARAMS)
+    except Exception:
+        lines.append("馬連/3連複: 推奨なし（予測エラー）")
+        return "\n".join(lines)
+    if not rec_base:
+        lines.append("馬連/3連複: 推奨なし")
+        return "\n".join(lines)
+
+    ap = rec_base.get("_meta", {}).get("axis_prob", 0)
+
+    sname, params = get_strategy(rtype, ground, clen, ap)
+    if sname is None:
+        lines.append(f"馬連/3連複: 対象外（{rtype}{clen}m {ground} axis={ap*100:.0f}%）")
+        return "\n".join(lines)
+    try:
+        rec = recommend_score_based(race_card_df, win_odds_col=None, **params)
+    except Exception:
+        lines.append("馬連/3連複: 推奨計算エラー")
+        return "\n".join(lines)
+    if not rec:
+        lines.append("馬連/3連複: 推奨なし")
+        return "\n".join(lines)
+    rec.setdefault("_meta", {})["axis_prob"] = ap
+
+    um_tickets = rec.get("馬連",  {}).get("tickets", [])
+    tp_tickets = rec.get("3連複", {}).get("tickets", [])
+
+    # 3連単独立推奨（道悪以外の戦略対象のみ）
+    tfc_rec = None
+    if sname != "道悪":
+        try:
+            tfc_rec = recommend_trifecta_strategy(race_card_df)
+        except Exception:
+            tfc_rec = None
+    tfc_tickets = tfc_rec.get("tickets", []) if tfc_rec else []
+
+    if not um_tickets and not tp_tickets:
+        lines.append(f"馬連/3連複: 推奨なし（{sname} {rtype}{clen}m axis={ap*100:.0f}%）")
+        return "\n".join(lines)
+
     mark = "★" if sname != "道悪" else "⚠"
-    lines = [f"── 馬券推奨 [{mark}{sname}  axis={ap*100:.0f}%] ──────────────"]
+    lines.append(f"── 馬連/3連複推奨 [{mark}{sname}  axis={ap*100:.0f}%] ──")
 
     ax_list = (rec.get("馬連") or rec.get("3連複") or {}).get("軸", [])
     if ax_list:
