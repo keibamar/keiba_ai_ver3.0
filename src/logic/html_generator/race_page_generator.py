@@ -156,6 +156,67 @@ def build_ai_pick_summary_html(df):
     return ""
 
 
+def _build_reason_text(conf: dict) -> str:
+    """信頼度情報から ~100字の日本語理由テキストを生成する"""
+    n_agree  = conf["n_agree"]
+    conf_v3  = conf["conf_v3"]
+    tan_lv   = conf["tan_lv"]
+    fuku_lv  = conf["fuku_lv"]
+    r1       = conf["rank1_per_model"]
+    honmei   = conf["honmei"]
+
+    hit_agree = r1.get("score_hitrate") == honmei
+    val_agree = r1.get("score_value")   == honmei
+
+    # モデル合意の文言
+    if n_agree >= 3:
+        model_str = "MAR・MAR-hit・MAR-valの全3モデルが同一の本命馬を選定"
+    elif n_agree == 2:
+        if hit_agree and val_agree:
+            model_str = "的中率重視(MAR-hit)・回収率重視(MAR-val)の2モデルがMARと一致"
+        elif hit_agree:
+            model_str = "MAR・MAR-hitが一致（MAR-valは別の馬を上位評価）"
+        elif val_agree:
+            model_str = "MAR・MAR-valが一致（MAR-hitは別の馬を上位評価）"
+        else:
+            model_str = "2モデルが一致"
+    elif n_agree == 1:
+        if hit_agree:
+            model_str = "MAR-hitのみ一致、MAR-valは別の馬を推薦"
+        elif val_agree:
+            model_str = "MAR-valのみ一致、MAR-hitは別の馬を推薦"
+        else:
+            model_str = "MARのみで、他の2モデルは別の馬を推薦"
+    else:
+        model_str = "全モデルで見解が分かれており、MARのみが選出"
+
+    # スコア差の文言
+    if conf_v3 >= 0.50:
+        gap_str = f"2番手との差{conf_v3:.2f}と大きなリードがある"
+    elif conf_v3 >= 0.25:
+        gap_str = f"2番手との差{conf_v3:.2f}と差は明確"
+    elif conf_v3 >= 0.10:
+        gap_str = f"2番手との差{conf_v3:.2f}とやや優位"
+    else:
+        gap_str = f"2番手との差{conf_v3:.2f}と僅差"
+
+    # 推奨メッセージ
+    if tan_lv == "大":
+        rec_str = "単複ともに高信頼で積極的な買い目として推奨。"
+    elif tan_lv == "中" and fuku_lv == "大":
+        rec_str = "複勝は高信頼、単勝は中程度。複勝を主軸に検討。"
+    elif tan_lv == "中":
+        rec_str = "単複ともに中程度の信頼度。点数を絞った購入が無難。"
+    elif fuku_lv == "大":
+        rec_str = "単勝は見送り、複勝に絞るのが無難。"
+    elif fuku_lv == "中":
+        rec_str = "複勝のみ少点数で狙う程度が無難。"
+    else:
+        rec_str = "信頼度低く様子見を推奨。"
+
+    return f"{model_str}。{gap_str}。{rec_str}"
+
+
 def build_confidence_html(df_raw):
     """信頼度・本命ボックスのHTMLを生成する（出馬表テーブルの直下に表示）"""
     if df_raw is None or df_raw.empty:
@@ -180,20 +241,10 @@ def build_confidence_html(df_raw):
     except Exception:
         pass
 
-    # 理由テキスト（モデル合意情報、p_aiは常に一致するため除外）
-    MODEL_LABEL = {"score_hitrate": "MAR-hit", "score_value": "MAR-val"}
-    r1 = conf["rank1_per_model"]
-    agree_labels = [MODEL_LABEL[c] for c in ("score_hitrate", "score_value")
-                    if c in r1 and r1[c] == honmei_num]
-    if agree_labels:
-        reason_base = "/".join(agree_labels) + "が一致"
-    else:
-        reason_base = "MAR単独"
-    reason = f"{reason_base}（合意{conf['n_agree']}/{conf['n_total']}、スコア差{conf['conf_v3']:.3f}）"
+    reason = _build_reason_text(conf)
 
     # 信頼度レベル表示
     TAN_STAR = {"大": "★★★", "中": "★★", "小": "★"}
-    FUKU_STAR = {"大": "★★★", "中": "★★", "小": "★"}
     LV_COLOR = {"大": "#c62828", "中": "#e65100", "小": "#777"}
     tan_lv = conf["tan_lv"]
     fuku_lv = conf["fuku_lv"]
@@ -203,11 +254,11 @@ def build_confidence_html(df_raw):
         'border:2px solid #6a1b9a;border-radius:8px;background:#f3e5f5;">'
         '<div style="font-size:0.85em;font-weight:bold;color:#6a1b9a;margin-bottom:6px;">'
         'AI予想 &#8212; 本命 &amp; 推奨度</div>'
-        f'<div style="margin-bottom:4px;font-size:1.0em;font-weight:bold;">&#9675; 本命: {honmei_num}番 {html.escape(honmei_name)}</div>'
-        f'<div style="font-size:0.85em;color:#555;margin-bottom:6px;">{html.escape(reason)}</div>'
+        f'<div style="margin-bottom:6px;font-size:1.05em;font-weight:bold;">◎ 本命: {honmei_num}番 {html.escape(honmei_name)}</div>'
+        f'<div style="font-size:0.85em;color:#444;margin-bottom:8px;line-height:1.5;">{html.escape(reason)}</div>'
         '<div style="display:flex;gap:16px;font-size:0.9em;">'
         f'<span style="font-weight:bold;color:{LV_COLOR[tan_lv]};">単勝 {tan_lv} {TAN_STAR[tan_lv]}</span>'
-        f'<span style="font-weight:bold;color:{LV_COLOR[fuku_lv]};">複勝 {fuku_lv} {FUKU_STAR[fuku_lv]}</span>'
+        f'<span style="font-weight:bold;color:{LV_COLOR[fuku_lv]};">複勝 {fuku_lv} {TAN_STAR[fuku_lv]}</span>'
         '</div>'
         '</div>'
     )
