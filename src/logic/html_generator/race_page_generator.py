@@ -156,6 +156,63 @@ def build_ai_pick_summary_html(df):
     return ""
 
 
+def build_confidence_html(df_raw):
+    """信頼度・本命ボックスのHTMLを生成する（出馬表テーブルの直下に表示）"""
+    if df_raw is None or df_raw.empty:
+        return ""
+    try:
+        import numpy as np
+        from src.logic.betting.ticket_advisor import compute_consensus_confidence
+        conf = compute_consensus_confidence(df_raw)
+    except Exception:
+        return ""
+
+    if conf["honmei"] is None:
+        return ""
+
+    # 本命馬名を取得
+    honmei_num = conf["honmei"]
+    honmei_name = ""
+    try:
+        row = df_raw[df_raw["馬番"].astype(str) == str(honmei_num)]
+        if not row.empty:
+            honmei_name = str(row.iloc[0]["馬名"])
+    except Exception:
+        pass
+
+    # 理由テキスト（モデル合意情報、p_aiは常に一致するため除外）
+    MODEL_LABEL = {"score_hitrate": "MAR-hit", "score_value": "MAR-val"}
+    r1 = conf["rank1_per_model"]
+    agree_labels = [MODEL_LABEL[c] for c in ("score_hitrate", "score_value")
+                    if c in r1 and r1[c] == honmei_num]
+    if agree_labels:
+        reason_base = "/".join(agree_labels) + "が一致"
+    else:
+        reason_base = "MAR単独"
+    reason = f"{reason_base}（合意{conf['n_agree']}/{conf['n_total']}、スコア差{conf['conf_v3']:.3f}）"
+
+    # 信頼度レベル表示
+    TAN_STAR = {"大": "★★★", "中": "★★", "小": "★"}
+    FUKU_STAR = {"大": "★★★", "中": "★★", "小": "★"}
+    LV_COLOR = {"大": "#c62828", "中": "#e65100", "小": "#777"}
+    tan_lv = conf["tan_lv"]
+    fuku_lv = conf["fuku_lv"]
+
+    return (
+        '<div class="confidence-box" style="margin:10px 0 16px 0;padding:12px 16px;'
+        'border:2px solid #6a1b9a;border-radius:8px;background:#f3e5f5;">'
+        '<div style="font-size:0.85em;font-weight:bold;color:#6a1b9a;margin-bottom:6px;">'
+        'AI予想 &#8212; 本命 &amp; 推奨度</div>'
+        f'<div style="margin-bottom:4px;font-size:1.0em;font-weight:bold;">&#9675; 本命: {honmei_num}番 {html.escape(honmei_name)}</div>'
+        f'<div style="font-size:0.85em;color:#555;margin-bottom:6px;">{html.escape(reason)}</div>'
+        '<div style="display:flex;gap:16px;font-size:0.9em;">'
+        f'<span style="font-weight:bold;color:{LV_COLOR[tan_lv]};">単勝 {tan_lv} {TAN_STAR[tan_lv]}</span>'
+        f'<span style="font-weight:bold;color:{LV_COLOR[fuku_lv]};">複勝 {fuku_lv} {FUKU_STAR[fuku_lv]}</span>'
+        '</div>'
+        '</div>'
+    )
+
+
 def _weight_change_style(body_str):
     """馬体重(増減)の文字列（例: "472(-4)"）から、増減が大きい馬を強調する文字色styleを返す
 
@@ -1821,6 +1878,11 @@ def make_race_card_html(date_str, place_id, target_id):
     if df is None:
         return
 
+    # Raw CSV（v3_score / score_hitrate / score_value / p_ai を含む）を信頼度計算に使う
+    _raw_race_day = datetime.strptime(date_str, "%Y%m%d").date()
+    _df_raw = race_card_dataset_manager.get_race_cards(_raw_race_day, target_id)
+    confidence_html = build_confidence_html(_df_raw)
+
     # --- レース情報（コース・距離・馬場・クラス）を取得 ---
     race_info_dict = _get_race_info_dict(target_id)
 
@@ -2048,7 +2110,7 @@ def make_race_card_html(date_str, place_id, target_id):
         recent_html=recent_html,
         result_table_html=result_table_html,
         payout_table_html=payout_table_html,
-        pick_summary_html=build_ai_pick_summary_html(df),
+        pick_summary_html=build_ai_pick_summary_html(df) + confidence_html,
         odds_update_label=_odds_update_label_html(date_str, target_id, is_confirmed),
         course_link_html=course_link_html,
         weather_info_html=weather_info_html,
