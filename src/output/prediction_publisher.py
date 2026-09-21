@@ -395,7 +395,14 @@ def send_race_pred_with_betting(race_day, race_id, race_card_df, race_info_df):
     except Exception as e:
         betting_text = f"推奨馬券なし（エラー: {e}）"
 
-    has_rec = "推奨馬券なし" not in betting_text
+    # 実際に馬券が推奨された場合のみ True
+    # 「推奨馬券なし」「推奨なし」「見送り」のいずれかが含まれれば推奨なし
+    _NO_REC = ("推奨馬券なし", "推奨なし", "見送り")
+    has_rec = (
+        not any(m in betting_text for m in _NO_REC)
+        or "── 馬連/3連複推奨" in betting_text
+        or "推奨 ★" in betting_text
+    )
 
     # ── 件名 ──────────────────────────────────────────────────────
     place_id = int(str(race_id)[4:6])
