@@ -156,68 +156,152 @@ def build_ai_pick_summary_html(df):
     return ""
 
 
-def _build_reason_text(conf: dict) -> str:
-    """信頼度情報から ~100字の日本語理由テキストを生成する"""
-    n_agree  = conf["n_agree"]
-    conf_v3  = conf["conf_v3"]
-    tan_lv   = conf["tan_lv"]
-    fuku_lv  = conf["fuku_lv"]
-    r1       = conf["rank1_per_model"]
-    honmei   = conf["honmei"]
+_CLASS_RANK_LIST = ["新馬", "未勝利", "1勝クラス", "2勝クラス", "3勝クラス", "オープン", "Listed", "G3", "G2", "G1"]
 
+
+def _CLASS_LEVEL(class_name: str) -> int:
+    """クラス名を数値ランクに変換（高いほど上位クラス）。不明は -1"""
+    s = str(class_name)
+    for i, c in enumerate(_CLASS_RANK_LIST):
+        if c in s:
+            return i
+    if "G1" in s or "GI" in s:
+        return 9
+    if "G2" in s or "GII" in s:
+        return 8
+    if "G3" in s or "GIII" in s:
+        return 7
+    return -1
+
+
+def _build_reason_from_report(conf: dict, report: dict) -> str:
+    """馬レポートデータから本命理由テキストを生成する（血統・走破時計・近走実績）"""
+    parts = []
+
+    peds0       = report.get("peds0")
+    peds4       = report.get("peds4")
+    peds_results = report.get("peds_results")
+    race_class  = report.get("race_class", "")
+
+    # ---- 血統 + コース適性 ----
+    if peds0:
+        fuku_rate = None
+        if isinstance(peds_results, pd.DataFrame) and not peds_results.empty:
+            for cls in [race_class, "all"]:
+                sub = peds_results[peds_results["クラス"] == cls]
+                if not sub.empty:
+                    try:
+                        fuku_rate = float(sub.iloc[0]["複勝率"])
+                        break
+                    except Exception:
+                        pass
+        if fuku_rate is not None and fuku_rate >= 15:
+            if fuku_rate >= 40:
+                parts.append(f"父{peds0}産駒は当コース複勝率{fuku_rate:.0f}%と高い適性")
+            elif fuku_rate >= 25:
+                parts.append(f"父{peds0}産駒は当コース複勝率{fuku_rate:.0f}%とまずまずの適性")
+            else:
+                parts.append(f"父{peds0}産駒で当コース複勝率{fuku_rate:.0f}%")
+        elif peds4:
+            parts.append(f"父{peds0}×母父{peds4}")
+        else:
+            parts.append(f"父{peds0}")
+
+    # ---- 同コース持ち時計 ----
+    same_best = report.get("same_course_best")
+    if same_best:
+        t_str = same_best.get("time_str", "-")
+        g_str = same_best.get("ground", "")
+        if t_str and t_str != "-":
+            parts.append(f"当コース持ち時計{t_str}({g_str})の実績")
+
+    # ---- 近走成績（直近3走、クラス昇降を考慮） ----
+    recent5 = report.get("recent5") or []
+    if recent5:
+        ranks = []
+        for r in recent5[:4]:
+            try:
+                ranks.append(int(str(r.get("result", "")).strip()))
+            except Exception:
+                pass
+        if ranks:
+            in_money = sum(1 for r in ranks[:3] if r <= 3)
+            r_str = "・".join(f"{r}着" for r in ranks[:3])
+
+            prev_result = ranks[0]
+            prev_class  = str(recent5[0].get("class_name", "")).strip()
+            cur_class   = str(race_class).strip()
+            prev_lv     = _CLASS_LEVEL(prev_class)
+            cur_lv      = _CLASS_LEVEL(cur_class)
+
+            if prev_result == 1:
+                # 前走1着 — クラス昇降で表現を分ける
+                if prev_lv >= 0 and cur_lv >= 0 and cur_lv > prev_lv:
+                    # 昇級戦
+                    parts.append(
+                        f"前走{prev_class}を優勝し昇級。{cur_class}は初挑戦となる"
+                    )
+                elif prev_lv >= 0 and cur_lv >= 0 and cur_lv == prev_lv:
+                    # 同クラス
+                    if cur_lv >= 5:  # オープン以上
+                        parts.append(
+                            f"前走{prev_class}を制し、同レベルで連勝を狙う重賞級の実力"
+                        )
+                    else:
+                        parts.append(
+                            f"前走同クラス（{cur_class}）で優勝。連勝に期待"
+                        )
+                else:
+                    parts.append("前走1着と絶好調")
+            elif in_money >= 3:
+                parts.append(f"近走{r_str}と安定した実績")
+            elif in_money >= 2:
+                parts.append(f"近走{r_str}と好調をキープ")
+            elif prev_result <= 3:
+                parts.append(f"前走{prev_result}着と上位争い")
+
+    if not parts:
+        return _build_reason_score_only(conf)
+
+    reason = "。".join(parts) + "。"
+
+    # テキストが短い場合、モデル合意の補足を追加する
+    n_agree = conf["n_agree"]
+    r1 = conf["rank1_per_model"]
+    honmei = conf["honmei"]
     hit_agree = r1.get("score_hitrate") == honmei
-    val_agree = r1.get("score_value")   == honmei
+    val_agree = r1.get("score_value") == honmei
 
-    # モデル合意の文言
-    if n_agree >= 3:
-        model_str = "MAR・MAR-hit・MAR-valの全3モデルが同一の本命馬を選定"
-    elif n_agree == 2:
-        if hit_agree and val_agree:
-            model_str = "的中率重視(MAR-hit)・回収率重視(MAR-val)の2モデルがMARと一致"
-        elif hit_agree:
-            model_str = "MAR・MAR-hitが一致（MAR-valは別の馬を上位評価）"
-        elif val_agree:
-            model_str = "MAR・MAR-valが一致（MAR-hitは別の馬を上位評価）"
+    if len(reason) < 40:
+        if n_agree >= 3:
+            reason += "バランス・的中率・回収率の全モデルが一致して最高評価。"
+        elif n_agree == 2 and hit_agree and val_agree:
+            reason += "的中率・回収率重視の両モデルでもトップ評価。"
+        elif n_agree >= 2:
+            reason += "複数モデルで一致した高評価。"
         else:
-            model_str = "2モデルが一致"
-    elif n_agree == 1:
-        if hit_agree:
-            model_str = "MAR-hitのみ一致、MAR-valは別の馬を推薦"
-        elif val_agree:
-            model_str = "MAR-valのみ一致、MAR-hitは別の馬を推薦"
-        else:
-            model_str = "MARのみで、他の2モデルは別の馬を推薦"
-    else:
-        model_str = "全モデルで見解が分かれており、MARのみが選出"
+            reason += "MARスコアで出走馬中トップ評価。"
 
-    # スコア差の文言
+    return reason
+
+
+def _build_reason_score_only(conf: dict) -> str:
+    """レポートデータがない場合のフォールバック（スコア差ベース）"""
+    conf_v3 = conf["conf_v3"]
+    n_agree = conf["n_agree"]
     if conf_v3 >= 0.50:
-        gap_str = f"2番手との差{conf_v3:.2f}と大きなリードがある"
+        gap = "2番手に大きく差をつけてトップ評価"
     elif conf_v3 >= 0.25:
-        gap_str = f"2番手との差{conf_v3:.2f}と差は明確"
+        gap = "2番手を明確に上回るトップ評価"
     elif conf_v3 >= 0.10:
-        gap_str = f"2番手との差{conf_v3:.2f}とやや優位"
+        gap = "2番手をやや上回るトップ評価"
     else:
-        gap_str = f"2番手との差{conf_v3:.2f}と僅差"
-
-    # 推奨メッセージ
-    if tan_lv == "大":
-        rec_str = "単複ともに高信頼で積極的な買い目として推奨。"
-    elif tan_lv == "中" and fuku_lv == "大":
-        rec_str = "複勝は高信頼、単勝は中程度。複勝を主軸に検討。"
-    elif tan_lv == "中":
-        rec_str = "単複ともに中程度の信頼度。点数を絞った購入が無難。"
-    elif fuku_lv == "大":
-        rec_str = "単勝は見送り、複勝に絞るのが無難。"
-    elif fuku_lv == "中":
-        rec_str = "複勝のみ少点数で狙う程度が無難。"
-    else:
-        rec_str = "信頼度低く様子見を推奨。"
-
-    return f"{model_str}。{gap_str}。{rec_str}"
+        gap = "僅差ながらトップ評価"
+    agree_str = f"合意{n_agree}/3モデル、" if n_agree >= 2 else ""
+    return f"{agree_str}{gap}。"
 
 
-def build_confidence_html(df_raw):
+def build_confidence_html(df_raw, honmei_report=None):
     """信頼度・本命ボックスのHTMLを生成する（出馬表テーブルの直下に表示）"""
     if df_raw is None or df_raw.empty:
         return ""
@@ -241,7 +325,11 @@ def build_confidence_html(df_raw):
     except Exception:
         pass
 
-    reason = _build_reason_text(conf)
+    # 理由テキスト: レポートデータがあれば血統・走破時計・近走から生成、なければスコアベース
+    if honmei_report and isinstance(honmei_report, dict) and "error" not in honmei_report:
+        reason = _build_reason_from_report(conf, honmei_report)
+    else:
+        reason = _build_reason_score_only(conf)
 
     # 信頼度レベル表示
     TAN_STAR = {"大": "★★★", "中": "★★", "小": "★"}
@@ -1932,7 +2020,24 @@ def make_race_card_html(date_str, place_id, target_id):
     # Raw CSV（v3_score / score_hitrate / score_value / p_ai を含む）を信頼度計算に使う
     _raw_race_day = datetime.strptime(date_str, "%Y%m%d").date()
     _df_raw = race_card_dataset_manager.get_race_cards(_raw_race_day, target_id)
-    confidence_html = build_confidence_html(_df_raw)
+
+    # 本命馬のレポートを取得して理由テキストに使う
+    _honmei_report = None
+    try:
+        from src.logic.betting.ticket_advisor import compute_consensus_confidence
+        _conf_tmp = compute_consensus_confidence(_df_raw)
+        _honmei_num = _conf_tmp.get("honmei")
+        if _honmei_num:
+            _honmei_name_row = _df_raw[_df_raw["馬番"].astype(str) == str(_honmei_num)]
+            if not _honmei_name_row.empty:
+                _honmei_name_tmp = str(_honmei_name_row.iloc[0]["馬名"])
+                _honmei_report = horse_report_generator.build_horse_report(
+                    _honmei_name_tmp, place_id, target_id, date_str
+                )
+    except Exception:
+        pass
+
+    confidence_html = build_confidence_html(_df_raw, _honmei_report)
 
     # --- レース情報（コース・距離・馬場・クラス）を取得 ---
     race_info_dict = _get_race_info_dict(target_id)
