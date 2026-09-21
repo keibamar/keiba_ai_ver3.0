@@ -53,7 +53,12 @@ BLEND_WEIGHTS = {
 # ───────────────────────────────────────────
 
 def blend_scores(df: pd.DataFrame) -> np.ndarray:
-    """3スコアを加重平均してブレンドスコアを返す"""
+    """v3_score（本命と共通の統合スコア）を優先して返す。
+    v3_score が未計算の場合のみ BLEND_WEIGHTS による加重平均にフォールバックする。"""
+    if "v3_score" in df.columns:
+        vals = pd.to_numeric(df["v3_score"], errors="coerce").values
+        if not np.isnan(vals).all():
+            return np.where(np.isnan(vals), 0.0, vals)
     total = np.zeros(len(df))
     weight_sum = 0.0
     for col, w in BLEND_WEIGHTS.items():
