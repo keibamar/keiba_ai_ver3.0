@@ -357,6 +357,23 @@ def _nested_crumbs_html(items, base_path="", current_class="page-calendar-tab-cu
     return rows
 
 
+def _trend_venue_names(fpath: str) -> str:
+    """trend HTML から開催場名を '・' 区切りで返す。"""
+    import re as _re
+    try:
+        with open(fpath, encoding="utf-8") as _f:
+            text = _f.read()
+    except OSError:
+        return ""
+    # 日次: "傾向短評 — 中山・阪神"
+    m = _re.search(r"傾向短評 — (.+?)</h1>", text)
+    if m:
+        return m.group(1)
+    # 週次: <span class="trend-venue-name"> を重複排除して列挙
+    venues = list(dict.fromkeys(_re.findall(r'<span class="trend-venue-name">(.+?)</span>', text)))
+    return "・".join(venues)
+
+
 def _get_trend_nav_links(base_path: str) -> list:
     """public_html/trend/ の全エントリを月別グループにまとめて返す。
 
@@ -386,12 +403,14 @@ def _get_trend_nav_links(base_path: str) -> list:
             sat = date(y, m, d)
         except (ValueError, IndexError):
             continue
+        venues = _trend_venue_names(os.path.join(trend_dir, fname))
+        venue_suffix = f"（{venues}）" if venues else ""
         if is_weekly:
             sun = sat + timedelta(days=1)
-            label = f"{m}/{d}~{sun.month}/{sun.day}振り返り"
-            sort_day, sort_type = sun.day, 1  # 日曜の後に並べる
+            label = f"{m}/{d}~{sun.month}/{sun.day}振り返り{venue_suffix}"
+            sort_day, sort_type = sun.day, 1
         else:
-            label = f"{m}/{d}短評"
+            label = f"{m}/{d}短評{venue_suffix}"
             sort_day, sort_type = d, 0
         rows.append((y, m, sort_day, sort_type, label, f"trend/{fname}"))
 

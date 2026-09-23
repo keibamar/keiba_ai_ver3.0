@@ -15,6 +15,7 @@ from src.logic.html_generator.site_nav_html import (
     AD_SLOT_IN_CONTENT_1,
     AD_SLOT_IN_CONTENT_2,
     SITE_URL,
+    _trend_venue_names,
     ad_unit_html,
     adsense_script_html,
     breadcrumb_html,
@@ -437,14 +438,16 @@ def _update_index() -> None:
             sat = date(y, m, d)
         except (ValueError, IndexError):
             continue
+        venues = _trend_venue_names(os.path.join(TREND_DIR, fname))
+        venue_suffix = f"（{venues}）" if venues else ""
         if is_weekly:
             sun = sat + timedelta(days=1)
             sort_day, sort_type = sun.day, 1
-            short_label = f"{m}/{d}〜{sun.month}/{sun.day} 週次振り返り"
+            short_label = f"{m}/{d}〜{sun.month}/{sun.day} 週次振り返り{venue_suffix}"
         else:
             weekday_ja = ["月", "火", "水", "木", "金", "土", "日"][sat.weekday()]
             sort_day, sort_type = d, 0
-            short_label = f"{m}/{d}（{weekday_ja}）短評"
+            short_label = f"{m}/{d}（{weekday_ja}）短評{venue_suffix}"
         rows.append((y, m, sort_day, sort_type, fname, is_weekly, short_label))
 
     rows.sort(key=lambda r: (r[0], r[1], r[2], r[3]))
