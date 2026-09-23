@@ -37,25 +37,9 @@ def _write_html(path: str, html: str) -> None:
 
 
 def _build_sidebar(current_file: str = "") -> str:
-    """最新エントリ10件のサイドバーを生成する"""
-    links = []
-    for fname in sorted(os.listdir(TREND_DIR), reverse=True):
-        if not fname.endswith(".html") or fname == "index.html":
-            continue
-        is_weekly = fname.startswith("weekly_")
-        date_key = fname.replace("weekly_", "").replace(".html", "")
-        if len(date_key) != 8:
-            continue
-        try:
-            y, m, d = int(date_key[:4]), int(date_key[4:6]), int(date_key[6:8])
-        except ValueError:
-            continue
-        label = _entry_label(date_key, is_weekly)
-        links.append((label, fname))
-        if len(links) >= 10:
-            break
+    """傾向ページの右サイドバー（一覧へ戻るリンクのみ）"""
     return sidebar_html(
-        [("傾向日記", links, current_file)],
+        [],
         up_link=("傾向分析日記一覧", "index.html"),
     )
 
@@ -315,7 +299,7 @@ def make_daily_trend_page(target_date: date, stats: dict, comment_text: str) -> 
 
     html = f"""{_head_html(page_title, description, page_url, css_ver)}
 <body>
-{site_nav_html(base_path="../")}
+{site_nav_html(base_path="../", current_path=f"trend/{filename}")}
 <div class="content-wrapper">
   <main class="main-content">
     {breadcrumb_html([("ホーム", "../index.html"), ("傾向分析日記", "index.html"), (title_date, "")])}
@@ -331,9 +315,6 @@ def make_daily_trend_page(target_date: date, stats: dict, comment_text: str) -> 
         {comment_html}
       </div>
       {ad_unit_html(AD_SLOT_IN_CONTENT_2)}
-      <nav class="trend-nav-bottom">
-        <a href="index.html" class="btn-secondary">← 傾向分析日記一覧</a>
-      </nav>
     </article>
   </main>
   {_build_sidebar(filename)}
@@ -396,7 +377,7 @@ def make_weekly_trend_page(sat_date: date, sun_date: date,
 
     html = f"""{_head_html(page_title, description, page_url, css_ver)}
 <body>
-{site_nav_html(base_path="../")}
+{site_nav_html(base_path="../", current_path=f"trend/{filename}")}
 <div class="content-wrapper">
   <main class="main-content">
     {breadcrumb_html([("ホーム", "../index.html"), ("傾向分析日記", "index.html"), (f"{sat_label}週次", "")])}
@@ -426,10 +407,6 @@ def make_weekly_trend_page(sat_date: date, sun_date: date,
       </div>
 
       {ad_unit_html(AD_SLOT_IN_CONTENT_2)}
-
-      <nav class="trend-nav-bottom">
-        <a href="index.html" class="btn-secondary">← 傾向分析日記一覧</a>
-      </nav>
     </article>
   </main>
   {_build_sidebar(filename)}
@@ -443,9 +420,12 @@ def make_weekly_trend_page(sat_date: date, sun_date: date,
 
 
 def _update_index() -> None:
-    """public_html/trend/index.html を再生成する（最新エントリ20件）"""
-    entries = []
-    for fname in sorted(os.listdir(TREND_DIR), reverse=True):
+    """public_html/trend/index.html を再生成する（月別グループ表示）"""
+    from datetime import timedelta
+    from itertools import groupby as _groupby
+
+    rows = []
+    for fname in os.listdir(TREND_DIR):
         if not fname.endswith(".html") or fname == "index.html":
             continue
         is_weekly = fname.startswith("weekly_")
@@ -454,18 +434,48 @@ def _update_index() -> None:
             continue
         try:
             y, m, d = int(date_key[:4]), int(date_key[4:6]), int(date_key[6:8])
-        except ValueError:
+            sat = date(y, m, d)
+        except (ValueError, IndexError):
             continue
-        label = _entry_label(date_key, is_weekly)
-        badge = '<span class="entry-badge weekly">週次</span>' if is_weekly else '<span class="entry-badge daily">短評</span>'
-        entries.append(f"""<li class="trend-index-entry">
-  {badge}
-  <a href="{fname}">{label}</a>
-</li>""")
-        if len(entries) >= 20:
-            break
+        if is_weekly:
+            sun = sat + timedelta(days=1)
+            sort_day, sort_type = sun.day, 1
+            short_label = f"{m}/{d}〜{sun.month}/{sun.day} 週次振り返り"
+        else:
+            weekday_ja = ["月", "火", "水", "木", "金", "土", "日"][sat.weekday()]
+            sort_day, sort_type = d, 0
+            short_label = f"{m}/{d}（{weekday_ja}）短評"
+        rows.append((y, m, sort_day, sort_type, fname, is_weekly, short_label))
 
-    entries_html = "\n".join(entries) if entries else "<li>エントリがまだありません。</li>"
+    rows.sort(key=lambda r: (r[0], r[1], r[2], r[3]))
+
+    groups = []
+    for (y, m_key), grp in _groupby(rows, key=lambda r: (r[0], r[1])):
+        groups.append((y, m_key, list(grp)))
+    groups.sort(key=lambda g: (g[0], g[1]), reverse=True)
+
+    sections_html = ""
+    if not groups:
+        sections_html = '<p class="trend-index-empty">エントリがまだありません。</p>'
+    else:
+        for y, m_key, grp_rows in groups:
+            badge_html_list = []
+            for _, _, _, _, fname, is_weekly, short_label in reversed(grp_rows):
+                badge_cls = "weekly" if is_weekly else "daily"
+                badge_text = "週次" if is_weekly else "短評"
+                badge_html_list.append(
+                    f'<li class="trend-index-entry">'
+                    f'<span class="entry-badge {badge_cls}">{badge_text}</span>'
+                    f'<a href="{fname}">{short_label}</a>'
+                    f'</li>'
+                )
+            entries_inner = "\n".join(badge_html_list)
+            sections_html += (
+                f'<section class="trend-month-section">'
+                f'<h2 class="trend-month-title">{y}年{m_key}月</h2>'
+                f'<ul class="trend-index-list">{entries_inner}</ul>'
+                f'</section>\n'
+            )
 
     css_ver = _css_version()
     page_url = f"{SITE_URL}/trend/index.html"
@@ -485,7 +495,7 @@ def _update_index() -> None:
   <link rel="canonical" href="{page_url}">
 </head>
 <body>
-{site_nav_html(base_path="../")}
+{site_nav_html(base_path="../", current_path="trend/index.html")}
 <div class="content-wrapper">
   <main class="main-content">
     {breadcrumb_html([("ホーム", "../index.html"), ("傾向分析日記", "")])}
@@ -493,9 +503,9 @@ def _update_index() -> None:
       <h1>傾向分析日記</h1>
       <p class="page-desc">各開催日の馬場・荒れ度・AI予想成績の短評と、土日まとめの週次振り返りです。</p>
     </div>
-    <ul class="trend-index-list">
-{entries_html}
-    </ul>
+    <div class="trend-index-groups">
+{sections_html}
+    </div>
   </main>
   {_build_sidebar()}
 </div>

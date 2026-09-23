@@ -357,8 +357,15 @@ def _nested_crumbs_html(items, base_path="", current_class="page-calendar-tab-cu
     return rows
 
 
-def _get_trend_nav_links(base_path: str, n: int = 8) -> list:
-    """public_html/trend/ から最新n件の（ラベル, パス）リストを返す"""
+def _get_trend_nav_links(base_path: str) -> list:
+    """public_html/trend/ の全エントリを月別グループにまとめて返す。
+
+    Returns:
+        [{"header": "YYYY/MM", "entries": [(label, path), ...]}, ...]
+        最新月が先頭。月内は日付昇順、週次は土日の翌日扱いで両日の後に並ぶ。
+    """
+    from datetime import timedelta
+    from itertools import groupby as _groupby
     trend_dir = os.path.join(paths.PUBLIC_HTML_PATH, "trend")
     try:
         files = [
@@ -367,21 +374,36 @@ def _get_trend_nav_links(base_path: str, n: int = 8) -> list:
         ]
     except FileNotFoundError:
         return []
-    links = []
-    for fname in sorted(files, reverse=True)[:n]:
+
+    rows = []
+    for fname in files:
         is_weekly = fname.startswith("weekly_")
         date_key = fname.replace("weekly_", "").replace(".html", "")
         if len(date_key) != 8:
             continue
         try:
-            y, m, d_num = int(date_key[:4]), int(date_key[4:6]), int(date_key[6:8])
-            weekday = date(y, m, d_num).weekday()
-            wd = ["月", "火", "水", "木", "金", "土", "日"][weekday]
-            label = f"{m}/{d_num} 週次振り返り" if is_weekly else f"{m}/{d_num}（{wd}）"
+            y, m, d = int(date_key[:4]), int(date_key[4:6]), int(date_key[6:8])
+            sat = date(y, m, d)
         except (ValueError, IndexError):
             continue
-        links.append((label, f"trend/{fname}"))
-    return links
+        if is_weekly:
+            sun = sat + timedelta(days=1)
+            label = f"{m}/{d}~{sun.month}/{sun.day}振り返り"
+            sort_day, sort_type = sun.day, 1  # 日曜の後に並べる
+        else:
+            label = f"{m}/{d}短評"
+            sort_day, sort_type = d, 0
+        rows.append((y, m, sort_day, sort_type, label, f"trend/{fname}"))
+
+    rows.sort(key=lambda r: (r[0], r[1], r[2], r[3]))
+
+    groups = []
+    for (y, m), grp in _groupby(rows, key=lambda r: (r[0], r[1])):
+        header = f"{y}/{m:02d}"
+        entries = [(r[4], r[5]) for r in grp]
+        groups.append({"header": header, "entries": entries})
+    groups.sort(key=lambda g: g["header"], reverse=True)
+    return groups
 
 
 def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
@@ -414,15 +436,63 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
             is_active = True
         elif label == "傾向分析日記":
             is_current = breadcrumb_items is None and current_path == path
+            # 個別ページ（trend/YYYYMMDD.html 等）にいる場合も展開する
+            is_in_trend_detail = (
+                breadcrumb_items is None
+                and current_path is not None
+                and current_path.startswith("trend/")
+                and current_path != "trend/index.html"
+            )
+            is_active = is_current or is_in_trend_detail
             crumb = _crumb_item_html(label, None if is_current else path, base_path)
-            is_active = is_current
-            trend_links = _get_trend_nav_links(base_path)
-            if trend_links:
-                inner = "".join(
-                    f"<li>{_crumb_item_html(tl, tp, base_path)}</li>\n"
-                    for tl, tp in trend_links
-                )
-                nested_html = inner
+
+            if is_active:
+                # 現在ページの月キーを特定（個別ページ時のみ使用）
+                cur_month = ""
+                if is_in_trend_detail and current_path:
+                    cur_fname = current_path[len("trend/"):]
+                    date_key = cur_fname.replace("weekly_", "").replace(".html", "")
+                    if len(date_key) == 8:
+                        try:
+                            cur_month = f"{date_key[:4]}/{date_key[4:6]}"
+                        except Exception:
+                            pass
+
+                trend_groups = _get_trend_nav_links(base_path)
+                if trend_groups:
+                    inner = ""
+                    for grp in trend_groups:
+                        is_cur_month = is_in_trend_detail and grp["header"] == cur_month
+                        entries_html = ""
+                        for tl, tp in grp["entries"]:
+                            # 現在ページのエントリはリンクなし（現在地表示）
+                            is_cur_entry = (
+                                is_in_trend_detail
+                                and current_path is not None
+                                and tp == current_path
+                            )
+                            entry_path = None if is_cur_entry else tp
+                            entries_html += (
+                                f"<li>{_crumb_item_html(tl, entry_path, base_path)}</li>\n"
+                            )
+                        month_list = (
+                            f'<ul class="page-calendar-tab-sublevel">\n{entries_html}</ul>'
+                        )
+                        if is_in_trend_detail:
+                            # 個別ページ: 現在月はデフォルト展開、他は閉じる
+                            open_attr = " open" if is_cur_month else ""
+                        else:
+                            # index ページ: 全月デフォルト折りたたみ
+                            open_attr = ""
+                        inner += (
+                            f"<li><details{open_attr}>"
+                            f'<summary class="trend-month-header">{grp["header"]}</summary>'
+                            f"{month_list}"
+                            f"</details></li>\n"
+                        )
+                    nested_html = inner
+                else:
+                    nested_html = ""
             else:
                 nested_html = ""
         else:

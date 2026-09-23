@@ -1716,7 +1716,7 @@ footer p {
 
 .page-sidebar li {
   margin-bottom: 6px;
-  font-size: 0.9em;
+  font-size: 1em;
 }
 
 .page-sidebar a {
@@ -2318,6 +2318,29 @@ body.section-calendar .calendar-widget {
   border-left-color: var(--mar-section-trend);
 }
 
+/* 傾向分析日記の月ヘッダー — details/summary アコーディオン（全ページ共通） */
+.page-calendar-tab-location details {
+  margin-top: 4px;
+}
+.page-calendar-tab-location details > summary.trend-month-header {
+  display: block;
+  list-style: none;
+  font-weight: bold;
+  color: var(--mar-section-trend);
+  cursor: pointer;
+  user-select: none;
+  padding-left: 2px;
+}
+.page-calendar-tab-location details > summary.trend-month-header::-webkit-details-marker {
+  display: none;
+}
+.page-calendar-tab-location details > summary.trend-month-header::before {
+  content: "▶ ";
+}
+.page-calendar-tab-location details[open] > summary.trend-month-header::before {
+  content: "▼ ";
+}
+
 @media (max-width: 800px) {
   /* スマホ幅では常時の本文埋め込み（float）ではなく、ボタンで開く
      ポップアップ（ドロワー）にする。階層リストが長いページ（兄弟レース・
@@ -2522,12 +2545,26 @@ body.section-calendar .calendar-widget {
 .trend-md-table tbody tr:nth-child(even) { background: #f8f8f8; }
 .trend-md-table tbody tr:hover { background: #f0f0f0; }
 
-/* ナビ */
-.trend-nav-bottom { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border, #eee); }
-
-/* 一覧ページ */
+/* 一覧ページ — 月別グループ */
+.trend-index-groups { display: flex; flex-direction: column; gap: 2rem; }
+.trend-month-section {}
+.trend-month-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--mar-section-trend, #2e7d32);
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 2px solid var(--mar-section-trend, #2e7d32);
+}
 .trend-index-list { list-style: none; padding: 0; margin: 0; }
-.trend-index-entry { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border, #eee); }
+.trend-index-entry {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 8px; border-bottom: 1px solid var(--border, #eee);
+  transition: background 0.12s;
+}
+.trend-index-entry:hover { background: var(--hover-bg, #f5f5f5); }
+.trend-index-entry a { color: var(--text, #222); text-decoration: none; flex: 1; }
+.trend-index-entry a:hover { text-decoration: underline; }
 .entry-badge {
   display: inline-block; font-size: 0.75em; font-weight: 700; padding: 2px 7px;
   border-radius: 3px; color: #fff; white-space: nowrap;
