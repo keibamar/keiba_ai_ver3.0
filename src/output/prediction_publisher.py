@@ -122,7 +122,7 @@ def make_race_text(race_day, race_id):
         # 信頼度の出力
         tan_stars  = {"大": "★★★", "中": "★★", "小": "★"}.get(tan_lv, "")
         fuku_stars = {"大": "★★★", "中": "★★", "小": "★"}.get(fuku_lv, "")
-        f.write(f"\n単勝信頼度:{tan_lv}{tan_stars}  複勝信頼度:{fuku_lv}{fuku_stars}  (合意{n_agree}/{n_total})\n")
+        f.write(f"\n単勝信頼度:{tan_lv}{tan_stars}  複勝信頼度:{fuku_lv}{fuku_stars}\n")
         # タグの出力
         f.write("#MAR競馬予想\n")
         f.write("#競馬予想AI\n")
