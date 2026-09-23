@@ -5,6 +5,13 @@
   const MARKS  = ['', '◎', '〇', '▲', '△', '☆', '消'];
   const COLORS  = { '◎': '#e53935', '〇': '#1565c0', '▲': '#6a1b9a',
                     '△': '#2e7d32', '☆': '#f57c00', '消': '#999' };
+  const TINTS   = { '◎': 'rgba(229,57,53,0.18)', '〇': 'rgba(21,101,192,0.10)',
+                    '▲': 'rgba(21,101,192,0.10)', '△': 'rgba(21,101,192,0.10)',
+                    '☆': 'rgba(21,101,192,0.10)', '消': 'rgba(0,0,0,0.20)' };
+
+  function isWhiteBg(c) {
+    return c === 'white' || c === '#ffffff' || c === '#fff' || c === 'rgb(255, 255, 255)';
+  }
   // 元の raceTable ソート対象列インデックス（印列挿入前）
   const ORIG_SORT_IDXS = [1, 7, 9, 10, 11];
 
@@ -41,26 +48,28 @@
       .mark-dropdown button:hover { background: #f0f0f0; }
       .mark-dropdown .mark-clear { color: #bbb; font-weight: normal; }
 
-      /* 消: グレーアウト（背景・色はそのまま） */
-      tr[data-mark="消"] td { opacity: 0.4; }
+      /* 消: グレーアウト */
+      tr[data-mark="消"] td { opacity: 0.55; }
 
-      /* ◎: 上下に赤線 + 印セルに赤い左線（背景色は上書きしない） */
-      tr[data-mark="◎"] td {
-        box-shadow: inset 0 2px 0 #e53935, inset 0 -1px 0 #e53935;
-      }
-      tr[data-mark="◎"] .mark-cell {
-        box-shadow: inset 0 2px 0 #e53935, inset 0 -1px 0 #e53935, inset 4px 0 0 #e53935;
+      /* ◎: 薄い赤tint（偶数行グレーを上書き・枠番インラインスタイルは自動保持） */
+      tbody tr[data-mark="◎"] td { background-color: rgba(229, 57, 53, 0.18); }
+
+      /* 〇▲△☆: 薄い青tint（共通） */
+      tbody tr[data-mark="〇"] td, tbody tr[data-mark="▲"] td,
+      tbody tr[data-mark="△"] td, tbody tr[data-mark="☆"] td {
+        background-color: rgba(21, 101, 192, 0.10);
       }
 
-      /* 〇▲△☆: 上下に青線（共通） */
-      tr[data-mark="〇"] td, tr[data-mark="▲"] td,
-      tr[data-mark="△"] td, tr[data-mark="☆"] td {
-        box-shadow: inset 0 2px 0 #1565c0, inset 0 -1px 0 #1565c0;
-      }
-      tr[data-mark="〇"] .mark-cell, tr[data-mark="▲"] .mark-cell,
-      tr[data-mark="△"] .mark-cell, tr[data-mark="☆"] .mark-cell {
-        box-shadow: inset 0 2px 0 #1565c0, inset 0 -1px 0 #1565c0, inset 4px 0 0 #1565c0;
-      }
+      /* 人気列（rank-1/2/3）の色を保持 */
+      tbody tr[data-mark] td.rank-1 { background-color: yellow; }
+      tbody tr[data-mark] td.rank-2 { background-color: lightblue; }
+      tbody tr[data-mark] td.rank-3 { background-color: orange; }
+
+      /* AIスコア列の色を保持 */
+      tbody tr[data-mark] td.ai-score-col,
+      tbody tr[data-mark] td.ai-rank-col { background-color: #fbeef0; }
+      tbody tr[data-mark]:nth-child(even) td.ai-score-col,
+      tbody tr[data-mark]:nth-child(even) td.ai-rank-col { background-color: #f3d9de; }
     `;
     document.head.appendChild(s);
   }
@@ -113,8 +122,22 @@
   function applyMark(row, btn, mark) {
     row.dataset.mark    = mark || '';
     btn.textContent     = mark || '−';
-    btn.style.color     = mark ? (COLORS[mark] || '#333') : '#bbb';
+    btn.style.color     = !mark ? '#bbb' : (mark === '◎' ? COLORS['◎'] : '#333');
     btn.style.fontWeight = (mark && mark !== '消') ? 'bold' : 'normal';
+
+    // 白のインラインbg（人気4位以下など）をtintで上書き（初回に元の値を保存）
+    const tint = TINTS[mark] || null;
+    row.querySelectorAll('td').forEach(td => {
+      if (!td.hasAttribute('data-orig-bg')) {
+        td.dataset.origBg = td.style.backgroundColor;
+      }
+      const orig = td.dataset.origBg;
+      if (tint && isWhiteBg(orig)) {
+        td.style.backgroundColor = tint;
+      } else if (isWhiteBg(orig)) {
+        td.style.backgroundColor = orig; // 印なし→白に戻す
+      }
+    });
   }
 
   // ── ドロップダウン ────────────────────────────────────────
@@ -141,7 +164,7 @@
     MARKS.filter(m => m).forEach(m => {
       const item = document.createElement('button');
       item.textContent = m;
-      item.style.color = COLORS[m] || '#333';
+      item.style.color = m === '◎' ? COLORS['◎'] : '#333';
       item.addEventListener('click', e => { e.stopPropagation(); selectMark(m, btn, row, k); });
       dd.appendChild(item);
     });
