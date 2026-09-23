@@ -1097,6 +1097,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
   </script>
   <p class="back-to-top"><a href="#pageTop">&uarr; ページの先頭へ戻る</a></p>
   {footer}
+<script src="../../assets/js/race-marks.js"></script>
 </body>
 </html>
 """.format(
