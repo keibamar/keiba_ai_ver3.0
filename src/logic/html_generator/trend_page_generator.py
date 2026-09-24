@@ -303,7 +303,7 @@ def make_daily_trend_page(target_date: date, stats: dict, comment_text: str) -> 
 {site_nav_html(base_path="../", current_path=f"trend/{filename}")}
 <div class="content-wrapper">
   <main class="main-content">
-    {breadcrumb_html([("ホーム", "../index.html"), ("傾向分析日記", "index.html"), (title_date, "")])}
+    {breadcrumb_html([("傾向分析日記", "index.html"), (title_date, "")])}
     <article class="trend-article">
       <header class="trend-header">
         <div class="trend-date-badge">{title_date}（{weekday}）</div>
@@ -381,7 +381,7 @@ def make_weekly_trend_page(sat_date: date, sun_date: date,
 {site_nav_html(base_path="../", current_path=f"trend/{filename}")}
 <div class="content-wrapper">
   <main class="main-content">
-    {breadcrumb_html([("ホーム", "../index.html"), ("傾向分析日記", "index.html"), (f"{sat_label}週次", "")])}
+    {breadcrumb_html([("傾向分析日記", "index.html"), (f"{sat_label}週次", "")])}
     <article class="trend-article">
       <header class="trend-header">
         <div class="trend-date-badge weekly-badge">週次振り返り</div>
@@ -501,7 +501,7 @@ def _update_index() -> None:
 {site_nav_html(base_path="../", current_path="trend/index.html")}
 <div class="content-wrapper">
   <main class="main-content">
-    {breadcrumb_html([("ホーム", "../index.html"), ("傾向分析日記", "")])}
+    {breadcrumb_html([("傾向分析日記", "")])}
     <div class="page-header">
       <h1>傾向分析日記</h1>
       <p class="page-desc">各開催日の馬場・荒れ度・AI予想成績の短評と、土日まとめの週次振り返りです。</p>
