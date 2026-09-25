@@ -2022,23 +2022,30 @@ def make_race_card_html(date_str, place_id, target_id):
     _raw_race_day = datetime.strptime(date_str, "%Y%m%d").date()
     _df_raw = race_card_dataset_manager.get_race_cards(_raw_race_day, target_id)
 
+    # prediction_publisher.make_race_text() が生成するテキストファイルが存在する場合のみ
+    # 本命ボックスを表示する（未公開レースには表示しない）
+    from src.config import paths as _paths
+    _pred_txt = os.path.join(
+        _paths.RACE_PREDICTION_TEXT_PATH, date_str, f"{target_id}.txt"
+    )
+    _prediction_published = os.path.isfile(_pred_txt)
+
     # 本命馬のレポートを取得して理由テキストに使う
     _honmei_report = None
-    try:
-        from src.logic.betting.ticket_advisor import compute_consensus_confidence
-        _conf_tmp = compute_consensus_confidence(_df_raw)
-        _honmei_num = _conf_tmp.get("honmei")
-        if _honmei_num:
-            _honmei_name_row = _df_raw[_df_raw["馬番"].astype(str) == str(_honmei_num)]
-            if not _honmei_name_row.empty:
-                _honmei_name_tmp = str(_honmei_name_row.iloc[0]["馬名"])
-                _honmei_report = horse_report_generator.build_horse_report(
-                    _honmei_name_tmp, place_id, target_id, date_str
-                )
-    except Exception:
-        pass
-
-    confidence_html = build_confidence_html(_df_raw, _honmei_report)
+    if _prediction_published:
+        try:
+            from src.logic.betting.ticket_advisor import compute_consensus_confidence
+            _conf_tmp = compute_consensus_confidence(_df_raw)
+            _honmei_num = _conf_tmp.get("honmei")
+            if _honmei_num:
+                _honmei_name_row = _df_raw[_df_raw["馬番"].astype(str) == str(_honmei_num)]
+                if not _honmei_name_row.empty:
+                    _honmei_name_tmp = str(_honmei_name_row.iloc[0]["馬名"])
+                    _honmei_report = horse_report_generator.build_horse_report(
+                        _honmei_name_tmp, place_id, target_id, date_str
+                    )
+        except Exception:
+            pass
 
     # --- レース情報（コース・距離・馬場・クラス）を取得 ---
     race_info_dict = _get_race_info_dict(target_id)
@@ -2053,6 +2060,21 @@ def make_race_card_html(date_str, place_id, target_id):
     payout_table_html = generate_payout_table_html(returns_df)
 
     is_confirmed = not result_df.empty
+
+    # 本命ボックス: 公開済みなら表示、未公開かつ結果もない場合は案内を表示、
+    # 未公開かつ結果あり（過去レース）は非表示
+    if _prediction_published:
+        confidence_html = build_confidence_html(_df_raw, _honmei_report)
+    elif not is_confirmed:
+        confidence_html = (
+            '<div class="confidence-box" style="margin:10px 0 16px 0;padding:12px 16px;'
+            'border:2px solid #bbb;border-radius:8px;background:#f9f9f9;color:#888;'
+            'font-size:0.9em;">'
+            'AI予想（本命・信頼度）は発走約20分前に公開されます。'
+            '</div>'
+        )
+    else:
+        confidence_html = ""
 
     # 確定結果がある場合、人気・オッズを結果データで全馬上書き（重複防止）
     # 人気は中途半端なスクレイプで重複値が入ることがあるため、確定結果がある場合は必ず上書き
