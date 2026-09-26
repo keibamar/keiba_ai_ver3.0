@@ -765,7 +765,9 @@ def get_strategy(rtype: str, ground: str, clen: int, ap: float):
 # バックテスト実績(9/5〜9/6 70R):
 #   単勝大(9R): ROI 350%  複勝大(18R): ROI 143%
 
-_CONSENSUS_SCORE_COLS = ["v3_score", "score_hitrate", "score_value", "p_ai"]
+# 主軸: idx_mar（出馬表MAR列と同一スコア）、比較: idx_hitrate / idx_value / v3_score
+_CONSENSUS_SCORE_COLS = ["idx_mar", "idx_hitrate", "idx_value", "v3_score"]
+_CONSENSUS_PRIMARY    = "idx_mar"
 
 
 def compute_consensus_confidence(df: pd.DataFrame) -> dict:
@@ -773,19 +775,19 @@ def compute_consensus_confidence(df: pd.DataFrame) -> dict:
 
     Returns:
         {
-          "n_agree":          int,   # v3_score本命と一致するモデル数 (0〜3)
-          "n_total":          int,   # 比較対象モデル数 (v3_score以外)
-          "conf_v3":          float, # v3_score の 1位-2位スコア差
+          "n_agree":          int,   # idx_mar本命と一致するモデル数 (0〜3)
+          "n_total":          int,   # 比較対象モデル数 (idx_mar以外)
+          "conf_v3":          float, # idx_mar の 1位-2位スコア差を正規化（÷25）
           "tan_lv":           str,   # 単勝信頼度 "大"/"中"/"小"
           "fuku_lv":          str,   # 複勝信頼度 "大"/"中"/"小"
-          "honmei":           str|None,  # v3_score本命の馬番(文字列)
+          "honmei":           str|None,  # idx_mar本命の馬番(文字列)
           "rank1_per_model":  dict,  # {col: 馬番str}
         }
     """
     avail = [c for c in _CONSENSUS_SCORE_COLS if c in df.columns]
     _empty = {"n_agree": 0, "n_total": 0, "conf_v3": 0.0,
               "tan_lv": "小", "fuku_lv": "小", "honmei": None, "rank1_per_model": {}}
-    if "v3_score" not in avail:
+    if _CONSENSUS_PRIMARY not in avail:
         return _empty
 
     rank1_per_model = {}
@@ -796,17 +798,19 @@ def compute_consensus_confidence(df: pd.DataFrame) -> dict:
         best_idx = vals.idxmax()
         rank1_per_model[col] = str(int(float(df.loc[best_idx, "馬番"])))
 
-    if "v3_score" not in rank1_per_model:
+    if _CONSENSUS_PRIMARY not in rank1_per_model:
         return _empty
 
-    honmei  = rank1_per_model["v3_score"]
+    honmei  = rank1_per_model[_CONSENSUS_PRIMARY]
     n_agree = sum(1 for c, u in rank1_per_model.items()
-                  if c != "v3_score" and u == honmei)
-    n_total = len([c for c in avail if c != "v3_score"])
+                  if c != _CONSENSUS_PRIMARY and u == honmei)
+    n_total = len([c for c in avail if c != _CONSENSUS_PRIMARY])
 
-    v3_vals = pd.to_numeric(df["v3_score"], errors="coerce").fillna(0).values
-    order   = np.argsort(-v3_vals)
-    conf_v3 = float(v3_vals[order[0]] - v3_vals[order[1]]) if len(v3_vals) >= 2 else 0.0
+    # idx_mar は 0-100 の指数スケール。差を ÷25 して旧 conf_v3 相当の値に正規化
+    # （idx_mar 差5点 ≈ conf_v3 0.20 相当）
+    mar_vals = pd.to_numeric(df[_CONSENSUS_PRIMARY], errors="coerce").fillna(0).values
+    order    = np.argsort(-mar_vals)
+    conf_v3  = float(mar_vals[order[0]] - mar_vals[order[1]]) / 25.0 if len(mar_vals) >= 2 else 0.0
 
     if n_agree >= 2 and conf_v3 >= 0.20:
         tan_lv = "大"

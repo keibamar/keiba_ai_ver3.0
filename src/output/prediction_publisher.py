@@ -259,7 +259,7 @@ def _make_betting_text(race_card_df, race_info_df):
     fuku_icon = {"大": "★★★", "中": "★★", "小": "★"}[fuku_lv]
     conf_header = (
         f"── 信頼度  単勝:{tan_lv}{tan_icon}  複勝:{fuku_lv}{fuku_icon}"
-        f"  [合意{n_agree}/{n_total}  v3差={conf_v3:.3f}] ──"
+        f"  [合意{n_agree}/{n_total}  MAR差={conf_v3:.3f}] ──"
     )
 
     lines = [conf_header]
