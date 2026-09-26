@@ -396,11 +396,9 @@ def send_race_pred_with_betting(race_day, race_id, race_card_df, race_info_df):
         betting_text = f"推奨馬券なし（エラー: {e}）"
 
     # 実際に馬券が推奨された場合のみ True
-    # 「推奨馬券なし」「推奨なし」「見送り」のいずれかが含まれれば推奨なし
-    _NO_REC = ("推奨馬券なし", "推奨なし", "見送り")
+    # 単複推奨（★）または馬連/3連複推奨ヘッダーが存在する場合のみ推奨あり
     has_rec = (
-        not any(m in betting_text for m in _NO_REC)
-        or "── 馬連/3連複推奨" in betting_text
+        "── 馬連/3連複推奨" in betting_text
         or "推奨 ★" in betting_text
     )
 

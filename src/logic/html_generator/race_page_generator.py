@@ -2021,6 +2021,10 @@ def make_race_card_html(date_str, place_id, target_id):
     # Raw CSV（v3_score / score_hitrate / score_value / p_ai を含む）を信頼度計算に使う
     _raw_race_day = datetime.strptime(date_str, "%Y%m%d").date()
     _df_raw = race_card_dataset_manager.get_race_cards(_raw_race_day, target_id)
+    # idx_mar が未計算の場合は score から補完（当日レース・score列が存在する場合のみ）
+    if _raw_race_day <= date.today() and "idx_mar" not in _df_raw.columns and "score" in _df_raw.columns:
+        _df_raw = _df_raw.copy()
+        _df_raw["idx_mar"] = pd.to_numeric(_df_raw["score"], errors="coerce").apply(score_to_index)
 
     # prediction_publisher.make_race_text() が生成するテキストファイルが存在する場合のみ
     # 本命ボックスを表示する（未公開レースには表示しない）
