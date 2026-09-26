@@ -917,10 +917,12 @@ def _horse_comment_html(report, ai_index, rank, popularity,
     course_name_for_avg = NAME_LIST[place_id - 1] if place_id and 1 <= place_id <= len(NAME_LIST) else ""
     avg_ms = np.nan
     if scb is None:
-        sentences.append(
-            f"このコース・距離での出走は初めてで持ち時計がなく、"
-            f"コース適性は他データから推測するしかない点が評価を難しくする。"
-        )
+        # 過去走のある馬がこのコース未経験の場合のみ言及（初出走馬は全員条件が同じなので省略）
+        if recent5:
+            sentences.append(
+                f"このコース・距離での出走は初めてで持ち時計がなく、"
+                f"コース適性は他データから推測するしかない点が評価を難しくする。"
+            )
     else:
         t_str = scb.get("time_str", "-")
         scb_ground = scb.get("ground", "") or ground_now
@@ -1085,7 +1087,10 @@ def _horse_comment_html(report, ai_index, rank, popularity,
                 scb_g = scb.get("ground", "")
                 fallback_parts.append(f"持ち時計{scb['time_str']}（{scb_g}）")
             if not fallback_parts:
-                fallback_parts.append("過去成績とタイムの総合評価")
+                if not recent5:
+                    fallback_parts.append("初出走のため過去成績なし（血統・能力値から評価）")
+                else:
+                    fallback_parts.append("過去成績とタイムの総合評価")
             reasons = fallback_parts
         sentences.append(
             f"{'・'.join(high_ranks)}でモデル高評価。"
