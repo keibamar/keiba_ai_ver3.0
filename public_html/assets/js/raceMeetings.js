@@ -1888,5 +1888,41 @@ window.raceMeetings = {
       "race_card_url": "races/20260927/06_nakayamaR11.html",
       "grade": "G1"
     }
+  ],
+  "20261003": [
+    {
+      "place_name": "京都",
+      "race_name": "オパールS",
+      "times": 4,
+      "day_number": 1,
+      "race_card_url": "races/20261003/08_kyotoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "東京",
+      "race_name": "グリーンチャンネルC",
+      "times": 4,
+      "day_number": 1,
+      "race_card_url": "races/20261003/05_tokyoR11.html",
+      "grade": null
+    }
+  ],
+  "20261004": [
+    {
+      "place_name": "京都",
+      "race_name": "京都大賞典",
+      "times": 4,
+      "day_number": 2,
+      "race_card_url": "races/20261004/08_kyotoR11.html",
+      "grade": "G2"
+    },
+    {
+      "place_name": "東京",
+      "race_name": "毎日王冠",
+      "times": 4,
+      "day_number": 2,
+      "race_card_url": "races/20261004/05_tokyoR11.html",
+      "grade": "G2"
+    }
   ]
 };
