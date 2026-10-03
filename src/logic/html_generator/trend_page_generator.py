@@ -308,7 +308,7 @@ def make_daily_trend_page(target_date: date, stats: dict, comment_text: str) -> 
       <header class="trend-header">
         <div class="trend-date-badge">{title_date}（{weekday}）</div>
         <h1 class="trend-title">傾向短評 — {venue_names}</h1>
-        <p class="trend-generated-at">生成日時: {datetime.now().strftime("%Y年%m月%d日 %H:%M")}</p>
+        <p class="trend-generated-at">更新日時: {datetime.now().strftime("%Y年%m月%d日 %H:%M")}</p>
       </header>
       {stats_html}
       {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
@@ -386,7 +386,7 @@ def make_weekly_trend_page(sat_date: date, sun_date: date,
       <header class="trend-header">
         <div class="trend-date-badge weekly-badge">週次振り返り</div>
         <h1 class="trend-title">{sat_label}〜{sun_label}</h1>
-        <p class="trend-generated-at">生成日時: {datetime.now().strftime("%Y年%m月%d日 %H:%M")}</p>
+        <p class="trend-generated-at">更新日時: {datetime.now().strftime("%Y年%m月%d日 %H:%M")}</p>
       </header>
 
       <section class="trend-day-section">
