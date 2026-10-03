@@ -1050,9 +1050,9 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
         # ①③回収率重視: 単複=v12n / 3連複=v12n
         s_tan_val = _mm_norm(s_v12n)
         s_san_val = _mm_norm(s_v12n)
-        # ④MAR推奨: 単複=v11n / 3連複=v12α0.4
+        # ④MAR推奨: 単複=v11n / 3連複=v12n（両方オッズなし）
         s_tan_mar = _mm_norm(s_v11n)
-        s_san_mar = _mm_blend(s_v12, s_v7, 0.4)
+        s_san_mar = _mm_norm(s_v12n)
 
         # ── 統合スコア → ランク・指数 ──
         def _to_rank_idx(s_tan, s_san):
