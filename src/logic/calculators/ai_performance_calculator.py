@@ -403,9 +403,10 @@ def get_week_main_races_with_course(today=None):
     today = today or date.today()
     sunday = current_schedule_weekend_end(today)
     saturday = sunday - timedelta(days=1)
+    monday = sunday + timedelta(days=1)
 
     races = []
-    for day in (saturday, sunday):
+    for day in (saturday, sunday, monday):
         races.extend(get_today_main_races_with_course(day))
     return races
 
@@ -487,9 +488,10 @@ def get_current_meeting_summaries(today=None):
     today = today or date.today()
     sunday = current_meeting_reference_day(today)
     saturday = sunday - timedelta(days=1)
+    monday = sunday + timedelta(days=1)
 
     meetings_by_key = {}
-    for day in (saturday, sunday):
+    for day in (saturday, sunday, monday):
         for meeting in get_current_meetings(day):
             meetings_by_key[(meeting["place_id"], meeting["times"])] = meeting
     if not meetings_by_key:
@@ -499,7 +501,7 @@ def get_current_meeting_summaries(today=None):
     summaries = []
     for place_id, times in sorted(meetings_by_key):
         days = []
-        for day in (saturday, sunday):
+        for day in (saturday, sunday, monday):
             match = calendar[
                 (calendar["course"].astype(int) == place_id)
                 & (calendar["times"].astype(int) == times)

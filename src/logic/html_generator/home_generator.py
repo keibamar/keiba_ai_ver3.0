@@ -298,6 +298,15 @@ def home_template(target_date=None):
     current_meetings = calc.get_current_meetings(calc.current_meeting_reference_day(today))
     weekly_meetings = calc.get_current_meeting_summaries(today)
     week_main_races = calc.get_week_main_races_with_course(today)
+    # 月曜開催の判定：開催カレンダー(weekly_meetings)を優先（出馬表未公開でも正しく動く）
+    has_monday_race = any(
+        d["day_date"].weekday() == 0
+        for s in weekly_meetings
+        for d in s.get("days", [])
+    ) or any(
+        r.get("race_day") and r["race_day"].weekday() == 0
+        for r in week_main_races
+    )
 
     # 開催結果・確定配当の反映には数日かかるため、週末（土日）が終わった直後
     # （月〜火）はまだその週末を「先週の結果」とみなさず、1つ前の週末を指す
@@ -325,14 +334,14 @@ def home_template(target_date=None):
     <div class="home-concept">
       <p class="home-concept-tagline">血統データと走破時計から勝ち馬を導く競馬予想AI</p>
       <div class="home-concept-chips">
-        <span class="concept-chip">毎週土日 更新</span>
+        <span class="concept-chip">{"毎週土日祝 更新" if has_monday_race else "毎週土日 更新"}</span>
         <span class="concept-chip">全成績 公開</span>
         <span class="concept-chip">3モデル 搭載</span>
       </div>
       <p class="home-concept-desc">JRAの過去レースデータで学習したAIが出馬表を分析。予想成績・コース傾向データを無料公開しています。<a href="about.html">AIの仕組みを見る &rarr;</a></p>
     </div>
 
-    <h2>今週の開催</h2>
+    <h2>今週の開催{"（土日月・3日間）" if has_monday_race else ""}</h2>
     {_weekly_meeting_summary_html(weekly_meetings)}
 
     {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
