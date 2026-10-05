@@ -17,6 +17,7 @@ if PROJECT_ROOT not in sys.path:
 from datetime import date, timedelta
 
 from src.logic.analytics import trend_analyzer
+from src.managers import race_schedule_dataset_manager
 from src.logic.text_generator import trend_text_generator
 from src.logic.html_generator import trend_page_generator
 
@@ -59,4 +60,7 @@ if __name__ == "__main__":
         d = date(int(ds[:4]), int(ds[4:6]), int(ds[6:8]))
     else:
         d = date.today()
+    if not race_schedule_dataset_manager.get_daily_id(0, d):
+        print(f"{d} は開催なし。スキップします。")
+        sys.exit(0)
     run(d)

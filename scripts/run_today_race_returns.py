@@ -24,11 +24,14 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from src.logic.html_generator import race_page_generator  # noqa: E402
-from src.managers import ai_performance_dataset_manager  # noqa: E402
+from src.managers import ai_performance_dataset_manager, race_schedule_dataset_manager  # noqa: E402
 from src.output import highlight_report, return_report  # noqa: E402
 
 if __name__ == "__main__":
     race_day = date.today()
+    if not race_schedule_dataset_manager.get_daily_id(0, race_day):
+        print(f"{race_day} は開催なし。スキップします。")
+        sys.exit(0)
     return_report.post_daily_race_returns(race_day)
     race_page_generator.make_daily_race_card_html(race_day)
     # 確定した予想結果をAI成績データセットに反映する（次回のAI成績ページ再生成（水曜）で使われる）

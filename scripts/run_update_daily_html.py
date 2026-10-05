@@ -20,7 +20,12 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from src.logic.scheduler import race_day_scheduler  # noqa: E402
+from src.managers import race_schedule_dataset_manager  # noqa: E402
 
 if __name__ == "__main__":
-    race_day_scheduler.update_daily_html(date.today())
+    today = date.today()
+    if not race_schedule_dataset_manager.get_daily_id(0, today):
+        print(f"{today} は開催なし。スキップします。")
+        sys.exit(0)
+    race_day_scheduler.update_daily_html(today)
     print("Update Daily Html Done")
