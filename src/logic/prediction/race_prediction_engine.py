@@ -858,12 +858,24 @@ _mm_model_cache: dict = {}
 _mm_ped_vocab = None
 
 
+_MM_SUFFIX_FALLBACK = {
+    "_v7_no26":  "_v7odds_binary_no26",
+    "_v11_no26": "_v11feat_no26",
+    "_v12_no26": "_v12feat_no26",
+    "_v15_no26": "_v15pace_no26",
+}
+
+
 def _mm_get_model(place_id, race_type, length, suffix):
     key = (place_id, race_type, length, suffix)
     if key not in _mm_model_cache:
         type_str = "turf" if race_type == "芝" else "dirt"
         mp = os.path.join(paths.PREDICTION_MODEL_PATH, PLACE_LIST[place_id - 1],
                           f"{type_str}{length}_lambdarank_model{suffix}.txt")
+        if not os.path.isfile(mp) and suffix in _MM_SUFFIX_FALLBACK:
+            alt = _MM_SUFFIX_FALLBACK[suffix]
+            mp = os.path.join(paths.PREDICTION_MODEL_PATH, PLACE_LIST[place_id - 1],
+                              f"{type_str}{length}_lambdarank_model{alt}.txt")
         if not os.path.isfile(mp):
             raise FileNotFoundError(mp)
         _mm_model_cache[key] = lgb.Booster(model_file=mp)
@@ -1040,7 +1052,6 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
             m = _mm_get_model(place_id, race_type, course_len, suffix)
             return m.predict(df_nodds[cols], num_iteration=m.best_iteration)
 
-        s_v11n = _score_n("_v11nodds_no26", _MM_V11N_COLS)
         s_v12n = _score_n("_v12nodds_no26", _MM_V12N_COLS)
 
         # ── 戦略ブレンドスコア ──
@@ -1050,9 +1061,6 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
         # ①③回収率重視: 単複=v12n / 3連複=v12n
         s_tan_val = _mm_norm(s_v12n)
         s_san_val = _mm_norm(s_v12n)
-        # ④MAR推奨: 単複=v11n / 3連複=v12n（両方オッズなし）
-        s_tan_mar = _mm_norm(s_v11n)
-        s_san_mar = _mm_norm(s_v12n)
 
         # ── 統合スコア → ランク・指数 ──
         def _to_rank_idx(s_tan, s_san):
@@ -1064,7 +1072,9 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
 
         idx_hr,  rnk_hr  = _to_rank_idx(s_tan_hr,  s_san_hr)
         idx_val, rnk_val = _to_rank_idx(s_tan_val, s_san_val)
-        idx_mar, rnk_mar = _to_rank_idx(s_tan_mar, s_san_mar)
+        # ④MAR推奨: hit40%+val60%ブレンド（同スケールidx同士を直接合成）
+        idx_mar = [round(0.4 * h + 0.6 * v, 1) for h, v in zip(idx_hr, idx_val)]
+        rnk_mar = rank_index(idx_mar)
 
         return pd.DataFrame({
             "idx_hitrate":  idx_hr,
