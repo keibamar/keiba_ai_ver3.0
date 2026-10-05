@@ -1,4 +1,4 @@
-﻿
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -28,7 +28,7 @@
     gtag('config', 'G-DNC949064T');
   </script>
   <title>2026/09/06 中山競馬場 第1R 3歳以上障害未勝利</title>
-  <link rel="stylesheet" href="../../assets/css/styles.css?v=1787784440">
+  <link rel="stylesheet" href="../../assets/css/styles.css?v=1791227842">
   <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
   <style>
     body {
@@ -232,6 +232,7 @@
       border: 1px solid #ddd;
       border-radius: 5px;
       background-color: #fff;
+      overflow-x: hidden;
     }
     .horse-report-toggle {
       cursor: pointer;
@@ -265,6 +266,14 @@
     .horse-report-content.open {
       display: block;
     }
+    /* 本命・推奨度ボックス: overflow:hidden でBFCを生成し、float:rightのサイドバーの
+       下に潜り込まないようにする（BFCなしだとボーダー/背景がfloatエリアに重なる）。
+       max-width はモバイルでbodyが広がった場合のビューポート幅上限。 */
+    .confidence-box {
+      overflow: hidden;
+      max-width: calc(100vw - 40px);
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
@@ -295,7 +304,7 @@
   <div id="todayRace"></div>
 </div>
 <script>window.CALENDAR_BASE_PATH = "../../";</script>
-<script src="../../assets/js/raceDays.js?v=1788433658"></script>
+<script src="../../assets/js/raceDays.js?v=1790852864"></script>
 <script src="../../assets/js/calendar.js?v=1782765283"></script>
 
   </div>
@@ -339,7 +348,7 @@
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000004"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -487,7 +496,7 @@
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000001"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -708,16 +717,16 @@
     </div>
     
   <div class="book-recommendation">
-      <p class="book-recommendation-title">📚 競馬の教科書 発想を変えるだけで回収率は上がる</p>
-      <p class="book-recommendation-note">能力比較と馬場読みに絞った発想転換で回収率を上げる考え方。</p>
-      <p class="book-recommendation-links"><a href="https://www.amazon.co.jp/dp/4801490719?tag=markeiba-22" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--amazon">競馬の教科書 発想を変えるだけで回収率は上がる（Amazon）</a> / <a href="https://hb.afl.rakuten.co.jp/ichiba/5556cb6e.528eef31.5556cb6f.fd56d27f/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Frakutenkobo-ebooks%2Ff5665ec99d8d39df8143d22e0ef75be3%2F" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--rakuten">競馬の教科書 発想を変えるだけで回収率は上がる（楽天市場）</a></p>
+      <p class="book-recommendation-title">📚 亀谷敬正の競馬血統辞典</p>
+      <p class="book-recommendation-note">血統分析の定番シリーズ第1作。</p>
+      <p class="book-recommendation-links"><a href="https://www.amazon.co.jp/dp/4801490646?tag=markeiba-22" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--amazon">亀谷敬正の競馬血統辞典（Amazon）</a> / <a href="https://hb.afl.rakuten.co.jp/ichiba/5556cac6.a0533177.5556cac7.0a45b379/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fvaboo%2Fva0646149480u20%2F" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--rakuten">亀谷敬正の競馬血統辞典（楽天市場）</a></p>
     </div>
 
   <div class="ad-unit">
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000002"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -1006,7 +1015,7 @@
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000003"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -1052,8 +1061,8 @@
     </style>
     
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_0_1')">
-                <span>🐎 [1枠1番] ヴェストラン</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_0_1')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [1枠1番] ヴェストラン </span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_0_1">
@@ -1179,7 +1188,7 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:54.6</td>
 <td>2.4</td>
-<td style="color: black; font-weight: bold;">0.84</td>
+<td style="color: black; font-weight: bold;">0.85</td>
 <td>40.1</td>
 <td>9-9-10-7</td>
 <td>446</td>
@@ -1231,21 +1240,21 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_1_2')">
-                <span>🐎 [2枠2番] エーオーキング</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_1_2')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [2枠2番] エーオーキング </span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_1_2">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
 <div class="horse-comment-wrap">
-<ul class="horse-comment"><li>父リアルスティールのこのコース勝率は20.0%（1勝/5走）と高く、血統面での適性は申し分ない。（参考：母数5件と少ないため信頼性に注意）</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li></ul>
+<ul class="horse-comment"><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li></ul>
 
 </div>
 <h4>血統: 父 <strong>リアルスティール</strong> / 母父 <strong>タイキシャトル</strong></h4>
 <h4>🧬 中山 障害2880m (稍重)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">リアルスティール</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:20.00%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 20.0%</span></span><span class="chakudo-segment seg-2nd" style="width:20.00%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 40.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 40.0%</span></span><span class="chakudo-segment seg-out" style="width:60.00%">3<span class="chakudo-tooltip">着外 3回 ／ 着外率 60.0%</span></span></span><span class="chakudo-value">n=5</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">リアルスティール</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:16.67%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 16.7%</span></span><span class="chakudo-segment seg-2nd" style="width:16.67%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 33.3%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 33.3%</span></span><span class="chakudo-segment seg-out" style="width:66.67%">4<span class="chakudo-tooltip">着外 4回 ／ 着外率 66.7%</span></span></span><span class="chakudo-value">n=6</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
@@ -1410,21 +1419,21 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_2_3')">
-                <span>🐎 [3枠3番] グロッシェン</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_2_3')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [3枠3番] グロッシェン </span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_2_3">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
 <div class="horse-comment-wrap">
-<ul class="horse-comment"><li>前走は道悪だったが今回は良馬場。本来の力を発揮できる条件かどうかに注目。</li><li>父ニューイヤーズデイのこのコース出走数は3件と少なく、血統面の適性を判断するにはデータ不足。</li><li>過去のダートレースでの平均上り37.1秒はnan水準では優秀で、末脚が武器になるタイプ。上りが問われる展開なら強み。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li><li>近5走の着順が上向き傾向（平均7.8着）で、充実期にある可能性が高い。</li></ul>
+<ul class="horse-comment"><li>前走は道悪だったが今回は良馬場。本来の力を発揮できる条件かどうかに注目。</li><li>父ニューイヤーズデイのこのコース勝率は25.0%（1勝/4走）と高く、血統面での適性は申し分ない。（参考：母数4件と少ないため信頼性に注意）</li><li>過去のダートレースでの平均上り37.1秒はnan水準では優秀で、末脚が武器になるタイプ。上りが問われる展開なら強み。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li><li>近5走の着順が上向き傾向（平均7.8着）で、充実期にある可能性が高い。</li></ul>
 
 </div>
 <h4>血統: 父 <strong>ニューイヤーズデイ</strong> / 母父 <strong>ステイゴールド</strong></h4>
 <h4>🧬 中山 障害2880m (稍重)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ニューイヤーズデイ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 0.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 0.0%</span></span><span class="chakudo-segment seg-out" style="width:100.00%">3<span class="chakudo-tooltip">着外 3回 ／ 着外率 100.0%</span></span></span><span class="chakudo-value">n=3</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ニューイヤーズデイ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:25.00%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 25.0%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 25.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 25.0%</span></span><span class="chakudo-segment seg-out" style="width:75.00%">3<span class="chakudo-tooltip">着外 3回 ／ 着外率 75.0%</span></span></span><span class="chakudo-value">n=4</span></div>
 </div>
 <h4>📊 近5走成績</h4>
 <div class="table-wrap">
@@ -1589,8 +1598,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_3_4')">
-                <span>🐎 [4枠4番] シグムンド</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_3_4')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [4枠4番] シグムンド </span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_3_4">
@@ -1647,7 +1656,7 @@
 <td style="background-color:#e8e8e8;">稍重</td>
 <td>1:54.0</td>
 <td>1.3</td>
-<td style="color: black; font-weight: bold;">0.83</td>
+<td style="color: black; font-weight: bold;">0.95</td>
 <td>39.6</td>
 <td>5-5-4-4</td>
 <td>512</td>
@@ -1768,8 +1777,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_4_5')">
-                <span>🐎 [5枠5番] スラッシュ</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_4_5')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [5枠5番] スラッシュ </span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_4_5">
@@ -1947,8 +1956,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_5_6')">
-                <span>🐎 [6枠6番] エンジョイドライブ</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_5_6')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [6枠6番] エンジョイドライブ </span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_5_6">
@@ -2126,8 +2135,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_6_7')">
-                <span>🐎 [7枠7番] ベラトール</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_6_7')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [7枠7番] ベラトール </span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_6_7">
@@ -2422,12 +2431,15 @@
   <footer>
     <p class="site-footer-brand">&copy; MAR(まーる) 競馬AIデータサイト</p>
     <p class="site-footer-disclaimer">本サイトの予想・データは参考情報です。的中や回収を保証するものではありません。実際の購入は自己責任でお願いします。</p>
-    <p class="site-footer-updated">データ最終更新: 2026/09/09</p>
+    <p class="site-footer-updated">データ最終更新: 2026/10/06</p>
+    <div class="a8-program-recommendation">
+      <p class="a8-program-title">🔗 おすすめサービス</p>
+      <p class="a8-program-item"><a href="https://px.a8.net/svt/ejp?a8mat=4B684D+EPADKI+50+2HGLCX" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--a8">お名前.com</a> <span class="a8-program-note">国内シェアNo.1の独自ドメイン取得サービス。</span></p>
+    </div>
     <p class="site-footer-links">
       <a href="../../about.html">このサイトについて</a>
       <a href="../../privacy.html">プライバシーポリシー</a>
       <a href="../../terms.html">利用規約</a>
-      <a href="../../contact.html">お問い合わせ</a>
     </p>
   </footer>
 <script src="../../assets/js/race-marks.js"></script>

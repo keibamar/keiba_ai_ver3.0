@@ -1,4 +1,4 @@
-﻿
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -28,7 +28,7 @@
     gtag('config', 'G-DNC949064T');
   </script>
   <title>2026/06/14 函館競馬場 第9R 八雲特別</title>
-  <link rel="stylesheet" href="../../assets/css/styles.css">
+  <link rel="stylesheet" href="../../assets/css/styles.css?v=1791227842">
   <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
   <style>
     body {
@@ -232,6 +232,7 @@
       border: 1px solid #ddd;
       border-radius: 5px;
       background-color: #fff;
+      overflow-x: hidden;
     }
     .horse-report-toggle {
       cursor: pointer;
@@ -265,6 +266,14 @@
     .horse-report-content.open {
       display: block;
     }
+    /* 本命・推奨度ボックス: overflow:hidden でBFCを生成し、float:rightのサイドバーの
+       下に潜り込まないようにする（BFCなしだとボーダー/背景がfloatエリアに重なる）。
+       max-width はモバイルでbodyが広がった場合のビューポート幅上限。 */
+    .confidence-box {
+      overflow: hidden;
+      max-width: calc(100vw - 40px);
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
@@ -295,7 +304,7 @@
   <div id="todayRace"></div>
 </div>
 <script>window.CALENDAR_BASE_PATH = "../../";</script>
-<script src="../../assets/js/raceDays.js?v=1784804879"></script>
+<script src="../../assets/js/raceDays.js?v=1790852864"></script>
 <script src="../../assets/js/calendar.js?v=1782765283"></script>
 
   </div>
@@ -327,6 +336,7 @@
 </ul></li>
 <li><span class="nav-icon">🏟️</span> <a href="../../courses/index.html">コース詳細データ</a></li>
 <li><span class="nav-icon">📊</span> <a href="../../performance/index.html">AI成績</a></li>
+<li><span class="nav-icon">📓</span> <a href="../../trend/index.html">傾向分析日記</a></li>
 </ul></li>
 
   </ul>
@@ -338,7 +348,7 @@
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000004"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -531,7 +541,7 @@
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000001"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -813,16 +823,16 @@
     </div>
     
   <div class="book-recommendation">
-      <p class="book-recommendation-title">📚 亀谷敬正の競馬血統辞典2</p>
-      <p class="book-recommendation-note">血統分析の定番シリーズ最新作。AI予想でも使っている血統データの読み解き方の参考に。</p>
-      <p class="book-recommendation-links"><a href="https://www.amazon.co.jp/dp/4801490867?tag=markeiba-22" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--amazon">亀谷敬正の競馬血統辞典2（Amazon）</a> / <a href="https://hb.afl.rakuten.co.jp/ichiba/34d56027.4cd7e36e.34d56028.7817ac3c/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fbook%2F18602254%2F" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--rakuten">亀谷敬正の競馬血統辞典2（楽天市場）</a></p>
+      <p class="book-recommendation-title">📚 亀谷敬正の競馬血統辞典</p>
+      <p class="book-recommendation-note">血統分析の定番シリーズ第1作。</p>
+      <p class="book-recommendation-links"><a href="https://www.amazon.co.jp/dp/4801490646?tag=markeiba-22" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--amazon">亀谷敬正の競馬血統辞典（Amazon）</a> / <a href="https://hb.afl.rakuten.co.jp/ichiba/5556cac6.a0533177.5556cac7.0a45b379/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fvaboo%2Fva0646149480u20%2F" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--rakuten">亀谷敬正の競馬血統辞典（楽天市場）</a></p>
     </div>
 
   <div class="ad-unit">
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000002"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -1238,7 +1248,7 @@
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000003"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -1284,8 +1294,8 @@
     </style>
     
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_0_1')">
-                <span>🐎 [1枠1番] サウンドサンライズ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;42.8<sub style='font-size:0.65em;color:#888;'>(8)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;42.3<sub style='font-size:0.65em;color:#888;'>(8)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;44.7<sub style='font-size:0.65em;color:#888;'>(9)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_0_1')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [1枠1番] サウンドサンライズ <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;42.8<sub style='font-size:0.65em;color:#888;'>(8)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;42.3<sub style='font-size:0.65em;color:#888;'>(8)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;44.7<sub style='font-size:0.65em;color:#888;'>(9)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_0_1">
@@ -1324,7 +1334,7 @@
 <td>34.9</td>
 <td>17-17-17-17</td>
 <td>410</td>
-<td style="font-weight:normal;">-0.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
+<td style="font-weight:normal;">40.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1347,7 +1357,7 @@
 <td>-</td>
 <td>7-3-14-15</td>
 <td>420</td>
-<td style="font-weight:normal;">-1.1<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
+<td style="font-weight:normal;">38.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1366,11 +1376,11 @@
 <td style="background-color:#e8e8e8;">稍重</td>
 <td>1:50.4</td>
 <td>0.8</td>
-<td style="color: black; font-weight: bold;">0.87</td>
+<td style="color: black; font-weight: bold;">1.0</td>
 <td>35.8</td>
 <td>7-8-10-10</td>
 <td>418</td>
-<td style="background-color:#FFF176;font-weight:bold;">2.4<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">74.5<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1389,11 +1399,11 @@
 <td style="background-color:#ffffff;">良</td>
 <td>2:00.4</td>
 <td>0.0</td>
-<td style="color: red; font-weight: bold;">-0.53</td>
+<td style="color: red; font-weight: bold;">-0.47</td>
 <td>35.5</td>
 <td>2-2-2-1</td>
 <td>412</td>
-<td style="font-weight:normal;">-1.6<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">33.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1464,8 +1474,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_1_2')">
-                <span>🐎 [2枠2番] ゼアズノープレイス<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;40.6<sub style='font-size:0.65em;color:#888;'>(10)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;40.9<sub style='font-size:0.65em;color:#888;'>(10)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;44.6<sub style='font-size:0.65em;color:#888;'>(10)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_1_2')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [2枠2番] ゼアズノープレイス <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;40.6<sub style='font-size:0.65em;color:#888;'>(10)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;40.9<sub style='font-size:0.65em;color:#888;'>(10)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;44.6<sub style='font-size:0.65em;color:#888;'>(10)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_1_2">
@@ -1504,7 +1514,7 @@
 <td>35.4</td>
 <td>14-14-14-14</td>
 <td>502</td>
-<td style="background-color:#FFF176;font-weight:bold;">0.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">53.4<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(3)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1550,7 +1560,7 @@
 <td>35.4</td>
 <td>10-10-10-9</td>
 <td>518</td>
-<td style="font-weight:normal;">-2.1<sub style="font-size:0.65em;color:#888;font-weight:bold;">(12)</sub></td>
+<td style="font-weight:normal;">28.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(12)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1573,7 +1583,7 @@
 <td>36.4</td>
 <td>7-7-8-6</td>
 <td>518</td>
-<td style="font-weight:normal;">-1.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(13)</sub></td>
+<td style="font-weight:normal;">37.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(13)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1644,8 +1654,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_2_3')">
-                <span>🐎 [3枠3番] ハミルトン<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;48.8<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.9<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;46.3<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_2_3')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [3枠3番] ハミルトン <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;48.8<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.9<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;46.3<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_2_3">
@@ -1707,7 +1717,7 @@
 <td>39.1</td>
 <td>2-2</td>
 <td>510</td>
-<td style="font-weight:normal;">-0.2<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="font-weight:normal;">47.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1726,11 +1736,11 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:47.1</td>
 <td>0.6</td>
-<td style="color: black; font-weight: bold;">1.03</td>
+<td style="color: black; font-weight: bold;">1.08</td>
 <td>38.8</td>
 <td>2-2-1-1</td>
 <td>510</td>
-<td style="background-color:#FFF176;font-weight:bold;">0.0<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">50.1<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1753,7 +1763,7 @@
 <td>38.1</td>
 <td>4-4-4-3</td>
 <td>510</td>
-<td style="background-color:#FFF176;font-weight:bold;">0.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">56.0<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1776,7 +1786,7 @@
 <td>38.0</td>
 <td>1-1-1-1</td>
 <td>514</td>
-<td style="font-weight:normal;">-0.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
+<td style="font-weight:normal;">49.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1824,8 +1834,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_3_4')">
-                <span>🐎 [4枠4番] コスモナエマ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;51.8<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;48.4<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span><span style="background:#FFA726;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;52.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_3_4')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [4枠4番] コスモナエマ <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;51.8<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;48.4<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span><span style="background:#FFA726;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;52.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_3_4">
@@ -1860,7 +1870,7 @@
 <td style="background-color:#b0b0b0;">重</td>
 <td>2:02.2</td>
 <td>-0.2</td>
-<td style="color: red; font-weight: bold;">-1.19</td>
+<td style="color: red; font-weight: bold;">-1.03</td>
 <td>36.6</td>
 <td>1-1-1-1</td>
 <td>480</td>
@@ -1883,7 +1893,7 @@
 <td style="background-color:#e8e8e8;">稍重</td>
 <td>2:03.8</td>
 <td>0.7</td>
-<td style="color: black; font-weight: bold;">0.92</td>
+<td style="color: black; font-weight: bold;">0.79</td>
 <td>36.3</td>
 <td>5-5-5-4</td>
 <td>480</td>
@@ -1906,11 +1916,11 @@
 <td style="background-color:#e8e8e8;">稍重</td>
 <td>2:06.7</td>
 <td>0.1</td>
-<td style="color: black; font-weight: bold;">3.2</td>
+<td style="color: black; font-weight: bold;">3.38</td>
 <td>37.0</td>
 <td>8-8-2-2</td>
 <td>486</td>
-<td style="font-weight:normal;">0.2<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="font-weight:normal;">52.2<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1929,11 +1939,11 @@
 <td style="background-color:#ffffff;">良</td>
 <td>2:02.3</td>
 <td>0.7</td>
-<td style="color: orange; font-weight: bold;">0.18</td>
+<td style="color: black; font-weight: bold;">0.34</td>
 <td>37.2</td>
 <td>7-6-2-2</td>
 <td>478</td>
-<td style="font-weight:normal;">-2.4<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
+<td style="font-weight:normal;">25.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -2004,8 +2014,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_4_5')">
-                <span>🐎 [5枠5番] モンローウォーク<span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;73.4<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span><span style="background:#FFA726;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;55.5<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span><span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;77.1<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_4_5')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [5枠5番] モンローウォーク <span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;73.4<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span><span style="background:#FFA726;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;55.5<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span><span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;77.1<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_4_5">
@@ -2040,11 +2050,11 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:35.5</td>
 <td>-0.5</td>
-<td style="color: red; font-weight: bold;">-0.53</td>
+<td style="color: red; font-weight: bold;">-0.56</td>
 <td>33.9</td>
 <td>1-1</td>
 <td>430</td>
-<td style="background-color:#FFF176;font-weight:bold;">0.1<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">50.5<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -2092,8 +2102,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_5_6')">
-                <span>🐎 [6枠6番] ナムラヒナギク<span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;57.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;57.2<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;53.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_5_6')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [6枠6番] ナムラヒナギク <span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;57.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;57.2<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;53.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_5_6">
@@ -2272,8 +2282,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_6_7')">
-                <span>🐎 [7枠7番] ポタリング<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;43.9<sub style='font-size:0.65em;color:#888;'>(7)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;46.8<sub style='font-size:0.65em;color:#888;'>(6)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;45.0<sub style='font-size:0.65em;color:#888;'>(8)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_6_7')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [7枠7番] ポタリング <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;43.9<sub style='font-size:0.65em;color:#888;'>(7)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;46.8<sub style='font-size:0.65em;color:#888;'>(6)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;45.0<sub style='font-size:0.65em;color:#888;'>(8)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_6_7">
@@ -2358,7 +2368,7 @@
 <td>34.6</td>
 <td>5-5-4-3</td>
 <td>440</td>
-<td style="font-weight:normal;">-1.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
+<td style="font-weight:normal;">39.9<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -2381,7 +2391,7 @@
 <td>35.7</td>
 <td>4-4-5-4</td>
 <td>440</td>
-<td style="background-color:#FFF176;font-weight:bold;">0.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">55.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(2)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -2400,11 +2410,11 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:46.6</td>
 <td>1.0</td>
-<td style="color: red; font-weight: bold;">-0.59</td>
+<td style="color: red; font-weight: bold;">-0.51</td>
 <td>34.1</td>
 <td>10-10</td>
 <td>442</td>
-<td style="font-weight:normal;">-1.2<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
+<td style="font-weight:normal;">38.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(10)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -2452,8 +2462,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_7_8')">
-                <span>🐎 [7枠8番] ゴガツノアマノガワ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;42.3<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;43.3<sub style='font-size:0.65em;color:#888;'>(7)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;45.3<sub style='font-size:0.65em;color:#888;'>(6)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_7_8')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [7枠8番] ゴガツノアマノガワ <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;42.3<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;43.3<sub style='font-size:0.65em;color:#888;'>(7)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;45.3<sub style='font-size:0.65em;color:#888;'>(6)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_7_8">
@@ -2561,7 +2571,7 @@
 <td>34.3</td>
 <td>6-6-6</td>
 <td>450</td>
-<td style="font-weight:normal;">-0.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
+<td style="font-weight:normal;">43.7<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -2584,7 +2594,7 @@
 <td>35.2</td>
 <td>2-2-3-2</td>
 <td>444</td>
-<td style="font-weight:normal;">-3.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
+<td style="font-weight:normal;">13.4<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -2632,8 +2642,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_8_9')">
-                <span>🐎 [8枠9番] キセキノエンジェル<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;44.0<sub style='font-size:0.65em;color:#888;'>(6)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;42.1<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;45.1<sub style='font-size:0.65em;color:#888;'>(7)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_8_9')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [8枠9番] キセキノエンジェル <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;44.0<sub style='font-size:0.65em;color:#888;'>(6)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;42.1<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;45.1<sub style='font-size:0.65em;color:#888;'>(7)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_8_9">
@@ -2691,7 +2701,7 @@
 <td style="background-color:#b0b0b0;">重</td>
 <td>1:56.5</td>
 <td>3.6</td>
-<td style="color: black; font-weight: bold;">3.72</td>
+<td style="color: black; font-weight: bold;">3.73</td>
 <td>40.5</td>
 <td>11-10-10-11</td>
 <td>470</td>
@@ -2718,7 +2728,7 @@
 <td>41.4</td>
 <td>10-10-9-10</td>
 <td>478</td>
-<td style="font-weight:normal;">-2.1<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
+<td style="font-weight:normal;">28.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -2741,7 +2751,7 @@
 <td>38.4</td>
 <td>11-11-9-8</td>
 <td>470</td>
-<td style="font-weight:normal;">-2.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
+<td style="font-weight:normal;">27.4<sub style="font-size:0.65em;color:#888;font-weight:bold;">(8)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -2760,11 +2770,11 @@
 <td style="background-color:#ffffff;">良</td>
 <td>2:02.4</td>
 <td>1.5</td>
-<td style="color: black; font-weight: bold;">2.42</td>
+<td style="color: black; font-weight: bold;">2.46</td>
 <td>35.4</td>
 <td>7-7</td>
 <td>472</td>
-<td style="font-weight:normal;">-4.5<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
+<td style="font-weight:normal;">5.4<sub style="font-size:0.65em;color:#888;font-weight:bold;">(16)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -2815,8 +2825,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_9_10')">
-                <span>🐎 [8枠10番] ドッグウッド<span style="background:#FFA726;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;55.3<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span><span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;73.6<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;46.8<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_9_10')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [8枠10番] ドッグウッド <span style="background:#FFA726;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;55.3<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span><span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;73.6<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;46.8<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_9_10">
@@ -2947,7 +2957,7 @@
 <td>34.8</td>
 <td>7-7-4-4</td>
 <td>452</td>
-<td style="font-weight:normal;">-2.8<sub style="font-size:0.65em;color:#888;font-weight:bold;">(13)</sub></td>
+<td style="font-weight:normal;">22.5<sub style="font-size:0.65em;color:#888;font-weight:bold;">(13)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -3112,12 +3122,15 @@
   <footer>
     <p class="site-footer-brand">&copy; MAR(まーる) 競馬AIデータサイト</p>
     <p class="site-footer-disclaimer">本サイトの予想・データは参考情報です。的中や回収を保証するものではありません。実際の購入は自己責任でお願いします。</p>
-    <p class="site-footer-updated">データ最終更新: 2026/07/24</p>
+    <p class="site-footer-updated">データ最終更新: 2026/10/06</p>
+    <div class="a8-program-recommendation">
+      <p class="a8-program-title">🔗 おすすめサービス</p>
+      <p class="a8-program-item"><a href="https://px.a8.net/svt/ejp?a8mat=4B684D+EPADKI+50+2HGLCX" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--a8">お名前.com</a> <span class="a8-program-note">国内シェアNo.1の独自ドメイン取得サービス。</span></p>
+    </div>
     <p class="site-footer-links">
       <a href="../../about.html">このサイトについて</a>
       <a href="../../privacy.html">プライバシーポリシー</a>
       <a href="../../terms.html">利用規約</a>
-      <a href="../../contact.html">お問い合わせ</a>
     </p>
   </footer>
 <script src="../../assets/js/race-marks.js"></script>

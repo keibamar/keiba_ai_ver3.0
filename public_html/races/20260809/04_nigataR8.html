@@ -1,4 +1,4 @@
-﻿
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -28,7 +28,7 @@
     gtag('config', 'G-DNC949064T');
   </script>
   <title>2026/08/09 新潟競馬場 第8R 驀進特別</title>
-  <link rel="stylesheet" href="../../assets/css/styles.css?v=1787784440">
+  <link rel="stylesheet" href="../../assets/css/styles.css?v=1791227842">
   <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
   <style>
     body {
@@ -232,6 +232,7 @@
       border: 1px solid #ddd;
       border-radius: 5px;
       background-color: #fff;
+      overflow-x: hidden;
     }
     .horse-report-toggle {
       cursor: pointer;
@@ -265,6 +266,14 @@
     .horse-report-content.open {
       display: block;
     }
+    /* 本命・推奨度ボックス: overflow:hidden でBFCを生成し、float:rightのサイドバーの
+       下に潜り込まないようにする（BFCなしだとボーダー/背景がfloatエリアに重なる）。
+       max-width はモバイルでbodyが広がった場合のビューポート幅上限。 */
+    .confidence-box {
+      overflow: hidden;
+      max-width: calc(100vw - 40px);
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
@@ -295,7 +304,7 @@
   <div id="todayRace"></div>
 </div>
 <script>window.CALENDAR_BASE_PATH = "../../";</script>
-<script src="../../assets/js/raceDays.js?v=1787828904"></script>
+<script src="../../assets/js/raceDays.js?v=1790852864"></script>
 <script src="../../assets/js/calendar.js?v=1782765283"></script>
 
   </div>
@@ -339,7 +348,7 @@
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000004"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -637,7 +646,7 @@
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000001"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -1045,16 +1054,16 @@
     </div>
     
   <div class="book-recommendation">
-      <p class="book-recommendation-title">📚 亀谷敬正の競馬血統辞典2</p>
-      <p class="book-recommendation-note">血統分析の定番シリーズ最新作。AI予想でも使っている血統データの読み解き方の参考に。</p>
-      <p class="book-recommendation-links"><a href="https://www.amazon.co.jp/dp/4801490867?tag=markeiba-22" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--amazon">亀谷敬正の競馬血統辞典2（Amazon）</a> / <a href="https://hb.afl.rakuten.co.jp/ichiba/34d56027.4cd7e36e.34d56028.7817ac3c/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fbook%2F18602254%2F" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--rakuten">亀谷敬正の競馬血統辞典2（楽天市場）</a></p>
+      <p class="book-recommendation-title">📚 亀谷敬正の競馬血統辞典</p>
+      <p class="book-recommendation-note">血統分析の定番シリーズ第1作。</p>
+      <p class="book-recommendation-links"><a href="https://www.amazon.co.jp/dp/4801490646?tag=markeiba-22" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--amazon">亀谷敬正の競馬血統辞典（Amazon）</a> / <a href="https://hb.afl.rakuten.co.jp/ichiba/5556cac6.a0533177.5556cac7.0a45b379/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fvaboo%2Fva0646149480u20%2F" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--rakuten">亀谷敬正の競馬血統辞典（楽天市場）</a></p>
     </div>
 
   <div class="ad-unit">
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000002"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -1558,7 +1567,7 @@
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000003"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -1604,8 +1613,8 @@
     </style>
     
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_0_1')">
-                <span>🐎 [1枠1番] クォーツァイト<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;40.5<sub style='font-size:0.65em;color:#888;'>(17)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;62.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;45.3<sub style='font-size:0.65em;color:#888;'>(13)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_0_1')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [1枠1番] クォーツァイト <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;40.5<sub style='font-size:0.65em;color:#888;'>(17)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;62.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;45.3<sub style='font-size:0.65em;color:#888;'>(13)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_0_1">
@@ -1784,8 +1793,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_1_2')">
-                <span>🐎 [1枠2番] ラヴェンデル<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;42.3<sub style='font-size:0.65em;color:#888;'>(14)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;57.2<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_1_2')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [1枠2番] ラヴェンデル <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;42.3<sub style='font-size:0.65em;color:#888;'>(14)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;57.2<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_1_2">
@@ -1866,7 +1875,7 @@
 <td style="background-color:#ffffff;">良</td>
 <td>1:14.0</td>
 <td>1.8</td>
-<td style="color: black; font-weight: bold;">1.73</td>
+<td style="color: black; font-weight: bold;">1.74</td>
 <td>38.0</td>
 <td>3-4</td>
 <td>428</td>
@@ -1967,8 +1976,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_2_3')">
-                <span>🐎 [2枠3番] リュウノタブーク<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;44.8<sub style='font-size:0.65em;color:#888;'>(12)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;53.0<sub style='font-size:0.65em;color:#888;'>(8)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_2_3')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [2枠3番] リュウノタブーク <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;44.8<sub style='font-size:0.65em;color:#888;'>(12)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;53.0<sub style='font-size:0.65em;color:#888;'>(8)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_2_3">
@@ -1981,7 +1990,7 @@
 <h4>🧬 新潟 芝1000m (良)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">オルフェーヴル</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:5.71%">2<span class="chakudo-tooltip">1着 2回 ／ 勝率 5.7%</span></span><span class="chakudo-segment seg-2nd" style="width:8.57%">3<span class="chakudo-tooltip">2着 3回 ／ 累積 14.3%</span></span><span class="chakudo-segment seg-3rd" style="width:8.57%">3<span class="chakudo-tooltip">3着 3回 ／ 複勝率 22.9%</span></span><span class="chakudo-segment seg-out" style="width:77.14%">27<span class="chakudo-tooltip">着外 27回 ／ 着外率 77.1%</span></span></span><span class="chakudo-value">n=35</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">オルフェーヴル</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:5.56%">2<span class="chakudo-tooltip">1着 2回 ／ 勝率 5.6%</span></span><span class="chakudo-segment seg-2nd" style="width:8.33%">3<span class="chakudo-tooltip">2着 3回 ／ 累積 13.9%</span></span><span class="chakudo-segment seg-3rd" style="width:8.33%">3<span class="chakudo-tooltip">3着 3回 ／ 複勝率 22.2%</span></span><span class="chakudo-segment seg-out" style="width:77.78%">28<span class="chakudo-tooltip">着外 28回 ／ 着外率 77.8%</span></span></span><span class="chakudo-value">n=36</span></div>
 <div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">2勝クラス</span><span class="chakudo-label peds-label">オルフェーヴル</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 0.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 0.0%</span></span><span class="chakudo-segment seg-out" style="width:100.00%">6<span class="chakudo-tooltip">着外 6回 ／ 着外率 100.0%</span></span></span><span class="chakudo-value">n=6</span></div>
 </div>
 <h4>📊 近5走成績</h4>
@@ -2147,8 +2156,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_3_4')">
-                <span>🐎 [2枠4番] ミスエル<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;41.3<sub style='font-size:0.65em;color:#888;'>(15)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;66.1<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_3_4')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [2枠4番] ミスエル <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;41.3<sub style='font-size:0.65em;color:#888;'>(15)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;66.1<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_3_4">
@@ -2161,7 +2170,7 @@
 <h4>🧬 新潟 芝1000m (良)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ディスクリートキャット</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:8.93%">5<span class="chakudo-tooltip">1着 5回 ／ 勝率 8.9%</span></span><span class="chakudo-segment seg-2nd" style="width:8.93%">5<span class="chakudo-tooltip">2着 5回 ／ 累積 17.9%</span></span><span class="chakudo-segment seg-3rd" style="width:3.57%">2<span class="chakudo-tooltip">3着 2回 ／ 複勝率 21.4%</span></span><span class="chakudo-segment seg-out" style="width:78.57%">44<span class="chakudo-tooltip">着外 44回 ／ 着外率 78.6%</span></span></span><span class="chakudo-value">n=56</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ディスクリートキャット</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:8.77%">5<span class="chakudo-tooltip">1着 5回 ／ 勝率 8.8%</span></span><span class="chakudo-segment seg-2nd" style="width:8.77%">5<span class="chakudo-tooltip">2着 5回 ／ 累積 17.5%</span></span><span class="chakudo-segment seg-3rd" style="width:3.51%">2<span class="chakudo-tooltip">3着 2回 ／ 複勝率 21.1%</span></span><span class="chakudo-segment seg-out" style="width:78.95%">45<span class="chakudo-tooltip">着外 45回 ／ 着外率 78.9%</span></span></span><span class="chakudo-value">n=57</span></div>
 <div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">2勝クラス</span><span class="chakudo-label peds-label">ディスクリートキャット</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:40.00%">2<span class="chakudo-tooltip">1着 2回 ／ 勝率 40.0%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 40.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 40.0%</span></span><span class="chakudo-segment seg-out" style="width:60.00%">3<span class="chakudo-tooltip">着外 3回 ／ 着外率 60.0%</span></span></span><span class="chakudo-value">n=5</span></div>
 </div>
 <h4>📊 近5走成績</h4>
@@ -2327,8 +2336,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_4_5')">
-                <span>🐎 [3枠5番] スペルキャスター<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;48.3<sub style='font-size:0.65em;color:#888;'>(8)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;52.6<sub style='font-size:0.65em;color:#888;'>(9)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_4_5')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [3枠5番] スペルキャスター <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;48.3<sub style='font-size:0.65em;color:#888;'>(8)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;52.6<sub style='font-size:0.65em;color:#888;'>(9)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_4_5">
@@ -2341,7 +2350,7 @@
 <h4>🧬 新潟 芝1000m (良)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ロードカナロア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:9.52%">14<span class="chakudo-tooltip">1着 14回 ／ 勝率 9.5%</span></span><span class="chakudo-segment seg-2nd" style="width:7.48%">11<span class="chakudo-tooltip">2着 11回 ／ 累積 17.0%</span></span><span class="chakudo-segment seg-3rd" style="width:12.24%">18<span class="chakudo-tooltip">3着 18回 ／ 複勝率 29.3%</span></span><span class="chakudo-segment seg-out" style="width:70.75%">104<span class="chakudo-tooltip">着外 104回 ／ 着外率 70.7%</span></span></span><span class="chakudo-value">n=147</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ロードカナロア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:9.46%">14<span class="chakudo-tooltip">1着 14回 ／ 勝率 9.5%</span></span><span class="chakudo-segment seg-2nd" style="width:7.43%">11<span class="chakudo-tooltip">2着 11回 ／ 累積 16.9%</span></span><span class="chakudo-segment seg-3rd" style="width:12.16%">18<span class="chakudo-tooltip">3着 18回 ／ 複勝率 29.1%</span></span><span class="chakudo-segment seg-out" style="width:70.95%">105<span class="chakudo-tooltip">着外 105回 ／ 着外率 70.9%</span></span></span><span class="chakudo-value">n=148</span></div>
 <div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">2勝クラス</span><span class="chakudo-label peds-label">ロードカナロア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:8.70%">2<span class="chakudo-tooltip">1着 2回 ／ 勝率 8.7%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 8.7%</span></span><span class="chakudo-segment seg-3rd" style="width:17.39%">4<span class="chakudo-tooltip">3着 4回 ／ 複勝率 26.1%</span></span><span class="chakudo-segment seg-out" style="width:73.91%">17<span class="chakudo-tooltip">着外 17回 ／ 着外率 73.9%</span></span></span><span class="chakudo-value">n=23</span></div>
 </div>
 <h4>📊 近5走成績</h4>
@@ -2510,21 +2519,21 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_5_6')">
-                <span>🐎 [3枠6番] ゼンダンタカ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;45.6<sub style='font-size:0.65em;color:#888;'>(10)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;18.5<sub style='font-size:0.65em;color:#888;'>(17)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;33.9<sub style='font-size:0.65em;color:#888;'>(16)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_5_6')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [3枠6番] ゼンダンタカ <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;45.6<sub style='font-size:0.65em;color:#888;'>(10)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;18.5<sub style='font-size:0.65em;color:#888;'>(17)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;33.9<sub style='font-size:0.65em;color:#888;'>(16)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_5_6">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
 <div class="horse-comment-wrap">
-<ul class="horse-comment"><li>父アジアエクスプレスのこのコース勝率は25.0%（7勝/28走）と高く、血統面での適性は申し分ない。</li><li>平均2.9番手と先行タイプ。今回のコース・距離での先行有利/不利との相性が焦点。</li><li>平均上り36.1秒は2勝クラス水準ではやや時間がかかる傾向で、瞬発力勝負になる展開では苦しくなりやすい。</li><li>5/24(はやぶさ賞)で0:55.3(良)の持ち時計。良のクラス平均0:55.0とほぼ同等。</li><li>近5走の着順が下降気味（平均12.6着）で、フォームの立て直しが課題。今回の巻き返しに期待できるかが焦点。</li></ul>
+<ul class="horse-comment"><li>父アジアエクスプレスのこのコース勝率は24.1%（7勝/29走）と高く、血統面での適性は申し分ない。</li><li>平均2.9番手と先行タイプ。今回のコース・距離での先行有利/不利との相性が焦点。</li><li>平均上り36.1秒は2勝クラス水準ではやや時間がかかる傾向で、瞬発力勝負になる展開では苦しくなりやすい。</li><li>5/24(はやぶさ賞)で0:55.3(良)の持ち時計。良のクラス平均0:55.0とほぼ同等。</li><li>近5走の着順が下降気味（平均12.6着）で、フォームの立て直しが課題。今回の巻き返しに期待できるかが焦点。</li></ul>
 
 </div>
 <h4>血統: 父 <strong>アジアエクスプレス</strong> / 母父 <strong>ダイワメジャー</strong></h4>
 <h4>🧬 新潟 芝1000m (良)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">アジアエクスプレス</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:25.00%">7<span class="chakudo-tooltip">1着 7回 ／ 勝率 25.0%</span></span><span class="chakudo-segment seg-2nd" style="width:3.57%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 28.6%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 28.6%</span></span><span class="chakudo-segment seg-out" style="width:71.43%">20<span class="chakudo-tooltip">着外 20回 ／ 着外率 71.4%</span></span></span><span class="chakudo-value">n=28</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">アジアエクスプレス</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:24.14%">7<span class="chakudo-tooltip">1着 7回 ／ 勝率 24.1%</span></span><span class="chakudo-segment seg-2nd" style="width:3.45%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 27.6%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 27.6%</span></span><span class="chakudo-segment seg-out" style="width:72.41%">21<span class="chakudo-tooltip">着外 21回 ／ 着外率 72.4%</span></span></span><span class="chakudo-value">n=29</span></div>
 <div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">2勝クラス</span><span class="chakudo-label peds-label">アジアエクスプレス</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:11.11%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 11.1%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 11.1%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 11.1%</span></span><span class="chakudo-segment seg-out" style="width:88.89%">8<span class="chakudo-tooltip">着外 8回 ／ 着外率 88.9%</span></span></span><span class="chakudo-value">n=9</span></div>
 </div>
 <h4>📊 近5走成績</h4>
@@ -2693,8 +2702,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_6_7')">
-                <span>🐎 [4枠7番] ラトルシェ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;40.6<sub style='font-size:0.65em;color:#888;'>(16)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;54.8<sub style='font-size:0.65em;color:#888;'>(6)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_6_7')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [4枠7番] ラトルシェ <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;40.6<sub style='font-size:0.65em;color:#888;'>(16)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;54.8<sub style='font-size:0.65em;color:#888;'>(6)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_6_7">
@@ -2707,7 +2716,7 @@
 <h4>🧬 新潟 芝1000m (良)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ミッキーアイル</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:6.25%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 6.2%</span></span><span class="chakudo-segment seg-2nd" style="width:10.42%">5<span class="chakudo-tooltip">2着 5回 ／ 累積 16.7%</span></span><span class="chakudo-segment seg-3rd" style="width:4.17%">2<span class="chakudo-tooltip">3着 2回 ／ 複勝率 20.8%</span></span><span class="chakudo-segment seg-out" style="width:79.17%">38<span class="chakudo-tooltip">着外 38回 ／ 着外率 79.2%</span></span></span><span class="chakudo-value">n=48</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ミッキーアイル</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:6.00%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 6.0%</span></span><span class="chakudo-segment seg-2nd" style="width:12.00%">6<span class="chakudo-tooltip">2着 6回 ／ 累積 18.0%</span></span><span class="chakudo-segment seg-3rd" style="width:4.00%">2<span class="chakudo-tooltip">3着 2回 ／ 複勝率 22.0%</span></span><span class="chakudo-segment seg-out" style="width:78.00%">39<span class="chakudo-tooltip">着外 39回 ／ 着外率 78.0%</span></span></span><span class="chakudo-value">n=50</span></div>
 <div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">2勝クラス</span><span class="chakudo-label peds-label">ミッキーアイル</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 0.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 0.0%</span></span><span class="chakudo-segment seg-out" style="width:100.00%">6<span class="chakudo-tooltip">着外 6回 ／ 着外率 100.0%</span></span></span><span class="chakudo-value">n=6</span></div>
 </div>
 <h4>📊 近5走成績</h4>
@@ -2876,21 +2885,21 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_7_8')">
-                <span>🐎 [4枠8番] カレンデュラ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;47.2<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;47.6<sub style='font-size:0.65em;color:#888;'>(15)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;41.9<sub style='font-size:0.65em;color:#888;'>(14)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_7_8')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [4枠8番] カレンデュラ <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;47.2<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;47.6<sub style='font-size:0.65em;color:#888;'>(15)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;41.9<sub style='font-size:0.65em;color:#888;'>(14)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_7_8">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
 <div class="horse-comment-wrap">
-<ul class="horse-comment"><li>1勝クラスから2勝クラスへクラス上昇。前走の内容と指数がクラス壁を越えられるかの判断材料になる。</li><li>父アルアインのこのコース勝率は19.0%（4勝/21走）と高く、血統面での適性は申し分ない。</li><li>5/23(はやぶさ賞)で0:56.0(稍重)の持ち時計。稍重のクラス平均0:55.6とほぼ同等。</li></ul>
+<ul class="horse-comment"><li>1勝クラスから2勝クラスへクラス上昇。前走の内容と指数がクラス壁を越えられるかの判断材料になる。</li><li>父アルアインの複勝率45.8%と安定感があり、このコースとの血統的な相性は良い。</li><li>5/23(はやぶさ賞)で0:56.0(稍重)の持ち時計。稍重のクラス平均0:55.6とほぼ同等。</li></ul>
 
 </div>
 <h4>血統: 父 <strong>アルアイン</strong> / 母父 <strong>アドマイヤコジーン</strong></h4>
 <h4>🧬 新潟 芝1000m (良)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">アルアイン</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:19.05%">4<span class="chakudo-tooltip">1着 4回 ／ 勝率 19.0%</span></span><span class="chakudo-segment seg-2nd" style="width:4.76%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 23.8%</span></span><span class="chakudo-segment seg-3rd" style="width:23.81%">5<span class="chakudo-tooltip">3着 5回 ／ 複勝率 47.6%</span></span><span class="chakudo-segment seg-out" style="width:52.38%">11<span class="chakudo-tooltip">着外 11回 ／ 着外率 52.4%</span></span></span><span class="chakudo-value">n=21</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">アルアイン</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:16.67%">4<span class="chakudo-tooltip">1着 4回 ／ 勝率 16.7%</span></span><span class="chakudo-segment seg-2nd" style="width:4.17%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 20.8%</span></span><span class="chakudo-segment seg-3rd" style="width:25.00%">6<span class="chakudo-tooltip">3着 6回 ／ 複勝率 45.8%</span></span><span class="chakudo-segment seg-out" style="width:54.17%">13<span class="chakudo-tooltip">着外 13回 ／ 着外率 54.2%</span></span></span><span class="chakudo-value">n=24</span></div>
 <div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">2勝クラス</span><span class="chakudo-label peds-label">アルアイン</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:9.09%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 9.1%</span></span><span class="chakudo-segment seg-2nd" style="width:9.09%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 18.2%</span></span><span class="chakudo-segment seg-3rd" style="width:27.27%">3<span class="chakudo-tooltip">3着 3回 ／ 複勝率 45.5%</span></span><span class="chakudo-segment seg-out" style="width:54.55%">6<span class="chakudo-tooltip">着外 6回 ／ 着外率 54.5%</span></span></span><span class="chakudo-value">n=11</span></div>
 </div>
 <h4>📊 近5走成績</h4>
@@ -3059,21 +3068,21 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_8_9')">
-                <span>🐎 [5枠9番] サトノアルペジオ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;45.2<sub style='font-size:0.65em;color:#888;'>(11)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;56.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_8_9')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [5枠9番] サトノアルペジオ <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;45.2<sub style='font-size:0.65em;color:#888;'>(11)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;56.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_8_9">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
 <div class="horse-comment-wrap">
-<ul class="horse-comment"><li>前走はダート（1400m）からの芝転向。過去の芝成績と血統適性がカギになる。</li><li>父モーリスのこのコース勝率は2.7%と低く、血統面の適性には疑問が残る。</li><li>近走の平均通過順は14.6番手と、全体平均（7.8番手）より後ろで競馬する傾向に変わっている。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li><li>近5走の着順が下降気味（平均9.0着）で、フォームの立て直しが課題。今回の巻き返しに期待できるかが焦点。</li><li>回収率(5位)でモデル高評価。主な要因：芝平均上り35.5秒（目安34.5秒、4走実績）。</li></ul>
+<ul class="horse-comment"><li>前走はダート（1400m）からの芝転向。過去の芝成績と血統適性がカギになる。</li><li>父モーリスのこのコース勝率は2.6%と低く、血統面の適性には疑問が残る。</li><li>近走の平均通過順は14.6番手と、全体平均（7.8番手）より後ろで競馬する傾向に変わっている。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li><li>近5走の着順が下降気味（平均9.0着）で、フォームの立て直しが課題。今回の巻き返しに期待できるかが焦点。</li><li>回収率(5位)でモデル高評価。主な要因：芝平均上り35.5秒（目安34.5秒、4走実績）。</li></ul>
 
 </div>
 <h4>血統: 父 <strong>モーリス</strong> / 母父 <strong>ネオユニヴァース</strong></h4>
 <h4>🧬 新潟 芝1000m (良)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">モーリス</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:2.70%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 2.7%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 2.7%</span></span><span class="chakudo-segment seg-3rd" style="width:8.11%">3<span class="chakudo-tooltip">3着 3回 ／ 複勝率 10.8%</span></span><span class="chakudo-segment seg-out" style="width:89.19%">33<span class="chakudo-tooltip">着外 33回 ／ 着外率 89.2%</span></span></span><span class="chakudo-value">n=37</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">モーリス</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:2.63%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 2.6%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 2.6%</span></span><span class="chakudo-segment seg-3rd" style="width:7.89%">3<span class="chakudo-tooltip">3着 3回 ／ 複勝率 10.5%</span></span><span class="chakudo-segment seg-out" style="width:89.47%">34<span class="chakudo-tooltip">着外 34回 ／ 着外率 89.5%</span></span></span><span class="chakudo-value">n=38</span></div>
 <div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">2勝クラス</span><span class="chakudo-label peds-label">モーリス</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 0.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 0.0%</span></span><span class="chakudo-segment seg-out" style="width:100.00%">2<span class="chakudo-tooltip">着外 2回 ／ 着外率 100.0%</span></span></span><span class="chakudo-value">n=2</span></div>
 </div>
 <h4>📊 近5走成績</h4>
@@ -3239,8 +3248,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_9_10')">
-                <span>🐎 [5枠10番] ペイシャヴァルツー<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;55.9<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;62.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#FFA726;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;61.1<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_9_10')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [5枠10番] ペイシャヴァルツー <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;55.9<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;62.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#FFA726;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;61.1<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_9_10">
@@ -3422,21 +3431,21 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_10_11')">
-                <span>🐎 [6枠11番] ハニーローリエ<span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;73.9<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;54.2<sub style='font-size:0.65em;color:#888;'>(7)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_10_11')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [6枠11番] ハニーローリエ <span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;73.9<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;54.2<sub style='font-size:0.65em;color:#888;'>(7)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_10_11">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
 <div class="horse-comment-wrap">
-<ul class="horse-comment"><li>父ルーラーシップのこのコース勝率は5.0%と低く、血統面の適性には疑問が残る。</li><li>平均3.5番手と先行タイプ。今回のコース・距離での先行有利/不利との相性が焦点。</li><li>過去の芝レースでの平均上り34.2秒は2勝クラス水準では優秀で、末脚が武器になるタイプ。上りが問われる展開なら強み。</li><li>5/3(邁進特別)で0:54.7(良)の持ち時計。良のクラス平均0:55.0とほぼ同等。</li><li>MAR(1位)でモデル高評価。主な要因：5/3(邁進特別)で0:54.7(良)の持ち時計（クラス平均並み）、芝平均上り34.2秒（2勝クラス目安34.5秒以下、近5走で2走が基準クリア）、近走好走：5/23(大日岳特別)2着、5/3(邁進特別)2着、4/11(花見山特別)3着。</li></ul>
+<ul class="horse-comment"><li>父ルーラーシップのこのコース勝率は4.8%と低く、血統面の適性には疑問が残る。</li><li>平均3.5番手と先行タイプ。今回のコース・距離での先行有利/不利との相性が焦点。</li><li>過去の芝レースでの平均上り34.2秒は2勝クラス水準では優秀で、末脚が武器になるタイプ。上りが問われる展開なら強み。</li><li>5/3(邁進特別)で0:54.7(良)の持ち時計。良のクラス平均0:55.0とほぼ同等。</li><li>MAR(1位)でモデル高評価。主な要因：5/3(邁進特別)で0:54.7(良)の持ち時計（クラス平均並み）、芝平均上り34.2秒（2勝クラス目安34.5秒以下、近5走で2走が基準クリア）、近走好走：5/23(大日岳特別)2着、5/3(邁進特別)2着、4/11(花見山特別)3着。</li></ul>
 
 </div>
 <h4>血統: 父 <strong>ルーラーシップ</strong> / 母父 <strong>ステイゴールド</strong></h4>
 <h4>🧬 新潟 芝1000m (良)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ルーラーシップ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:5.00%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 5.0%</span></span><span class="chakudo-segment seg-2nd" style="width:15.00%">3<span class="chakudo-tooltip">2着 3回 ／ 累積 20.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 20.0%</span></span><span class="chakudo-segment seg-out" style="width:80.00%">16<span class="chakudo-tooltip">着外 16回 ／ 着外率 80.0%</span></span></span><span class="chakudo-value">n=20</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ルーラーシップ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:4.76%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 4.8%</span></span><span class="chakudo-segment seg-2nd" style="width:14.29%">3<span class="chakudo-tooltip">2着 3回 ／ 累積 19.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 19.0%</span></span><span class="chakudo-segment seg-out" style="width:80.95%">17<span class="chakudo-tooltip">着外 17回 ／ 着外率 81.0%</span></span></span><span class="chakudo-value">n=21</span></div>
 <div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">2勝クラス</span><span class="chakudo-label peds-label">ルーラーシップ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:33.33%">2<span class="chakudo-tooltip">2着 2回 ／ 累積 33.3%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 33.3%</span></span><span class="chakudo-segment seg-out" style="width:66.67%">4<span class="chakudo-tooltip">着外 4回 ／ 着外率 66.7%</span></span></span><span class="chakudo-value">n=6</span></div>
 </div>
 <h4>📊 近5走成績</h4>
@@ -3605,8 +3614,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_11_12')">
-                <span>🐎 [6枠12番] レジーナローズ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;49.9<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;47.9<sub style='font-size:0.65em;color:#888;'>(12)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_11_12')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [6枠12番] レジーナローズ <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;49.9<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;47.9<sub style='font-size:0.65em;color:#888;'>(12)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_11_12">
@@ -3619,7 +3628,7 @@
 <h4>🧬 新潟 芝1000m (良)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">リオンディーズ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:7.32%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 7.3%</span></span><span class="chakudo-segment seg-2nd" style="width:7.32%">3<span class="chakudo-tooltip">2着 3回 ／ 累積 14.6%</span></span><span class="chakudo-segment seg-3rd" style="width:7.32%">3<span class="chakudo-tooltip">3着 3回 ／ 複勝率 22.0%</span></span><span class="chakudo-segment seg-out" style="width:78.05%">32<span class="chakudo-tooltip">着外 32回 ／ 着外率 78.0%</span></span></span><span class="chakudo-value">n=41</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">リオンディーズ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:7.14%">3<span class="chakudo-tooltip">1着 3回 ／ 勝率 7.1%</span></span><span class="chakudo-segment seg-2nd" style="width:7.14%">3<span class="chakudo-tooltip">2着 3回 ／ 累積 14.3%</span></span><span class="chakudo-segment seg-3rd" style="width:7.14%">3<span class="chakudo-tooltip">3着 3回 ／ 複勝率 21.4%</span></span><span class="chakudo-segment seg-out" style="width:78.57%">33<span class="chakudo-tooltip">着外 33回 ／ 着外率 78.6%</span></span></span><span class="chakudo-value">n=42</span></div>
 <div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">2勝クラス</span><span class="chakudo-label peds-label">リオンディーズ</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 0.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 0.0%</span></span><span class="chakudo-segment seg-out" style="width:100.00%">4<span class="chakudo-tooltip">着外 4回 ／ 着外率 100.0%</span></span></span><span class="chakudo-value">n=4</span></div>
 </div>
 <h4>📊 近5走成績</h4>
@@ -3788,8 +3797,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_12_13')">
-                <span>🐎 [7枠13番] ロードトレゾール<span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;69.2<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;47.6<sub style='font-size:0.65em;color:#888;'>(15)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;30.9<sub style='font-size:0.65em;color:#888;'>(17)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_12_13')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [7枠13番] ロードトレゾール <span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;69.2<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;47.6<sub style='font-size:0.65em;color:#888;'>(15)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;30.9<sub style='font-size:0.65em;color:#888;'>(17)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_12_13">
@@ -3802,7 +3811,7 @@
 <h4>🧬 新潟 芝1000m (良)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ロードカナロア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:9.52%">14<span class="chakudo-tooltip">1着 14回 ／ 勝率 9.5%</span></span><span class="chakudo-segment seg-2nd" style="width:7.48%">11<span class="chakudo-tooltip">2着 11回 ／ 累積 17.0%</span></span><span class="chakudo-segment seg-3rd" style="width:12.24%">18<span class="chakudo-tooltip">3着 18回 ／ 複勝率 29.3%</span></span><span class="chakudo-segment seg-out" style="width:70.75%">104<span class="chakudo-tooltip">着外 104回 ／ 着外率 70.7%</span></span></span><span class="chakudo-value">n=147</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">ロードカナロア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:9.46%">14<span class="chakudo-tooltip">1着 14回 ／ 勝率 9.5%</span></span><span class="chakudo-segment seg-2nd" style="width:7.43%">11<span class="chakudo-tooltip">2着 11回 ／ 累積 16.9%</span></span><span class="chakudo-segment seg-3rd" style="width:12.16%">18<span class="chakudo-tooltip">3着 18回 ／ 複勝率 29.1%</span></span><span class="chakudo-segment seg-out" style="width:70.95%">105<span class="chakudo-tooltip">着外 105回 ／ 着外率 70.9%</span></span></span><span class="chakudo-value">n=148</span></div>
 <div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">2勝クラス</span><span class="chakudo-label peds-label">ロードカナロア</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:8.70%">2<span class="chakudo-tooltip">1着 2回 ／ 勝率 8.7%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 8.7%</span></span><span class="chakudo-segment seg-3rd" style="width:17.39%">4<span class="chakudo-tooltip">3着 4回 ／ 複勝率 26.1%</span></span><span class="chakudo-segment seg-out" style="width:73.91%">17<span class="chakudo-tooltip">着外 17回 ／ 着外率 73.9%</span></span></span><span class="chakudo-value">n=23</span></div>
 </div>
 <h4>📊 近5走成績</h4>
@@ -3971,8 +3980,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_13_14')">
-                <span>🐎 [7枠14番] ラブディーヴァ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;49.3<sub style='font-size:0.65em;color:#888;'>(6)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;62.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;35.5<sub style='font-size:0.65em;color:#888;'>(15)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_13_14')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [7枠14番] ラブディーヴァ <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;49.3<sub style='font-size:0.65em;color:#888;'>(6)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;62.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;35.5<sub style='font-size:0.65em;color:#888;'>(15)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_13_14">
@@ -4154,8 +4163,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_14_15')">
-                <span>🐎 [8枠15番] キントラダンサー<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;48.6<sub style='font-size:0.65em;color:#888;'>(7)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;47.6<sub style='font-size:0.65em;color:#888;'>(15)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;48.8<sub style='font-size:0.65em;color:#888;'>(11)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_14_15')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [8枠15番] キントラダンサー <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;48.6<sub style='font-size:0.65em;color:#888;'>(7)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;47.6<sub style='font-size:0.65em;color:#888;'>(15)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;48.8<sub style='font-size:0.65em;color:#888;'>(11)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_14_15">
@@ -4168,7 +4177,7 @@
 <h4>🧬 新潟 芝1000m (良)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">キタサンブラック</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:7.69%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 7.7%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 7.7%</span></span><span class="chakudo-segment seg-3rd" style="width:7.69%">1<span class="chakudo-tooltip">3着 1回 ／ 複勝率 15.4%</span></span><span class="chakudo-segment seg-out" style="width:84.62%">11<span class="chakudo-tooltip">着外 11回 ／ 着外率 84.6%</span></span></span><span class="chakudo-value">n=13</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">キタサンブラック</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:7.14%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 7.1%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 7.1%</span></span><span class="chakudo-segment seg-3rd" style="width:7.14%">1<span class="chakudo-tooltip">3着 1回 ／ 複勝率 14.3%</span></span><span class="chakudo-segment seg-out" style="width:85.71%">12<span class="chakudo-tooltip">着外 12回 ／ 着外率 85.7%</span></span></span><span class="chakudo-value">n=14</span></div>
 <div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">2勝クラス</span><span class="chakudo-label peds-label">キタサンブラック</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:0.00%">0<span class="chakudo-tooltip">1着 0回 ／ 勝率 0.0%</span></span><span class="chakudo-segment seg-2nd" style="width:0.00%">0<span class="chakudo-tooltip">2着 0回 ／ 累積 0.0%</span></span><span class="chakudo-segment seg-3rd" style="width:0.00%">0<span class="chakudo-tooltip">3着 0回 ／ 複勝率 0.0%</span></span><span class="chakudo-segment seg-out" style="width:100.00%">3<span class="chakudo-tooltip">着外 3回 ／ 着外率 100.0%</span></span></span><span class="chakudo-value">n=3</span></div>
 </div>
 <h4>📊 近5走成績</h4>
@@ -4334,8 +4343,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_15_16')">
-                <span>🐎 [8枠16番] メッエフアパラ<span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;43.6<sub style='font-size:0.65em;color:#888;'>(13)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;62.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_15_16')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [8枠16番] メッエフアパラ <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;43.6<sub style='font-size:0.65em;color:#888;'>(13)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;49.0<sub style='font-size:0.65em;color:#888;'>(9)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;62.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_15_16">
@@ -4393,7 +4402,7 @@
 <td style="background-color:#b0b0b0;">重</td>
 <td>1:11.8</td>
 <td>1.3</td>
-<td style="color: black; font-weight: bold;">1.26</td>
+<td style="color: black; font-weight: bold;">1.28</td>
 <td>36.6</td>
 <td>11-13</td>
 <td>464</td>
@@ -4514,21 +4523,21 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_16_17')">
-                <span>🐎 [8枠17番] クールベイビー<span style="background:#FFA726;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;63.7<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;62.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;49.1<sub style='font-size:0.65em;color:#888;'>(10)</sub></span></span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_16_17')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [8枠17番] クールベイビー <span style="background:#FFA726;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;63.7<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span><span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">hit&nbsp;62.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span><span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">val&nbsp;49.1<sub style='font-size:0.65em;color:#888;'>(10)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_16_17">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
 <div class="horse-comment-wrap">
-<ul class="horse-comment"><li>前走1600mから600m短縮。距離短縮で先行馬には追い風、差し馬は末脚が生きにくくなる可能性。</li><li>父アルアインのこのコース勝率は19.0%（4勝/21走）と高く、血統面での適性は申し分ない。</li><li>8/31(雷光特別)で0:54.2(良)の持ち時計。良のクラス平均0:55.0より0.8秒速く、十分な水準。</li><li>MAR(3位)・的中率(2位)でモデル高評価。主な要因：父アルアインのコース勝率19%（4勝/21走）、8/31(雷光特別)で0:54.2(良)の持ち時計（クラス平均より0.8秒速い）、近走8/31(雷光特別)2着。</li></ul>
+<ul class="horse-comment"><li>前走1600mから600m短縮。距離短縮で先行馬には追い風、差し馬は末脚が生きにくくなる可能性。</li><li>父アルアインの複勝率45.8%と安定感があり、このコースとの血統的な相性は良い。</li><li>8/31(雷光特別)で0:54.2(良)の持ち時計。良のクラス平均0:55.0より0.8秒速く、十分な水準。</li><li>MAR(3位)・的中率(2位)でモデル高評価。主な要因：父アルアインのコース勝率17%（4勝/24走）、8/31(雷光特別)で0:54.2(良)の持ち時計（クラス平均より0.8秒速い）、近走8/31(雷光特別)2着。</li></ul>
 
 </div>
 <h4>血統: 父 <strong>アルアイン</strong> / 母父 <strong>ケイムホーム</strong></h4>
 <h4>🧬 新潟 芝1000m (良)</h4>
 <p class="chakudo-legend">着度数 (1着,2着,3着,着外) ／ バーにマウスを合わせると内訳の割合（2着・3着は累積割合も）を確認できます</p>
 <div class="chakudo-chart">
-<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">アルアイン</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:19.05%">4<span class="chakudo-tooltip">1着 4回 ／ 勝率 19.0%</span></span><span class="chakudo-segment seg-2nd" style="width:4.76%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 23.8%</span></span><span class="chakudo-segment seg-3rd" style="width:23.81%">5<span class="chakudo-tooltip">3着 5回 ／ 複勝率 47.6%</span></span><span class="chakudo-segment seg-out" style="width:52.38%">11<span class="chakudo-tooltip">着外 11回 ／ 着外率 52.4%</span></span></span><span class="chakudo-value">n=21</span></div>
+<div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">all</span><span class="chakudo-label peds-label">アルアイン</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:16.67%">4<span class="chakudo-tooltip">1着 4回 ／ 勝率 16.7%</span></span><span class="chakudo-segment seg-2nd" style="width:4.17%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 20.8%</span></span><span class="chakudo-segment seg-3rd" style="width:25.00%">6<span class="chakudo-tooltip">3着 6回 ／ 複勝率 45.8%</span></span><span class="chakudo-segment seg-out" style="width:54.17%">13<span class="chakudo-tooltip">着外 13回 ／ 着外率 54.2%</span></span></span><span class="chakudo-value">n=24</span></div>
 <div class="chakudo-row"><span class="chakudo-label" style="width:56px;text-align:left;font-size:0.85em;">2勝クラス</span><span class="chakudo-label peds-label">アルアイン</span><span class="chakudo-bar-track"><span class="chakudo-segment seg-1st" style="width:9.09%">1<span class="chakudo-tooltip">1着 1回 ／ 勝率 9.1%</span></span><span class="chakudo-segment seg-2nd" style="width:9.09%">1<span class="chakudo-tooltip">2着 1回 ／ 累積 18.2%</span></span><span class="chakudo-segment seg-3rd" style="width:27.27%">3<span class="chakudo-tooltip">3着 3回 ／ 複勝率 45.5%</span></span><span class="chakudo-segment seg-out" style="width:54.55%">6<span class="chakudo-tooltip">着外 6回 ／ 着外率 54.5%</span></span></span><span class="chakudo-value">n=11</span></div>
 </div>
 <h4>📊 近5走成績</h4>
@@ -4814,12 +4823,15 @@
   <footer>
     <p class="site-footer-brand">&copy; MAR(まーる) 競馬AIデータサイト</p>
     <p class="site-footer-disclaimer">本サイトの予想・データは参考情報です。的中や回収を保証するものではありません。実際の購入は自己責任でお願いします。</p>
-    <p class="site-footer-updated">データ最終更新: 2026/09/02</p>
+    <p class="site-footer-updated">データ最終更新: 2026/10/06</p>
+    <div class="a8-program-recommendation">
+      <p class="a8-program-title">🔗 おすすめサービス</p>
+      <p class="a8-program-item"><a href="https://px.a8.net/svt/ejp?a8mat=4B684D+EPADKI+50+2HGLCX" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--a8">お名前.com</a> <span class="a8-program-note">国内シェアNo.1の独自ドメイン取得サービス。</span></p>
+    </div>
     <p class="site-footer-links">
       <a href="../../about.html">このサイトについて</a>
       <a href="../../privacy.html">プライバシーポリシー</a>
       <a href="../../terms.html">利用規約</a>
-      <a href="../../contact.html">お問い合わせ</a>
     </p>
   </footer>
 <script src="../../assets/js/race-marks.js"></script>

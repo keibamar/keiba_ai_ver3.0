@@ -1,4 +1,4 @@
-﻿
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -28,7 +28,7 @@
     gtag('config', 'G-DNC949064T');
   </script>
   <title>2025/11/01 東京競馬場 第9R 本栖湖特別</title>
-  <link rel="stylesheet" href="../../assets/css/styles.css">
+  <link rel="stylesheet" href="../../assets/css/styles.css?v=1791227842">
   <link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
   <style>
     body {
@@ -232,6 +232,7 @@
       border: 1px solid #ddd;
       border-radius: 5px;
       background-color: #fff;
+      overflow-x: hidden;
     }
     .horse-report-toggle {
       cursor: pointer;
@@ -265,6 +266,14 @@
     .horse-report-content.open {
       display: block;
     }
+    /* 本命・推奨度ボックス: overflow:hidden でBFCを生成し、float:rightのサイドバーの
+       下に潜り込まないようにする（BFCなしだとボーダー/背景がfloatエリアに重なる）。
+       max-width はモバイルでbodyが広がった場合のビューポート幅上限。 */
+    .confidence-box {
+      overflow: hidden;
+      max-width: calc(100vw - 40px);
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
@@ -295,7 +304,7 @@
   <div id="todayRace"></div>
 </div>
 <script>window.CALENDAR_BASE_PATH = "../../";</script>
-<script src="../../assets/js/raceDays.js?v=1784804879"></script>
+<script src="../../assets/js/raceDays.js?v=1790852864"></script>
 <script src="../../assets/js/calendar.js?v=1782765283"></script>
 
   </div>
@@ -326,6 +335,7 @@
 </ul></li>
 <li><span class="nav-icon">🏟️</span> <a href="../../courses/index.html">コース詳細データ</a></li>
 <li><span class="nav-icon">📊</span> <a href="../../performance/index.html">AI成績</a></li>
+<li><span class="nav-icon">📓</span> <a href="../../trend/index.html">傾向分析日記</a></li>
 </ul></li>
 
   </ul>
@@ -337,7 +347,7 @@
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000004"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -381,7 +391,7 @@
           <td style="color:red; font-weight:bold;">468(+10)</td>
           <td style="background-color:#ffffff;">5</td>
           <td style="color:#333;">12.2</td>
-          <td class="mm-mar-col" data-sort="0"></td>
+          <td class="mm-mar-col" data-sort="48.70" style="background-color:#FFA726;color:#333;font-size:1.05em;font-weight:bold;">48.7<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(3)</sub></td>
           <td class="mm-hitrate-col" data-sort="0"></td>
           <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -396,7 +406,7 @@
           <td style="">472(+6)</td>
           <td style="background-color:#ffffff;">6</td>
           <td style="color:#333;">16.1</td>
-          <td class="mm-mar-col" data-sort="0"></td>
+          <td class="mm-mar-col" data-sort="19.80" style="color:#1f4fd6;font-size:1.05em;font-weight:bold;">19.8<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(5)</sub></td>
           <td class="mm-hitrate-col" data-sort="0"></td>
           <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -411,7 +421,7 @@
           <td style="color:red; font-weight:bold;">460(+14)</td>
           <td style="background-color:#ffffff;">7</td>
           <td style="color:#333;">58.2</td>
-          <td class="mm-mar-col" data-sort="0"></td>
+          <td class="mm-mar-col" data-sort="22.80" style="color:#1f4fd6;font-size:1.05em;font-weight:bold;">22.8<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(4)</sub></td>
           <td class="mm-hitrate-col" data-sort="0"></td>
           <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -426,7 +436,7 @@
           <td style="color:blue; font-weight:bold;">506(-12)</td>
           <td style="background-color:#FFA07A;">3</td>
           <td style="color:#c62828; font-weight:bold;">7.0</td>
-          <td class="mm-mar-col" data-sort="0"></td>
+          <td class="mm-mar-col" data-sort="62.10" style="background-color:#FFF176;color:#b71c1c;font-size:1.05em;font-weight:bold;">62.1<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(1)</sub></td>
           <td class="mm-hitrate-col" data-sort="0"></td>
           <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -441,7 +451,7 @@
           <td style="">458(+8)</td>
           <td style="background-color:#FFD700;">1</td>
           <td style="color:#c62828; font-weight:bold;">1.8</td>
-          <td class="mm-mar-col" data-sort="0"></td>
+          <td class="mm-mar-col" data-sort="4.70" style="color:#1f4fd6;font-size:1.05em;font-weight:bold;">4.7<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(8)</sub></td>
           <td class="mm-hitrate-col" data-sort="0"></td>
           <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -456,7 +466,7 @@
           <td style="color:blue; font-weight:bold;">466(-10)</td>
           <td style="background-color:#B0E0E6;">2</td>
           <td style="color:#c62828; font-weight:bold;">3.4</td>
-          <td class="mm-mar-col" data-sort="0"></td>
+          <td class="mm-mar-col" data-sort="16.20" style="color:#1f4fd6;font-size:1.05em;font-weight:bold;">16.2<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(7)</sub></td>
           <td class="mm-hitrate-col" data-sort="0"></td>
           <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -471,7 +481,7 @@
           <td style="">498(+2)</td>
           <td style="background-color:#ffffff;">8</td>
           <td style="color:#1f4fd6; font-weight:bold;">166.9</td>
-          <td class="mm-mar-col" data-sort="0"></td>
+          <td class="mm-mar-col" data-sort="17.40" style="color:#1f4fd6;font-size:1.05em;font-weight:bold;">17.4<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(6)</sub></td>
           <td class="mm-hitrate-col" data-sort="0"></td>
           <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -486,7 +496,7 @@
           <td style="">506(0)</td>
           <td style="background-color:#ffffff;">4</td>
           <td style="color:#c62828; font-weight:bold;">8.0</td>
-          <td class="mm-mar-col" data-sort="0"></td>
+          <td class="mm-mar-col" data-sort="61.00" style="background-color:#80DEEA;color:#b71c1c;font-size:1.05em;font-weight:bold;">61.0<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(2)</sub></td>
           <td class="mm-hitrate-col" data-sort="0"></td>
           <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -494,13 +504,13 @@
     </tbody>
   </table>
   </div>
-  
+  <div class="confidence-box" style="margin:10px 0 16px 0;padding:12px 16px;border:2px solid #6a1b9a;border-radius:8px;background:#f3e5f5;"><div style="font-size:0.85em;font-weight:bold;color:#6a1b9a;margin-bottom:6px;">AI予想 &#8212; 本命 &amp; 推奨度</div><div style="margin-bottom:6px;font-size:1.05em;font-weight:bold;">◎ 本命: 4番 ジュンツバメガエシ</div><div style="font-size:0.85em;color:#444;margin-bottom:8px;line-height:1.5;">父ジャスタウェイ産駒は当コース複勝率50%と高い適性。当コース持ち時計2:24.6(稍重)の実績。前走2着と上位争い。</div><div style="display:flex;gap:16px;font-size:0.9em;"><span style="font-weight:bold;color:#777;">単勝 小 ★</span><span style="font-weight:bold;color:#777;">複勝 小 ★</span></div></div>
 
   <div class="ad-unit">
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000001"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -536,7 +546,7 @@
             <td>33.3</td>
             <td>4-4-4-4</td>
             <td>1.8</td>
-            <td class="mm-mar-col" data-sort="0"></td>
+            <td class="mm-mar-col" data-sort="4.70" style="color:#1f4fd6;font-size:1.05em;font-weight:bold;">4.7<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(8)</sub></td>
             <td class="mm-hitrate-col" data-sort="0"></td>
             <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -554,7 +564,7 @@
             <td>34.1</td>
             <td>2-2-2-2</td>
             <td>7.0</td>
-            <td class="mm-mar-col" data-sort="0"></td>
+            <td class="mm-mar-col" data-sort="62.10" style="background-color:#FFF176;color:#b71c1c;font-size:1.05em;font-weight:bold;">62.1<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(1)</sub></td>
             <td class="mm-hitrate-col" data-sort="0"></td>
             <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -572,7 +582,7 @@
             <td>33.3</td>
             <td>7-7-7-7</td>
             <td>8.0</td>
-            <td class="mm-mar-col" data-sort="0"></td>
+            <td class="mm-mar-col" data-sort="61.00" style="background-color:#80DEEA;color:#b71c1c;font-size:1.05em;font-weight:bold;">61.0<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(2)</sub></td>
             <td class="mm-hitrate-col" data-sort="0"></td>
             <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -590,7 +600,7 @@
             <td>33.6</td>
             <td>5-5-5-5</td>
             <td>12.2</td>
-            <td class="mm-mar-col" data-sort="0"></td>
+            <td class="mm-mar-col" data-sort="48.70" style="background-color:#FFA726;color:#333;font-size:1.05em;font-weight:bold;">48.7<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(3)</sub></td>
             <td class="mm-hitrate-col" data-sort="0"></td>
             <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -608,7 +618,7 @@
             <td>34.2</td>
             <td>3-3-3-3</td>
             <td>3.4</td>
-            <td class="mm-mar-col" data-sort="0"></td>
+            <td class="mm-mar-col" data-sort="16.20" style="color:#1f4fd6;font-size:1.05em;font-weight:bold;">16.2<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(7)</sub></td>
             <td class="mm-hitrate-col" data-sort="0"></td>
             <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -626,7 +636,7 @@
             <td>33.5</td>
             <td>8-8-8-7</td>
             <td>16.1</td>
-            <td class="mm-mar-col" data-sort="0"></td>
+            <td class="mm-mar-col" data-sort="19.80" style="color:#1f4fd6;font-size:1.05em;font-weight:bold;">19.8<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(5)</sub></td>
             <td class="mm-hitrate-col" data-sort="0"></td>
             <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -644,7 +654,7 @@
             <td>34.6</td>
             <td>1-1-1-1</td>
             <td>58.2</td>
-            <td class="mm-mar-col" data-sort="0"></td>
+            <td class="mm-mar-col" data-sort="22.80" style="color:#1f4fd6;font-size:1.05em;font-weight:bold;">22.8<sub style="font-size:0.70em;margin-left:2px;color:#d32f2f;font-weight:bold;">(4)</sub></td>
             <td class="mm-hitrate-col" data-sort="0"></td>
             <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -662,7 +672,7 @@
             <td>34.4</td>
             <td>5-5-5-5</td>
             <td>166.9</td>
-            <td class="mm-mar-col" data-sort="0"></td>
+            <td class="mm-mar-col" data-sort="17.40" style="color:#1f4fd6;font-size:1.05em;font-weight:bold;">17.4<sub style="font-size:0.70em;margin-left:2px;color:#888;font-weight:bold;">(6)</sub></td>
             <td class="mm-hitrate-col" data-sort="0"></td>
             <td class="mm-value-col" data-sort="0"></td>
         </tr>
@@ -739,16 +749,16 @@
     </div>
     
   <div class="book-recommendation">
-      <p class="book-recommendation-title">📚 亀谷敬正の競馬血統辞典2</p>
-      <p class="book-recommendation-note">血統分析の定番シリーズ最新作。AI予想でも使っている血統データの読み解き方の参考に。</p>
-      <p class="book-recommendation-links"><a href="https://www.amazon.co.jp/dp/4801490867?tag=markeiba-22" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--amazon">亀谷敬正の競馬血統辞典2（Amazon）</a> / <a href="https://hb.afl.rakuten.co.jp/ichiba/34d56027.4cd7e36e.34d56028.7817ac3c/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fbook%2F18602254%2F" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--rakuten">亀谷敬正の競馬血統辞典2（楽天市場）</a></p>
+      <p class="book-recommendation-title">📚 亀谷敬正の競馬血統辞典</p>
+      <p class="book-recommendation-note">血統分析の定番シリーズ第1作。</p>
+      <p class="book-recommendation-links"><a href="https://www.amazon.co.jp/dp/4801490646?tag=markeiba-22" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--amazon">亀谷敬正の競馬血統辞典（Amazon）</a> / <a href="https://hb.afl.rakuten.co.jp/ichiba/5556cac6.a0533177.5556cac7.0a45b379/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fvaboo%2Fva0646149480u20%2F" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--rakuten">亀谷敬正の競馬血統辞典（楽天市場）</a></p>
     </div>
 
   <div class="ad-unit">
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000002"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -1117,7 +1127,7 @@
   <ins class="adsbygoogle"
        style="display:block"
        data-ad-client="ca-pub-5124016618612171"
-       data-ad-slot="2926646233"
+       data-ad-slot="0000000003"
        data-ad-format="auto"
        data-full-width-responsive="true"></ins>
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
@@ -1163,14 +1173,14 @@
     </style>
     
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_0_1')">
-                <span>🐎 [1枠1番] サンカシグレ</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_0_1')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [1枠1番] サンカシグレ <span style="background:#FFA726;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;48.7<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(3)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_0_1">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
 <div class="horse-comment-wrap">
-<ul class="horse-comment"><li>1勝クラスから2勝クラスへクラス上昇。前走の内容と指数がクラス壁を越えられるかの判断材料になる。</li><li>平均9.4番手と後ろから競馬するタイプ。展開と上り勝負の質次第。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li></ul>
+<ul class="horse-comment"><li>1勝クラスから2勝クラスへクラス上昇。前走の内容と指数がクラス壁を越えられるかの判断材料になる。</li><li>平均9.4番手と後ろから競馬するタイプ。展開と上り勝負の質次第。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li><li>MAR(3位)でモデル高評価。主な要因：近走好走：9/27(3歳以上1勝クラス)1着、5/17(3歳未勝利)1着、4/27(3歳未勝利)2着。</li></ul>
 
 </div>
 <h4>血統: 父 <strong>ウインブライト</strong> / 母父 <strong>アグネスタキオン</strong></h4>
@@ -1291,7 +1301,7 @@
 <td style="background-color:#ffffff;">良</td>
 <td>2:02.0</td>
 <td>0.3</td>
-<td style="color: black; font-weight: bold;">0.52</td>
+<td style="color: black; font-weight: bold;">0.65</td>
 <td>35.5</td>
 <td>5-4-3-3</td>
 <td>452</td>
@@ -1343,14 +1353,14 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_1_2')">
-                <span>🐎 [2枠2番] ズイウンゴサイ</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_1_2')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [2枠2番] ズイウンゴサイ <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;19.8<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(5)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_1_2">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
 <div class="horse-comment-wrap">
-<ul class="horse-comment"><li>父シュヴァルグランの複勝率40.0%と安定感があり、このコースとの血統的な相性は良い。</li><li>平均12.3番手と後ろから競馬するタイプ。展開と上り勝負の質次第。</li><li>11/23(3歳以上1勝クラス)で2:24.8(良)の持ち時計。良のクラス平均2:25.6より0.8秒速く、十分な水準。</li></ul>
+<ul class="horse-comment"><li>父シュヴァルグランの複勝率40.0%と安定感があり、このコースとの血統的な相性は良い。</li><li>平均12.3番手と後ろから競馬するタイプ。展開と上り勝負の質次第。</li><li>11/23(3歳以上1勝クラス)で2:24.8(良)の持ち時計。良のクラス平均2:25.6より0.8秒速く、十分な水準。</li><li>MAR(5位)でモデル高評価。主な要因：11/23(3歳以上1勝クラス)で2:24.8(良)の持ち時計（クラス平均より0.8秒速い）、近走好走：8/10(3歳以上1勝クラス)1着、5/25(4歳以上1勝クラス)3着。</li></ul>
 
 </div>
 <h4>血統: 父 <strong>シュヴァルグラン</strong> / 母父 <strong>チチカステナンゴ</strong></h4>
@@ -1383,7 +1393,7 @@
 <td>33.8</td>
 <td>6-6-5-5</td>
 <td>466</td>
-<td style='color:#ccc;'>-</td>
+<td style="font-weight:normal;">24.5<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1406,7 +1416,7 @@
 <td>33.5</td>
 <td>11-11</td>
 <td>466</td>
-<td style='color:#ccc;'>-</td>
+<td style="font-weight:normal;">42.6<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1452,7 +1462,7 @@
 <td>33.9</td>
 <td>3-2-3-3</td>
 <td>466</td>
-<td style='color:#ccc;'>-</td>
+<td style="font-weight:normal;">31.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(4)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1475,7 +1485,7 @@
 <td>36.0</td>
 <td>8-8-7-5</td>
 <td>466</td>
-<td style='color:#ccc;'>-</td>
+<td style="font-weight:normal;">34.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1526,14 +1536,14 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_2_3')">
-                <span>🐎 [3枠3番] オウケンボルト</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_2_3')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [3枠3番] オウケンボルト <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;22.8<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(4)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_2_3">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
 <div class="horse-comment-wrap">
-<ul class="horse-comment"><li>平均3.3番手と先行タイプ。今回のコース・距離での先行有利/不利との相性が焦点。</li><li>10/29で2:24.2(良)の持ち時計。良のクラス平均2:25.6より1.4秒速く、十分な水準。</li></ul>
+<ul class="horse-comment"><li>平均3.3番手と先行タイプ。今回のコース・距離での先行有利/不利との相性が焦点。</li><li>10/29で2:24.2(良)の持ち時計。良のクラス平均2:25.6より1.4秒速く、十分な水準。</li><li>MAR(4位)でモデル高評価。主な要因：10/29で2:24.2(良)の持ち時計（クラス平均より1.4秒速い）。</li></ul>
 
 </div>
 <h4>血統: 父 <strong>フェノーメノ</strong> / 母父 <strong>オウケンブルースリ</strong></h4>
@@ -1612,7 +1622,7 @@
 <td>34.9</td>
 <td>3-3-3</td>
 <td>454</td>
-<td style="font-weight:normal;">-0.9<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
+<td style="font-weight:normal;">41.4<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(5)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1635,7 +1645,7 @@
 <td>38.5</td>
 <td>3-3-3-7</td>
 <td>454</td>
-<td style="font-weight:normal;">-0.3<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
+<td style="font-weight:normal;">47.0<sub style="font-size:0.65em;color:#888;font-weight:bold;">(6)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1658,7 +1668,7 @@
 <td>35.9</td>
 <td>2-2-2</td>
 <td>450</td>
-<td style="font-weight:normal;">-3.7<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
+<td style="font-weight:normal;">13.1<sub style="font-size:0.65em;color:#888;font-weight:bold;">(9)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1709,14 +1719,14 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_3_4')">
-                <span>🐎 [4枠4番] ジュンツバメガエシ</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_3_4')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [4枠4番] ジュンツバメガエシ <span style="background:#FFF176;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;62.1<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(1)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_3_4">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
 <div class="horse-comment-wrap">
-<ul class="horse-comment"><li>6/1(青嵐賞)で2:24.6(稍重)の持ち時計。稍重のクラス平均2:26.0より1.4秒速く、十分な水準。</li><li>近5走の着順が上向き傾向（平均5.2着）で、充実期にある可能性が高い。</li></ul>
+<ul class="horse-comment"><li>6/1(青嵐賞)で2:24.6(稍重)の持ち時計。稍重のクラス平均2:26.0より1.4秒速く、十分な水準。</li><li>近5走の着順が上向き傾向（平均5.2着）で、充実期にある可能性が高い。</li><li>MAR(1位)でモデル高評価。主な要因：6/1(青嵐賞)で2:24.6(稍重)の持ち時計（クラス平均より1.4秒速い）、近走好走：8/31(美濃特別)2着、5/3(4歳以上2勝クラス)2着。</li></ul>
 
 </div>
 <h4>血統: 父 <strong>ジャスタウェイ</strong> / 母父 <strong>エリシオ</strong></h4>
@@ -1768,7 +1778,7 @@
 <td style="background-color:#ffffff;">良</td>
 <td>2:00.0</td>
 <td>0.5</td>
-<td style="color: red; font-weight: bold;">-0.32</td>
+<td style="color: red; font-weight: bold;">-0.28</td>
 <td>34.2</td>
 <td>5-5-5-5</td>
 <td>520</td>
@@ -1795,7 +1805,7 @@
 <td>35.5</td>
 <td>5-5-3-3</td>
 <td>512</td>
-<td style="font-weight:normal;">0.1<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
+<td style="font-weight:normal;">51.4<sub style="font-size:0.65em;color:#888;font-weight:bold;">(7)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1818,7 +1828,7 @@
 <td>32.9</td>
 <td>3-3-3-3</td>
 <td>508</td>
-<td style="background-color:#FFF176;font-weight:bold;">1.0<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">59.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1837,11 +1847,11 @@
 <td style="background-color:#ffffff;">良</td>
 <td>2:03.6</td>
 <td>1.9</td>
-<td style="color: black; font-weight: bold;">3.28</td>
+<td style="color: black; font-weight: bold;">3.33</td>
 <td>36.9</td>
 <td>3-2-3-2</td>
 <td>510</td>
-<td style="background-color:#FFF176;font-weight:bold;">0.8<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
+<td style="background-color:#FFF176;font-weight:bold;">58.3<sub style="font-size:0.65em;color:#d32f2f;font-weight:bold;">(1)</sub></td>
 <td style='color:#ccc;'>-</td>
 <td style='color:#ccc;'>-</td>
 </tr>
@@ -1892,8 +1902,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_4_5')">
-                <span>🐎 [5枠5番] トリプルコーク</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_4_5')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [5枠5番] トリプルコーク <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;4.7<sub style='font-size:0.65em;color:#888;'>(8)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_4_5">
@@ -1928,7 +1938,7 @@
 <td style="background-color:#ffffff;">良</td>
 <td>2:13.6</td>
 <td>-0.1</td>
-<td style="color: red; font-weight: bold;">-0.3</td>
+<td style="color: red; font-weight: bold;">-0.27</td>
 <td>34.9</td>
 <td>7-7-9-8</td>
 <td>450</td>
@@ -2049,8 +2059,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_5_6')">
-                <span>🐎 [6枠6番] ホウオウアートマン</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_5_6')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [6枠6番] ホウオウアートマン <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;16.2<sub style='font-size:0.65em;color:#888;'>(7)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_5_6">
@@ -2232,8 +2242,8 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_6_7')">
-                <span>🐎 [7枠7番] バナマンテソーロ</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_6_7')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [7枠7番] バナマンテソーロ <span style="background:#f0f0f0;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;17.4<sub style='font-size:0.65em;color:#888;'>(6)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_6_7">
@@ -2412,14 +2422,14 @@
             </div>
             
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_7_8')">
-                <span>🐎 [8枠8番] ローザサンリヴァル</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('horse_report_7_8')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [8枠8番] ローザサンリヴァル <span style="background:#80DEEA;border-radius:3px;padding:1px 5px;margin-left:4px;font-size:0.80em;">MAR&nbsp;61.0<sub style='font-size:0.65em;color:#d32f2f;font-weight:bold;'>(2)</sub></span></span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="horse_report_7_8">
                 <div class='horse-report' style='padding: 10px; background: #fafafa; border: 1px solid #ddd;'>
 <div class="horse-comment-wrap">
-<ul class="horse-comment"><li>平均9.6番手と後ろから競馬するタイプ。展開と上り勝負の質次第。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li><li>近5走の着順が上向き傾向（平均3.0着）で、充実期にある可能性が高い。</li></ul>
+<ul class="horse-comment"><li>平均9.6番手と後ろから競馬するタイプ。展開と上り勝負の質次第。</li><li>このコース・距離での出走は初めてで持ち時計がなく、コース適性は他データから推測するしかない点が評価を難しくする。</li><li>近5走の着順が上向き傾向（平均3.0着）で、充実期にある可能性が高い。</li><li>MAR(2位)でモデル高評価。主な要因：近走好走：4/20(奥の細道特別)2着、3/1(背振山特別)1着、2/16(4歳以上1勝クラス)2着。</li></ul>
 
 </div>
 <h4>血統: 父 <strong>ルーラーシップ</strong> / 母父 <strong>クロフネ</strong></h4>
@@ -2517,7 +2527,7 @@
 <td style="background-color:#ffffff;">良</td>
 <td>2:02.1</td>
 <td>0.5</td>
-<td style="color: black; font-weight: bold;">1.35</td>
+<td style="color: black; font-weight: bold;">1.48</td>
 <td>36.4</td>
 <td>4-4-3-3</td>
 <td>510</td>
@@ -2540,7 +2550,7 @@
 <td style="background-color:#ffffff;">良</td>
 <td>2:01.1</td>
 <td>0.7</td>
-<td style="color: black; font-weight: bold;">0.35</td>
+<td style="color: black; font-weight: bold;">0.48</td>
 <td>34.5</td>
 <td>7-7-11-10</td>
 <td>500</td>
@@ -2709,12 +2719,15 @@
   <footer>
     <p class="site-footer-brand">&copy; MAR(まーる) 競馬AIデータサイト</p>
     <p class="site-footer-disclaimer">本サイトの予想・データは参考情報です。的中や回収を保証するものではありません。実際の購入は自己責任でお願いします。</p>
-    <p class="site-footer-updated">データ最終更新: 2026/07/24</p>
+    <p class="site-footer-updated">データ最終更新: 2026/10/06</p>
+    <div class="a8-program-recommendation">
+      <p class="a8-program-title">🔗 おすすめサービス</p>
+      <p class="a8-program-item"><a href="https://px.a8.net/svt/ejp?a8mat=4B684D+EPADKI+50+2HGLCX" target="_blank" rel="nofollow noopener sponsored" class="affiliate-link affiliate-link--a8">お名前.com</a> <span class="a8-program-note">国内シェアNo.1の独自ドメイン取得サービス。</span></p>
+    </div>
     <p class="site-footer-links">
       <a href="../../about.html">このサイトについて</a>
       <a href="../../privacy.html">プライバシーポリシー</a>
       <a href="../../terms.html">利用規約</a>
-      <a href="../../contact.html">お問い合わせ</a>
     </p>
   </footer>
 <script src="../../assets/js/race-marks.js"></script>

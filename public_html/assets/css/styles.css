@@ -1399,9 +1399,11 @@ table tbody tr:hover {
     padding: 4px 6px;
     font-size: 0.85em;
   }
+}
 
-  /* 血統別着度数グラフ: 種牡馬名ラベル(160px)+ バー(160px)+ 値(72px)= 472px以上が
-     スマホ幅(約390px)を超えて横スクロールが発生するため、各要素を縮小する */
+/* 血統別着度数グラフ: ラベル56px+血統名160px+バー160px+値≈72px+gap=約472px以上が
+   タブレット〜スマホ幅(約580px以下)を超えて横スクロールが発生するため縮小する */
+@media (max-width: 580px) {
   .chakudo-row .peds-label {
     width: 88px;
     overflow: hidden;

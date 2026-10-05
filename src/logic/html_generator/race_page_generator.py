@@ -873,6 +873,7 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
       border: 1px solid #ddd;
       border-radius: 5px;
       background-color: #fff;
+      overflow-x: hidden;
     }}
     .horse-report-toggle {{
       cursor: pointer;
@@ -905,6 +906,14 @@ def build_html_content(date_str, date_display, place_id, race_num, race_name, ra
     }}
     .horse-report-content.open {{
       display: block;
+    }}
+    /* 本命・推奨度ボックス: overflow:hidden でBFCを生成し、float:rightのサイドバーの
+       下に潜り込まないようにする（BFCなしだとボーダー/背景がfloatエリアに重なる）。
+       max-width はモバイルでbodyが広がった場合のビューポート幅上限。 */
+    .confidence-box {{
+      overflow: hidden;
+      max-width: calc(100vw - 40px);
+      box-sizing: border-box;
     }}
   </style>
 </head>
@@ -2243,8 +2252,8 @@ def make_race_card_html(date_str, place_id, target_id):
             unique_id = f"horse_report_{idx}_{umaban}"
             horse_reports_html += f"""
             <div class="horse-report-card">
-              <div class="horse-report-toggle" onclick="toggleHorseReport('{unique_id}')">
-                <span>🐎 [{waku}枠{umaban}番] {horse_name}{index_badges}</span>
+              <div class="horse-report-toggle" onclick="toggleHorseReport('{unique_id}')" style="flex-wrap:wrap;">
+                <span style="min-width:0;">🐎 [{waku}枠{umaban}番] {horse_name} {index_badges}</span>
                 <span class="horse-report-toggle-icon open">▼</span>
               </div>
               <div class="horse-report-content open" id="{unique_id}">
