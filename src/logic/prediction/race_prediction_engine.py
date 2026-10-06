@@ -915,6 +915,18 @@ def _mm_strategy_score(s_tan, s_san):
     return combined
 
 
+def _birth_month_multiplier(birth_month, age_cond):
+    """相対年齢効果に基づくスコア乗数。
+    2歳限定: 1月±10%, 3歳限定: 1月±5%。月が遅いほど不利。
+    age_cond が "2歳"/"3歳" 以外の場合は 1.0（補正なし）を返す。
+    """
+    if birth_month is None or age_cond not in ("2歳", "3歳"):
+        return 1.0
+    scale = 0.10 if age_cond == "2歳" else 0.05
+    normalized = (6.5 - float(birth_month)) / 5.5  # 1月→+1.0, 12月→-1.0
+    return 1.0 + normalized * scale
+
+
 def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
                                 kinryo_series=None, jockey_ids=None, odds_series=None):
     """3戦略（的中率重視/回収率重視/MAR推奨）の統合指数とランクを計算する。
@@ -953,6 +965,7 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
 
         feat_rows_v15   = []   # 104列（オッズあり、重複あり）
         feat_rows_nodds = []   # 102列（オッズなし、重複あり）
+        birth_months    = []   # 年齢限定戦補正用
 
         for idx, hid in enumerate(horse_ids):
             # v3 base (60列)
@@ -1046,6 +1059,7 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
                 + list(ev9[:5])
                 + [_ev(ev9, 5), _ev(ev9, 6)]
             )  # 102列
+            birth_months.append(horse_profile_dataset_manager.get_birth_month(str(hid)))
 
         # ── オッズあり DataFrame（列名付き 104列）──
         df_v15 = pd.DataFrame(feat_rows_v15, columns=_MM_IX9_NO_RACE).fillna(-1)
@@ -1076,6 +1090,18 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
         # ①③回収率重視: 単複=v12n / 3連複=v12n
         s_tan_val = _mm_norm(s_v12n)
         s_san_val = _mm_norm(s_v12n)
+
+        # ── 年齢限定戦: birth_month スコア補正 ──
+        try:
+            age_cond = str(race_info_df.at[0, "age_cond"]) if "age_cond" in race_info_df.columns else ""
+        except Exception:
+            age_cond = ""
+        if age_cond in ("2歳", "3歳"):
+            bm_mults = np.array([_birth_month_multiplier(bm, age_cond) for bm in birth_months])
+            s_tan_hr  = s_tan_hr  * bm_mults
+            s_san_hr  = s_san_hr  * bm_mults
+            s_tan_val = s_tan_val * bm_mults
+            s_san_val = s_san_val * bm_mults
 
         # ── 統合スコア → ランク・指数 ──
         def _to_rank_idx(s_tan, s_san):

@@ -43,16 +43,21 @@ def blank_rank_df(n):
     return pd.DataFrame({col: [pd.NA] * n for col in cols})
 
 
+# 年齢限定戦の age_cond 値（"2歳"/"3歳" のみ。"3歳以上"等は含まない）
+AGE_LIMITED_CONDITIONS = {"2歳", "3歳"}
+
+
 def parse_race_card_info_tokens(info):
     """出馬表ページのレース情報トークン列から
-    race_type, course_len, class, ground_state, weather を求める
+    race_type, course_len, class, ground_state, weather, age_cond を求める
 
     Args:
         info (list[str]): レース情報テキストを re.findall(r'\\w+', texts) した結果
 
     Returns:
         dict: 判定できた項目のみを含む辞書
-              (race_type, course_len, class, ground_state, weather)
+              (race_type, course_len, class, ground_state, weather, age_cond)
+              age_cond: "2歳"/"3歳" のみ設定（"3歳以上"などは設定しない）
     """
     df_info = {}
     for text in info:
@@ -74,6 +79,9 @@ def parse_race_card_info_tokens(info):
             df_info["ground_state"] = "不良"
         if text in ["曇", "晴", "雨", "小雨", "小雪", "雪"]:
             df_info["weather"] = text
+        # 年齢条件: "2歳"/"3歳" のみ限定戦として扱う（"3歳以上"等は除外）
+        if text in AGE_LIMITED_CONDITIONS:
+            df_info["age_cond"] = text
     return df_info
 
 
