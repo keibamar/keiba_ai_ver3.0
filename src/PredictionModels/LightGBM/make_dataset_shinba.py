@@ -2,20 +2,33 @@
 
 走歴なしの新馬戦に特化した特徴量セット。
 
-Features (SHINBA_FEATURES 列定義・19列):
+Features (SHINBA_FEATURES 列定義・26列):
   父統計 (5列):
     sire_course_win    父の新馬戦(同race_type×距離帯)勝率
     sire_course_place  父の新馬戦(同race_type×距離帯)複勝率
     sire_course_runs   父の新馬戦(同race_type×距離帯)出走数
     sire_global_win    父の新馬戦(全コース)勝率
     sire_global_place  父の新馬戦(全コース)複勝率
+  母父(BMS)統計 (5列):
+    bms_course_win     母父の新馬戦(同race_type×距離帯)勝率
+    bms_course_place   母父の新馬戦(同race_type×距離帯)複勝率
+    bms_course_runs    母父の新馬戦(同race_type×距離帯)出走数
+    bms_global_win     母父の新馬戦(全コース)勝率
+    bms_global_place   母父の新馬戦(全コース)複勝率
+  同牝系統計 (3列):
+    dam_shinba_win     同牝系(母)の新馬戦勝率 (runs<3時はNaN)
+    dam_shinba_place   同牝系(母)の新馬戦複勝率 (runs<3時はNaN)
+    dam_shinba_runs    同牝系(母)の新馬戦出走数 (runs<3時はNaN)
+  父父(祖父)統計 (2列):
+    grandsire_win      父父の新馬戦(全コース)勝率
+    grandsire_place    父父の新馬戦(全コース)複勝率
   騎手統計 (2列):
     jockey_shinba_win    騎手の新馬戦勝率
     jockey_shinba_place  騎手の新馬戦複勝率
   調教師統計 (2列):
     trainer_shinba_win   調教師の新馬戦勝率
     trainer_shinba_place 調教師の新馬戦複勝率
-  レース・馬属性 (8列):
+  レース・馬属性 (7列):
     place_id      開催場ID (1-10)
     race_type_code 0=芝 / 1=ダート
     course_len    コース距離 (m)
@@ -24,9 +37,6 @@ Features (SHINBA_FEATURES 列定義・19列):
     kinryo        斤量
     sex_code      0=牡/セン / 1=牝
     horse_weight  馬体重 (kg)
-  オッズ (2列):
-    current_odds  単勝オッズ
-    current_pop   人気
 """
 
 import glob
@@ -49,15 +59,32 @@ from src.config.constants import PLACE_LIST
 from src.managers import horse_peds_dataset_manager, race_result_dataset_manager
 
 SHINBA_FEATURES = [
+    # 父統計 (5列)
     "sire_course_win",
     "sire_course_place",
     "sire_course_runs",
     "sire_global_win",
     "sire_global_place",
+    # 母父(BMS)統計 (5列)
+    "bms_course_win",
+    "bms_course_place",
+    "bms_course_runs",
+    "bms_global_win",
+    "bms_global_place",
+    # 同牝系(母)統計 (3列)
+    "dam_shinba_win",
+    "dam_shinba_place",
+    "dam_shinba_runs",
+    # 父父(祖父)統計 (2列)
+    "grandsire_win",
+    "grandsire_place",
+    # 騎手統計 (2列)
     "jockey_shinba_win",
     "jockey_shinba_place",
+    # 調教師統計 (2列)
     "trainer_shinba_win",
     "trainer_shinba_place",
+    # レース・馬属性 (8列)
     "place_id",
     "race_type_code",
     "course_len",
@@ -66,12 +93,13 @@ SHINBA_FEATURES = [
     "kinryo",
     "sex_code",
     "horse_weight",
-    "current_odds",
-    "current_pop",
 ]
 
 # 距離帯（父×コース統計を帯単位でまとめてサンプル数を稼ぐ）
 _DIST_BANDS = [(0, 1400), (1400, 1900), (1900, 2200), (2200, 99999)]
+
+# 同牝系統計の最小出走数（これ未満はNaN）
+_DAM_MIN_RUNS = 3
 
 
 def _dist_band(length):
@@ -134,16 +162,36 @@ def _load_all_shinba_results():
     return shinba
 
 
-def _fetch_sire_map(horse_ids):
-    """horse_id → 父名 のマップを返す"""
-    sire_map = {}
+def _safe_ped(val):
+    """peds値をstr変換（NaN/None/空は空文字に）"""
+    if val is None:
+        return ""
+    try:
+        if pd.isna(val):
+            return ""
+    except Exception:
+        pass
+    s = str(val).strip()
+    return s if s and s.lower() != "nan" else ""
+
+
+def _fetch_peds_map(horse_ids):
+    """horse_id → (sire, dam, grandsire, bms) のマップを返す
+    peds_0=父, peds_1=母, peds_2=父父, peds_4=母父(BMS)
+    """
+    peds_map = {}
     for hid in tqdm(horse_ids, desc="horse_peds読込"):
         try:
-            info = horse_peds_dataset_manager.get_peds_info(str(hid))
-            sire_map[str(hid)] = str(info[0]) if info[0] is not np.nan else ""
+            peds_data = horse_peds_dataset_manager.get_horse_peds_dataset(str(hid))
+            peds_list = peds_data[str(hid)].tolist()
+            sire      = _safe_ped(peds_list[0]) if len(peds_list) > 0 else ""
+            dam       = _safe_ped(peds_list[1]) if len(peds_list) > 1 else ""
+            grandsire = _safe_ped(peds_list[2]) if len(peds_list) > 2 else ""
+            bms       = _safe_ped(peds_list[4]) if len(peds_list) > 4 else ""
         except Exception:
-            sire_map[str(hid)] = ""
-    return sire_map
+            sire, dam, grandsire, bms = "", "", "", ""
+        peds_map[str(hid)] = (sire, dam, grandsire, bms)
+    return peds_map
 
 
 def _build_cumulative_stats(df, group_cols, win_col="_is_win", place_col="_is_place"):
@@ -186,11 +234,14 @@ def make_training_dataset():
         raise RuntimeError("新馬戦データが見つかりません")
     print(f"  → {len(shinba)}件")
 
-    # 父名を取得
+    # 血統情報を取得 (父/母/父父/母父)
     unique_ids = shinba["horse_id"].dropna().unique().tolist()
     print(f"  → 馬 {len(unique_ids)}頭の血統を取得中...")
-    sire_map = _fetch_sire_map(unique_ids)
-    shinba["sire"] = shinba["horse_id"].map(lambda x: sire_map.get(str(x), ""))
+    peds_map = _fetch_peds_map(unique_ids)
+    shinba["sire"]      = shinba["horse_id"].map(lambda x: peds_map.get(str(x), ("","","",""))[0])
+    shinba["dam"]       = shinba["horse_id"].map(lambda x: peds_map.get(str(x), ("","","",""))[1])
+    shinba["grandsire"] = shinba["horse_id"].map(lambda x: peds_map.get(str(x), ("","","",""))[2])
+    shinba["bms"]       = shinba["horse_id"].map(lambda x: peds_map.get(str(x), ("","","",""))[3])
 
     # 日付パース・場所・コード変換
     shinba["date_dt"]      = shinba["date"].apply(_parse_date_jp)
@@ -206,8 +257,6 @@ def make_training_dataset():
     shinba["sex_code"]     = shinba["性齢"].apply(_sex_code)
     shinba["waku_int"]     = pd.to_numeric(shinba["枠番"], errors="coerce")
     shinba["umaban_int"]   = pd.to_numeric(shinba["馬番"], errors="coerce")
-    shinba["odds_f"]       = pd.to_numeric(shinba["単勝"],  errors="coerce")
-    shinba["pop_f"]        = pd.to_numeric(shinba["人気"],  errors="coerce")
     shinba["course_len_f"] = pd.to_numeric(shinba["course_len"], errors="coerce")
 
     # 着順 → label / is_win / is_place
@@ -252,6 +301,35 @@ def make_training_dataset():
     shinba["sire_course_place"] = c_plc
     shinba["sire_course_runs"]  = c_runs
 
+    print("累積母父(BMS)統計（全コース）を計算中...")
+    bg_win, bg_plc, _ = _build_cumulative_stats(shinba, ["bms"], "_is_win", "_is_plc")
+    shinba["bms_global_win"]   = bg_win
+    shinba["bms_global_place"] = bg_plc
+
+    print("累積母父(BMS)統計（race_type×距離帯）を計算中...")
+    bc_win, bc_plc, bc_runs = _build_cumulative_stats(
+        shinba, ["bms", "race_type", "dist_band"], "_is_win", "_is_plc"
+    )
+    shinba["bms_course_win"]   = bc_win
+    shinba["bms_course_place"] = bc_plc
+    shinba["bms_course_runs"]  = bc_runs
+
+    print("累積同牝系(母)統計を計算中...")
+    d_win, d_plc, d_runs = _build_cumulative_stats(shinba, ["dam"], "_is_win", "_is_plc")
+    # runs < _DAM_MIN_RUNS は NaN
+    mask_dam = d_runs < _DAM_MIN_RUNS
+    d_win[mask_dam]  = np.nan
+    d_plc[mask_dam]  = np.nan
+    d_runs[mask_dam] = np.nan
+    shinba["dam_shinba_win"]   = d_win
+    shinba["dam_shinba_place"] = d_plc
+    shinba["dam_shinba_runs"]  = d_runs
+
+    print("累積父父(祖父)統計（全コース）を計算中...")
+    gs_win, gs_plc, _ = _build_cumulative_stats(shinba, ["grandsire"], "_is_win", "_is_plc")
+    shinba["grandsire_win"]   = gs_win
+    shinba["grandsire_place"] = gs_plc
+
     print("累積騎手統計を計算中...")
     j_win, j_plc, _ = _build_cumulative_stats(shinba, ["jockey_id"], "_is_win", "_is_plc")
     shinba["jockey_shinba_win"]   = j_win
@@ -264,25 +342,33 @@ def make_training_dataset():
 
     # 特徴量 DataFrame 組み立て
     feat = pd.DataFrame({
-        "sire_course_win":    shinba["sire_course_win"],
-        "sire_course_place":  shinba["sire_course_place"],
-        "sire_course_runs":   shinba["sire_course_runs"],
-        "sire_global_win":    shinba["sire_global_win"],
-        "sire_global_place":  shinba["sire_global_place"],
-        "jockey_shinba_win":  shinba["jockey_shinba_win"],
-        "jockey_shinba_place":shinba["jockey_shinba_place"],
-        "trainer_shinba_win": shinba["trainer_shinba_win"],
+        "sire_course_win":     shinba["sire_course_win"],
+        "sire_course_place":   shinba["sire_course_place"],
+        "sire_course_runs":    shinba["sire_course_runs"],
+        "sire_global_win":     shinba["sire_global_win"],
+        "sire_global_place":   shinba["sire_global_place"],
+        "bms_course_win":      shinba["bms_course_win"],
+        "bms_course_place":    shinba["bms_course_place"],
+        "bms_course_runs":     shinba["bms_course_runs"],
+        "bms_global_win":      shinba["bms_global_win"],
+        "bms_global_place":    shinba["bms_global_place"],
+        "dam_shinba_win":      shinba["dam_shinba_win"],
+        "dam_shinba_place":    shinba["dam_shinba_place"],
+        "dam_shinba_runs":     shinba["dam_shinba_runs"],
+        "grandsire_win":       shinba["grandsire_win"],
+        "grandsire_place":     shinba["grandsire_place"],
+        "jockey_shinba_win":   shinba["jockey_shinba_win"],
+        "jockey_shinba_place": shinba["jockey_shinba_place"],
+        "trainer_shinba_win":  shinba["trainer_shinba_win"],
         "trainer_shinba_place":shinba["trainer_shinba_place"],
-        "place_id":           shinba["place_id_int"].astype(float),
-        "race_type_code":     shinba["race_type_code"],
-        "course_len":         shinba["course_len_f"],
-        "waku":               shinba["waku_int"],
-        "umaban":             shinba["umaban_int"],
-        "kinryo":             shinba["kinryo_f"],
-        "sex_code":           shinba["sex_code"],
-        "horse_weight":       shinba["horse_weight"],
-        "current_odds":       shinba["odds_f"],
-        "current_pop":        shinba["pop_f"],
+        "place_id":            shinba["place_id_int"].astype(float),
+        "race_type_code":      shinba["race_type_code"],
+        "course_len":          shinba["course_len_f"],
+        "waku":                shinba["waku_int"],
+        "umaban":              shinba["umaban_int"],
+        "kinryo":              shinba["kinryo_f"],
+        "sex_code":            shinba["sex_code"],
+        "horse_weight":        shinba["horse_weight"],
     })
     assert list(feat.columns) == SHINBA_FEATURES
 
@@ -314,10 +400,14 @@ def build_stats_tables():
 
     Returns:
         dict: {
-            "sire_course": DataFrame(sire, race_type, dist_band → win_rate, place_rate, runs),
-            "sire_global": DataFrame(sire → global_win, global_place),
-            "jockey":      DataFrame(jockey_id → win_rate, place_rate),
-            "trainer":     DataFrame(調教師 → win_rate, place_rate),
+            "sire_course":  DataFrame(sire, race_type, dist_band → win_rate, place_rate, runs),
+            "sire_global":  DataFrame(sire → global_win, global_place),
+            "bms_course":   DataFrame(bms, race_type, dist_band → win_rate, place_rate, runs),
+            "bms_global":   DataFrame(bms → global_win, global_place),
+            "dam":          DataFrame(dam → win_rate, place_rate, runs) ※runs<3除外済み,
+            "grandsire":    DataFrame(grandsire → global_win, global_place),
+            "jockey":       DataFrame(jockey_id → win_rate, place_rate),
+            "trainer":      DataFrame(調教師 → win_rate, place_rate),
         }
     """
     shinba = _load_all_shinba_results()
@@ -325,8 +415,11 @@ def build_stats_tables():
         return {}
 
     unique_ids = shinba["horse_id"].dropna().unique().tolist()
-    sire_map = _fetch_sire_map(unique_ids)
-    shinba["sire"] = shinba["horse_id"].map(lambda x: sire_map.get(str(x), ""))
+    peds_map = _fetch_peds_map(unique_ids)
+    shinba["sire"]      = shinba["horse_id"].map(lambda x: peds_map.get(str(x), ("","","",""))[0])
+    shinba["dam"]       = shinba["horse_id"].map(lambda x: peds_map.get(str(x), ("","","",""))[1])
+    shinba["grandsire"] = shinba["horse_id"].map(lambda x: peds_map.get(str(x), ("","","",""))[2])
+    shinba["bms"]       = shinba["horse_id"].map(lambda x: peds_map.get(str(x), ("","","",""))[3])
 
     shinba["dist_band"] = shinba["course_len"].apply(
         lambda x: _dist_band(x) if str(x).isdigit() else "unknown"
@@ -345,38 +438,51 @@ def build_stats_tables():
 
     sire_course = (
         shinba.groupby(["sire", "race_type", "dist_band"])
-        .agg(
-            win_rate=("_is_win",  "mean"),
-            place_rate=("_is_plc", "mean"),
-            runs=("_is_win", "count"),
-        )
+        .agg(win_rate=("_is_win", "mean"), place_rate=("_is_plc", "mean"), runs=("_is_win", "count"))
         .reset_index()
     )
 
     sire_global = (
         shinba.groupby("sire")
-        .agg(
-            global_win=("_is_win",  "mean"),
-            global_place=("_is_plc", "mean"),
-        )
+        .agg(global_win=("_is_win", "mean"), global_place=("_is_plc", "mean"))
+        .reset_index()
+    )
+
+    bms_course = (
+        shinba.groupby(["bms", "race_type", "dist_band"])
+        .agg(win_rate=("_is_win", "mean"), place_rate=("_is_plc", "mean"), runs=("_is_win", "count"))
+        .reset_index()
+    )
+
+    bms_global = (
+        shinba.groupby("bms")
+        .agg(global_win=("_is_win", "mean"), global_place=("_is_plc", "mean"))
+        .reset_index()
+    )
+
+    dam_all = (
+        shinba.groupby("dam")
+        .agg(win_rate=("_is_win", "mean"), place_rate=("_is_plc", "mean"), runs=("_is_win", "count"))
+        .reset_index()
+    )
+    # 出走数が少ない牝系は信頼性低いのでフィルタ
+    dam_stats = dam_all[dam_all["runs"] >= _DAM_MIN_RUNS].copy()
+
+    grandsire = (
+        shinba.groupby("grandsire")
+        .agg(global_win=("_is_win", "mean"), global_place=("_is_plc", "mean"))
         .reset_index()
     )
 
     jockey = (
         shinba.groupby("jockey_id")
-        .agg(
-            win_rate=("_is_win",  "mean"),
-            place_rate=("_is_plc", "mean"),
-        )
+        .agg(win_rate=("_is_win", "mean"), place_rate=("_is_plc", "mean"))
         .reset_index()
     )
 
     trainer = (
         shinba.groupby("調教師")
-        .agg(
-            win_rate=("_is_win",  "mean"),
-            place_rate=("_is_plc", "mean"),
-        )
+        .agg(win_rate=("_is_win", "mean"), place_rate=("_is_plc", "mean"))
         .reset_index()
         .rename(columns={"調教師": "trainer"})
     )
@@ -384,14 +490,19 @@ def build_stats_tables():
     return {
         "sire_course": sire_course,
         "sire_global": sire_global,
+        "bms_course":  bms_course,
+        "bms_global":  bms_global,
+        "dam":         dam_stats,
+        "grandsire":   grandsire,
         "jockey":      jockey,
         "trainer":     trainer,
     }
 
 
 def make_row_for_prediction(
-    sire, race_type, course_len, place_id, waku, umaban, kinryo, sex_code,
-    horse_weight, current_odds, current_pop, jockey_id, trainer_name,
+    sire, bms, dam, grandsire,
+    race_type, course_len, place_id, waku, umaban, kinryo, sex_code,
+    horse_weight, jockey_id, trainer_name,
     stats_tables,
 ):
     """
@@ -412,21 +523,35 @@ def make_row_for_prediction(
         rows = tbl[mask]
         return rows[val_col].iloc[0] if not rows.empty else default
 
-    sc_tbl = stats_tables.get("sire_course")
-    sg_tbl = stats_tables.get("sire_global")
-    jk_tbl = stats_tables.get("jockey")
-    tr_tbl = stats_tables.get("trainer")
+    sc_tbl  = stats_tables.get("sire_course")
+    sg_tbl  = stats_tables.get("sire_global")
+    bc_tbl  = stats_tables.get("bms_course")
+    bg_tbl  = stats_tables.get("bms_global")
+    dam_tbl = stats_tables.get("dam")
+    gs_tbl  = stats_tables.get("grandsire")
+    jk_tbl  = stats_tables.get("jockey")
+    tr_tbl  = stats_tables.get("trainer")
 
     row = {
-        "sire_course_win":     _lookup(sc_tbl, ["sire", "race_type", "dist_band"], [sire, rt, dist_band], "win_rate"),
-        "sire_course_place":   _lookup(sc_tbl, ["sire", "race_type", "dist_band"], [sire, rt, dist_band], "place_rate"),
-        "sire_course_runs":    _lookup(sc_tbl, ["sire", "race_type", "dist_band"], [sire, rt, dist_band], "runs", 0.0),
-        "sire_global_win":     _lookup(sg_tbl, ["sire"], [sire], "global_win"),
-        "sire_global_place":   _lookup(sg_tbl, ["sire"], [sire], "global_place"),
-        "jockey_shinba_win":   _lookup(jk_tbl, ["jockey_id"], [jockey_id], "win_rate"),
-        "jockey_shinba_place": _lookup(jk_tbl, ["jockey_id"], [jockey_id], "place_rate"),
-        "trainer_shinba_win":  _lookup(tr_tbl, ["trainer"], [trainer_name], "win_rate"),
-        "trainer_shinba_place":_lookup(tr_tbl, ["trainer"], [trainer_name], "place_rate"),
+        "sire_course_win":     _lookup(sc_tbl,  ["sire", "race_type", "dist_band"], [sire, rt, dist_band], "win_rate"),
+        "sire_course_place":   _lookup(sc_tbl,  ["sire", "race_type", "dist_band"], [sire, rt, dist_band], "place_rate"),
+        "sire_course_runs":    _lookup(sc_tbl,  ["sire", "race_type", "dist_band"], [sire, rt, dist_band], "runs", 0.0),
+        "sire_global_win":     _lookup(sg_tbl,  ["sire"], [sire], "global_win"),
+        "sire_global_place":   _lookup(sg_tbl,  ["sire"], [sire], "global_place"),
+        "bms_course_win":      _lookup(bc_tbl,  ["bms",  "race_type", "dist_band"], [bms,  rt, dist_band], "win_rate"),
+        "bms_course_place":    _lookup(bc_tbl,  ["bms",  "race_type", "dist_band"], [bms,  rt, dist_band], "place_rate"),
+        "bms_course_runs":     _lookup(bc_tbl,  ["bms",  "race_type", "dist_band"], [bms,  rt, dist_band], "runs", 0.0),
+        "bms_global_win":      _lookup(bg_tbl,  ["bms"],  [bms],  "global_win"),
+        "bms_global_place":    _lookup(bg_tbl,  ["bms"],  [bms],  "global_place"),
+        "dam_shinba_win":      _lookup(dam_tbl, ["dam"],  [dam],  "win_rate"),
+        "dam_shinba_place":    _lookup(dam_tbl, ["dam"],  [dam],  "place_rate"),
+        "dam_shinba_runs":     _lookup(dam_tbl, ["dam"],  [dam],  "runs", 0.0),
+        "grandsire_win":       _lookup(gs_tbl,  ["grandsire"], [grandsire], "global_win"),
+        "grandsire_place":     _lookup(gs_tbl,  ["grandsire"], [grandsire], "global_place"),
+        "jockey_shinba_win":   _lookup(jk_tbl,  ["jockey_id"], [jockey_id],   "win_rate"),
+        "jockey_shinba_place": _lookup(jk_tbl,  ["jockey_id"], [jockey_id],   "place_rate"),
+        "trainer_shinba_win":  _lookup(tr_tbl,  ["trainer"],   [trainer_name], "win_rate"),
+        "trainer_shinba_place":_lookup(tr_tbl,  ["trainer"],   [trainer_name], "place_rate"),
         "place_id":            float(place_id),
         "race_type_code":      1.0 if rt == "ダート" else 0.0,
         "course_len":          float(course_len),
@@ -435,7 +560,5 @@ def make_row_for_prediction(
         "kinryo":              float(kinryo) if kinryo is not None else np.nan,
         "sex_code":            float(sex_code),
         "horse_weight":        float(horse_weight) if horse_weight is not None else np.nan,
-        "current_odds":        float(current_odds) if current_odds is not None else np.nan,
-        "current_pop":         float(current_pop)  if current_pop  is not None else np.nan,
     }
     return pd.DataFrame([row])[SHINBA_FEATURES]

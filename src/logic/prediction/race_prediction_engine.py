@@ -1125,7 +1125,8 @@ def _shinba_get_stats():
     """統計テーブルをロード（キャッシュ済み）"""
     if "sire_course" not in _shinba_stats_cache:
         stats_dir = os.path.join(paths.PREDICTION_MODEL_PATH, "shinba", "stats_tables")
-        for name in ("sire_course", "sire_global", "jockey", "trainer"):
+        for name in ("sire_course", "sire_global", "bms_course", "bms_global",
+                     "dam", "grandsire", "jockey", "trainer"):
             p = os.path.join(stats_dir, f"{name}.csv")
             _shinba_stats_cache[name] = pd.read_csv(p) if os.path.isfile(p) else pd.DataFrame()
     return _shinba_stats_cache
@@ -1152,12 +1153,26 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
 
         rows = []
         for idx, hid in enumerate(horse_ids):
-            # 父名
+            # 血統情報 (父/母/父父/母父)
+            def _safe_ped_val(v):
+                if v is None:
+                    return ""
+                try:
+                    if pd.isna(v):
+                        return ""
+                except Exception:
+                    pass
+                s = str(v).strip()
+                return s if s and s.lower() != "nan" else ""
             try:
-                peds = horse_peds_dataset_manager.get_peds_info(str(hid))
-                sire = str(peds[0]) if peds[0] is not np.nan else ""
+                peds_data = horse_peds_dataset_manager.get_horse_peds_dataset(str(hid))
+                peds_list = peds_data[str(hid)].tolist()
+                sire      = _safe_ped_val(peds_list[0]) if len(peds_list) > 0 else ""
+                dam       = _safe_ped_val(peds_list[1]) if len(peds_list) > 1 else ""
+                grandsire = _safe_ped_val(peds_list[2]) if len(peds_list) > 2 else ""
+                bms       = _safe_ped_val(peds_list[4]) if len(peds_list) > 4 else ""
             except Exception:
-                sire = ""
+                sire, dam, grandsire, bms = "", "", "", ""
 
             # 騎手
             jockey_id = str(jockey_ids[idx]) if jockey_ids and idx < len(jockey_ids) else ""
@@ -1210,6 +1225,9 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
 
             row = make_row_for_prediction(
                 sire=sire,
+                bms=bms,
+                dam=dam,
+                grandsire=grandsire,
                 race_type=race_type,
                 course_len=int(course_len) if str(course_len).isdigit() else 1600,
                 place_id=place_id,
@@ -1218,8 +1236,6 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
                 kinryo=kinryo,
                 sex_code=sex_code,
                 horse_weight=horse_weight,
-                current_odds=odds_v,
-                current_pop=idx + 1,
                 jockey_id=jockey_id,
                 trainer_name=trainer_name,
                 stats_tables=tables,
