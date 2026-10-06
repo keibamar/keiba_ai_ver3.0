@@ -8,6 +8,7 @@
 """
 
 import os
+import time
 
 import pandas as pd
 from tqdm import tqdm
@@ -89,11 +90,19 @@ def fetch_profiles_for_horse_ids(horse_id_list, skip_existing=True):
     ]
     print(f"取得対象: {len(targets)}頭 / 全{len(horse_id_list)}頭")
     ok, ng = 0, 0
+    consecutive_errors = 0
     for hid in tqdm(targets, desc="horse_profile取得"):
         df = netkeiba_scraper.scrape_horse_profile(str(hid))
         if not df.empty:
             save_horse_profile(hid, df)
             ok += 1
+            consecutive_errors = 0
         else:
             ng += 1
+            consecutive_errors += 1
+            # 連続エラーが続く場合は長めに待機（レート制限対策）
+            if consecutive_errors >= 10:
+                time.sleep(30)
+                consecutive_errors = 0
+        time.sleep(2)
     print(f"完了: 成功{ok}頭 / 失敗{ng}頭")
