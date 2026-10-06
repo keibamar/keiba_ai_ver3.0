@@ -2,7 +2,7 @@
 
 走歴なしの新馬戦に特化した特徴量セット。
 
-Features (SHINBA_FEATURES 列定義・26列):
+Features (SHINBA_FEATURES 列定義・28列):
   父統計 (5列):
     sire_course_win    父の新馬戦(同race_type×距離帯)勝率
     sire_course_place  父の新馬戦(同race_type×距離帯)複勝率
@@ -28,7 +28,7 @@ Features (SHINBA_FEATURES 列定義・26列):
   調教師統計 (2列):
     trainer_shinba_win   調教師の新馬戦勝率
     trainer_shinba_place 調教師の新馬戦複勝率
-  レース・馬属性 (7列):
+  レース・馬属性 (9列):
     place_id      開催場ID (1-10)
     race_type_code 0=芝 / 1=ダート
     course_len    コース距離 (m)
@@ -37,6 +37,7 @@ Features (SHINBA_FEATURES 列定義・26列):
     kinryo        斤量
     sex_code      0=牡/セン / 1=牝
     horse_weight  馬体重 (kg)
+    birth_month   誕生月 (1〜12、不明時はNaN)
 """
 
 import glob
@@ -56,7 +57,7 @@ if _PROJECT_ROOT not in sys.path:
 
 from src.config import paths
 from src.config.constants import PLACE_LIST
-from src.managers import horse_peds_dataset_manager, race_result_dataset_manager
+from src.managers import horse_peds_dataset_manager, horse_profile_dataset_manager, race_result_dataset_manager
 
 SHINBA_FEATURES = [
     # 父統計 (5列)
@@ -84,7 +85,7 @@ SHINBA_FEATURES = [
     # 調教師統計 (2列)
     "trainer_shinba_win",
     "trainer_shinba_place",
-    # レース・馬属性 (8列)
+    # レース・馬属性 (9列)
     "place_id",
     "race_type_code",
     "course_len",
@@ -93,6 +94,7 @@ SHINBA_FEATURES = [
     "kinryo",
     "sex_code",
     "horse_weight",
+    "birth_month",
 ]
 
 # 距離帯（父×コース統計を帯単位でまとめてサンプル数を稼ぐ）
@@ -176,8 +178,9 @@ def _safe_ped(val):
 
 
 def _fetch_peds_map(horse_ids):
-    """horse_id → (sire, dam, grandsire, bms) のマップを返す
+    """horse_id → (sire, dam, grandsire, bms, birth_month) のマップを返す
     peds_0=父, peds_1=母, peds_2=父父, peds_4=母父(BMS)
+    birth_month=誕生月(1〜12、不明時はNaN)
     """
     peds_map = {}
     for hid in tqdm(horse_ids, desc="horse_peds読込"):
@@ -190,7 +193,8 @@ def _fetch_peds_map(horse_ids):
             bms       = _safe_ped(peds_list[4]) if len(peds_list) > 4 else ""
         except Exception:
             sire, dam, grandsire, bms = "", "", "", ""
-        peds_map[str(hid)] = (sire, dam, grandsire, bms)
+        birth_month = horse_profile_dataset_manager.get_birth_month(str(hid))
+        peds_map[str(hid)] = (sire, dam, grandsire, bms, birth_month)
     return peds_map
 
 
@@ -234,14 +238,18 @@ def make_training_dataset():
         raise RuntimeError("新馬戦データが見つかりません")
     print(f"  → {len(shinba)}件")
 
-    # 血統情報を取得 (父/母/父父/母父)
+    # 血統情報 + 誕生月を取得
     unique_ids = shinba["horse_id"].dropna().unique().tolist()
-    print(f"  → 馬 {len(unique_ids)}頭の血統を取得中...")
+    print(f"  → 馬 {len(unique_ids)}頭の血統・誕生月を取得中...")
     peds_map = _fetch_peds_map(unique_ids)
-    shinba["sire"]      = shinba["horse_id"].map(lambda x: peds_map.get(str(x), ("","","",""))[0])
-    shinba["dam"]       = shinba["horse_id"].map(lambda x: peds_map.get(str(x), ("","","",""))[1])
-    shinba["grandsire"] = shinba["horse_id"].map(lambda x: peds_map.get(str(x), ("","","",""))[2])
-    shinba["bms"]       = shinba["horse_id"].map(lambda x: peds_map.get(str(x), ("","","",""))[3])
+    _empty = ("", "", "", "", None)
+    shinba["sire"]        = shinba["horse_id"].map(lambda x: peds_map.get(str(x), _empty)[0])
+    shinba["dam"]         = shinba["horse_id"].map(lambda x: peds_map.get(str(x), _empty)[1])
+    shinba["grandsire"]   = shinba["horse_id"].map(lambda x: peds_map.get(str(x), _empty)[2])
+    shinba["bms"]         = shinba["horse_id"].map(lambda x: peds_map.get(str(x), _empty)[3])
+    shinba["birth_month"] = shinba["horse_id"].map(
+        lambda x: float(peds_map.get(str(x), _empty)[4]) if peds_map.get(str(x), _empty)[4] is not None else np.nan
+    )
 
     # 日付パース・場所・コード変換
     shinba["date_dt"]      = shinba["date"].apply(_parse_date_jp)
@@ -369,6 +377,7 @@ def make_training_dataset():
         "kinryo":              shinba["kinryo_f"],
         "sex_code":            shinba["sex_code"],
         "horse_weight":        shinba["horse_weight"],
+        "birth_month":         shinba["birth_month"],
     })
     assert list(feat.columns) == SHINBA_FEATURES
 
@@ -504,6 +513,7 @@ def make_row_for_prediction(
     race_type, course_len, place_id, waku, umaban, kinryo, sex_code,
     horse_weight, jockey_id, trainer_name,
     stats_tables,
+    birth_month=None,
 ):
     """
     1馬分の予測用特徴量行を返す（stats_tables は build_stats_tables() の戻り値）。
@@ -560,5 +570,6 @@ def make_row_for_prediction(
         "kinryo":              float(kinryo) if kinryo is not None else np.nan,
         "sex_code":            float(sex_code),
         "horse_weight":        float(horse_weight) if horse_weight is not None else np.nan,
+        "birth_month":         float(birth_month) if birth_month is not None else np.nan,
     }
     return pd.DataFrame([row])[SHINBA_FEATURES]

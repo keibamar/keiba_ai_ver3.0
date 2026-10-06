@@ -62,6 +62,7 @@ from src.datasets.race_result import transform as race_result_transform
 from src.logic.calculators import average_calculator
 from src.managers import (
     horse_peds_dataset_manager,
+    horse_profile_dataset_manager,
     past_performance_dataset_manager,
     peds_results_dataset_manager,
     race_info_dataset_manager,
@@ -1174,6 +1175,9 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
             except Exception:
                 sire, dam, grandsire, bms = "", "", "", ""
 
+            # 誕生月
+            birth_month = horse_profile_dataset_manager.get_birth_month(str(hid))
+
             # 騎手
             jockey_id = str(jockey_ids[idx]) if jockey_ids and idx < len(jockey_ids) else ""
 
@@ -1239,6 +1243,7 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
                 jockey_id=jockey_id,
                 trainer_name=trainer_name,
                 stats_tables=tables,
+                birth_month=birth_month,
             )
             rows.append(row)
 

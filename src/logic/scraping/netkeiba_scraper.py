@@ -266,6 +266,47 @@ def scrape_horse_peds(horse_id):
         return pd.DataFrame()
 
 
+def scrape_horse_profile(horse_id):
+    """horse_idからプロフィール情報（生年月日等）を取得する。
+
+    https://db.netkeiba.com/horse/{horse_id} のプロフィールテーブルを解析し、
+    生年月日を含む基本情報を返す。
+
+    Args:
+        horse_id (str): horse_id
+
+    Returns:
+        pd.DataFrame: 1行のDataFrame。列 = ["horse_id", "birth_date"]。
+            birth_dateは "YYYY-MM-DD" 文字列。取得失敗時は空のDataFrame。
+    """
+    url = f"https://db.netkeiba.com/horse/{horse_id}"
+    try:
+        soup = common.fetch_soup(url)
+        if not common.validate_soup(soup, url, "scrape_horse_profile"):
+            return pd.DataFrame()
+
+        birth_date = ""
+        # プロフィールテーブル: <th>生年月日</th><td>YYYY年MM月DD日</td>
+        for th in soup.find_all("th"):
+            if "生年月日" in th.get_text():
+                td = th.find_next_sibling("td")
+                if td:
+                    text = td.get_text(strip=True)
+                    import re as _re
+                    m = _re.search(r"(\d{4})年(\d{1,2})月(\d{1,2})日", text)
+                    if m:
+                        birth_date = f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+                break
+
+        if not birth_date:
+            return pd.DataFrame()
+
+        return pd.DataFrame([{"horse_id": str(horse_id), "birth_date": birth_date}])
+    except Exception as e:
+        common.scraping_error(e)
+        return pd.DataFrame()
+
+
 # netkeibaのh1.RaceName内、重賞アイコンのCSSクラス（Icon_GradeType{N}）のNから
 # G1/G2/G3を判定するマッピング。実際の出馬表ページで安田記念・大阪杯・NHKマイルC
 # （いずれもN=1）、京都記念・中山記念・チューリップ賞（いずれもN=2）、函館記念
