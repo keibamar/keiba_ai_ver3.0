@@ -2,7 +2,7 @@
 
 走歴なしの新馬戦に特化した特徴量セット。
 
-Features (SHINBA_FEATURES 列定義・28列):
+Features (SHINBA_FEATURES 列定義・29列):
   父統計 (5列):
     sire_course_win    父の新馬戦(同race_type×距離帯)勝率
     sire_course_place  父の新馬戦(同race_type×距離帯)複勝率
@@ -22,6 +22,8 @@ Features (SHINBA_FEATURES 列定義・28列):
   父父(祖父)統計 (2列):
     grandsire_win      父父の新馬戦(全コース)勝率
     grandsire_place    父父の新馬戦(全コース)複勝率
+  近親交配クロス (1列):
+    cross_score        近親交配スコア（父系・母系共通祖先を4代まで検索, Σ1/2^(gS+gD)）
   騎手統計 (2列):
     jockey_shinba_win    騎手の新馬戦勝率
     jockey_shinba_place  騎手の新馬戦複勝率
@@ -79,6 +81,8 @@ SHINBA_FEATURES = [
     # 父父(祖父)統計 (2列)
     "grandsire_win",
     "grandsire_place",
+    # 近親交配クロス (1列)
+    "cross_score",
     # 騎手統計 (2列)
     "jockey_shinba_win",
     "jockey_shinba_place",
@@ -177,24 +181,55 @@ def _safe_ped(val):
     return s if s and s.lower() != "nan" else ""
 
 
+def _compute_cross_score(peds_list, max_gen=4):
+    """近親交配クロススコアを計算する。
+    父系と母系の共通祖先を max_gen 代まで走査し、
+    score = Σ 1/2^(gen_sire + gen_dam) を返す（近いクロスほど高スコア）。
+    """
+    if not peds_list:
+        return 0.0
+
+    sire_gen = {}  # ancestor_name → sire 側での最小代数
+    dam_gen  = {}  # ancestor_name → dam 側での最小代数
+
+    def _traverse(node_idx, gen, result_dict):
+        if gen > max_gen or node_idx >= len(peds_list):
+            return
+        name = _safe_ped(peds_list[node_idx])
+        if name and gen < result_dict.get(name, 99):
+            result_dict[name] = gen
+        _traverse(2 * node_idx + 2, gen + 1, result_dict)
+        _traverse(2 * node_idx + 3, gen + 1, result_dict)
+
+    _traverse(0, 1, sire_gen)
+    _traverse(1, 1, dam_gen)
+
+    score = 0.0
+    for name, sg in sire_gen.items():
+        if name in dam_gen:
+            score += 1.0 / (2 ** (sg + dam_gen[name]))
+    return score
+
+
 def _fetch_peds_map(horse_ids):
-    """horse_id → (sire, dam, grandsire, bms, birth_month) のマップを返す
+    """horse_id → (sire, dam, grandsire, bms, birth_month, cross_score) のマップを返す
     peds_0=父, peds_1=母, peds_2=父父, peds_4=母父(BMS)
-    birth_month=誕生月(1〜12、不明時はNaN)
+    birth_month=誕生月(1〜12、不明時はNaN), cross_score=近親交配スコア
     """
     peds_map = {}
     for hid in tqdm(horse_ids, desc="horse_peds読込"):
         try:
             peds_data = horse_peds_dataset_manager.get_horse_peds_dataset(str(hid))
             peds_list = peds_data[str(hid)].tolist()
-            sire      = _safe_ped(peds_list[0]) if len(peds_list) > 0 else ""
-            dam       = _safe_ped(peds_list[1]) if len(peds_list) > 1 else ""
-            grandsire = _safe_ped(peds_list[2]) if len(peds_list) > 2 else ""
-            bms       = _safe_ped(peds_list[4]) if len(peds_list) > 4 else ""
+            sire        = _safe_ped(peds_list[0]) if len(peds_list) > 0 else ""
+            dam         = _safe_ped(peds_list[1]) if len(peds_list) > 1 else ""
+            grandsire   = _safe_ped(peds_list[2]) if len(peds_list) > 2 else ""
+            bms         = _safe_ped(peds_list[4]) if len(peds_list) > 4 else ""
+            cross_score = _compute_cross_score(peds_list)
         except Exception:
-            sire, dam, grandsire, bms = "", "", "", ""
+            sire, dam, grandsire, bms, cross_score = "", "", "", "", 0.0
         birth_month = horse_profile_dataset_manager.get_birth_month(str(hid))
-        peds_map[str(hid)] = (sire, dam, grandsire, bms, birth_month)
+        peds_map[str(hid)] = (sire, dam, grandsire, bms, birth_month, cross_score)
     return peds_map
 
 
@@ -238,17 +273,20 @@ def make_training_dataset():
         raise RuntimeError("新馬戦データが見つかりません")
     print(f"  → {len(shinba)}件")
 
-    # 血統情報 + 誕生月を取得
+    # 血統情報 + 誕生月 + クロスを取得
     unique_ids = shinba["horse_id"].dropna().unique().tolist()
-    print(f"  → 馬 {len(unique_ids)}頭の血統・誕生月を取得中...")
+    print(f"  → 馬 {len(unique_ids)}頭の血統・誕生月・クロスを取得中...")
     peds_map = _fetch_peds_map(unique_ids)
-    _empty = ("", "", "", "", None)
+    _empty = ("", "", "", "", None, 0.0)
     shinba["sire"]        = shinba["horse_id"].map(lambda x: peds_map.get(str(x), _empty)[0])
     shinba["dam"]         = shinba["horse_id"].map(lambda x: peds_map.get(str(x), _empty)[1])
     shinba["grandsire"]   = shinba["horse_id"].map(lambda x: peds_map.get(str(x), _empty)[2])
     shinba["bms"]         = shinba["horse_id"].map(lambda x: peds_map.get(str(x), _empty)[3])
     shinba["birth_month"] = shinba["horse_id"].map(
         lambda x: float(peds_map.get(str(x), _empty)[4]) if peds_map.get(str(x), _empty)[4] is not None else np.nan
+    )
+    shinba["cross_score"] = shinba["horse_id"].map(
+        lambda x: float(peds_map.get(str(x), _empty)[5])
     )
 
     # 日付パース・場所・コード変換
@@ -365,6 +403,7 @@ def make_training_dataset():
         "dam_shinba_runs":     shinba["dam_shinba_runs"],
         "grandsire_win":       shinba["grandsire_win"],
         "grandsire_place":     shinba["grandsire_place"],
+        "cross_score":         shinba["cross_score"],
         "jockey_shinba_win":   shinba["jockey_shinba_win"],
         "jockey_shinba_place": shinba["jockey_shinba_place"],
         "trainer_shinba_win":  shinba["trainer_shinba_win"],
@@ -514,6 +553,7 @@ def make_row_for_prediction(
     horse_weight, jockey_id, trainer_name,
     stats_tables,
     birth_month=None,
+    cross_score=0.0,
 ):
     """
     1馬分の予測用特徴量行を返す（stats_tables は build_stats_tables() の戻り値）。
@@ -533,14 +573,14 @@ def make_row_for_prediction(
         rows = tbl[mask]
         return rows[val_col].iloc[0] if not rows.empty else default
 
-    sc_tbl  = stats_tables.get("sire_course")
-    sg_tbl  = stats_tables.get("sire_global")
-    bc_tbl  = stats_tables.get("bms_course")
-    bg_tbl  = stats_tables.get("bms_global")
-    dam_tbl = stats_tables.get("dam")
-    gs_tbl  = stats_tables.get("grandsire")
-    jk_tbl  = stats_tables.get("jockey")
-    tr_tbl  = stats_tables.get("trainer")
+    sc_tbl   = stats_tables.get("sire_course")
+    sg_tbl   = stats_tables.get("sire_global")
+    bc_tbl   = stats_tables.get("bms_course")
+    bg_tbl   = stats_tables.get("bms_global")
+    dam_tbl  = stats_tables.get("dam")
+    gs_tbl   = stats_tables.get("grandsire")
+    jk_tbl   = stats_tables.get("jockey")
+    tr_tbl   = stats_tables.get("trainer")
 
     row = {
         "sire_course_win":     _lookup(sc_tbl,  ["sire", "race_type", "dist_band"], [sire, rt, dist_band], "win_rate"),
@@ -558,6 +598,7 @@ def make_row_for_prediction(
         "dam_shinba_runs":     _lookup(dam_tbl, ["dam"],  [dam],  "runs", 0.0),
         "grandsire_win":       _lookup(gs_tbl,  ["grandsire"], [grandsire], "global_win"),
         "grandsire_place":     _lookup(gs_tbl,  ["grandsire"], [grandsire], "global_place"),
+        "cross_score":         float(cross_score) if cross_score is not None else 0.0,
         "jockey_shinba_win":   _lookup(jk_tbl,  ["jockey_id"], [jockey_id],   "win_rate"),
         "jockey_shinba_place": _lookup(jk_tbl,  ["jockey_id"], [jockey_id],   "place_rate"),
         "trainer_shinba_win":  _lookup(tr_tbl,  ["trainer"],   [trainer_name], "win_rate"),

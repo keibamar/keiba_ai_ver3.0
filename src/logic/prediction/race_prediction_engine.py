@@ -1169,6 +1169,7 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
     try:
         from src.PredictionModels.LightGBM.make_dataset_shinba import (
             make_row_for_prediction,
+            _compute_cross_score,
         )
 
         place_id   = int(str(race_id)[4:6])
@@ -1194,12 +1195,13 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
             try:
                 peds_data = horse_peds_dataset_manager.get_horse_peds_dataset(str(hid))
                 peds_list = peds_data[str(hid)].tolist()
-                sire      = _safe_ped_val(peds_list[0]) if len(peds_list) > 0 else ""
-                dam       = _safe_ped_val(peds_list[1]) if len(peds_list) > 1 else ""
-                grandsire = _safe_ped_val(peds_list[2]) if len(peds_list) > 2 else ""
-                bms       = _safe_ped_val(peds_list[4]) if len(peds_list) > 4 else ""
+                sire        = _safe_ped_val(peds_list[0]) if len(peds_list) > 0 else ""
+                dam         = _safe_ped_val(peds_list[1]) if len(peds_list) > 1 else ""
+                grandsire   = _safe_ped_val(peds_list[2]) if len(peds_list) > 2 else ""
+                bms         = _safe_ped_val(peds_list[4]) if len(peds_list) > 4 else ""
+                cross_score = _compute_cross_score(peds_list)
             except Exception:
-                sire, dam, grandsire, bms = "", "", "", ""
+                sire, dam, grandsire, bms, cross_score = "", "", "", "", 0.0
 
             # 誕生月
             birth_month = horse_profile_dataset_manager.get_birth_month(str(hid))
@@ -1270,6 +1272,7 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
                 trainer_name=trainer_name,
                 stats_tables=tables,
                 birth_month=birth_month,
+                cross_score=cross_score,
             )
             rows.append(row)
 
