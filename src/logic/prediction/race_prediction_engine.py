@@ -857,6 +857,10 @@ def blended_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
 _mm_model_cache: dict = {}
 _mm_ped_vocab = None
 
+# ── 新馬戦専用モデル ──
+_shinba_model_cache: dict = {}
+_shinba_stats_cache: dict = {}
+
 
 _MM_SUFFIX_FALLBACK = {
     "_v7_no26":  "_v7odds_binary_no26",
@@ -925,6 +929,16 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
     """
     if not _MM_AVAILABLE:
         return pd.DataFrame()
+    # 新馬戦は専用モデルに委譲
+    try:
+        if race_info_df.at[0, "class"] == "新馬":
+            return shinba_rank_prediction(
+                race_id, horse_ids, race_info_df, waku_df,
+                kinryo_series=kinryo_series, jockey_ids=jockey_ids,
+                odds_series=odds_series,
+            )
+    except Exception:
+        pass
     try:
         place_id   = int(str(race_id)[4:6])
         race_type  = race_info_df.at[0, "race_type"]
@@ -1083,6 +1097,150 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
             "rank_value":   rnk_val,
             "idx_mar":      idx_mar,
             "rank_mar":     rnk_mar,
+        })
+
+    except Exception as e:
+        prediction_error(e)
+        return pd.DataFrame()
+
+
+# ============================================================
+# 新馬戦専用モデル
+# ============================================================
+
+def _shinba_get_model(race_type):
+    """新馬戦モデルをロード（キャッシュ済み）"""
+    key = race_type
+    if key not in _shinba_model_cache:
+        type_str = "turf" if race_type == "芝" else "dirt"
+        mp = os.path.join(paths.PREDICTION_MODEL_PATH, "shinba",
+                          f"{type_str}_shinba_model.txt")
+        if not os.path.isfile(mp):
+            raise FileNotFoundError(f"新馬戦モデル未学習: {mp}")
+        _shinba_model_cache[key] = lgb.Booster(model_file=mp)
+    return _shinba_model_cache[key]
+
+
+def _shinba_get_stats():
+    """統計テーブルをロード（キャッシュ済み）"""
+    if "sire_course" not in _shinba_stats_cache:
+        stats_dir = os.path.join(paths.PREDICTION_MODEL_PATH, "shinba", "stats_tables")
+        for name in ("sire_course", "sire_global", "jockey", "trainer"):
+            p = os.path.join(stats_dir, f"{name}.csv")
+            _shinba_stats_cache[name] = pd.read_csv(p) if os.path.isfile(p) else pd.DataFrame()
+    return _shinba_stats_cache
+
+
+def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
+                           kinryo_series=None, jockey_ids=None, odds_series=None):
+    """新馬戦専用モデルによる予想（走歴なし馬用）
+
+    multi_model_rank_prediction() と同一シグネチャ・同一戻り値形式。
+    3戦略はすべて同一スコアから生成（モデルが1つのため）。
+    """
+    try:
+        from src.PredictionModels.LightGBM.make_dataset_shinba import (
+            make_row_for_prediction,
+        )
+
+        place_id   = int(str(race_id)[4:6])
+        race_type  = race_info_df.at[0, "race_type"]
+        course_len = str(race_info_df.at[0, "course_len"])
+
+        model  = _shinba_get_model(race_type)
+        tables = _shinba_get_stats()
+
+        rows = []
+        for idx, hid in enumerate(horse_ids):
+            # 父名
+            try:
+                peds = horse_peds_dataset_manager.get_peds_info(str(hid))
+                sire = str(peds[0]) if peds[0] is not np.nan else ""
+            except Exception:
+                sire = ""
+
+            # 騎手
+            jockey_id = str(jockey_ids[idx]) if jockey_ids and idx < len(jockey_ids) else ""
+
+            # 調教師
+            try:
+                trainer_col = [c for c in waku_df.columns if "調教師" in c or "trainer" in c.lower()]
+                trainer_name = str(waku_df[trainer_col[0]].iloc[idx]) if trainer_col else ""
+            except Exception:
+                trainer_name = ""
+
+            # 斤量
+            kinryo = np.nan
+            if kinryo_series is not None and idx < len(kinryo_series):
+                try:
+                    kinryo = float(str(kinryo_series.iloc[idx]).strip())
+                except Exception:
+                    pass
+
+            # 枠・馬番
+            waku_v   = float(waku_df["枠"].iloc[idx])  if "枠"  in waku_df.columns else np.nan
+            umaban_v = float(waku_df["馬番"].iloc[idx]) if "馬番" in waku_df.columns else np.nan
+
+            # 馬体重
+            hw_col = [c for c in waku_df.columns if "馬体重" in c]
+            horse_weight = np.nan
+            if hw_col:
+                try:
+                    m = re.match(r"(\d+)", str(waku_df[hw_col[0]].iloc[idx]))
+                    horse_weight = float(m.group(1)) if m else np.nan
+                except Exception:
+                    pass
+
+            # 性別
+            sex_col = [c for c in waku_df.columns if "性" in c and "齢" in c]
+            sex_code = 0.0
+            if sex_col:
+                try:
+                    sex_code = 1.0 if str(waku_df[sex_col[0]].iloc[idx]).startswith("牝") else 0.0
+                except Exception:
+                    pass
+
+            # オッズ・人気
+            odds_v = np.nan
+            if odds_series is not None and idx < len(odds_series):
+                try:
+                    odds_v = float(odds_series.iloc[idx])
+                except Exception:
+                    pass
+
+            row = make_row_for_prediction(
+                sire=sire,
+                race_type=race_type,
+                course_len=int(course_len) if str(course_len).isdigit() else 1600,
+                place_id=place_id,
+                waku=waku_v,
+                umaban=umaban_v,
+                kinryo=kinryo,
+                sex_code=sex_code,
+                horse_weight=horse_weight,
+                current_odds=odds_v,
+                current_pop=idx + 1,
+                jockey_id=jockey_id,
+                trainer_name=trainer_name,
+                stats_tables=tables,
+            )
+            rows.append(row)
+
+        X = pd.concat(rows, ignore_index=True).fillna(-1.0)
+        scores = model.predict(X.values, num_iteration=model.best_iteration)
+        scores = np.array(scores, dtype=float)
+
+        z       = _zscore(pd.Series(scores))
+        idx_all = [score_to_index(v) for v in z]
+        rnk     = rank_index(scores.tolist())
+
+        return pd.DataFrame({
+            "idx_hitrate":  idx_all,
+            "rank_hitrate": rnk,
+            "idx_value":    idx_all,
+            "rank_value":   rnk,
+            "idx_mar":      idx_all,
+            "rank_mar":     rnk,
         })
 
     except Exception as e:
