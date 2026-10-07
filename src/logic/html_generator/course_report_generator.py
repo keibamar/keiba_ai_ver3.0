@@ -38,6 +38,7 @@ from src.logic.html_generator.site_nav_html import (
     ad_unit_html,
     adsense_script_html,
     breadcrumb_html,
+    diary_sidebar_html,
     ga4_script_html,
     meta_tags_html,
     site_footer_html,
@@ -1695,6 +1696,8 @@ def course_report_to_html(report, ai_df=None):
   {site_nav_html(base_path="../../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb}
   <p><a href="index.html">&larr; {place_name}のコース一覧へ</a></p>
+  <div class="page-layout">
+  <main class="page-content">
   <h1>{place_name} {current_label_html} コース詳細</h1>
 
   <div class="tabbed-section">
@@ -1806,6 +1809,9 @@ def course_report_to_html(report, ai_df=None):
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../../">&larr; HOMEへ戻る</a></p>
+  </main>
+  {diary_sidebar_html("../../")}
+  </div>
   {site_footer_html(base_path="../../")}
   <script src="../../assets/js/sortable-table.js"></script>
   <script src="../../assets/js/section-tabs.js"></script>
@@ -1867,6 +1873,8 @@ def make_course_index_page():
 <body class="section-courses">
   {site_nav_html(base_path="../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb_html(breadcrumb_items, base_path="../")}
+  <div class="page-layout">
+  <main class="page-content">
   <h1>コース詳細データ</h1>
 
   <h2>開催中の競馬場</h2>
@@ -1880,6 +1888,9 @@ def make_course_index_page():
   </div>
 
   <p><a href="../">&larr; HOMEへ戻る</a></p>
+  </main>
+  {diary_sidebar_html("../")}
+  </div>
   {site_footer_html(base_path="../")}
 </body>
 </html>
@@ -1971,6 +1982,8 @@ def make_track_page(place_id):
 <body class="section-courses">
   {site_nav_html(base_path="../../", breadcrumb_items=tab_hierarchy_items)}
   {breadcrumb}
+  <div class="page-layout">
+  <main class="page-content">
   <h1>{place_name} コース一覧</h1>
   {venue_desc_html}
   <div class="card-grid">
@@ -1994,6 +2007,9 @@ def make_track_page(place_id):
 
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/index.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../index.html">&larr; コース詳細データ一覧へ</a></p>
+  </main>
+  {diary_sidebar_html("../../")}
+  </div>
   {site_footer_html(base_path="../../")}
   <script src="../../assets/js/sortable-table.js"></script>
 </body>

@@ -32,6 +32,7 @@ from src.logic.html_generator.site_nav_html import (
     ad_unit_html,
     adsense_script_html,
     breadcrumb_html,
+    diary_sidebar_section,
     ga4_script_html,
     meta_tags_html,
     sidebar_html,
@@ -546,7 +547,10 @@ def make_annual_performance_page(year, df=None):
 
     years = sorted({int(y) for y in df["year"]}, reverse=True) if not df.empty else []
     sidebar = sidebar_html(
-        [("年度", [(f"{y}年", f"{y}.html") for y in years], f"{year}年")],
+        [
+            ("年度", [(f"{y}年", f"{y}.html") for y in years], f"{year}年"),
+            diary_sidebar_section("../../"),
+        ],
         up_link=("AI成績トップ", "../index.html"),
     )
     breadcrumb_items = [("AI成績", "performance/index.html"), (f"{year}年", None)]

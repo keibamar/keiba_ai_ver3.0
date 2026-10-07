@@ -58,5 +58,31 @@ if __name__ == "__main__":
         print("記事テキストが生成できませんでした。終了します。")
         sys.exit(1)
 
-    weekly_review_generator.make_weekly_review_page(sat, sun, article_text, data)
+    # 開催場・メインレース・pub_date を自動検出
+    graded = data.get("graded_races", [])
+    main_race = graded[0]["race_name"] if graded else ""
+
+    _PLACE = {
+        "01": "札幌", "02": "函館", "03": "福島", "04": "新潟",
+        "05": "東京", "06": "中山", "07": "中京", "08": "京都",
+        "09": "阪神", "10": "小倉",
+    }
+    seen: set[str] = set()
+    venues: list[str] = []
+    for s in data.get("race_summaries", []):
+        pc = str(s["race_id"])[4:6]
+        v = _PLACE.get(pc, pc)
+        if v not in seen:
+            seen.add(v)
+            venues.append(v)
+
+    pub_date = today  # 振り返りは実行日（火曜）を公開日とする
+
+    weekly_review_generator.make_weekly_review_page(
+        sat, sun, article_text, data,
+        article_type="振り返り",
+        main_race=main_race,
+        pub_date=pub_date,
+        venues=venues,
+    )
     print("週末振り返り記事の生成が完了しました。")
