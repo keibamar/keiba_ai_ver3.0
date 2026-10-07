@@ -438,7 +438,7 @@ def make_daily_trend_page(target_date: date, stats: dict, comment_text: str) -> 
 <body>
 {site_nav_html(base_path="../", current_path=f"trend/{filename}")}
 <main>
-  {breadcrumb_html([("傾向分析", "index.html"), (title_date, None)], base_path="../")}
+  {breadcrumb_html([("傾向分析", "trend/index.html"), (title_date, None)], base_path="../")}
   <article class="trend-article">
     <header class="trend-header">
       <div class="trend-date-badge">{title_date}（{weekday}）</div>
@@ -537,7 +537,7 @@ def make_weekly_trend_page(sat_date: date, sun_date: date,
 <body>
 {site_nav_html(base_path="../", current_path=f"trend/{filename}")}
 <main>
-  {breadcrumb_html([("傾向分析", "index.html"), (f"{sat_label}週次", None)], base_path="../")}
+  {breadcrumb_html([("傾向分析", "trend/index.html"), (f"{sat_label}週次", None)], base_path="../")}
   <article class="trend-article">
     <header class="trend-header">
       <div class="trend-date-badge weekly-badge">週次振り返り</div>
