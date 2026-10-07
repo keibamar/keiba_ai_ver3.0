@@ -1657,13 +1657,15 @@ footer p {
 /* 階層が深いページ（コース詳細・AI成績のコース別ページ等）で、兄弟ページ
    （他のコース・他の競馬場・他の年度等）へすぐ移動できるようにする。 */
 
-.page-layout {
+.page-layout,
+.content-wrapper {
   display: flex;
   gap: 24px;
   align-items: flex-start;
 }
 
-.page-content {
+.page-content,
+.main-content {
   flex: 1;
   min-width: 0;
 }
@@ -1736,7 +1738,8 @@ footer p {
 }
 
 @media (max-width: 800px) {
-  .page-layout {
+  .page-layout,
+  .content-wrapper {
     flex-direction: column;
   }
 
@@ -1747,6 +1750,29 @@ footer p {
     max-height: none;
   }
 }
+
+.diary-sidebar-more {
+  font-size: 0.9em;
+  color: var(--mar-primary) !important;
+  font-weight: bold;
+}
+
+.diary-back-link {
+  margin-top: 2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--mar-border, #ddd);
+  font-size: 0.95em;
+}
+
+.diary-back-link a {
+  color: var(--mar-primary);
+  text-decoration: none;
+}
+
+.diary-back-link a:hover {
+  text-decoration: underline;
+}
+
 
 /* --- セクション分けカード型UI + セクション間タブナビゲーション（section-tabs.js） --- */
 /* 縦に長い「見出し→表→見出し→表」の羅列を避け、関連セクションをタブで切り替えて
@@ -2592,21 +2618,40 @@ body.section-calendar .calendar-widget {
 .review-header { border-left: 4px solid #c62828; }
 .review-text-body { line-height: 1.9; font-size: 0.98em; }
 .review-perf-card {
-  background: #fff8f8; border: 1px solid #ffcdd2; border-radius: 6px;
+  background: #fff8f8; border: 1px solid #ffcdd2; border-radius: 8px;
   padding: 1rem 1.2rem; margin: 1rem 0 1.5rem;
 }
+.review-perf-header {
+  display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.9rem;
+}
 .review-perf-title {
-  font-weight: 700; font-size: 1em; margin-bottom: 0.6rem; color: #c62828;
+  font-weight: 700; font-size: 1em; color: #c62828;
 }
-.review-perf-n { font-weight: 400; font-size: 0.85em; color: #666; }
-.review-perf-table { border-collapse: collapse; font-size: 0.9em; }
-.review-perf-table th, .review-perf-table td {
-  padding: 4px 14px 4px 0; text-align: left;
+.review-perf-n { font-weight: 400; font-size: 0.82em; color: #888; }
+.review-perf-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem;
 }
-.review-perf-table thead tr { border-bottom: 1px solid #ffcdd2; }
+.review-perf-item {
+  background: #fff; border: 1px solid #ffcdd2; border-radius: 6px;
+  padding: 0.6rem 0.7rem; text-align: center;
+}
+.review-perf-type {
+  font-size: 0.78rem; font-weight: 700; color: #555;
+  margin-bottom: 0.5rem; border-bottom: 1px solid #f5c6cb; padding-bottom: 0.3rem;
+}
+.review-perf-stats { display: flex; justify-content: space-around; gap: 0.3rem; }
+.review-perf-stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
+.review-perf-stat-val {
+  font-size: 1.15rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums;
+}
+.review-perf-stat-val small { font-size: 0.65em; font-weight: 400; }
+.review-perf-stat-label { font-size: 0.68rem; color: #888; margin-top: 0.1rem; }
 .rate-good    { color: #2e7d32; font-weight: 700; }
 .rate-neutral { color: #1565c0; }
 .rate-bad     { color: #b71c1c; }
+@media (max-width: 480px) {
+  .review-perf-grid { grid-template-columns: 1fr; }
+}
 
 /* 週次ページ — セクション背景は常に白、内部テキストは常に暗色 */
 .trend-day-section {

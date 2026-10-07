@@ -198,10 +198,25 @@ def daily_index_template(date_str, date_display, nav_links, place_races, place_k
         SITE_URL,
         adsense_script_html,
         breadcrumb_html,
+        diary_sidebar_html,
         ga4_script_html,
         meta_tags_html,
         site_footer_html,
         site_nav_html,
+    )
+    from src.config import paths
+
+    # 傾向分析ページが存在する場合のみリンクを表示
+    trend_html_path = os.path.join(paths.PUBLIC_HTML_PATH, "trend", f"{date_str}.html")
+    trend_link = (
+        f'<p><a href="../../trend/{date_str}.html">📈 {date_display} 傾向分析 →</a></p>'
+        if os.path.exists(trend_html_path) else ""
+    )
+
+    # テーブルヘッダー: 会場名をコース詳細データへのリンクに
+    venue_headers = "".join(
+        f'<th><a href="../../courses/{k}/index.html">{place_races[k]["display"]}競馬場</a></th>'
+        for k in place_keys
     )
 
     breadcrumb_items = [("レースカレンダー", "races/index.html"), (date_display, None)]
@@ -280,13 +295,15 @@ def daily_index_template(date_str, date_display, nav_links, place_races, place_k
   {site_nav_html(base_path="../../", breadcrumb_items=breadcrumb_items)}
   {breadcrumb_html(breadcrumb_items, base_path="../../")}
   {nav_links}
+  <main>
   <h1>{date_display} レース一覧</h1>
+  {trend_link}
   <div class="table-wrap table-wrap--full">
   <table>
     <thead>
       <tr>
         <th>レース</th>
-        {''.join(f'<th>{place_races[k]["display"]}競馬場</th>' for k in place_keys)}
+        {venue_headers}
       </tr>
     </thead>
     <tbody>
@@ -294,6 +311,7 @@ def daily_index_template(date_str, date_display, nav_links, place_races, place_k
     </tbody>
   </table>
   </div>
+  </main>
   {site_footer_html(base_path="../../")}
 </body>
 </html>
@@ -469,6 +487,7 @@ def races_calendar_template(target_date=None):
 <body class="section-calendar">
   {site_nav_html(base_path="../", current_path="races/index.html", show_calendar=False)}
   {breadcrumb_html([("レースカレンダー", None)], base_path="../")}
+  <main>
   <h1>開催日カレンダー</h1>
 
   {calendar_widget_html(base_path="../", show_meetings=True)}
@@ -477,6 +496,7 @@ def races_calendar_template(target_date=None):
   {_today_meetings_html(today_races, base_path="../")}
 
   <p><a href="../">&larr; HOMEへ戻る</a></p>
+  </main>
   {site_footer_html(base_path="../")}
 </body>
 </html>

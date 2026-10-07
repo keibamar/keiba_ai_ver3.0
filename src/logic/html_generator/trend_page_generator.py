@@ -20,6 +20,7 @@ from src.logic.html_generator.site_nav_html import (
     ad_unit_html,
     adsense_script_html,
     breadcrumb_html,
+    diary_sidebar_section,
     ga4_script_html,
     meta_tags_html,
     sidebar_html,
@@ -39,9 +40,9 @@ def _write_html(path: str, html: str) -> None:
 
 
 def _build_sidebar(current_file: str = "") -> str:
-    """傾向ページの右サイドバー（一覧へ戻るリンクのみ）"""
+    """傾向ページの右サイドバー（傾向分析一覧へ + 最新コラム）"""
     return sidebar_html(
-        [],
+        [diary_sidebar_section("../")],
         up_link=("傾向分析一覧", "index.html"),
     )
 
@@ -111,6 +112,8 @@ def _md_table_to_html(block: str) -> str:
 def _text_to_html(text: str) -> str:
     """生成テキストをHTML段落に変換する（Markdown見出し・リスト・テーブル・太字対応）"""
     text = text.strip()
+    # 見出し行（#〜####）の前に空行を補完してブロック分割されるようにする
+    text = re.sub(r"([^\n])\n(#{1,4} )", r"\1\n\n\2", text)
     paragraphs = []
     for block in re.split(r"\n{2,}", text):
         block = block.strip()
@@ -445,7 +448,7 @@ def make_daily_trend_page(target_date: date, stats: dict, comment_text: str) -> 
 {site_nav_html(base_path="../", current_path=f"trend/{filename}")}
 <div class="content-wrapper">
   <main class="main-content">
-    {breadcrumb_html([("傾向分析", "index.html"), (title_date, "")])}
+    {breadcrumb_html([("傾向分析", "index.html"), (title_date, None)], base_path="../")}
     <article class="trend-article">
       <header class="trend-header">
         <div class="trend-date-badge">{title_date}（{weekday}）</div>
@@ -546,7 +549,7 @@ def make_weekly_trend_page(sat_date: date, sun_date: date,
 {site_nav_html(base_path="../", current_path=f"trend/{filename}")}
 <div class="content-wrapper">
   <main class="main-content">
-    {breadcrumb_html([("傾向分析", "index.html"), (f"{sat_label}週次", "")])}
+    {breadcrumb_html([("傾向分析", "index.html"), (f"{sat_label}週次", None)], base_path="../")}
     <article class="trend-article">
       <header class="trend-header">
         <div class="trend-date-badge weekly-badge">週次振り返り</div>
@@ -716,7 +719,7 @@ def _update_index() -> None:
 {site_nav_html(base_path="../", current_path="trend/index.html")}
 <div class="content-wrapper">
   <main class="main-content">
-    {breadcrumb_html([("傾向分析", "")])}
+    {breadcrumb_html([("傾向分析", None)], base_path="../")}
     <div class="page-header">
       <h1>傾向分析</h1>
       <div class="page-desc">
@@ -735,7 +738,6 @@ def _update_index() -> None:
 {sections_html}
     </div>
   </main>
-  {_build_sidebar()}
 </div>
 {site_footer_html()}
 </body>

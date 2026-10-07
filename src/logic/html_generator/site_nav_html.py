@@ -428,6 +428,66 @@ def _get_trend_nav_links(base_path: str) -> list:
     return groups
 
 
+def _get_diary_nav_links(base_path: str, recent_only: bool = False) -> list:
+    """public_html/diary/ の全エントリを月別グループにまとめて返す。
+
+    Args:
+        recent_only: True のとき最新月の最新3件だけを返す（全ページ共通の最新記事用）
+
+    Returns:
+        [{"header": "YYYY/MM", "entries": [(label, path), ...]}, ...]
+        最新月が先頭。月内は公開日降順。
+    """
+    from itertools import groupby as _groupby
+
+    diary_data_dir = os.path.join(paths.DATA_PATH, "diary")
+    try:
+        json_files = [f for f in os.listdir(diary_data_dir) if f.endswith(".json")]
+    except FileNotFoundError:
+        return []
+
+    _TYPE_SHORT = {"振り返り": "振返", "前日展望": "前日", "週末展望": "週末"}
+
+    rows = []
+    for fname in json_files:
+        try:
+            with open(os.path.join(diary_data_dir, fname), encoding="utf-8") as fp:
+                meta = json.load(fp)
+        except (json.JSONDecodeError, OSError):
+            continue
+        date_key = meta.get("date_key", fname.replace(".json", ""))
+        if len(date_key) != 8:
+            continue
+        try:
+            y, m, d = int(date_key[:4]), int(date_key[4:6]), int(date_key[6:8])
+        except (ValueError, IndexError):
+            continue
+
+        article_type = meta.get("article_type", "振り返り")
+        main_race = meta.get("main_race", "")
+        type_short = _TYPE_SHORT.get(article_type, article_type)
+        label = f"{m}/{d} {main_race}（{type_short}）" if main_race else f"{m}/{d} {type_short}"
+        path = f"diary/{date_key}.html"
+        rows.append((y, m, d, label, path))
+
+    rows.sort(key=lambda r: (r[0], r[1], r[2]), reverse=True)
+
+    if recent_only:
+        recent = rows[:3]
+        if not recent:
+            return []
+        return [{"header": "", "entries": [(r[3], r[4]) for r in recent]}]
+
+    rows_asc = sorted(rows, key=lambda r: (r[0], r[1], r[2]))
+    groups = []
+    for (y, m), grp in _groupby(rows_asc, key=lambda r: (r[0], r[1])):
+        header = f"{y}/{m:02d}"
+        entries = list(reversed([(r[3], r[4]) for r in grp]))
+        groups.append({"header": header, "entries": entries})
+    groups.sort(key=lambda g: g["header"], reverse=True)
+    return groups
+
+
 def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
     """HOMEを根に、NAV_LINKSの3項目を1段下にネストした、常時表示用の階層ツリーを返す
 
@@ -525,9 +585,54 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
                 and current_path.startswith("diary/")
                 and current_path != "diary/index.html"
             )
+            is_in_diary = (
+                breadcrumb_items is None
+                and current_path is not None
+                and current_path.startswith("diary/")
+            )
             is_active = is_current or is_in_diary_detail
             crumb = _crumb_item_html(label, None if is_current else path, base_path)
-            nested_html = ""
+
+            if is_in_diary:
+                # 日記ページ内: 傾向分析と同様に月別インデックスを展開
+                cur_month = ""
+                if is_in_diary_detail and current_path:
+                    date_key = current_path[len("diary/"):].replace(".html", "")
+                    if len(date_key) == 8:
+                        try:
+                            cur_month = f"{date_key[:4]}/{date_key[4:6]}"
+                        except Exception:
+                            pass
+
+                diary_groups = _get_diary_nav_links(base_path)
+                inner = ""
+                for grp in diary_groups:
+                    is_cur_month = is_in_diary_detail and grp["header"] == cur_month
+                    entries_html = ""
+                    for tl, tp in grp["entries"]:
+                        is_cur_entry = (
+                            is_in_diary_detail
+                            and current_path is not None
+                            and tp == current_path
+                        )
+                        entry_path = None if is_cur_entry else tp
+                        entries_html += (
+                            f"<li>{_crumb_item_html(tl, entry_path, base_path)}</li>\n"
+                        )
+                    month_list = (
+                        f'<ul class="page-calendar-tab-sublevel">\n{entries_html}</ul>'
+                    )
+                    open_attr = " open" if is_cur_month else ""
+                    inner += (
+                        f"<li><details{open_attr}>"
+                        f'<summary class="trend-month-header">{grp["header"]}</summary>'
+                        f"{month_list}"
+                        f"</details></li>\n"
+                    )
+                nested_html = inner
+            else:
+                # 他ページ: ナビはリンクのみ（右サイドバーで最新記事を表示するため展開しない）
+                nested_html = ""
         else:
             is_current = breadcrumb_items is None and current_path == path
             crumb = _crumb_item_html(label, None if is_current else path, base_path)
@@ -657,3 +762,42 @@ def sidebar_html(sections, up_link=None):
 
     return f"""<aside class="page-sidebar">
   {up_html}{sections_html}</aside>"""
+
+
+def diary_sidebar_html(base_path: str = "") -> str:
+    """MARの競馬コラム 最新記事ウィジェット（単独サイドバー）を返す。
+
+    sidebar_html() を持たないページ（HOME・カレンダー・コース・出馬表等）に
+    page-layout ラッパーと組み合わせて埋め込む用途。
+    """
+    groups = _get_diary_nav_links(base_path, recent_only=True)
+    entries = groups[0]["entries"] if groups else []
+
+    items = "".join(
+        f'<li><a href="{base_path}{path}">{label}</a></li>\n'
+        for label, path in entries
+    )
+    items += f'<li><a href="{base_path}diary/index.html" class="diary-sidebar-more">→ 一覧を見る</a></li>\n'
+
+    return f"""<aside class="page-sidebar">
+  <h3>🏇 MARの競馬コラム</h3>
+  <ul>
+    {items}
+  </ul>
+</aside>"""
+
+
+def diary_sidebar_section(base_path: str = "") -> tuple:
+    """既存 sidebar_html() の sections に追加するタプルを返す。
+
+    パフォーマンス・傾向分析など既にサイドバーがあるページで、
+    コラム最新記事セクションを追加する用途。
+
+    Returns:
+        (title, [(label, path), ...], None)
+    """
+    groups = _get_diary_nav_links(base_path, recent_only=True)
+    entries = groups[0]["entries"] if groups else []
+    links = [(label, f"{base_path}{path}") for label, path in entries]
+    links.append(("→ 一覧を見る", f"{base_path}diary/index.html"))
+    return ("🏇 MARの競馬コラム", links, None)

@@ -19,7 +19,6 @@ from src.logic.html_generator.site_nav_html import (
     breadcrumb_html,
     ga4_script_html,
     meta_tags_html,
-    sidebar_html,
     site_footer_html,
     site_nav_html,
 )
@@ -48,14 +47,7 @@ def _weekday_str(d: date) -> str:
     return _WEEKDAY[d.weekday()]
 
 
-def _build_sidebar() -> str:
-    return sidebar_html(
-        [],
-        up_link=("MARの競馬コラム一覧", "index.html"),
-    )
-
-
-def _perf_summary_html(perf: dict) -> str:
+def _perf_summary_html(perf: dict, article_type: str = "振り返り") -> str:
     """AI成績サマリーのデータカード"""
     win = perf.get("win", {})
     place = perf.get("place", {})
@@ -71,22 +63,36 @@ def _perf_summary_html(perf: dict) -> str:
             return "rate-neutral"
         return "rate-bad"
 
-    rows = [
+    card_title = "先週末のMAR成績" if article_type == "振り返り" else "今週末のMAR成績"
+
+    items = [
         ("単勝", win.get("hit_rate", 0), win.get("return_rate", 0)),
         ("複勝", place.get("hit_rate", 0), place.get("return_rate", 0)),
         ("3連複BOX", trio.get("hit_rate", 0), trio.get("return_rate", 0)),
     ]
-    table_rows = "".join(
-        f'<tr><th>{label}</th><td>{hr:.1f}%</td>'
-        f'<td class="{_rate_cls(rr)}">{rr:.1f}%</td></tr>'
-        for label, hr, rr in rows
-    )
+    item_html = ""
+    for label, hr, rr in items:
+        roi_cls = _rate_cls(rr)
+        item_html += f"""<div class="review-perf-item">
+  <div class="review-perf-type">{label}</div>
+  <div class="review-perf-stats">
+    <div class="review-perf-stat">
+      <span class="review-perf-stat-val">{hr:.1f}<small>%</small></span>
+      <span class="review-perf-stat-label">的中率</span>
+    </div>
+    <div class="review-perf-stat {roi_cls}">
+      <span class="review-perf-stat-val">{rr:.1f}<small>%</small></span>
+      <span class="review-perf-stat-label">回収率</span>
+    </div>
+  </div>
+</div>"""
+
     return f"""<div class="review-perf-card">
-  <div class="review-perf-title">今週末のMAR成績 <span class="review-perf-n">（{n}レース）</span></div>
-  <table class="review-perf-table">
-    <thead><tr><th>券種</th><th>的中率</th><th>回収率</th></tr></thead>
-    <tbody>{table_rows}</tbody>
-  </table>
+  <div class="review-perf-header">
+    <span class="review-perf-title">{card_title}</span>
+    <span class="review-perf-n">対象 {n}R</span>
+  </div>
+  <div class="review-perf-grid">{item_html}</div>
 </div>"""
 
 
@@ -113,31 +119,37 @@ def make_weekly_review_page(
     article_type: str = "振り返り",
     main_race: str = "",
     pub_date: date | None = None,
+    venues: list[str] | None = None,
 ) -> str:
     """MARの競馬コラムページを生成する
 
     Args:
-        sat_date: 土曜日（ファイル名・URL の基準）
-        sun_date: 日曜日（タイトル表示用）
+        sat_date: 土曜日（サブタイトル・date_range の基準）
+        sun_date: 日曜日（タイトル表示用。前日展望の場合は None）
         article_text: Markdown記事テキスト
-        data: collect_weekend_data() の返り値
+        data: collect_weekend_data() / collect_preview_data() の返り値
         article_type: "振り返り" / "週末展望" / "前日展望"
         main_race: メインレース名（タイトルに入れる、省略可）
         pub_date: 公開日（省略時は sat_date）
+        venues: 開催場リスト（例: ["東京", "京都"]）。サブタイトルに追加
 
     Returns:
         生成したHTMLファイルのパス
     """
-    date_key = sat_date.strftime("%Y%m%d")
+    pub_d = pub_date or sat_date
+    date_key = pub_d.strftime("%Y%m%d")
     filename = f"{date_key}.html"
     out_path = os.path.join(DIARY_DIR, filename)
-
-    pub_d = pub_date or sat_date
     pub_label = f"{pub_d.month}/{pub_d.day}（{_weekday_str(pub_d)}）"
 
-    sat_label = f"{sat_date.month}/{sat_date.day}"
-    sun_label = f"〜{sun_date.month}/{sun_date.day}" if sun_date else ""
+    sat_label = f"{sat_date.month}/{sat_date.day}（{_weekday_str(sat_date)}）"
+    if sun_date:
+        sun_label = f"・{sun_date.month}/{sun_date.day}（{_weekday_str(sun_date)}）"
+    else:
+        sun_label = ""
     date_range = f"{sat_label}{sun_label}"
+    venue_str = f"｜{'・'.join(venues)}" if venues else ""
+    subtitle_text = f"{date_range}{venue_str}"
 
     # タイプ別の説明文プレフィックス
     _desc_prefix = {
@@ -167,6 +179,7 @@ def make_weekly_review_page(
         "pub_date": pub_d.isoformat(),
         "article_type": article_type,
         "main_race": main_race,
+        "venues": venues or [],
         "page_title": page_title,
     }
     meta_path = os.path.join(DIARY_DATA_DIR, f"{date_key}.json")
@@ -174,7 +187,7 @@ def make_weekly_review_page(
         json.dump(meta, f, ensure_ascii=False, indent=2)
 
     css_ver = _css_version()
-    perf_html = _perf_summary_html(data.get("perf", {}))
+    perf_html = _perf_summary_html(data.get("perf", {}), article_type)
     article_html = _text_to_html(article_text)
 
     badge_cls = _TYPE_BADGE_CLS.get(article_type, "review")
@@ -182,30 +195,29 @@ def make_weekly_review_page(
     html = f"""{_head_html(page_title, description, page_url, css_ver)}
 <body>
 {site_nav_html(base_path="../", current_path=f"diary/{filename}")}
-<div class="content-wrapper">
-  <main class="main-content">
-    {breadcrumb_html([("MARの競馬コラム", "index.html"), (f"{date_range}", "")])}
-    <article class="trend-article">
-      <header class="trend-header review-header">
-        <div class="trend-date-badge {badge_cls}-badge">{article_type}</div>
-        <h1 class="trend-title">{h1_text}</h1>
-        <p class="trend-subtitle">{date_range}</p>
-        <p class="trend-generated-at">公開日時: {datetime.now().strftime("%Y年%m月%d日 %H:%M")}</p>
-      </header>
+<main>
+  {breadcrumb_html([("MARの競馬コラム", "diary/index.html"), (h1_text, None)], base_path="../")}
+  <article class="trend-article">
+    <header class="trend-header review-header">
+      <div class="trend-date-badge {badge_cls}-badge">{article_type}</div>
+      <h1 class="trend-title">{h1_text}</h1>
+      <p class="trend-subtitle">{subtitle_text}</p>
+      <p class="trend-generated-at">公開日時: {datetime.now().strftime("%Y年%m月%d日 %H:%M")}</p>
+    </header>
 
-      {perf_html}
+    {perf_html}
 
-      {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
+    {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
 
-      <div class="trend-text-body review-text-body">
-        {article_html}
-      </div>
+    <div class="trend-text-body review-text-body">
+      {article_html}
+    </div>
 
-      {ad_unit_html(AD_SLOT_IN_CONTENT_2)}
-    </article>
-  </main>
-  {_build_sidebar()}
-</div>
+    {ad_unit_html(AD_SLOT_IN_CONTENT_2)}
+
+    <p class="diary-back-link"><a href="index.html">← MARの競馬コラム一覧へ戻る</a></p>
+  </article>
+</main>
 {site_footer_html()}
 </body>
 </html>"""
@@ -327,7 +339,7 @@ def _update_diary_index() -> None:
 {site_nav_html(base_path="../", current_path="diary/index.html")}
 <div class="content-wrapper">
   <main class="main-content">
-    {breadcrumb_html([("MARの競馬コラム", "")])}
+    {breadcrumb_html([("MARの競馬コラム", None)], base_path="../")}
     <div class="trend-index-page">
       <header class="trend-index-header">
         <h1 class="trend-index-title">MARの競馬コラム</h1>

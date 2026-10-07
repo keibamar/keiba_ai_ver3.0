@@ -328,9 +328,8 @@ def home_template(target_date=None):
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 </head>
 <body>
-  <main>
-    {site_nav_html(base_path="", current_path="index.html")}
-
+{site_nav_html(base_path="", current_path="index.html")}
+<main>
     <div class="home-concept">
       <p class="home-concept-tagline">血統データと走破時計から勝ち馬を導く競馬予想AI</p>
       <div class="home-concept-chips">
@@ -376,8 +375,8 @@ def home_template(target_date=None):
     </div>
 
     {ad_unit_html(AD_SLOT_IN_CONTENT_2)}
-  </main>
-  {site_footer_html(base_path="")}
+</main>
+{site_footer_html(base_path="")}
 </body>
 </html>
 """
