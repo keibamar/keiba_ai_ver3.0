@@ -1,4 +1,4 @@
-"""週末競馬日記（②）のHTMLページ生成
+"""MARの競馬コラム（②）のHTMLページ生成
 
 public_html/diary/YYYYMMDD.html（土曜日付）として出力する。
 傾向分析とは独立したセクション。
@@ -35,7 +35,7 @@ os.makedirs(DIARY_DIR, exist_ok=True)
 def _build_sidebar() -> str:
     return sidebar_html(
         [],
-        up_link=("週末競馬日記一覧", "index.html"),
+        up_link=("MARの競馬コラム一覧", "index.html"),
     )
 
 
@@ -95,7 +95,7 @@ def make_weekly_review_page(
     article_text: str,
     data: dict,
 ) -> str:
-    """週末競馬日記ページを生成する
+    """MARの競馬コラムページを生成する
 
     Args:
         sat_date: 土曜日（ファイル名・URL の基準）
@@ -115,11 +115,11 @@ def make_weekly_review_page(
         f"〜{sun_date.month:02d}月{sun_date.day:02d}日"
         if sun_date else ""
     )
-    page_title = f"{sat_label}{sun_label} 週末競馬日記 | MAR"
+    page_title = f"{sat_label}{sun_label} MARの競馬コラム | MAR"
     description = (
-        f"{sat_label}{sun_label}の週末競馬日記。"
+        f"{sat_label}{sun_label}のMARの競馬コラム。"
         "MARのAI予想結果と注目レース・注目馬の振り返り。"
-        "今週の馬券トピックと読者への問いかけ。"
+        "今週の競馬トピックをお届けします。"
     )
     page_url = f"{SITE_URL}/diary/{filename}"
 
@@ -132,10 +132,10 @@ def make_weekly_review_page(
 {site_nav_html(base_path="../", current_path=f"diary/{filename}")}
 <div class="content-wrapper">
   <main class="main-content">
-    {breadcrumb_html([("週末競馬日記", "index.html"), (f"{sat_label}{sun_label}", "")])}
+    {breadcrumb_html([("MARの競馬コラム", "index.html"), (f"{sat_label}{sun_label}", "")])}
     <article class="trend-article">
       <header class="trend-header review-header">
-        <div class="trend-date-badge review-badge">週末競馬日記</div>
+        <div class="trend-date-badge review-badge">MARの競馬コラム</div>
         <h1 class="trend-title">{sat_label}{sun_label}</h1>
         <p class="trend-generated-at">公開日時: {datetime.now().strftime("%Y年%m月%d日 %H:%M")}</p>
       </header>
@@ -159,7 +159,7 @@ def make_weekly_review_page(
 
     _write_html(out_path, html)
     _update_diary_index()
-    print(f"週末競馬日記を生成しました: {out_path}")
+    print(f"MARの競馬コラムを生成しました: {out_path}")
     return out_path
 
 
@@ -178,7 +178,7 @@ def _update_diary_index() -> None:
         except (ValueError, IndexError):
             continue
         sun = date(y, m, d + 1) if d < 28 else sat  # 大まかな日曜日付
-        short_label = f"{m}/{d}〜{sun.month}/{sun.day} 週末競馬日記"
+        short_label = f"{m}/{d}〜{sun.month}/{sun.day} MARの競馬コラム"
         rows.append((y, m, d, fname, short_label))
 
     rows.sort(key=lambda r: (r[0], r[1], r[2]))
@@ -189,9 +189,9 @@ def _update_diary_index() -> None:
     groups.sort(key=lambda g: (g[0], g[1]), reverse=True)
 
     css_ver = _css_version()
-    page_title = "週末競馬日記 | MAR"
+    page_title = "MARの競馬コラム | MAR"
     page_url = f"{SITE_URL}/diary/index.html"
-    description = "MAR週末競馬日記。毎週火曜更新。土日の競馬をAI予想の結果とともに振り返ります。"
+    description = "MARの競馬コラム。週末の振り返り・注目レース展望をAIの視点でお届けします。"
 
     sections_html = ""
     if not groups:
@@ -202,7 +202,7 @@ def _update_diary_index() -> None:
             for _, _, _, fname, short_label in reversed(grp_rows):
                 badge_html_list.append(
                     f'<li class="trend-index-entry">'
-                    f'<span class="entry-badge review">日記</span>'
+                    f'<span class="entry-badge review">コラム</span>'
                     f'<a href="{fname}">{short_label}</a>'
                     f'</li>'
                 )
@@ -235,13 +235,14 @@ def _update_diary_index() -> None:
 {site_nav_html(base_path="../", current_path="diary/index.html")}
 <div class="content-wrapper">
   <main class="main-content">
-    {breadcrumb_html([("週末競馬日記", "")])}
+    {breadcrumb_html([("MARの競馬コラム", "")])}
     <div class="trend-index-page">
       <header class="trend-index-header">
-        <h1 class="trend-index-title">週末競馬日記</h1>
+        <h1 class="trend-index-title">MARの競馬コラム</h1>
         <p class="trend-index-desc">
-          毎週火曜更新。土日の競馬をAI予想（MAR）の成績とともに振り返り、
-          今週のハイライトレースや注目馬をお届けします。
+          AIによる競馬コラム。週末の注目レース展望（木曜更新）、前日の見どころ（金・土更新）、
+          週末の振り返り（火曜更新）の3本立てでお届けします。<br>
+          データ分析をベースにしながらも、読み物として楽しめる内容を目指しています。
         </p>
       </header>
       {sections_html}

@@ -138,7 +138,7 @@ NAV_LINKS = [
     ("コース詳細データ", "courses/index.html"),
     ("AI成績", "performance/index.html"),
     ("傾向分析", "trend/index.html"),
-    ("週末競馬日記", "diary/index.html"),
+    ("MARの競馬コラム", "diary/index.html"),
 ]
 
 # レースカレンダー/コース詳細データ/AI成績を、サイドバー上で色とアイコンで区別する。
@@ -148,14 +148,14 @@ NAV_ICONS = {
     "コース詳細データ": "🏟️",
     "AI成績": "📊",
     "傾向分析": "📈",
-    "週末競馬日記": "🏇",
+    "MARの競馬コラム": "🏇",
 }
 NAV_COLOR_CLASSES = {
     "レースカレンダー": "nav-color-calendar",
     "コース詳細データ": "nav-color-courses",
     "AI成績": "nav-color-performance",
     "傾向分析": "nav-color-trend",
-    "週末競馬日記": "nav-color-diary",
+    "MARの競馬コラム": "nav-color-diary",
 }
 
 
@@ -517,7 +517,7 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
                     nested_html = ""
             else:
                 nested_html = ""
-        elif label == "週末競馬日記":
+        elif label == "MARの競馬コラム":
             is_current = breadcrumb_items is None and current_path == path
             is_in_diary_detail = (
                 breadcrumb_items is None
