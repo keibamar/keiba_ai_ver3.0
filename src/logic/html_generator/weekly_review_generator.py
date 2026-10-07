@@ -1,9 +1,10 @@
 """MARの競馬コラム（②）のHTMLページ生成
 
-public_html/diary/YYYYMMDD.html（土曜日付）として出力する。
+public_html/diary/YYYYMMDD.html（公開日付）として出力する。
 傾向分析とは独立したセクション。
 """
 
+import json
 import os
 from datetime import date, datetime
 from itertools import groupby as _groupby
@@ -29,7 +30,22 @@ from src.logic.html_generator.trend_page_generator import (
 )
 
 DIARY_DIR = os.path.join(paths.PUBLIC_HTML_PATH, "diary")
+DIARY_DATA_DIR = os.path.join(paths.DATA_PATH, "diary")
 os.makedirs(DIARY_DIR, exist_ok=True)
+os.makedirs(DIARY_DATA_DIR, exist_ok=True)
+
+_WEEKDAY = ["月", "火", "水", "木", "金", "土", "日"]
+
+# article_type → バッジCSSクラス
+_TYPE_BADGE_CLS = {
+    "振り返り": "review",
+    "週末展望": "preview-weekend",
+    "前日展望": "preview-tomorrow",
+}
+
+
+def _weekday_str(d: date) -> str:
+    return _WEEKDAY[d.weekday()]
 
 
 def _build_sidebar() -> str:
@@ -94,14 +110,20 @@ def make_weekly_review_page(
     sun_date: date | None,
     article_text: str,
     data: dict,
+    article_type: str = "振り返り",
+    main_race: str = "",
+    pub_date: date | None = None,
 ) -> str:
     """MARの競馬コラムページを生成する
 
     Args:
         sat_date: 土曜日（ファイル名・URL の基準）
         sun_date: 日曜日（タイトル表示用）
-        article_text: Claude API が生成したMarkdown記事テキスト
+        article_text: Markdown記事テキスト
         data: collect_weekend_data() の返り値
+        article_type: "振り返り" / "週末展望" / "前日展望"
+        main_race: メインレース名（タイトルに入れる、省略可）
+        pub_date: 公開日（省略時は sat_date）
 
     Returns:
         生成したHTMLファイルのパス
@@ -110,33 +132,56 @@ def make_weekly_review_page(
     filename = f"{date_key}.html"
     out_path = os.path.join(DIARY_DIR, filename)
 
-    sat_label = f"{sat_date.year}年{sat_date.month:02d}月{sat_date.day:02d}日"
-    sun_label = (
-        f"〜{sun_date.month:02d}月{sun_date.day:02d}日"
-        if sun_date else ""
-    )
-    page_title = f"{sat_label}{sun_label} MARの競馬コラム | MAR"
-    description = (
-        f"{sat_label}{sun_label}のMARの競馬コラム。"
-        "MARのAI予想結果と注目レース・注目馬の振り返り。"
-        "今週の競馬トピックをお届けします。"
-    )
+    pub_d = pub_date or sat_date
+    pub_label = f"{pub_d.month}/{pub_d.day}（{_weekday_str(pub_d)}）"
+
+    sat_label = f"{sat_date.month}/{sat_date.day}"
+    sun_label = f"〜{sun_date.month}/{sun_date.day}" if sun_date else ""
+    date_range = f"{sat_label}{sun_label}"
+
+    # タイトル：公開日 MARの競馬コラム（メインレース名：タイプ）
+    if main_race:
+        page_title = f"{pub_label} MARの競馬コラム（{main_race}：{article_type}）| MAR"
+        h1_text = f"{main_race}：{article_type}"
+        description = f"{date_range}の{article_type}。{main_race}など今週末の注目レースをお届けします。"
+    else:
+        page_title = f"{pub_label} MARの競馬コラム：{article_type} | MAR"
+        h1_text = article_type
+        description = f"{date_range}の{article_type}。今週末の競馬をお届けします。"
+
     page_url = f"{SITE_URL}/diary/{filename}"
+
+    # メタデータをJSONに保存（indexページ再生成に使用）
+    meta = {
+        "date_key": date_key,
+        "sat": sat_date.isoformat(),
+        "sun": sun_date.isoformat() if sun_date else None,
+        "pub_date": pub_d.isoformat(),
+        "article_type": article_type,
+        "main_race": main_race,
+        "page_title": page_title,
+    }
+    meta_path = os.path.join(DIARY_DATA_DIR, f"{date_key}.json")
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=2)
 
     css_ver = _css_version()
     perf_html = _perf_summary_html(data.get("perf", {}))
     article_html = _text_to_html(article_text)
+
+    badge_cls = _TYPE_BADGE_CLS.get(article_type, "review")
 
     html = f"""{_head_html(page_title, description, page_url, css_ver)}
 <body>
 {site_nav_html(base_path="../", current_path=f"diary/{filename}")}
 <div class="content-wrapper">
   <main class="main-content">
-    {breadcrumb_html([("MARの競馬コラム", "index.html"), (f"{sat_label}{sun_label}", "")])}
+    {breadcrumb_html([("MARの競馬コラム", "index.html"), (f"{date_range}", "")])}
     <article class="trend-article">
       <header class="trend-header review-header">
-        <div class="trend-date-badge review-badge">MARの競馬コラム</div>
-        <h1 class="trend-title">{sat_label}{sun_label}</h1>
+        <div class="trend-date-badge {badge_cls}-badge">{article_type}</div>
+        <h1 class="trend-title">{h1_text}</h1>
+        <p class="trend-subtitle">{date_range}</p>
         <p class="trend-generated-at">公開日時: {datetime.now().strftime("%Y年%m月%d日 %H:%M")}</p>
       </header>
 
@@ -165,21 +210,59 @@ def make_weekly_review_page(
 
 def _update_diary_index() -> None:
     """public_html/diary/index.html を再生成する（月別グループ表示）"""
+    # JSONメタデータを読み込む
     rows = []
-    for fname in os.listdir(DIARY_DIR):
-        if not fname.endswith(".html") or fname == "index.html":
+    for fname in os.listdir(DIARY_DATA_DIR):
+        if not fname.endswith(".json"):
             continue
-        date_key = fname.replace(".html", "")
+        try:
+            with open(os.path.join(DIARY_DATA_DIR, fname), encoding="utf-8") as f:
+                meta = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            continue
+        date_key = meta.get("date_key", fname.replace(".json", ""))
         if len(date_key) != 8:
             continue
         try:
             y, m, d = int(date_key[:4]), int(date_key[4:6]), int(date_key[6:8])
-            sat = date(y, m, d)
         except (ValueError, IndexError):
             continue
-        sun = date(y, m, d + 1) if d < 28 else sat  # 大まかな日曜日付
-        short_label = f"{m}/{d}〜{sun.month}/{sun.day} MARの競馬コラム"
-        rows.append((y, m, d, fname, short_label))
+
+        sat = date.fromisoformat(meta["sat"]) if meta.get("sat") else date(y, m, d)
+        sun = date.fromisoformat(meta["sun"]) if meta.get("sun") else None
+        pub_d = date.fromisoformat(meta["pub_date"]) if meta.get("pub_date") else sat
+        article_type = meta.get("article_type", "振り返り")
+        main_race = meta.get("main_race", "")
+
+        pub_label = f"{pub_d.month}/{pub_d.day}（{_weekday_str(pub_d)}）"
+        date_range = f"{sat.month}/{sat.day}"
+        if sun:
+            date_range += f"〜{sun.month}/{sun.day}"
+
+        if main_race:
+            short_label = f"{pub_label} {main_race}：{article_type}"
+        else:
+            short_label = f"{pub_label} {date_range} {article_type}"
+
+        rows.append((y, m, d, f"{date_key}.html", short_label, article_type))
+
+    # JSONがなく HTMLだけある古いファイルをフォールバックで拾う
+    existing_keys = {r[3].replace(".html", "") for r in rows}
+    for fname in os.listdir(DIARY_DIR):
+        if not fname.endswith(".html") or fname == "index.html":
+            continue
+        date_key = fname.replace(".html", "")
+        if len(date_key) != 8 or date_key in existing_keys:
+            continue
+        try:
+            y, m, d = int(date_key[:4]), int(date_key[4:6]), int(date_key[6:8])
+            sat = date(y, m, d)
+            sun_d = d + 1
+            sun = date(y, m, sun_d) if sun_d <= 28 else sat
+        except (ValueError, IndexError):
+            continue
+        short_label = f"{m}/{d}〜{sun.month}/{sun.day} 振り返り"
+        rows.append((y, m, d, fname, short_label, "振り返り"))
 
     rows.sort(key=lambda r: (r[0], r[1], r[2]))
 
@@ -191,7 +274,7 @@ def _update_diary_index() -> None:
     css_ver = _css_version()
     page_title = "MARの競馬コラム | MAR"
     page_url = f"{SITE_URL}/diary/index.html"
-    description = "MARの競馬コラム。週末の振り返り・注目レース展望をAIの視点でお届けします。"
+    description = "毎週末のレース展望と振り返りをお届けするコラムです。週末の注目レース展望（木曜）、前日の見どころ（金・土）、週末の振り返り（火曜）の3本立てで更新します。"
 
     sections_html = ""
     if not groups:
@@ -199,10 +282,11 @@ def _update_diary_index() -> None:
     else:
         for y, m_key, grp_rows in groups:
             badge_html_list = []
-            for _, _, _, fname, short_label in reversed(grp_rows):
+            for _, _, _, fname, short_label, article_type in reversed(grp_rows):
+                badge_cls = _TYPE_BADGE_CLS.get(article_type, "review")
                 badge_html_list.append(
                     f'<li class="trend-index-entry">'
-                    f'<span class="entry-badge review">コラム</span>'
+                    f'<span class="entry-badge {badge_cls}">{article_type}</span>'
                     f'<a href="{fname}">{short_label}</a>'
                     f'</li>'
                 )
@@ -240,9 +324,8 @@ def _update_diary_index() -> None:
       <header class="trend-index-header">
         <h1 class="trend-index-title">MARの競馬コラム</h1>
         <p class="trend-index-desc">
-          AIによる競馬コラム。週末の注目レース展望（木曜更新）、前日の見どころ（金・土更新）、
-          週末の振り返り（火曜更新）の3本立てでお届けします。<br>
-          データ分析をベースにしながらも、読み物として楽しめる内容を目指しています。
+          毎週末のレース展望と振り返りをお届けするコラムです。<br>
+          週末の注目レース展望（木曜）・前日の見どころ（金・土）・週末の振り返り（火曜）の3本立てで更新します。
         </p>
       </header>
       {sections_html}
