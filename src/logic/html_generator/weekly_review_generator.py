@@ -139,15 +139,23 @@ def make_weekly_review_page(
     sun_label = f"〜{sun_date.month}/{sun_date.day}" if sun_date else ""
     date_range = f"{sat_label}{sun_label}"
 
+    # タイプ別の説明文プレフィックス
+    _desc_prefix = {
+        "振り返り": f"先週末（{date_range}）の振り返り。",
+        "週末展望": f"今週末（{date_range}）の注目レース展望。",
+        "前日展望": f"明日（{date_range}）の注目レース展望。",
+    }
+    desc_prefix = _desc_prefix.get(article_type, f"{date_range}の{article_type}。")
+
     # タイトル：公開日 MARの競馬コラム（メインレース名：タイプ）
     if main_race:
         page_title = f"{pub_label} MARの競馬コラム（{main_race}：{article_type}）| MAR"
         h1_text = f"{main_race}：{article_type}"
-        description = f"{date_range}の{article_type}。{main_race}など今週末の注目レースをお届けします。"
+        description = f"{desc_prefix}{main_race}のレース結果・見どころをお届けします。"
     else:
         page_title = f"{pub_label} MARの競馬コラム：{article_type} | MAR"
         h1_text = article_type
-        description = f"{date_range}の{article_type}。今週末の競馬をお届けします。"
+        description = f"{desc_prefix}今週末の競馬をお届けします。"
 
     page_url = f"{SITE_URL}/diary/{filename}"
 
