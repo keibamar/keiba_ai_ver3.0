@@ -14,10 +14,31 @@ from src.config import paths
 from src.managers import race_result_dataset_manager as rr_mgr
 from src.managers import race_card_dataset_manager as rc_mgr
 from src.managers import ai_performance_dataset_manager as ap_mgr
+from src.managers import race_info_dataset_manager as ri_mgr
 
 
 # 馬場状態の重さ順マップ（数値が大きいほど悪い馬場）
 GROUND_STATE_RANK = {"良": 0, "稍重": 1, "重": 2, "不良": 3}
+
+# 1番人気勝率しきい値 → 荒れ傾向ラベル（高い順に評価）
+_ROUGHNESS_THRESHOLDS = [
+    (0.40, "固め"),
+    (0.30, "やや固め"),
+    (0.20, "やや荒れ"),
+    (0.00, "荒れ"),
+]
+
+
+def _roughness_label(fav1_rate: float) -> str:
+    for threshold, label in _ROUGHNESS_THRESHOLDS:
+        if fav1_rate >= threshold:
+            return label
+    return "荒れ"
+
+
+def compute_roughness_by_place(upset_by_place: dict) -> dict:
+    """場別 upset_by_place から {場名: ラベル} を返す（後方互換ラッパー）"""
+    return {place: data["label"] for place, data in upset_by_place.items() if "label" in data}
 
 
 def _place_id_from_race_id(race_id: str) -> int:
@@ -128,12 +149,14 @@ def _compute_upset_index(df: pd.DataFrame) -> dict:
     high_odds = int((valid["odds_float"] >= 10.0).sum())
     upset_ratio = high_odds / race_count if race_count > 0 else 0.0
 
-    if upset_ratio >= 0.4:
+    if upset_ratio >= 0.50:
         label = "荒れ"
-    elif upset_ratio >= 0.2:
+    elif upset_ratio >= 0.30:
         label = "やや荒れ"
+    elif upset_ratio >= 0.15:
+        label = "やや固め"
     else:
-        label = "堅い"
+        label = "固め"
 
     return {
         "upset_ratio": round(upset_ratio, 3),
@@ -280,6 +303,170 @@ def _compute_horse_tendencies(df: pd.DataFrame) -> dict:
     }
 
 
+_POP_BRACKETS = [
+    (1, 1, "1番人気"),
+    (2, 2, "2番人気"),
+    (3, 3, "3番人気"),
+    (4, 6, "4〜6番人気"),
+    (7, 9, "7〜9番人気"),
+    (10, 999, "10番人気以上"),
+]
+
+
+def _load_race_returns_for_date(target_date: date) -> dict:
+    """指定日の複勝・三連複払い戻しを race_info/race_returns 個別ファイルから読み込む
+
+    集約CSV（{year}_race_returns.csv）は週次更新で再生成されるまで古いため、
+    個別ファイル（{year}/{race_id}.csv）を直接読む。
+
+    Returns:
+        dict: {race_id: {"fukusho": [float,...], "sanrenpuku": float|None}}
+    """
+    year = target_date.year
+    race_ids_today = set(_load_time_id_list(target_date))
+    if not race_ids_today:
+        return {}
+
+    base_dir = os.path.join(paths.RACE_INFO_DATA_PATH, "race_returns")
+    result: dict = {}
+    for place_id in range(1, len(PLACE_LIST) + 1):
+        place_dir = os.path.join(base_dir, PLACE_LIST[place_id - 1], str(year))
+        if not os.path.isdir(place_dir):
+            continue
+        for race_id_str in race_ids_today:
+            csv_path = os.path.join(place_dir, f"{race_id_str}.csv")
+            if not os.path.exists(csv_path):
+                continue
+            try:
+                df = pd.read_csv(csv_path, dtype=str, index_col=0)
+            except Exception:
+                continue
+            if df.empty or "式別" not in df.columns or "配当" not in df.columns:
+                continue
+            entry = result.setdefault(race_id_str, {"fukusho": [], "sanrenpuku": None})
+            for p_val in df[df["式別"] == "複勝"]["配当"]:
+                try:
+                    entry["fukusho"].append(float(p_val))
+                except (ValueError, TypeError):
+                    pass
+            sr_rows = df[df["式別"] == "三連複"]["配当"].tolist()
+            if sr_rows:
+                try:
+                    entry["sanrenpuku"] = float(sr_rows[0])
+                except (ValueError, TypeError):
+                    pass
+    return result
+
+
+def _compute_winner_popularity_dist(df: pd.DataFrame) -> dict:
+    """勝ち馬の人気分布（全体・開催場別）と単勝払い戻し統計を計算する"""
+    winners = df[df[COL_RANK] == "1"].copy()
+    if "race_id" in winners.columns:
+        winners = winners.drop_duplicates(subset=["race_id"])
+    if winners.empty:
+        return {}
+
+    def _bracket_dist(w: pd.DataFrame) -> list:
+        dist = []
+        if COL_NINKI not in w.columns:
+            return dist
+        pops = pd.to_numeric(w[COL_NINKI], errors="coerce").dropna()
+        total = int(len(pops))
+        for lo, hi, label in _POP_BRACKETS:
+            count = int(((pops >= lo) & (pops <= hi)).sum())
+            dist.append({
+                "label": label,
+                "count": count,
+                "pct": round(count / total * 100, 1) if total > 0 else 0.0,
+            })
+        return dist
+
+    dist = _bracket_dist(winners)
+
+    by_place: dict = {}
+    if "place_id" in winners.columns:
+        for pid, grp in winners.groupby("place_id"):
+            place_name = NAME_LIST[int(pid) - 1]
+            pd_dist = _bracket_dist(grp)
+            if pd_dist:
+                by_place[place_name] = {"dist": pd_dist, "race_count": int(len(grp))}
+
+    payout = {}
+    if COL_TANSHO in winners.columns:
+        odds = pd.to_numeric(winners[COL_TANSHO], errors="coerce").dropna()
+        if len(odds) > 0:
+            payout["avg_payout"] = int(round(float(odds.mean()) * 100))
+            payout["max_payout"] = int(round(float(odds.max()) * 100))
+
+    return {
+        "dist": dist,
+        "by_place": by_place,
+        "payout": payout,
+        "race_count": int(len(winners)),
+    }
+
+
+def _compute_top3_popularity_dist(df: pd.DataFrame,
+                                   returns_data: dict | None = None) -> dict:
+    """3着内馬の人気分布と複勝・三連複払い戻し統計を計算する"""
+    top3 = df[df[COL_RANK].isin(["1", "2", "3"])].copy()
+    if top3.empty:
+        return {}
+
+    def _bracket_dist(w: pd.DataFrame) -> list:
+        dist = []
+        if COL_NINKI not in w.columns:
+            return dist
+        pops = pd.to_numeric(w[COL_NINKI], errors="coerce").dropna()
+        total = int(len(pops))
+        for lo, hi, label in _POP_BRACKETS:
+            count = int(((pops >= lo) & (pops <= hi)).sum())
+            dist.append({
+                "label": label,
+                "count": count,
+                "pct": round(count / total * 100, 1) if total > 0 else 0.0,
+            })
+        return dist
+
+    dist = _bracket_dist(top3)
+
+    by_place: dict = {}
+    if "place_id" in top3.columns:
+        for pid, grp in top3.groupby("place_id"):
+            place_name = NAME_LIST[int(pid) - 1]
+            pd_dist = _bracket_dist(grp)
+            if pd_dist:
+                rc = int(grp["race_id"].nunique()) if "race_id" in grp.columns else int(len(grp) // 3)
+                by_place[place_name] = {"dist": pd_dist, "race_count": rc}
+
+    payout: dict = {}
+    if returns_data:
+        fukusho_vals: list[float] = []
+        sanrenpuku_vals: list[float] = []
+        for rdata in returns_data.values():
+            fukusho_vals.extend(rdata.get("fukusho", []))
+            sr = rdata.get("sanrenpuku")
+            if sr is not None:
+                sanrenpuku_vals.append(sr)
+        if fukusho_vals:
+            payout["fukusho_avg"] = int(round(sum(fukusho_vals) / len(fukusho_vals)))
+            payout["fukusho_max"] = int(round(max(fukusho_vals)))
+        if sanrenpuku_vals:
+            payout["sanrenpuku_avg"] = int(round(sum(sanrenpuku_vals) / len(sanrenpuku_vals)))
+            payout["sanrenpuku_max"] = int(round(max(sanrenpuku_vals)))
+
+    race_count = int(top3["race_id"].nunique()) if "race_id" in top3.columns else int(len(top3) // 3)
+    horse_count = int(len(top3))
+
+    return {
+        "dist": dist,
+        "by_place": by_place,
+        "payout": payout,
+        "race_count": race_count,
+        "horse_count": horse_count,
+    }
+
+
 def _compute_pace_bias(df: pd.DataFrame) -> dict:
     """通過順データから前残り率・差し馬勝率を計算する（週次用）
 
@@ -391,8 +578,21 @@ def get_day_stats(target_date: date) -> dict:
     # 開催場別サマリ（馬場・天気）
     ground_by_place = _compute_ground_summary(df)
 
-    # 荒れ度
+    # 荒れ度（全体）
     upset = _compute_upset_index(df)
+
+    # 荒れ度（場別）：全体と同じ基準で計算
+    upset_by_place: dict = {}
+    if "place_id" in df.columns:
+        for pid, grp in df.groupby("place_id"):
+            try:
+                pid_int = int(pid)
+            except (ValueError, TypeError):
+                continue
+            if pid_int < 1 or pid_int > len(NAME_LIST):
+                continue
+            place_name = NAME_LIST[pid_int - 1]
+            upset_by_place[place_name] = _compute_upset_index(grp)
 
     # 上り3F統計
     up3f = _compute_up3f_stats(df)
@@ -416,15 +616,21 @@ def get_day_stats(target_date: date) -> dict:
 
     win_times = _compute_win_time_stats(df)
     horse_tendencies = _compute_horse_tendencies(df)
+    winner_pop_dist = _compute_winner_popularity_dist(df)
+    returns_data = _load_race_returns_for_date(target_date)
+    top3_pop_dist = _compute_top3_popularity_dist(df, returns_data)
 
     return {
         "date": target_date.strftime("%Y%m%d"),
         "ground_by_place": ground_by_place,
         "upset": upset,
+        "upset_by_place": upset_by_place,
         "up3f": up3f,
         "win_times": win_times,
         "ai_perf": ai_perf,
         "horse_tendencies": horse_tendencies,
+        "winner_pop_dist": winner_pop_dist,
+        "top3_pop_dist": top3_pop_dist,
         "race_count": int(df["race_id"].nunique()) if "race_id" in df.columns else len(df),
         "up3f_baselines": get_venue_up3f_baselines(),
     }
