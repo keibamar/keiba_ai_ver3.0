@@ -20,10 +20,8 @@ from src.logic.html_generator.site_nav_html import (
     ad_unit_html,
     adsense_script_html,
     breadcrumb_html,
-    diary_sidebar_section,
     ga4_script_html,
     meta_tags_html,
-    sidebar_html,
     site_footer_html,
     site_nav_html,
 )
@@ -38,13 +36,6 @@ def _write_html(path: str, html: str) -> None:
     with open(path, "w", encoding="utf-8") as f:
         f.write(html)
 
-
-def _build_sidebar(current_file: str = "") -> str:
-    """傾向ページの右サイドバー（傾向分析一覧へ + 最新コラム）"""
-    return sidebar_html(
-        [diary_sidebar_section("../")],
-        up_link=("傾向分析一覧", "index.html"),
-    )
 
 
 def _css_version() -> int:
@@ -446,25 +437,23 @@ def make_daily_trend_page(target_date: date, stats: dict, comment_text: str) -> 
     html = f"""{_head_html(page_title, description, page_url, css_ver)}
 <body>
 {site_nav_html(base_path="../", current_path=f"trend/{filename}")}
-<div class="content-wrapper">
-  <main class="main-content">
-    {breadcrumb_html([("傾向分析", "index.html"), (title_date, None)], base_path="../")}
-    <article class="trend-article">
-      <header class="trend-header">
-        <div class="trend-date-badge">{title_date}（{weekday}）</div>
-        <h1 class="trend-title">傾向短評 — {venue_names}</h1>
-        <p class="trend-generated-at">更新日時: {datetime.now().strftime("%Y年%m月%d日 %H:%M")}</p>
-      </header>
-      {stats_html}
-      {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
-      <div class="trend-text-body">
-        {comment_html}
-      </div>
-      {ad_unit_html(AD_SLOT_IN_CONTENT_2)}
-    </article>
-  </main>
-  {_build_sidebar(filename)}
-</div>
+<main>
+  {breadcrumb_html([("傾向分析", "index.html"), (title_date, None)], base_path="../")}
+  <article class="trend-article">
+    <header class="trend-header">
+      <div class="trend-date-badge">{title_date}（{weekday}）</div>
+      <h1 class="trend-title">傾向短評 — {venue_names}</h1>
+      <p class="trend-generated-at">更新日時: {datetime.now().strftime("%Y年%m月%d日 %H:%M")}</p>
+    </header>
+    {stats_html}
+    {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
+    <div class="trend-text-body">
+      {comment_html}
+    </div>
+    {ad_unit_html(AD_SLOT_IN_CONTENT_2)}
+    <p class="diary-back-link"><a href="index.html">← 傾向分析一覧へ戻る</a></p>
+  </article>
+</main>
 {site_footer_html()}
 </body>
 </html>"""
@@ -547,39 +536,37 @@ def make_weekly_trend_page(sat_date: date, sun_date: date,
     html = f"""{_head_html(page_title, description, page_url, css_ver)}
 <body>
 {site_nav_html(base_path="../", current_path=f"trend/{filename}")}
-<div class="content-wrapper">
-  <main class="main-content">
-    {breadcrumb_html([("傾向分析", "index.html"), (f"{sat_label}週次", None)], base_path="../")}
-    <article class="trend-article">
-      <header class="trend-header">
-        <div class="trend-date-badge weekly-badge">週次振り返り</div>
-        <h1 class="trend-title">{sat_label}〜{sun_label}</h1>
-        <p class="trend-generated-at">更新日時: {datetime.now().strftime("%Y年%m月%d日 %H:%M")}</p>
-      </header>
+<main>
+  {breadcrumb_html([("傾向分析", "index.html"), (f"{sat_label}週次", None)], base_path="../")}
+  <article class="trend-article">
+    <header class="trend-header">
+      <div class="trend-date-badge weekly-badge">週次振り返り</div>
+      <h1 class="trend-title">{sat_label}〜{sun_label}</h1>
+      <p class="trend-generated-at">更新日時: {datetime.now().strftime("%Y年%m月%d日 %H:%M")}</p>
+    </header>
 
-      <section class="trend-day-section">
-        <h2 class="trend-day-title">土曜（{sat_label}）</h2>
-        {sat_stats_html}
-      </section>
+    <section class="trend-day-section">
+      <h2 class="trend-day-title">土曜（{sat_label}）</h2>
+      {sat_stats_html}
+    </section>
 
-      <section class="trend-day-section">
-        <h2 class="trend-day-title">日曜（{sun_label}）</h2>
-        {sun_stats_html}
-      </section>
+    <section class="trend-day-section">
+      <h2 class="trend-day-title">日曜（{sun_label}）</h2>
+      {sun_stats_html}
+    </section>
 
-      {pace_html}
+    {pace_html}
 
-      {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
+    {ad_unit_html(AD_SLOT_IN_CONTENT_1)}
 
-      <div class="trend-text-body">
-        {comment_html}
-      </div>
+    <div class="trend-text-body">
+      {comment_html}
+    </div>
 
-      {ad_unit_html(AD_SLOT_IN_CONTENT_2)}
-    </article>
-  </main>
-  {_build_sidebar(filename)}
-</div>
+    {ad_unit_html(AD_SLOT_IN_CONTENT_2)}
+    <p class="diary-back-link"><a href="index.html">← 傾向分析一覧へ戻る</a></p>
+  </article>
+</main>
 {site_footer_html()}
 </body>
 </html>"""
