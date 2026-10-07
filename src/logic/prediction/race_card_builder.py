@@ -13,7 +13,11 @@ from src.datasets.race_card import transform as race_card_transform
 from src.logic.prediction import race_prediction_engine
 from src.logic.prediction.race_prediction_engine import multi_model_rank_prediction
 from src.logic.scraping import netkeiba_scraper
-from src.managers import horse_peds_dataset_manager, past_performance_dataset_manager
+from src.managers import (
+    horse_peds_dataset_manager,
+    past_performance_dataset_manager,
+    training_data_manager,
+)
 
 
 def make_race_card(race_id):
@@ -52,6 +56,7 @@ def make_race_card(race_id):
     horse_peds_df = pd.DataFrame()
     for horse_id in horse_ids:
         past_performance_dataset_manager.ensure_past_performance_dataset(horse_id)
+        training_data_manager.ensure_training_data(horse_id)
         horse_ped = horse_peds_dataset_manager.get_horse_peds_dataset(horse_id)
         horse_peds_df = pd.concat([horse_peds_df, horse_ped], axis=1)
 
