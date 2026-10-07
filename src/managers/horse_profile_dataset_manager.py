@@ -77,6 +77,19 @@ def get_birth_month(horse_id):
         return None
 
 
+def get_birth_month_cached(horse_id):
+    """誕生月を返す（1〜12）。キャッシュのみ参照し、スクレイピングは行わない。"""
+    try:
+        df = get_horse_profile_csv(str(horse_id))
+        if df.empty:
+            return None
+        birth_date = str(df["birth_date"].iloc[0])
+        month = int(birth_date.split("-")[1])
+        return month if 1 <= month <= 12 else None
+    except Exception:
+        return None
+
+
 def fetch_profiles_for_horse_ids(horse_id_list, skip_existing=True):
     """horse_idリストのプロフィールをまとめて取得・保存する（一括スクレイピング用）。
 

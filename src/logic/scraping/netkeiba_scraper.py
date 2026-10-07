@@ -1,4 +1,4 @@
-"""netkeiba.comからレース結果(race_result)を取得するスクレイパー
+"""netkeiba.comからレース結果(race_result)・追い切り(oikiri)等を取得するスクレイパー
 
 旧 libs/scraping.py の scrape_race_results / 旧 src/legacy_datasets/race_results.py の
 scrape_race_results_dataframe を移植したもの。
@@ -546,3 +546,97 @@ def scrape_race_returns_dataframe(race_id_list):
         return pd.DataFrame(columns=race_info_model.RACE_RETURNS_COLUMNS)
 
     return pd.concat([return_tables[key] for key in return_tables])
+
+
+# --- 調教時計（追い切り） ---------------------------------------------------------
+
+# 追い切りページの標準カラム名（テーブルによって異なる場合あり）
+OIKIRI_COLUMNS = ["horse_id", "horse_name", "date", "place", "course", "rider_type",
+                  "6F", "5F", "4F", "3F", "2F", "1F", "comment"]
+
+
+def scrape_oikiri(race_id):
+    """race_idから追い切り（調教時計）データを取得する
+
+    race.netkeiba.com の追い切りページをスクレイピングし、
+    各馬の直前追い切り情報（コース・時計・騎乗者種別）を返す。
+
+    Returns:
+        pd.DataFrame: 追い切りデータ（horse_id 列含む）。
+                      取得できない場合は空のDataFrame。
+    """
+    url = f"https://race.netkeiba.com/race/oikiri.html?race_id={race_id}"
+    if not common.url_exists(url):
+        print(f"scrape_oikiri: URL not found, skip {url}")
+        return pd.DataFrame()
+    try:
+        soup = common.fetch_soup(url)
+        if not common.validate_soup(soup, url, "scrape_oikiri"):
+            return pd.DataFrame()
+
+        # 馬名→horse_id のマッピングをリンクから構築
+        horse_id_map = {}
+        for a in soup.select("a[href*='/horse/']"):
+            href = a.get("href", "")
+            m = re.search(r"/horse/(\d+)", href)
+            if m:
+                horse_id_map[a.get_text(strip=True)] = m.group(1)
+
+        # テーブルを探す（class="OikiriTable" → フォールバックで最大テーブル）
+        table = (
+            soup.select_one("table.OikiriTable")
+            or soup.select_one("table.oikiri_table")
+            or soup.select_one("table#tablesorter")
+        )
+        if table is None:
+            all_tables = soup.find_all("table")
+            if not all_tables:
+                print(f"scrape_oikiri: no table found for {race_id}")
+                return pd.DataFrame()
+            # 行数が最多のテーブルを選択
+            table = max(all_tables, key=lambda t: len(t.find_all("tr")))
+
+        # ヘッダー行を取得
+        header_row = table.find("tr")
+        if header_row is None:
+            return pd.DataFrame()
+        headers = [th.get_text(strip=True) for th in header_row.find_all(["th", "td"])]
+
+        # データ行を取得
+        rows = []
+        for tr in table.find_all("tr")[1:]:
+            cells = tr.find_all("td")
+            if not cells:
+                continue
+            row_data = [c.get_text(strip=True) for c in cells]
+            if len(row_data) < 2:
+                continue
+
+            # horse_id をリンクから取得
+            hid = ""
+            horse_name = ""
+            for a in tr.select("a[href*='/horse/']"):
+                m = re.search(r"/horse/(\d+)", a.get("href", ""))
+                if m:
+                    hid = m.group(1)
+                    horse_name = a.get_text(strip=True)
+                    break
+
+            row_dict = {"horse_id": hid, "horse_name": horse_name}
+            for i, h in enumerate(headers):
+                if i < len(row_data):
+                    row_dict[h] = row_data[i]
+            rows.append(row_dict)
+
+        if not rows:
+            print(f"scrape_oikiri: no data rows for {race_id}")
+            return pd.DataFrame()
+
+        df = pd.DataFrame(rows)
+        df.index = [str(race_id)] * len(df)
+        df.index.name = "race_id"
+        return df
+
+    except Exception as e:
+        print(f"scrape_oikiri: error {e.__class__.__name__}: {e} for {race_id}")
+        return pd.DataFrame()

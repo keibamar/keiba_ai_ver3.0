@@ -332,6 +332,16 @@ def make_html_prev_day(race_day):
             race_info_dataset_manager.update_horse_name_id_map(race_card_df)
         except Exception:
             print(f"Make RaceCard Error: {race_id}")
+        # 追い切り（調教時計）取得
+        try:
+            oikiri_df = netkeiba_scraper.scrape_oikiri(race_id)
+            if not oikiri_df.empty:
+                race_info_dataset_manager.save_oikiri_for_race_id(race_id, oikiri_df)
+                print(f"  追い切り取得: {race_id} ({len(oikiri_df)}行)")
+            else:
+                print(f"  追い切り取得なし: {race_id}")
+        except Exception:
+            print(f"  追い切り取得エラー: {race_id}")
 
     race_page_generator.make_daily_race_card_html(race_day)
     daily_index_generator.make_daily_index_page(race_day)

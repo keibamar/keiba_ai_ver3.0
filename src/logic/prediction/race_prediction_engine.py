@@ -1135,15 +1135,19 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
 # 新馬戦専用モデル
 # ============================================================
 
-def _shinba_get_model(race_type):
-    """新馬戦モデルをロード（キャッシュ済み）"""
-    key = race_type
+def _shinba_get_model(race_type, model_type):
+    """新馬戦モデルをロード（キャッシュ済み）。model_type: "hit" or "val"）"""
+    key = f"{race_type}_{model_type}"
     if key not in _shinba_model_cache:
         type_str = "turf" if race_type == "芝" else "dirt"
         mp = os.path.join(paths.PREDICTION_MODEL_PATH, "shinba",
-                          f"{type_str}_shinba_model.txt")
+                          f"{type_str}_shinba_{model_type}.txt")
         if not os.path.isfile(mp):
-            raise FileNotFoundError(f"新馬戦モデル未学習: {mp}")
+            # 旧モデル名にフォールバック
+            mp = os.path.join(paths.PREDICTION_MODEL_PATH, "shinba",
+                              f"{type_str}_shinba_model.txt")
+        if not os.path.isfile(mp):
+            raise FileNotFoundError(f"新馬戦{model_type}モデル未学習: {mp}")
         _shinba_model_cache[key] = lgb.Booster(model_file=mp)
     return _shinba_model_cache[key]
 
@@ -1153,7 +1157,7 @@ def _shinba_get_stats():
     if "sire_course" not in _shinba_stats_cache:
         stats_dir = os.path.join(paths.PREDICTION_MODEL_PATH, "shinba", "stats_tables")
         for name in ("sire_course", "sire_global", "bms_course", "bms_global",
-                     "dam", "grandsire", "jockey", "trainer"):
+                     "dam", "grandsire", "matdam_sire", "nick", "jockey", "trainer"):
             p = os.path.join(stats_dir, f"{name}.csv")
             _shinba_stats_cache[name] = pd.read_csv(p) if os.path.isfile(p) else pd.DataFrame()
     return _shinba_stats_cache
@@ -1164,7 +1168,8 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
     """新馬戦専用モデルによる予想（走歴なし馬用）
 
     multi_model_rank_prediction() と同一シグネチャ・同一戻り値形式。
-    3戦略はすべて同一スコアから生成（モデルが1つのため）。
+    hit(的中率重視) / val(回収率重視) の2モデルをブレンド:
+      MAR = 0.6 × hit_idx + 0.4 × val_idx
     """
     try:
         from src.PredictionModels.LightGBM.make_dataset_shinba import (
@@ -1176,7 +1181,8 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
         race_type  = race_info_df.at[0, "race_type"]
         course_len = str(race_info_df.at[0, "course_len"])
 
-        model  = _shinba_get_model(race_type)
+        model_hit = _shinba_get_model(race_type, "hit")
+        model_val = _shinba_get_model(race_type, "val")
         tables = _shinba_get_stats()
 
         rows = []
@@ -1195,13 +1201,15 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
             try:
                 peds_data = horse_peds_dataset_manager.get_horse_peds_dataset(str(hid))
                 peds_list = peds_data[str(hid)].tolist()
-                sire        = _safe_ped_val(peds_list[0]) if len(peds_list) > 0 else ""
-                dam         = _safe_ped_val(peds_list[1]) if len(peds_list) > 1 else ""
-                grandsire   = _safe_ped_val(peds_list[2]) if len(peds_list) > 2 else ""
-                bms         = _safe_ped_val(peds_list[4]) if len(peds_list) > 4 else ""
+                sire        = _safe_ped_val(peds_list[0])  if len(peds_list) > 0  else ""
+                dam         = _safe_ped_val(peds_list[1])  if len(peds_list) > 1  else ""
+                grandsire   = _safe_ped_val(peds_list[2])  if len(peds_list) > 2  else ""
+                bms         = _safe_ped_val(peds_list[4])  if len(peds_list) > 4  else ""
+                matdam_sire = _safe_ped_val(peds_list[12]) if len(peds_list) > 12 else ""
                 cross_score = _compute_cross_score(peds_list)
             except Exception:
-                sire, dam, grandsire, bms, cross_score = "", "", "", "", 0.0
+                sire, dam, grandsire, bms, matdam_sire = "", "", "", "", ""
+                cross_score = 0.0
 
             # 誕生月
             birth_month = horse_profile_dataset_manager.get_birth_month(str(hid))
@@ -1272,25 +1280,37 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
                 trainer_name=trainer_name,
                 stats_tables=tables,
                 birth_month=birth_month,
+                matdam_sire=matdam_sire,
                 cross_score=cross_score,
             )
             rows.append(row)
 
         X = pd.concat(rows, ignore_index=True).fillna(-1.0)
-        scores = model.predict(X.values, num_iteration=model.best_iteration)
-        scores = np.array(scores, dtype=float)
 
-        z       = _zscore(pd.Series(scores))
-        idx_all = [score_to_index(v) for v in z]
-        rnk     = rank_index(scores.tolist())
+        # hit モデル（的中率重視）
+        scores_hit = np.array(model_hit.predict(X.values, num_iteration=model_hit.best_iteration), dtype=float)
+        z_hit      = _zscore(pd.Series(scores_hit))
+        idx_hit    = [score_to_index(v) for v in z_hit]
+        rnk_hit    = rank_index(scores_hit.tolist())
+
+        # val モデル（回収率重視）
+        scores_val = np.array(model_val.predict(X.values, num_iteration=model_val.best_iteration), dtype=float)
+        z_val      = _zscore(pd.Series(scores_val))
+        idx_val    = [score_to_index(v) for v in z_val]
+        rnk_val    = rank_index(scores_val.tolist())
+
+        # MAR = 0.6 × hit_idx + 0.4 × val_idx
+        mar_raw  = [0.6 * h + 0.4 * v for h, v in zip(idx_hit, idx_val)]
+        idx_mar  = [score_to_index(v) for v in _zscore(pd.Series(mar_raw))]
+        rnk_mar  = rank_index(mar_raw)
 
         return pd.DataFrame({
-            "idx_hitrate":  idx_all,
-            "rank_hitrate": rnk,
-            "idx_value":    idx_all,
-            "rank_value":   rnk,
-            "idx_mar":      idx_all,
-            "rank_mar":     rnk,
+            "idx_hitrate":  idx_hit,
+            "rank_hitrate": rnk_hit,
+            "idx_value":    idx_val,
+            "rank_value":   rnk_val,
+            "idx_mar":      idx_mar,
+            "rank_mar":     rnk_mar,
         })
 
     except Exception as e:

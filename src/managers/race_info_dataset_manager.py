@@ -48,6 +48,7 @@ CHAKUDO_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "chakudo")
 AVERAGE_FRAMES_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_frames")
 AVERAGE_TIMES_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "average_times")
 RACE_RETURNS_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "race_returns")
+OIKIRI_DATA_PATH = os.path.join(paths.RACE_INFO_DATA_PATH, "oikiri")
 
 
 def _get_race_results_with_race_id(place_id, year):
@@ -713,3 +714,26 @@ def save_race_return_for_race_id(race_id, race_returns_df):
     out_dir = os.path.join(RACE_RETURNS_DATA_PATH, PLACE_LIST[place_id - 1], str(year))
     os.makedirs(out_dir, exist_ok=True)
     race_returns_df.to_csv(os.path.join(out_dir, f"{race_id}.csv"))
+
+
+# --- 追い切り（oikiri） --------------------------------------------------------
+
+
+def get_oikiri_for_race_id(race_id):
+    """data/race_info/oikiri/{year}/{race_id}.csv を取得する"""
+    year = str(race_id)[:4]
+    path = os.path.join(OIKIRI_DATA_PATH, year, f"{race_id}.csv")
+    df = read_csv_or_empty(path, dtype=str, index_col=0)
+    if not df.empty:
+        df.index.name = "race_id"
+    return df
+
+
+def save_oikiri_for_race_id(race_id, oikiri_df):
+    """1レース分の追い切りデータを data/race_info/oikiri/{year}/{race_id}.csv に保存する"""
+    if oikiri_df is None or oikiri_df.empty:
+        return
+    year = str(race_id)[:4]
+    out_dir = os.path.join(OIKIRI_DATA_PATH, year)
+    os.makedirs(out_dir, exist_ok=True)
+    oikiri_df.to_csv(os.path.join(out_dir, f"{race_id}.csv"))
