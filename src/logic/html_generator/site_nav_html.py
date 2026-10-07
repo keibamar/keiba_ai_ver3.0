@@ -137,7 +137,8 @@ NAV_LINKS = [
     ("レースカレンダー", "races/index.html"),
     ("コース詳細データ", "courses/index.html"),
     ("AI成績", "performance/index.html"),
-    ("傾向分析日記", "trend/index.html"),
+    ("傾向分析", "trend/index.html"),
+    ("週末競馬日記", "diary/index.html"),
 ]
 
 # レースカレンダー/コース詳細データ/AI成績を、サイドバー上で色とアイコンで区別する。
@@ -146,13 +147,15 @@ NAV_ICONS = {
     "レースカレンダー": "📅",
     "コース詳細データ": "🏟️",
     "AI成績": "📊",
-    "傾向分析日記": "📓",
+    "傾向分析": "📈",
+    "週末競馬日記": "🏇",
 }
 NAV_COLOR_CLASSES = {
     "レースカレンダー": "nav-color-calendar",
     "コース詳細データ": "nav-color-courses",
     "AI成績": "nav-color-performance",
-    "傾向分析日記": "nav-color-trend",
+    "傾向分析": "nav-color-trend",
+    "週末競馬日記": "nav-color-diary",
 }
 
 
@@ -453,7 +456,7 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
             crumb = _crumb_item_html(label, head_path, base_path)
             nested_html = _nested_crumbs_html(breadcrumb_items[1:], base_path)
             is_active = True
-        elif label == "傾向分析日記":
+        elif label == "傾向分析":
             is_current = breadcrumb_items is None and current_path == path
             # 個別ページ（trend/YYYYMMDD.html 等）にいる場合も展開する
             is_in_trend_detail = (
@@ -514,6 +517,17 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
                     nested_html = ""
             else:
                 nested_html = ""
+        elif label == "週末競馬日記":
+            is_current = breadcrumb_items is None and current_path == path
+            is_in_diary_detail = (
+                breadcrumb_items is None
+                and current_path is not None
+                and current_path.startswith("diary/")
+                and current_path != "diary/index.html"
+            )
+            is_active = is_current or is_in_diary_detail
+            crumb = _crumb_item_html(label, None if is_current else path, base_path)
+            nested_html = ""
         else:
             is_current = breadcrumb_items is None and current_path == path
             crumb = _crumb_item_html(label, None if is_current else path, base_path)

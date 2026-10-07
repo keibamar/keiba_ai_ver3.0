@@ -2320,6 +2320,15 @@ body.section-calendar .calendar-widget {
   border-left-color: var(--mar-section-trend);
 }
 
+.page-calendar-tab-location li.nav-color-diary > a,
+.page-calendar-tab-location li.nav-color-diary > span.page-calendar-tab-current {
+  color: #c62828;
+}
+
+.page-calendar-tab-location li.nav-color-diary .page-calendar-tab-sublevel {
+  border-left-color: #c62828;
+}
+
 /* 傾向分析日記の月ヘッダー — details/summary アコーディオン（全ページ共通） */
 .page-calendar-tab-location details {
   margin-top: 4px;
@@ -2454,6 +2463,7 @@ body.section-calendar .calendar-widget {
   border-radius: 3px; margin-bottom: 6px; letter-spacing: 0.05em;
 }
 .weekly-badge { background: #6a1b9a; }
+.review-badge { background: #c62828; }
 .trend-title { font-size: 1.4rem; margin: 4px 0 2px; }
 .trend-generated-at { font-size: 0.78em; color: #888; margin: 0; }
 
@@ -2565,14 +2575,36 @@ body.section-calendar .calendar-widget {
   transition: background 0.12s;
 }
 .trend-index-entry:hover { background: var(--hover-bg, #f5f5f5); }
-.trend-index-entry a { color: var(--text, #222); text-decoration: none; flex: 1; }
+.trend-index-entry a { color: var(--text, #222); text-decoration: none; }
+.trend-entry-wrap { display: inline-flex; align-items: center; gap: 0.4rem; flex: 1; flex-wrap: wrap; }
 .trend-index-entry a:hover { text-decoration: underline; }
 .entry-badge {
   display: inline-block; font-size: 0.75em; font-weight: 700; padding: 2px 7px;
   border-radius: 3px; color: #fff; white-space: nowrap;
 }
-.entry-badge.daily  { background: #1565c0; }
-.entry-badge.weekly { background: #6a1b9a; }
+.entry-badge.daily   { background: #1565c0; }
+.entry-badge.weekly  { background: #6a1b9a; }
+.entry-badge.review  { background: #c62828; }
+
+/* 週末振り返りページ */
+.review-header { border-left: 4px solid #c62828; }
+.review-text-body { line-height: 1.9; font-size: 0.98em; }
+.review-perf-card {
+  background: #fff8f8; border: 1px solid #ffcdd2; border-radius: 6px;
+  padding: 1rem 1.2rem; margin: 1rem 0 1.5rem;
+}
+.review-perf-title {
+  font-weight: 700; font-size: 1em; margin-bottom: 0.6rem; color: #c62828;
+}
+.review-perf-n { font-weight: 400; font-size: 0.85em; color: #666; }
+.review-perf-table { border-collapse: collapse; font-size: 0.9em; }
+.review-perf-table th, .review-perf-table td {
+  padding: 4px 14px 4px 0; text-align: left;
+}
+.review-perf-table thead tr { border-bottom: 1px solid #ffcdd2; }
+.rate-good    { color: #2e7d32; font-weight: 700; }
+.rate-neutral { color: #1565c0; }
+.rate-bad     { color: #b71c1c; }
 
 /* 週次ページ — セクション背景は常に白、内部テキストは常に暗色 */
 .trend-day-section {
@@ -2656,3 +2688,292 @@ body.section-calendar .calendar-widget {
 :root[data-theme="dark"] .trend-md-table tbody tr:nth-child(even) { background: #2a2a2a; }
 :root[data-theme="dark"] .trend-nav-bottom { border-top-color: #444; }
 :root[data-theme="dark"] .cs-baseline { color: #aaa; }
+
+/* ── 勝ち馬人気分布グラフ（スタック棒） ── */
+.trend-pop-dist {
+  margin: 0.75rem 0 0;
+  padding: 0.7rem 0.75rem;
+  background: #fff;
+  border: 1px solid var(--border, #e0e0e0);
+  border-radius: 6px;
+}
+.pop-dist-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.trend-pop-dist-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary, #555);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+/* スタック棒 1行（共通） */
+.pop-stacked-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.pop-stacked-label {
+  flex: 0 0 2.6rem;
+  text-align: right;
+  white-space: nowrap;
+}
+.pop-stacked-bar {
+  flex: 1;
+  display: flex;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+.pop-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-width: 0;
+}
+.pop-seg-count {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: rgba(0,0,0,0.65);
+  white-space: nowrap;
+  line-height: 1;
+}
+.pop-stacked-total {
+  flex: 0 0 3rem;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* 全体行（メイン） */
+.pop-row-main { margin: 0.25rem 0; }
+.pop-row-main .pop-stacked-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary, #222);
+}
+.pop-row-main .pop-stacked-bar { height: 22px; }
+.pop-row-main .pop-stacked-total { font-size: 0.72rem; color: var(--text-secondary, #555); }
+/* 開催別行（サブ） */
+.pop-row-venue { margin: 0.18rem 0; padding-left: 0.6rem; }
+.pop-row-venue .pop-stacked-label {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--text-muted, #888);
+}
+.pop-row-venue .pop-stacked-bar { height: 14px; border-radius: 3px; }
+.pop-row-venue .pop-stacked-total { font-size: 0.65rem; color: var(--text-muted, #888); }
+.pop-row-venue .pop-seg-count { font-size: 0.57rem; }
+/* 開催別セパレーター */
+.pop-venue-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.35rem 0 0.1rem 0;
+  font-size: 0.65rem;
+  color: var(--text-muted, #aaa);
+}
+.pop-venue-divider::before {
+  content: '';
+  flex: 0 0 2.6rem;
+}
+.pop-venue-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border, #e0e0e0);
+}
+/* セグメント色（出馬表系統） */
+.pop-fav1    { background: #FFD700; }   /* 1番人気: 黄 */
+.pop-fav2    { background: #64B5F6; }   /* 2番人気: 水色 */
+.pop-fav3    { background: #FF9500; }   /* 3番人気: 橙 */
+.pop-mid     { background: #81C784; }   /* 4〜6番人気: 緑 */
+.pop-longshot{ background: #E57373; }   /* 7〜9番人気: 赤系 */
+.pop-upset   { background: #B0BEC5; }   /* 10番人気以上: グレー */
+/* 払い戻しサマリ */
+.trend-payout-summary {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.payout-item { display: flex; gap: 0.25rem; align-items: center; }
+.payout-label { font-size: 0.68rem; color: var(--text-muted, #888); }
+.payout-val { font-size: 0.72rem; font-weight: 700; color: var(--text-primary, #222); font-variant-numeric: tabular-nums; }
+/* 凡例 */
+.pop-legend {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--border, #e0e0e0);
+}
+.pop-leg-item {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.65rem;
+  color: var(--text-secondary, #555);
+  white-space: nowrap;
+}
+.pop-leg-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+/* dark mode — チャート背景はダークグレー（黒ではない）に固定 */
+:root[data-theme="dark"] .trend-pop-dist { background: #2a2a2a; border-color: #505050; }
+:root[data-theme="dark"] .pop-stacked-bar { background: #424242; }
+:root[data-theme="dark"] .pop-legend { border-top-color: #505050; }
+:root[data-theme="dark"] .pop-venue-divider::after { background: #505050; }
+:root[data-theme="dark"] .payout-val { color: #eee; }
+:root[data-theme="dark"] .pop-row-main .pop-stacked-label { color: #eee; }
+:root[data-theme="dark"] .pop-row-venue .pop-stacked-label { color: #aaa; }
+:root[data-theme="dark"] .pop-row-main .pop-stacked-total { color: #ccc; }
+:root[data-theme="dark"] .pop-row-venue .pop-stacked-total { color: #888; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .trend-pop-dist { background: #2a2a2a; border-color: #505050; }
+  :root:not([data-theme="light"]) .pop-stacked-bar { background: #424242; }
+  :root:not([data-theme="light"]) .pop-legend { border-top-color: #505050; }
+  :root:not([data-theme="light"]) .pop-venue-divider::after { background: #505050; }
+  :root:not([data-theme="light"]) .payout-val { color: #eee; }
+  :root:not([data-theme="light"]) .pop-row-main .pop-stacked-label { color: #eee; }
+  :root:not([data-theme="light"]) .pop-row-venue .pop-stacked-label { color: #aaa; }
+  :root:not([data-theme="light"]) .pop-row-main .pop-stacked-total { color: #ccc; }
+  :root:not([data-theme="light"]) .pop-row-venue .pop-stacked-total { color: #888; }
+}
+
+/* ── 荒れ傾向バッジ ─────────────────────────────────── */
+.trend-roughness-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.4rem 0 0.6rem;
+}
+.roughness-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+.roughness-place {
+  display: inline-block;
+  background: #546e7a;
+  color: #fff;
+  padding: 0.08em 0.45em;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.roughness-label {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  border-radius: 3px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.roughness-firm         { background: #c8e6c9; color: #1b5e20; }
+.roughness-somewhat-firm { background: #dcedc8; color: #33691e; }
+.roughness-somewhat-rough { background: #ffe0b2; color: #bf360c; }
+.roughness-rough        { background: #ffccbc; color: #b71c1c; }
+.roughness-neutral      { background: #eeeeee; color: #555; }
+/* インデックス用小サイズ */
+.roughness-small .roughness-item { font-size: 0.8rem; }
+.roughness-small .roughness-place { font-size: 0.72rem; padding: 0.05em 0.38em; }
+.roughness-small .roughness-label { font-size: 0.74rem; padding: 0.05em 0.4em; }
+.trend-index-entry .trend-roughness-row { display: inline-flex; align-items: center; margin: 0; vertical-align: middle; }
+
+/* ダークモード */
+:root[data-theme="dark"] .roughness-place { background: #455a64; color: #fff; }
+:root[data-theme="dark"] .roughness-firm         { background: #1b5e20; color: #c8e6c9; }
+:root[data-theme="dark"] .roughness-somewhat-firm { background: #33691e; color: #dcedc8; }
+:root[data-theme="dark"] .roughness-somewhat-rough { background: #bf360c; color: #ffe0b2; }
+:root[data-theme="dark"] .roughness-rough        { background: #b71c1c; color: #ffccbc; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .roughness-place { background: #455a64; color: #fff; }
+  :root:not([data-theme="light"]) .roughness-firm         { background: #1b5e20; color: #c8e6c9; }
+  :root:not([data-theme="light"]) .roughness-somewhat-firm { background: #33691e; color: #dcedc8; }
+  :root:not([data-theme="light"]) .roughness-somewhat-rough { background: #bf360c; color: #ffe0b2; }
+  :root:not([data-theme="light"]) .roughness-rough        { background: #b71c1c; color: #ffccbc; }
+}
+
+/* ── 荒れ度サマリブロック（短評ページ） ─────────────────────────── */
+.trend-roughness-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.2rem;
+  padding: 0.6rem 0.8rem;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+.trend-roughness-overall,
+.trend-roughness-venues {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.trend-roughness-section-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #666;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.trend-roughness-note {
+  font-size: 0.78rem;
+  color: #777;
+  white-space: nowrap;
+}
+:root[data-theme="dark"] .trend-roughness-summary { background: #333; border-color: #555; }
+:root[data-theme="dark"] .trend-roughness-section-label { color: #aaa; }
+:root[data-theme="dark"] .trend-roughness-note { color: #999; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .trend-roughness-summary { background: #333; border-color: #555; }
+  :root:not([data-theme="light"]) .trend-roughness-section-label { color: #aaa; }
+  :root:not([data-theme="light"]) .trend-roughness-note { color: #999; }
+}
+
+/* ── インデックスページ 説明リスト ───────────────────── */
+.trend-index-legend {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.trend-index-legend li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.trend-index-legend .roughness-label {
+  flex-shrink: 0;
+  min-width: 4.5em;
+  text-align: center;
+}
+.page-desc-sub {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+:root[data-theme="dark"] .page-desc-sub { color: #aaa; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .page-desc-sub { color: #aaa; }
+}
