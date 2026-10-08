@@ -117,5 +117,5 @@ def fetch_profiles_for_horse_ids(horse_id_list, skip_existing=True):
             if consecutive_errors >= 10:
                 time.sleep(30)
                 consecutive_errors = 0
-        time.sleep(2)
+        time.sleep(3)
     print(f"完了: 成功{ok}頭 / 失敗{ng}頭")

@@ -1924,5 +1924,41 @@ window.raceMeetings = {
       "race_card_url": "races/20261004/05_tokyoR11.html",
       "grade": "G2"
     }
+  ],
+  "20261010": [
+    {
+      "place_name": "京都",
+      "race_name": "御陵S",
+      "times": 4,
+      "day_number": 3,
+      "race_card_url": "races/20261010/08_kyotoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "東京",
+      "race_name": "サウジアラビアRC",
+      "times": 4,
+      "day_number": 3,
+      "race_card_url": "races/20261010/05_tokyoR11.html",
+      "grade": "G3"
+    }
+  ],
+  "20261011": [
+    {
+      "place_name": "京都",
+      "race_name": "太秦S",
+      "times": 4,
+      "day_number": 4,
+      "race_card_url": "races/20261011/08_kyotoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "東京",
+      "race_name": "アイルランドT",
+      "times": 4,
+      "day_number": 4,
+      "race_card_url": "races/20261011/05_tokyoR11.html",
+      "grade": "G2"
+    }
   ]
 };
