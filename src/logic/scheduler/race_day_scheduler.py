@@ -45,6 +45,7 @@ from src.managers import (  # noqa: E402
     race_info_dataset_manager,
     race_result_dataset_manager,
     race_schedule_dataset_manager,
+    training_data_manager,
 )
 from src.output import prediction_publisher  # noqa: E402
 
@@ -330,6 +331,11 @@ def make_html_prev_day(race_day):
             race_card_dataset_manager.save_race_cards(race_card_df, race_day, race_id)
             race_card_dataset_manager.save_race_info_df(race_info_df, race_day, race_id)
             race_info_dataset_manager.update_horse_name_id_map(race_card_df)
+            # 調教タイムを取得（前日のタイミングで更新 — netkeiba更新が13時のため）
+            if hasattr(race_card_df, 'empty') and not race_card_df.empty:
+                horse_ids_in_race = race_card_df.at[str(race_id), "horse_id"] if str(race_id) in race_card_df.index else []
+                for hid in horse_ids_in_race:
+                    training_data_manager.ensure_training_data(str(hid))
         except Exception:
             print(f"Make RaceCard Error: {race_id}")
         # 追い切り（調教時計）取得
