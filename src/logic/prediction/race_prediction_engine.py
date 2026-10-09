@@ -928,13 +928,24 @@ def _birth_month_multiplier(birth_month, age_cond):
 
 
 def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
-                                kinryo_series=None, jockey_ids=None, odds_series=None):
+                                kinryo_series=None, jockey_ids=None, odds_series=None,
+                                stored_val_df=None):
     """3戦略（的中率重視/回収率重視/MAR推奨）の統合指数とランクを計算する。
 
+    実行モード:
+      前日モード（stored_val_df=None）:
+        val（v12nodds: オッズ不使用）のみ計算して返す。hit/MARはNaN。
+      当日モード（stored_val_df=<DataFrame>）:
+        hit（v11/v15: オッズ使用）を計算し、前日計算済みのvalと合成してMARを算出。
+
     戦略:
-      ②的中率重視: 単複=v11α0.6  / 3連複=v15α0.5
-      ①③回収率重視: 単複=v12_nodds / 3連複=v12_nodds
-      ④MAR推奨:    単複=v11_nodds / 3連複=v12α0.4
+      ②的中率重視(hit): 単複=v11α0.6  / 3連複=v15α0.5  （オッズあり、当日のみ）
+      ①③回収率重視(val): 単複=v12_nodds / 3連複=v12_nodds（オッズなし、前日計算）
+      ④MAR推奨:         0.4×hit + 0.6×val              （当日・hit確定後に算出）
+
+    Args:
+        stored_val_df: 前日計算済みの val 指数 DataFrame（idx_value, rank_value 列）。
+                       None の場合は前日モード。
 
     Returns:
         pd.DataFrame: idx_hitrate, rank_hitrate, idx_value, rank_value,
@@ -1061,19 +1072,10 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
             )  # 102列
             birth_months.append(horse_profile_dataset_manager.get_birth_month(str(hid)))
 
-        # ── オッズあり DataFrame（列名付き 104列）──
-        df_v15 = pd.DataFrame(feat_rows_v15, columns=_MM_IX9_NO_RACE).fillna(-1)
+        # ── モード判定 ──
+        is_race_day_mode = (stored_val_df is not None)
 
-        def _score_v(suffix, n_cols):
-            m = _mm_get_model(place_id, race_type, course_len, suffix)
-            return m.predict(df_v15.iloc[:, :n_cols], num_iteration=m.best_iteration)
-
-        s_v7  = _score_v("_v7_no26",  66)
-        s_v11 = _score_v("_v11_no26", 90)
-        s_v12 = _score_v("_v12_no26", 97)
-        s_v15 = _score_v("_v15_no26", 104)
-
-        # ── オッズなし DataFrame（重複排除 100列）──
+        # ── val スコア: オッズなし v12nodds（前日モードで計算） ──
         df_nodds = pd.DataFrame(feat_rows_nodds, columns=_MM_NODDS_DUPS).fillna(-1)
         df_nodds = df_nodds.loc[:, ~df_nodds.columns.duplicated(keep="first")]
 
@@ -1081,15 +1083,24 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
             m = _mm_get_model(place_id, race_type, course_len, suffix)
             return m.predict(df_nodds[cols], num_iteration=m.best_iteration)
 
-        s_v12n = _score_n("_v12nodds_no26", _MM_V12N_COLS)
-
-        # ── 戦略ブレンドスコア ──
-        # ②的中率重視: 単複=v11α0.6 / 3連複=v15α0.5
-        s_tan_hr  = _mm_blend(s_v11, s_v7, 0.6)
-        s_san_hr  = _mm_blend(s_v15, s_v7, 0.5)
-        # ①③回収率重視: 単複=v12n / 3連複=v12n
+        s_v12n    = _score_n("_v12nodds_no26", _MM_V12N_COLS)
         s_tan_val = _mm_norm(s_v12n)
         s_san_val = _mm_norm(s_v12n)
+
+        # ── hit スコア: オッズあり v11/v15（当日モードのみ計算） ──
+        if is_race_day_mode:
+            df_v15 = pd.DataFrame(feat_rows_v15, columns=_MM_IX9_NO_RACE).fillna(-1)
+
+            def _score_v(suffix, n_cols):
+                m = _mm_get_model(place_id, race_type, course_len, suffix)
+                return m.predict(df_v15.iloc[:, :n_cols], num_iteration=m.best_iteration)
+
+            s_v7  = _score_v("_v7_no26",  66)
+            s_v11 = _score_v("_v11_no26", 90)
+            s_v12 = _score_v("_v12_no26", 97)
+            s_v15 = _score_v("_v15_no26", 104)
+            s_tan_hr = _mm_blend(s_v11, s_v7, 0.6)
+            s_san_hr = _mm_blend(s_v15, s_v7, 0.5)
 
         # ── 年齢限定戦: birth_month スコア補正 ──
         try:
@@ -1098,24 +1109,35 @@ def multi_model_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
             age_cond = ""
         if age_cond in ("2歳", "3歳"):
             bm_mults = np.array([_birth_month_multiplier(bm, age_cond) for bm in birth_months])
-            s_tan_hr  = s_tan_hr  * bm_mults
-            s_san_hr  = s_san_hr  * bm_mults
             s_tan_val = s_tan_val * bm_mults
             s_san_val = s_san_val * bm_mults
+            if is_race_day_mode:
+                s_tan_hr = s_tan_hr * bm_mults
+                s_san_hr = s_san_hr * bm_mults
 
         # ── 統合スコア → ランク・指数 ──
         def _to_rank_idx(s_tan, s_san):
             combined = _mm_strategy_score(s_tan, s_san)
             z   = _zscore(pd.Series(combined))
             idx = [score_to_index(v) for v in z]
-            rnk = rank_index(combined.tolist())
+            rnk = rank_index(idx)
             return idx, rnk
 
-        idx_hr,  rnk_hr  = _to_rank_idx(s_tan_hr,  s_san_hr)
-        idx_val, rnk_val = _to_rank_idx(s_tan_val, s_san_val)
-        # ④MAR推奨: hit40%+val60%ブレンド（同スケールidx同士を直接合成）
-        idx_mar = [round(0.4 * h + 0.6 * v, 1) for h, v in zip(idx_hr, idx_val)]
-        rnk_mar = rank_index(idx_mar)
+        if is_race_day_mode:
+            # 当日: hit 計算 → 前日計算済み val と合成して MAR 算出
+            idx_hr, rnk_hr = _to_rank_idx(s_tan_hr, s_san_hr)
+            idx_val = pd.to_numeric(stored_val_df["idx_value"], errors="coerce").tolist()
+            rnk_val = stored_val_df["rank_value"].tolist()
+            idx_mar = [round(0.4 * h + 0.6 * v, 1) for h, v in zip(idx_hr, idx_val)]
+            rnk_mar = rank_index(idx_mar)
+        else:
+            # 前日: val のみ計算。hit・MAR は NaN（当日に確定する）
+            idx_val, rnk_val = _to_rank_idx(s_tan_val, s_san_val)
+            nan_list = [float("nan")] * n
+            idx_hr  = nan_list
+            rnk_hr  = [None] * n
+            idx_mar = nan_list
+            rnk_mar = [None] * n
 
         return pd.DataFrame({
             "idx_hitrate":  idx_hr,
@@ -1291,13 +1313,13 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
         scores_hit = np.array(model_hit.predict(X.values, num_iteration=model_hit.best_iteration), dtype=float)
         z_hit      = _zscore(pd.Series(scores_hit))
         idx_hit    = [score_to_index(v) for v in z_hit]
-        rnk_hit    = rank_index(scores_hit.tolist())
+        rnk_hit    = rank_index(idx_hit)
 
         # val モデル（回収率重視）
         scores_val = np.array(model_val.predict(X.values, num_iteration=model_val.best_iteration), dtype=float)
         z_val      = _zscore(pd.Series(scores_val))
         idx_val    = [score_to_index(v) for v in z_val]
-        rnk_val    = rank_index(scores_val.tolist())
+        rnk_val    = rank_index(idx_val)
 
         # MAR = 0.6 × hit_idx + 0.4 × val_idx
         mar_raw  = [0.6 * h + 0.4 * v for h, v in zip(idx_hit, idx_val)]

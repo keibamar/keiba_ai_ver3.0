@@ -13,14 +13,18 @@ from src.datasets.race_card import transform as race_card_transform
 from src.logic.prediction import race_prediction_engine
 from src.logic.prediction.race_prediction_engine import multi_model_rank_prediction
 from src.logic.scraping import netkeiba_scraper
-from src.managers import horse_peds_dataset_manager, past_performance_dataset_manager
+from src.managers import horse_peds_dataset_manager, past_performance_dataset_manager, race_card_dataset_manager
 
 
-def make_race_card(race_id):
+def make_race_card(race_id, race_day=None):
     """出馬表を作成する
 
     Args:
         race_id (str): race_id
+        race_day (date | None): レース開催日。指定された場合は当日モード:
+            既存 CSV から前日計算済みの val 指数を読み込み、hit のみ再計算して MAR を合成。
+            None の場合は前日モード: val のみ計算し、hit・MAR は NaN。
+            新馬戦（shinba）は両モデルともオッズ不使用のため race_day に関係なく両方計算。
 
     Returns:
         tuple または pd.DataFrame:
@@ -90,11 +94,21 @@ def make_race_card(race_id):
         kinryo_series = (
             race_card_df[kinryo_col].reset_index(drop=True) if kinryo_col else None
         )
+        # 当日モード: 前日計算済みの val 指数を既存 CSV から読み込む
+        stored_val_df = None
+        if race_day is not None:
+            try:
+                existing = race_card_dataset_manager.get_race_cards(race_day, race_id)
+                if not existing.empty and "idx_value" in existing.columns:
+                    stored_val_df = existing[["idx_value", "rank_value"]].reset_index(drop=True)
+            except Exception:
+                pass
         multi_df = multi_model_rank_prediction(
             race_id, horse_ids, race_info_df, waku_df,
             kinryo_series=kinryo_series,
             jockey_ids=jockey_ids,
             odds_series=odds_series,
+            stored_val_df=stored_val_df,
         )
         if not multi_df.empty and len(multi_df) == len(rank_df):
             overlap = [c for c in multi_df.columns if c in rank_df.columns]

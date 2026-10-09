@@ -393,6 +393,17 @@ def scrape_race_card(race_id):
         info = re.findall(r"\w+", texts)
         # Aコースなどの表記を消去
         info = [s for s in info if s not in ("A", "B", "C")]
+        # info[0] は h1 の先頭トークンだが「・」「()」等で分断される。
+        # h1 の直接テキストノードからレース名をそのまま取得して上書きする。
+        if info:
+            h1_elem = soup.find("h1", attrs={"class": "RaceName"})
+            if h1_elem:
+                # NavigableString は str のサブクラス。Tag は str でないので直接テキストのみ取れる。
+                raw_name = "".join(
+                    t for t in h1_elem.children if isinstance(t, str) and t.strip()
+                ).strip()
+                if raw_name:
+                    info[0] = raw_name
         horse_numbers = int(re.findall(r"\d+", info[-1])[0])
 
         race_info_df = pd.DataFrame([race_card_transform.parse_race_card_info_tokens(info)])

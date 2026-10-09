@@ -465,8 +465,8 @@ def post_daily_race_pred(race_day=date.today()):
         if int(race_time) <= int(str_comp_time):
             race_id = time_id_list[0][1]
             try:
-                # 予想の更新
-                race_card_df, race_info_df = race_card_builder.make_race_card(race_id)
+                # 予想の更新（当日モード: 前日val + 当日hit でMAR合成）
+                race_card_df, race_info_df = race_card_builder.make_race_card(race_id, race_day=race_day)
                 # csvファイルで出力
                 race_card_dataset_manager.save_race_cards(race_card_df, race_day, race_id)
                 race_card_dataset_manager.save_race_info_df(race_info_df, race_day, race_id)

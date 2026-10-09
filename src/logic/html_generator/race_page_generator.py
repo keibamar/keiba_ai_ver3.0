@@ -66,16 +66,19 @@ def read_race_csv(date_str, target_id):
         return None
 
     # idx_* が存在しない場合は score_* から変換して補完（multi_model_rank_prediction 未実行時のフォールバック）
-    # MAR-hit は人気・オッズ不使用なので前日から表示。MAR / MAR-val はオッズ・人気が確定する当日のみ表示。
+    # MAR-val (v12nodds: オッズ不使用) は前日から表示。MAR-hit / MAR はオッズ確定後の当日のみ表示。
     is_race_day = (race_day <= date.today())
     df = df.copy()
-    if "idx_hitrate" not in df.columns and "score_hitrate" in df.columns:
-        z = _zscore_series(df["score_hitrate"])
-        df["idx_hitrate"] = z.apply(score_to_index)
+    # val: 前日から表示（オッズ不要モデルで前日計算済み）
+    if "idx_value" not in df.columns and "score_value" in df.columns:
+        z = _zscore_series(df["score_value"])
+        df["idx_value"] = z.apply(score_to_index)
     if is_race_day:
-        if "idx_value" not in df.columns and "score_value" in df.columns:
-            z = _zscore_series(df["score_value"])
-            df["idx_value"] = z.apply(score_to_index)
+        # hit: 当日のみ（オッズ依存モデル）
+        if "idx_hitrate" not in df.columns and "score_hitrate" in df.columns:
+            z = _zscore_series(df["score_hitrate"])
+            df["idx_hitrate"] = z.apply(score_to_index)
+        # MAR: hit が確定する当日のみ
         if "idx_mar" not in df.columns and "score" in df.columns:
             df["idx_mar"] = pd.to_numeric(df["score"], errors="coerce").apply(score_to_index)
             if "rank" in df.columns and "rank_mar" not in df.columns:
