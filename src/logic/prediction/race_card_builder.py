@@ -97,6 +97,8 @@ def make_race_card(race_id):
             odds_series=odds_series,
         )
         if not multi_df.empty and len(multi_df) == len(rank_df):
+            overlap = [c for c in multi_df.columns if c in rank_df.columns]
+            rank_df = rank_df.drop(columns=overlap)
             rank_df = pd.concat([rank_df.reset_index(drop=True),
                                  multi_df.reset_index(drop=True)], axis=1)
     else:
