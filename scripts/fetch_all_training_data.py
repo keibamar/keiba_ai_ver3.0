@@ -74,8 +74,8 @@ def main():
         help="この時刻（HH:MM）になったら停止（デフォルト: 08:50）"
     )
     parser.add_argument(
-        "--sleep", type=float, default=2.0,
-        help="リクエスト間隔秒数（デフォルト: 2.0）"
+        "--sleep", type=float, default=3.0,
+        help="リクエスト間隔秒数（デフォルト: 3.0）"
     )
     parser.add_argument(
         "--force", action="store_true",
