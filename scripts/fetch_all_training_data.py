@@ -162,10 +162,15 @@ def main():
                 skip += 1
                 consecutive_errors = 0
         except Exception as e:
+            err_str = str(e)
+            # 400 エラー = リクエストしすぎ → 即時終了
+            if "400 Client Error" in err_str:
+                print(f"  [400 ERROR] {horse_id}: リクエスト過多と判断。スクレイピングを即時停止します。")
+                break
             print(f"  [ERROR] {horse_id}: {e}")
             ng += 1
             consecutive_errors += 1
-            # 連続エラー: レート制限の可能性があるため長待機後に続行
+            # 連続エラー: 一時的障害として長待機後に続行
             if consecutive_errors >= CONSECUTIVE_ERROR_THRESHOLD:
                 print(f"  連続エラー {consecutive_errors} 回 → {LONG_WAIT_SEC}s 待機してから再開")
                 time.sleep(LONG_WAIT_SEC)
