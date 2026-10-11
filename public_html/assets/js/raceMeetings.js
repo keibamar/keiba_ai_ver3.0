@@ -1960,5 +1960,23 @@ window.raceMeetings = {
       "race_card_url": "races/20261011/05_tokyoR11.html",
       "grade": "G2"
     }
+  ],
+  "20261012": [
+    {
+      "place_name": "東京",
+      "race_name": "オクトーバーS",
+      "times": 4,
+      "day_number": 5,
+      "race_card_url": null,
+      "grade": null
+    },
+    {
+      "place_name": "京都",
+      "race_name": "スワンS",
+      "times": 4,
+      "day_number": 5,
+      "race_card_url": null,
+      "grade": "G2"
+    }
   ]
 };
