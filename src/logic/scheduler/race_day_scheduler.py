@@ -351,6 +351,7 @@ def make_html_prev_day(race_day):
 
     race_page_generator.make_daily_race_card_html(race_day)
     daily_index_generator.make_daily_index_page(race_day)
+    home_generator.make_home_page()
 
 
 def _supplement_missing_weights(race_day):

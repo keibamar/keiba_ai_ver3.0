@@ -49,17 +49,28 @@ def extract_top5_pred(race_data_df):
 
     rank列の値と一致する行を1つずつ探す実装だと、スコアが同値で順位が
     重複する馬がいる場合（rank=2,3,4が誰にも付かず欠番になる等）に
-    5頭未満しか抽出できなくなる。scoreの降順で並べて上位5行を取る方式にし、
+    5頭未満しか抽出できなくなる。スコアの降順で並べて上位5行を取る方式にし、
     順位の重複・欠番に関係なく必ず5頭（出走数が5未満ならその頭数）を返す。
+
+    並び順はHTMLのMAR列と一致させるため idx_mar を優先し、
+    idx_mar が未計算の場合は score にフォールバックする。
 
     Args:
         race_data_df(pd.DataFrame) : 出馬表データセット
     Returns:
-        result_list(list) : 上位5頭の[馬番, 馬名]のリスト(score降順)
+        result_list(list) : 上位5頭の[馬番, 馬名]のリスト(idx_mar降順)
     """
-    if "score" not in race_data_df.columns:
+    import pandas as pd
+    if (
+        "idx_mar" in race_data_df.columns
+        and not pd.to_numeric(race_data_df["idx_mar"], errors="coerce").isna().all()
+    ):
+        sort_col = "idx_mar"
+    elif "score" in race_data_df.columns:
+        sort_col = "score"
+    else:
         return []
-    sorted_df = race_data_df.sort_values("score", ascending=False).reset_index(drop=True)
+    sorted_df = race_data_df.sort_values(sort_col, ascending=False).reset_index(drop=True)
     result_list = []
     for i in range(min(5, len(sorted_df))):
         result_list.append([sorted_df.at[i, "馬番"], sorted_df.at[i, "馬名"]])
