@@ -1967,7 +1967,7 @@ window.raceMeetings = {
       "race_name": "オクトーバーS",
       "times": 4,
       "day_number": 5,
-      "race_card_url": null,
+      "race_card_url": "races/20261012/05_tokyoR11.html",
       "grade": null
     },
     {
@@ -1975,7 +1975,7 @@ window.raceMeetings = {
       "race_name": "スワンS",
       "times": 4,
       "day_number": 5,
-      "race_card_url": null,
+      "race_card_url": "races/20261012/08_kyotoR11.html",
       "grade": "G2"
     }
   ]
