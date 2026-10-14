@@ -74,6 +74,10 @@ def main():
         help="この時刻（HH:MM）になったら停止（デフォルト: 08:50）"
     )
     parser.add_argument(
+        "--no-deadline", action="store_true",
+        help="時刻による自動停止を無効化して完了まで続ける"
+    )
+    parser.add_argument(
         "--sleep", type=float, default=3.0,
         help="リクエスト間隔秒数（デフォルト: 3.0）"
     )
@@ -90,10 +94,11 @@ def main():
         print("ERROR: NETKEIBA_LOGIN_ID / NETKEIBA_PASSWORD が .env に設定されていません")
         sys.exit(1)
 
-    deadline_dt = calc_deadline_dt(args.deadline)
+    deadline_dt = None if args.no_deadline else calc_deadline_dt(args.deadline)
 
     print(f"=== 全馬調教タイム取得 ===")
-    print(f"停止予定時刻: {deadline_dt.strftime('%Y-%m-%d %H:%M')}  |  sleep: {args.sleep}s  |  force: {args.force}")
+    deadline_label = "なし（手動停止まで）" if deadline_dt is None else deadline_dt.strftime('%Y-%m-%d %H:%M')
+    print(f"停止予定時刻: {deadline_label}  |  sleep: {args.sleep}s  |  force: {args.force}")
 
     # horse_id リスト収集
     all_ids = get_all_peds_horse_ids()
@@ -127,7 +132,7 @@ def main():
 
     for i, horse_id in enumerate(targets):
         # 期限チェック（各馬の前に確認）
-        if deadline_reached(deadline_dt):
+        if deadline_dt is not None and deadline_reached(deadline_dt):
             print(f"\n⏰ 停止時刻 {args.deadline} に達しました。終了します。")
             break
 
