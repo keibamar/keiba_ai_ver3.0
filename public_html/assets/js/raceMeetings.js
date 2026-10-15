@@ -1978,5 +1978,57 @@ window.raceMeetings = {
       "race_card_url": "races/20261012/08_kyotoR11.html",
       "grade": "G2"
     }
+  ],
+  "20261017": [
+    {
+      "place_name": "新潟",
+      "race_name": "北陸S",
+      "times": 4,
+      "day_number": 1,
+      "race_card_url": "races/20261017/04_nigataR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "京都",
+      "race_name": "トルマリンS",
+      "times": 4,
+      "day_number": 6,
+      "race_card_url": "races/20261017/08_kyotoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "東京",
+      "race_name": "富士S",
+      "times": 4,
+      "day_number": 6,
+      "race_card_url": "races/20261017/05_tokyoR11.html",
+      "grade": "G2"
+    }
+  ],
+  "20261018": [
+    {
+      "place_name": "新潟",
+      "race_name": "新潟牝馬S",
+      "times": 4,
+      "day_number": 2,
+      "race_card_url": "races/20261018/04_nigataR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "東京",
+      "race_name": "ブラジルC",
+      "times": 4,
+      "day_number": 7,
+      "race_card_url": "races/20261018/05_tokyoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "京都",
+      "race_name": "秋華賞",
+      "times": 4,
+      "day_number": 7,
+      "race_card_url": "races/20261018/08_kyotoR11.html",
+      "grade": "G1"
+    }
   ]
 };
