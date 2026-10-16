@@ -118,6 +118,39 @@ def make_race_card(race_id, race_day=None):
     else:
         print(f"ℹ️ [スキップ/エラーではありません] 枠順未確定のためAI予想をスキップ: {race_id}")
         rank_df = race_card_transform.blank_rank_df(len(race_card_df))
+        # 前日モード(race_day=None)かつ枠順未確定の場合: val指数(odds不要モデル)のみ計算する
+        # waku/umaban はNaN(-1)として渡すが、_v12_noddsはオッズ不要なので有意なスコアが出る
+        if race_day is None:
+            try:
+                waku_df_for_val = (
+                    race_card_df[["枠", "馬番"]].reset_index(drop=True)
+                    if "枠" in race_card_df.columns and "馬番" in race_card_df.columns
+                    else pd.DataFrame({"枠": [None] * len(race_card_df), "馬番": [None] * len(race_card_df)})
+                )
+                kinryo_col_val = race_card_df.columns[4] if len(race_card_df.columns) > 4 else None
+                kinryo_series_val = (
+                    race_card_df[kinryo_col_val].reset_index(drop=True) if kinryo_col_val else None
+                )
+                jockey_ids_val = (
+                    race_card_df["jockey_id"].reset_index(drop=True).tolist()
+                    if "jockey_id" in race_card_df.columns
+                    else None
+                )
+                multi_df_val = multi_model_rank_prediction(
+                    race_id, horse_ids, race_info_df, waku_df_for_val,
+                    kinryo_series=kinryo_series_val,
+                    jockey_ids=jockey_ids_val,
+                    odds_series=None,
+                    stored_val_df=None,  # 前日モード: val のみ計算
+                )
+                if not multi_df_val.empty and len(multi_df_val) == len(rank_df):
+                    overlap = [c for c in multi_df_val.columns if c in rank_df.columns]
+                    rank_df = rank_df.drop(columns=overlap)
+                    rank_df = pd.concat(
+                        [rank_df.reset_index(drop=True), multi_df_val.reset_index(drop=True)], axis=1
+                    )
+            except Exception:
+                pass
 
     # 父，母，母父のみ抽出してデータセットを統合
     horse_peds_display = race_card_transform.extract_peds_for_display(horse_peds_df)
