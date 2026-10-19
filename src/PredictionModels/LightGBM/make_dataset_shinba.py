@@ -526,10 +526,18 @@ def make_training_dataset_with_ids():
     shinba["label"]   = shinba["着順"].apply(_rank_to_label)
     shinba = shinba.dropna(subset=["label", "date_dt"]).sort_values("date_dt").reset_index(drop=True)
 
-    race_ids  = shinba["race_id"].values
-    horse_ids = shinba["horse_id"].values
-    date_dt   = shinba["date_dt"].values
-    return feat, groups, labels, tan_odds, race_ids, date_dt, horse_ids
+    def _parse_odds_s(x):
+        try:
+            return float(str(x).replace(",", ""))
+        except Exception:
+            return np.nan
+
+    race_ids    = shinba["race_id"].values
+    horse_ids   = shinba["horse_id"].values
+    date_dt     = shinba["date_dt"].values
+    horse_odds  = shinba["単勝"].map(_parse_odds_s).values if "単勝" in shinba.columns \
+                  else np.full(len(shinba), np.nan)
+    return feat, groups, labels, tan_odds, race_ids, date_dt, horse_ids, horse_odds
 
 
 def build_stats_tables():

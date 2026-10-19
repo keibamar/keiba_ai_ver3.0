@@ -294,22 +294,25 @@ def main():
     _cache_labels = os.path.join(CACHE_DIR, "labels.npy")
     _cache_odds   = os.path.join(CACHE_DIR, "tan_odds.npy")
     _cache_rids   = os.path.join(CACHE_DIR, "race_ids.npy")
+    _cache_hodds  = os.path.join(CACHE_DIR, "horse_odds.npy")
 
     all_cached = all(os.path.isfile(p) for p in [
-        _cache_feat, _cache_groups, _cache_labels, _cache_odds, _cache_rids
+        _cache_feat, _cache_groups, _cache_labels, _cache_odds, _cache_rids, _cache_hodds
     ])
 
     if all_cached:
         print("\n1. キャッシュから読み込み中...")
-        feat_df  = pd.read_pickle(_cache_feat)
-        groups   = list(np.load(_cache_groups))
-        labels   = np.load(_cache_labels)
-        tan_odds = np.load(_cache_odds)
-        race_ids = np.load(_cache_rids, allow_pickle=True)
+        feat_df    = pd.read_pickle(_cache_feat)
+        groups     = list(np.load(_cache_groups))
+        labels     = np.load(_cache_labels)
+        tan_odds   = np.load(_cache_odds)
+        race_ids   = np.load(_cache_rids, allow_pickle=True)
+        horse_odds = np.load(_cache_hodds)
         print(f"  → {len(feat_df)}行 / {len(groups)}レース")
     else:
         print("\n1. 基本データセット生成中...")
-        feat_base, groups, labels, tan_odds, race_ids, _, horse_ids = make_training_dataset_with_ids()
+        feat_base, groups, labels, tan_odds, race_ids, _, horse_ids, horse_odds = \
+            make_training_dataset_with_ids()
         groups = list(groups)
         print(f"  → {len(feat_base)}行 / {len(groups)}レース")
 
@@ -318,13 +321,14 @@ def main():
         feat_df["race_id"]  = race_ids
         feat_df["horse_id"] = horse_ids
         feat_df = add_training_features(feat_df)
-        feat_df = feat_df.drop(columns=["race_id", "horse_id"], errors="ignore")
+        feat_df = feat_df.drop(columns=["horse_id"], errors="ignore")
 
         feat_df.to_pickle(_cache_feat)
         np.save(_cache_groups, np.array(groups))
         np.save(_cache_labels, labels)
         np.save(_cache_odds,   tan_odds)
         np.save(_cache_rids,   race_ids)
+        np.save(_cache_hodds,  horse_odds)
         print(f"  キャッシュ保存: {CACHE_DIR}")
 
     # train_has_data の分布確認
@@ -333,10 +337,26 @@ def main():
         print(f"\n  調教データあり: {n_with} / {len(feat_df)} 馬 ({100*n_with/len(feat_df):.1f}%)")
 
     # ---- 2. 特徴量セット定義 ----
-    ALL_FEATURES = SHINBA_FEATURES + TRAINING_FEATURES
-    # 特徴量列のうち feat_df に存在するものだけ使う
-    use_feats_base = [c for c in SHINBA_FEATURES if c in feat_df.columns]
-    use_feats_all  = [c for c in ALL_FEATURES      if c in feat_df.columns]
+    # グレード × オッズ交互作用特徴量 (HIT モデル専用: レース当日にオッズ取得可能)
+    log_odds = np.log1p(np.where(np.isnan(horse_odds) | (horse_odds <= 0), np.nan, horse_odds))
+    feat_df["horse_log_odds"]           = log_odds
+    feat_df["train_grade_x_logodds"]    = feat_df["train_grade_code"]  * feat_df["horse_log_odds"]
+    feat_df["train_bgrade_x_logodds"]   = feat_df["train_best_grade"]  * feat_df["horse_log_odds"]
+    feat_df["train_lapz_x_logodds"]     = feat_df["train_last_lap_z"]  * feat_df["horse_log_odds"]
+
+    _ODDS_INTERACTION_COLS = [
+        "horse_log_odds", "train_grade_x_logodds",
+        "train_bgrade_x_logodds", "train_lapz_x_logodds",
+    ]
+
+    ALL_FEATURES_HIT = SHINBA_FEATURES + TRAINING_FEATURES + _ODDS_INTERACTION_COLS
+    ALL_FEATURES_VAL = SHINBA_FEATURES + TRAINING_FEATURES   # val はオッズなし
+
+    use_feats_base     = [c for c in SHINBA_FEATURES        if c in feat_df.columns]
+    use_feats_all_hit  = [c for c in ALL_FEATURES_HIT       if c in feat_df.columns]
+    use_feats_all_val  = [c for c in ALL_FEATURES_VAL       if c in feat_df.columns]
+    print(f"  HIT 特徴量: {len(use_feats_all_hit)}列  VAL 特徴量: {len(use_feats_all_val)}列")
+    print(f"  交互作用列: {_ODDS_INTERACTION_COLS}")
 
     # ---- 3. 年ベース分割 ----
     print(f"\n3. 年で分割 (train: ~{EVAL_YEAR-1} / eval: {EVAL_YEAR}~)...")
@@ -379,45 +399,56 @@ def main():
         )
         X_tv_b, X_vv_b, y_tv, y_vv, g_tv, g_vv, to_tv, to_vv = split_b
 
-        split_a = split_timeseries(
-            X_tr_rt[use_feats_all].fillna(-1), y_tr_rt, g_tr_rt, to_tr_rt
+        split_ah = split_timeseries(
+            X_tr_rt[use_feats_all_hit].fillna(-1), y_tr_rt, g_tr_rt, to_tr_rt
         )
-        X_tv_a, X_vv_a = split_a[0], split_a[1]
+        split_av = split_timeseries(
+            X_tr_rt[use_feats_all_val].fillna(-1), y_tr_rt, g_tr_rt, to_tr_rt
+        )
+        X_tv_ah, X_vv_ah = split_ah[0], split_ah[1]
+        X_tv_av, X_vv_av = split_av[0], split_av[1]
 
         results[rt_name] = {}
 
-        for label, X_tv, X_vv, X_ev_feat, feats in [
-            ("base",     X_tv_b, X_vv_b, X_ev_rt[use_feats_base].fillna(-1), use_feats_base),
-            ("training", X_tv_a, X_vv_a, X_ev_rt[use_feats_all].fillna(-1),  use_feats_all),
-        ]:
-            print(f"\n  [{label}] 特徴量: {len(feats)}列")
+        # HIT/VAL で異なるフィーチャーセットを使う
+        _INTERACTION_MARKER = set(_ODDS_INTERACTION_COLS) | set(TRAINING_FEATURES)
 
-            # --- HIT ---
+        for label, X_tv_h, X_vv_h, X_tv_v, X_vv_v, feats_h, feats_v in [
+            ("base",
+             X_tv_b, X_vv_b, X_tv_b, X_vv_b,
+             use_feats_base, use_feats_base),
+            ("training",
+             X_tv_ah, X_vv_ah, X_tv_av, X_vv_av,
+             use_feats_all_hit, use_feats_all_val),
+        ]:
+            print(f"\n  [{label}] HIT {len(feats_h)}列 / VAL {len(feats_v)}列")
+
+            # --- HIT (オッズ交互作用あり) ---
             print(f"  [{label}] HIT: Optunaチューニング ({N_TRIALS} trials)...")
-            best_hit = _tune_hit(X_tv, y_tv, g_tv, X_vv, y_vv, g_vv)
+            best_hit = _tune_hit(X_tv_h, y_tv, g_tv, X_vv_h, y_vv, g_vv)
             n_est_h = best_hit.pop("n_estimators", 300)
-            dtr = lgb.Dataset(X_tv.values, label=y_tv, group=g_tv, feature_name=feats)
-            dva = lgb.Dataset(X_vv.values, label=y_vv, group=g_vv, reference=dtr)
+            dtr = lgb.Dataset(X_tv_h.values, label=y_tv, group=g_tv, feature_name=feats_h)
+            dva = lgb.Dataset(X_vv_h.values, label=y_vv, group=g_vv, reference=dtr)
             model_hit = _fit_hit(best_hit, dtr, dva, n_est_h)
 
-            # eval
-            ev_hit = eval_hit_model(model_hit, X_ev_feat, y_ev_rt, g_ev_rt)
+            X_ev_hit = X_ev_rt[feats_h].fillna(-1)
+            ev_hit = eval_hit_model(model_hit, X_ev_hit, y_ev_rt, g_ev_rt)
             print(f"  [{label}] HIT eval → NDCG@1={ev_hit['ndcg@1']:.4f}  NDCG@3={ev_hit['ndcg@3']:.4f}  WinRate={ev_hit['win_rate']:.3f}  ({ev_hit['n_races']}R)")
 
-            # save
             hit_path = os.path.join(MODEL_DIR, f"{rt_name}_shinba_{label}_hit.txt")
             model_hit.save_model(hit_path)
 
-            # --- VAL ---
+            # --- VAL (オッズなし) ---
             print(f"  [{label}] VAL: Optunaチューニング ({N_TRIALS} trials)...")
-            best_val = _tune_val(X_tv, to_tv, g_tv, X_vv, to_vv, g_vv)
+            best_val = _tune_val(X_tv_v, to_tv, g_tv, X_vv_v, to_vv, g_vv)
             n_est_v = best_val.pop("n_estimators", 300)
             y_vv_bin = (to_vv > 0).astype(float)
-            dtr_v = lgb.Dataset(X_tv.values, label=to_tv, group=g_tv, feature_name=feats)
-            dva_v = lgb.Dataset(X_vv.values, label=y_vv_bin, group=g_vv, reference=dtr_v)
+            dtr_v = lgb.Dataset(X_tv_v.values, label=to_tv, group=g_tv, feature_name=feats_v)
+            dva_v = lgb.Dataset(X_vv_v.values, label=y_vv_bin, group=g_vv, reference=dtr_v)
             model_val = _fit_val(best_val, dtr_v, dva_v, n_est_v)
 
-            ev_val = eval_val_roi(model_val, X_ev_feat, y_ev_rt, to_ev_rt, g_ev_rt)
+            X_ev_val = X_ev_rt[feats_v].fillna(-1)
+            ev_val = eval_val_roi(model_val, X_ev_val, y_ev_rt, to_ev_rt, g_ev_rt)
             print(f"  [{label}] VAL eval → WinRate={ev_val['win_rate']:.3f}  ROI={ev_val['roi']:.2f}  ({ev_val['n_races']}R)")
 
             val_path = os.path.join(MODEL_DIR, f"{rt_name}_shinba_{label}_val.txt")
@@ -426,15 +457,31 @@ def main():
             # feature importance (training model のみ)
             if label == "training":
                 imp = pd.Series(model_hit.feature_importance(importance_type="gain"),
-                                index=feats).sort_values(ascending=False)
-                print(f"\n  [training] HIT 特徴量重要度 Top10:")
-                for feat, score in imp.head(10).items():
-                    marker = " ★" if feat in TRAINING_FEATURES else ""
+                                index=feats_h).sort_values(ascending=False)
+                print(f"\n  [training] HIT 特徴量重要度 Top12:")
+                for feat, score in imp.head(12).items():
+                    marker = " ★" if feat in _INTERACTION_MARKER else ""
                     print(f"    {feat:<35s}: {score:.1f}{marker}")
 
             results[rt_name][label] = {
                 "hit": ev_hit, "val": ev_val,
             }
+
+        # ---- training_valogds: VAL model with odds features ----
+        print(f"\n  [training_valogds] VAL + オッズ特徴量 ({N_TRIALS} trials)...")
+        best_vo = _tune_val(X_tv_ah, to_tv, g_tv, X_vv_ah, to_vv, g_vv)
+        n_est_vo = best_vo.pop("n_estimators", 300)
+        y_vv_bin_o = (to_vv > 0).astype(float)
+        dtr_vo = lgb.Dataset(X_tv_ah.values, label=to_tv, group=g_tv, feature_name=use_feats_all_hit)
+        dva_vo = lgb.Dataset(X_vv_ah.values, label=y_vv_bin_o, group=g_vv, reference=dtr_vo)
+        model_vo = _fit_val(best_vo, dtr_vo, dva_vo, n_est_vo)
+        ev_vo = eval_val_roi(model_vo, X_ev_rt[use_feats_all_hit].fillna(-1), y_ev_rt, to_ev_rt, g_ev_rt)
+        print(f"  [training_valogds] VAL → WinRate={ev_vo['win_rate']:.3f}  ROI={ev_vo['roi']:.2f}  ({ev_vo['n_races']}R)")
+        model_vo.save_model(os.path.join(MODEL_DIR, f"{rt_name}_shinba_training_valogds_val.txt"))
+        results[rt_name]["training_valogds"] = {
+            "hit": results[rt_name]["training"]["hit"],
+            "val": ev_vo,
+        }
 
     # ---- 4. サマリ ----
     print("\n" + "=" * 65)

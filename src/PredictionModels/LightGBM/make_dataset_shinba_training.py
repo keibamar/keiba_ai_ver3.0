@@ -1,6 +1,7 @@
 """新馬戦 + 調教データ特徴量の生成
 
-make_dataset_shinba.py の SHINBA_FEATURES に追加する調教特徴量 (8列):
+make_dataset_shinba.py の SHINBA_FEATURES に追加する調教特徴量 (11列):
+    --- 絶対値系 (8列) ---
     train_has_data       : 調教データあり=1 / なし=0
     train_last_lap       : 最終追い切りの最終200mタイム
     train_last_400m      : 最終追い切りの400mタイム (区間数<2 の場合はNaN)
@@ -9,9 +10,15 @@ make_dataset_shinba.py の SHINBA_FEATURES に追加する調教特徴量 (8列)
     train_leg_code       : 最終追い切りの強度 馬也=0/強め=1/一杯=2
     train_sessions_count : そのレースに向けた追い切り本数
     train_best_grade     : 全セッション中の最高グレード (A=3/B=2/C=1/不明=0)
+
+    --- コース相対値系 (3列) ---
+    train_last_lap_z     : 最終200mタイムのコース別zスコア (速いほど負=有利)
+    train_last_400m_z    : 400mタイムのコース別zスコア
+    train_course_cat     : コース種別 0=坂路 / 1=W系 / 2=その他
 """
 
 import ast
+import json
 import os
 import sys
 
@@ -35,6 +42,10 @@ TRAINING_FEATURES = [
     "train_leg_code",
     "train_sessions_count",
     "train_best_grade",
+    # コース相対値系
+    "train_last_lap_z",
+    "train_last_400m_z",
+    "train_course_cat",
 ]
 
 _GRADE_MAP = {"A": 3.0, "B": 2.0, "C": 1.0}
@@ -43,6 +54,42 @@ _LEG_MAP   = {
     "強め": 1.0, "仕掛": 1.0, "末強め": 1.0,
     "一杯": 2.0, "追い切り": 2.0,
 }
+
+# コース種別マッピング
+_COURSE_CAT_MAP = {}  # 動的に構築 (下の _course_cat 関数)
+
+
+def _course_cat(course_str: str) -> float:
+    """コース文字列 → 0=坂路 / 1=W系 / 2=その他"""
+    s = str(course_str).strip()
+    if "坂" in s:
+        return 0.0
+    if "Ｗ" in s or "W" in s or "ＣＷ" in s or "CW" in s or "北Ｃ" in s or "北C" in s:
+        return 1.0
+    return 2.0
+
+
+# コース別タイム統計 (遅延ロード)
+_COURSE_STATS: dict | None = None
+_STATS_PATH = os.path.join(paths.TRAINING_DATA_PATH, "course_stats.json")
+
+
+def _get_course_stats() -> dict:
+    global _COURSE_STATS
+    if _COURSE_STATS is None:
+        if os.path.exists(_STATS_PATH):
+            with open(_STATS_PATH, encoding="utf-8") as f:
+                _COURSE_STATS = json.load(f)
+        else:
+            _COURSE_STATS = {}
+    return _COURSE_STATS
+
+
+def _zscore(value: float, mean: float | None, std: float | None) -> float:
+    """z スコアを計算。std が 0 または None の場合は NaN。"""
+    if mean is None or std is None or std <= 0 or np.isnan(value):
+        return np.nan
+    return (value - mean) / std
 
 
 def _parse_times(times_str) -> list[float]:
@@ -90,14 +137,12 @@ def extract_training_features(horse_id: str, race_id: str) -> dict:
     if df.empty or "race_id" not in df.columns:
         return default
 
-    # 当該レースに向けたセッションを抽出
     df["race_id"] = df["race_id"].astype(str).str.strip()
     sessions = df[df["race_id"] == str(race_id)].copy()
 
     if sessions.empty:
         return default
 
-    # training_date でソートして最終追い切りを取得
     sessions["training_date"] = pd.to_datetime(sessions["training_date"], errors="coerce")
     sessions = sessions.dropna(subset=["training_date"]).sort_values("training_date")
 
@@ -105,6 +150,7 @@ def extract_training_features(horse_id: str, race_id: str) -> dict:
         return default
 
     last = sessions.iloc[-1]
+    course_str = str(last.get("course", "")).strip()
 
     times = _parse_times(last.get("times_list", ""))
     last_lap  = float(times[-1]) if len(times) >= 1 else np.nan
@@ -122,6 +168,13 @@ def extract_training_features(horse_id: str, race_id: str) -> dict:
         if gc > best_grade:
             best_grade = gc
 
+    # コース相対値系
+    stats = _get_course_stats()
+    st = stats.get(course_str, {})
+    ll_z  = _zscore(last_lap,  st.get("ll_mean"), st.get("ll_std"))
+    l4_z  = _zscore(last_400m, st.get("l4_mean"), st.get("l4_std"))
+    course_cat = _course_cat(course_str)
+
     return {
         "train_has_data":       1.0,
         "train_last_lap":       last_lap,
@@ -131,6 +184,10 @@ def extract_training_features(horse_id: str, race_id: str) -> dict:
         "train_leg_code":       leg_code,
         "train_sessions_count": sessions_count,
         "train_best_grade":     best_grade,
+        # コース相対値系
+        "train_last_lap_z":     ll_z,
+        "train_last_400m_z":    l4_z,
+        "train_course_cat":     course_cat,
     }
 
 
@@ -138,7 +195,6 @@ def add_training_features(shinba_df: pd.DataFrame) -> pd.DataFrame:
     """shinba DataFrame に TRAINING_FEATURES 列を追加して返す。
 
     shinba_df には 'horse_id' と 'race_id' 列が必要。
-    行数が多い場合は tqdm で進捗表示する。
     """
     try:
         from tqdm import tqdm
