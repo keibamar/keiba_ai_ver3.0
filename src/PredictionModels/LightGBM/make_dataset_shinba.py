@@ -497,6 +497,41 @@ def make_training_dataset():
     return feat, groups, labels, tan_odds
 
 
+def make_training_dataset_with_ids():
+    """make_training_dataset() と同じデータを返すが race_ids / horse_ids / date_dt も含む。
+
+    Returns:
+        tuple: (feat_df, groups, labels, tan_odds, race_ids, date_dt, horse_ids)
+    """
+    feat, groups, labels, tan_odds = make_training_dataset()
+
+    # shinba を再ロードして date/race_id/horse_id を取得（順序は make_training_dataset と同一）
+    shinba = _load_all_shinba_results()
+
+    def _rank_to_label(v):
+        import re
+        s = re.sub(r"\D", "", str(v))
+        if not s:
+            return np.nan
+        r = int(s)
+        if r == 1:
+            return 3.0
+        if r == 2:
+            return 2.0
+        if r == 3:
+            return 1.0
+        return 0.0
+
+    shinba["date_dt"] = shinba["date"].apply(_parse_date_jp)
+    shinba["label"]   = shinba["着順"].apply(_rank_to_label)
+    shinba = shinba.dropna(subset=["label", "date_dt"]).sort_values("date_dt").reset_index(drop=True)
+
+    race_ids  = shinba["race_id"].values
+    horse_ids = shinba["horse_id"].values
+    date_dt   = shinba["date_dt"].values
+    return feat, groups, labels, tan_odds, race_ids, date_dt, horse_ids
+
+
 def build_stats_tables():
     """
     予測時に使う統計テーブルを全データから構築して返す。
