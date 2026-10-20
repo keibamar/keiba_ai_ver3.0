@@ -78,8 +78,20 @@ def main():
     print("=== 2026年出走馬 調教データ再取得 ===")
 
     print("horse_id 収集中...")
-    targets = collect_2026_horse_ids()
-    print(f"対象: {len(targets)} 頭")
+    all_targets = collect_2026_horse_ids()
+
+    # 今回の取得セッション（2026-10-19 22:00以降）で更新済みのファイルはスキップ
+    session_start = pd.Timestamp("2026-10-19 22:00:00")
+    already_done = set()
+    for hid in all_targets:
+        path = os.path.join(TRAINING_DATA_PATH, f"{hid}.csv")
+        if os.path.isfile(path):
+            mtime = pd.Timestamp(os.path.getmtime(path), unit="s", tz="Asia/Tokyo").tz_localize(None)
+            if mtime >= session_start:
+                already_done.add(hid)
+
+    targets = [hid for hid in all_targets if hid not in already_done]
+    print(f"全対象: {len(all_targets)} 頭  取得済みスキップ: {len(already_done)} 頭  残り: {len(targets)} 頭")
 
     eta_min = len(targets) * args.sleep / 60
     print(f"推定時間: 約 {eta_min:.0f} 分 ({eta_min/60:.1f} 時間) @ {args.sleep}秒/頭")
@@ -129,13 +141,13 @@ def main():
 
         try:
             df = scrape_horse_training(horse_id, session)
+            out_path = os.path.join(TRAINING_DATA_PATH, f"{horse_id}.csv")
             if not df.empty:
-                out_path = os.path.join(TRAINING_DATA_PATH, f"{horse_id}.csv")
                 df.to_csv(out_path, index=False, encoding="utf-8-sig")
-                ok += 1
             else:
-                # データなし = 空ファイルで保存 (スキップ防止にはしない)
-                ok += 1
+                # データなし = 空ファイルを保存してスキップ対象にする
+                open(out_path, "w").close()
+            ok += 1
             consecutive_errors = 0
         except Exception as e:
             ng += 1
