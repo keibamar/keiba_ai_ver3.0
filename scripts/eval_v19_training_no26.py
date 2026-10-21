@@ -141,8 +141,12 @@ def add_training_cols(df: pd.DataFrame, lookup: dict) -> pd.DataFrame:
     records = []
     for _, row in df.iterrows():
         rid = str(int(row["race_id"]))
-        uma = int(row["umaban"])
-        hid = lookup.get((rid, uma))
+        # horse_id 列があれば直接使う。なければ race_results lookup にフォールバック
+        if "horse_id" in df.columns and pd.notna(row.get("horse_id")):
+            hid = str(row["horse_id"]).strip()
+        else:
+            uma = int(row["umaban"])
+            hid = lookup.get((rid, uma))
         records.append(_training_feats(hid, rid) if hid else
                        dict({c: np.nan for c in TRAINING_FEATURES}, train_has_data=0.0))
     feat_df = pd.DataFrame(records, index=df.index)
@@ -201,7 +205,7 @@ def _evaluate_model(model, df_ev):
 
 
 def _load_v11_with_flag(place_id, year, race_type, band_length):
-    """v11 データと flag を読み込む。"""
+    """v11 データと flag を読み込む。horse_id は _horseid_v11.csv から付加。"""
     place_dir = name_header.PLACE_LIST[place_id - 1]
     dset_dir  = os.path.join(DATASET_DIR, place_dir)
     base = os.path.join(dset_dir,
@@ -218,6 +222,12 @@ def _load_v11_with_flag(place_id, year, race_type, band_length):
                     df   = df.reset_index(drop=True)
                     flag = flag.reset_index(drop=True)
                     df["_result_flag"] = flag["result_flag"]
+                    # horse_id を _horseid_v11.csv から付加
+                    hid_path = base + f"_horseid_{ver}.csv"
+                    if os.path.isfile(hid_path):
+                        hid_df = pd.read_csv(hid_path, dtype=str)
+                        if len(hid_df) == len(df):
+                            df["horse_id"] = hid_df["horse_id"].values
                     return df
             except Exception:
                 pass

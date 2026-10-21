@@ -237,7 +237,7 @@ def get_extra_past_race_features_v11(
 # データセット保存・読み込み
 # ============================================================
 
-def save_dataset_v11(place_id, year, race_type, length, df, flag_list):
+def save_dataset_v11(place_id, year, race_type, length, df, flag_list, horse_id_list=None):
     out_dir = os.path.join(
         paths_v3.PREDICTION_DATASET_PATH, name_header.PLACE_LIST[place_id - 1]
     )
@@ -245,6 +245,8 @@ def save_dataset_v11(place_id, year, race_type, length, df, flag_list):
     base = os.path.join(out_dir, f"{year}_{race_type}{length}_ai_dataset")
     df.reset_index(drop=True).to_csv(base + "_for_rank_v11.csv")
     pd.DataFrame(flag_list, columns=["result_flag"]).to_csv(base + "_flag_v11.csv")
+    if horse_id_list is not None:
+        pd.DataFrame(horse_id_list, columns=["horse_id"]).to_csv(base + "_horseid_v11.csv", index=False)
 
 
 def load_dataset_v11(place_id, year, race_type, length):
@@ -306,6 +308,7 @@ def make_dataset_for_train_v11(place_id, year=date.today().year, vocab=None, cou
         print(f"  {race_type}{length}m ({len(df_course)}走)")
         race_id_list = []
         flag_list = []
+        horse_id_list = []
         jockey_wins, jockey_places = [], []
         trainer_wins, trainer_places = [], []
         odds_list, popularity_list = [], []
@@ -344,6 +347,7 @@ def make_dataset_for_train_v11(place_id, year=date.today().year, vocab=None, cou
                 df_result.iloc[0]["class"],
             ]
             horse_id         = df_result.iloc[0]["horse_id"]
+            horse_id_list.append(str(horse_id).strip())
             current_date_str = df_result.iloc[0].get("date", "")
             current_gs       = str(df_result.iloc[0]["ground_state"]).strip()
 
@@ -470,5 +474,5 @@ def make_dataset_for_train_v11(place_id, year=date.today().year, vocab=None, cou
         ], axis=1)
         df_dataset.columns = index_v11
 
-        save_dataset_v11(place_id, year, race_type, length, df_dataset, flag_list)
+        save_dataset_v11(place_id, year, race_type, length, df_dataset, flag_list, horse_id_list)
         print(f"    保存完了: {len(df_dataset)}行")
