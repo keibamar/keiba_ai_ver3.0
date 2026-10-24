@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 > nul
 REM ============================================================
-REM generate_daily_preview: Fri/Sat/Sun 21:00 (task scheduler)
+REM generate_daily_preview: Fri/Sat 20:00 (task scheduler)
 REM
 REM Steps:
 REM   1. Refresh next-day odds/popularity  -> update race card HTML

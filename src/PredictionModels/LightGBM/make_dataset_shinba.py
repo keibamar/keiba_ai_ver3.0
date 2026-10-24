@@ -2,7 +2,7 @@
 
 走歴なしの新馬戦に特化した特徴量セット。
 
-Features (SHINBA_FEATURES 列定義・29列, v5):
+Features (SHINBA_FEATURES 列定義・28列, v6):
   父統計 (5列):
     sire_course_win    父の新馬戦(同race_type×距離帯)勝率
     sire_course_place  父の新馬戦(同race_type×距離帯)複勝率
@@ -28,7 +28,7 @@ Features (SHINBA_FEATURES 列定義・29列, v5):
   調教師統計 (2列):
     trainer_shinba_win   調教師の新馬戦勝率
     trainer_shinba_place 調教師の新馬戦複勝率
-  レース・馬属性 (9列):
+  レース・馬属性 (8列):
     place_id      開催場ID (1-10)
     race_type_code 0=芝 / 1=ダート
     course_len    コース距離 (m)
@@ -36,14 +36,14 @@ Features (SHINBA_FEATURES 列定義・29列, v5):
     umaban        馬番
     kinryo        斤量
     sex_code      0=牡/セン / 1=牝
-    horse_weight  馬体重 (kg)
     birth_month   誕生月 (1〜12、不明時はNaN)
   クロス (1列):
     cross_score   インブリード4×4以内の近交係数スコア
+  ※ horse_weight は前日予想時に未発表のためv6で削除
 
-比較学習用 SHINBA_ALL_FEATURES (34列):
-  SHINBA_FEATURES (29列) + nick_win/nick_place/nick_runs/matdam_sire_win/matdam_sire_place (5列)
-  → make_training_dataset() はこの34列を返す
+比較学習用 SHINBA_ALL_FEATURES (33列):
+  SHINBA_FEATURES (28列) + nick_win/nick_place/nick_runs/matdam_sire_win/matdam_sire_place (5列)
+  → make_training_dataset() はこの33列を返す
   → train_shinba_model.py は SHINBA_FEATURES のみ使用
 """
 
@@ -94,17 +94,16 @@ _V3_BASE_FEATURES = [
     "umaban",
     "kinryo",
     "sex_code",
-    "horse_weight",
     "birth_month",
 ]
 
 # 各バリアント特徴量（比較学習用）
-V3_FEATURES  = _V3_BASE_FEATURES                                          # 28列
-V4_FEATURES  = _V3_BASE_FEATURES + ["nick_win", "nick_place", "nick_runs"]  # 31列
-V5_FEATURES  = _V3_BASE_FEATURES + ["cross_score"]                          # 29列
-V6_FEATURES  = _V3_BASE_FEATURES + ["matdam_sire_win", "matdam_sire_place"] # 30列
+V3_FEATURES  = _V3_BASE_FEATURES                                          # 27列
+V4_FEATURES  = _V3_BASE_FEATURES + ["nick_win", "nick_place", "nick_runs"]  # 30列
+V5_FEATURES  = _V3_BASE_FEATURES + ["cross_score"]                          # 28列
+V6_FEATURES  = _V3_BASE_FEATURES + ["matdam_sire_win", "matdam_sire_place"] # 29列
 
-# 本番用特徴量 (v5)
+# 本番用特徴量 (v6: horse_weight削除済み)
 SHINBA_FEATURES = V5_FEATURES
 
 # 全バリアント列（make_training_dataset が返す全列）
