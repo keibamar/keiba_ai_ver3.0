@@ -54,12 +54,21 @@ BLEND_WEIGHTS = {
 
 def blend_scores(df: pd.DataFrame) -> np.ndarray:
     """idx_mar（オッズなし MAR推奨スコア）を優先して返す。
-    idx_mar が未計算の場合は v3_score、さらになければ BLEND_WEIGHTS による加重平均にフォールバックする。"""
+    idx_mar が未計算の場合は v3_score、さらになければ BLEND_WEIGHTS による加重平均にフォールバックする。
+    idx_mar は 0-100 スケールなので softmax に直接渡すと確率が1頭に集中する。
+    z-score 正規化してから返すことで確率分布を適切に広げる。"""
     # idx_mar（オッズ非使用モデルベース）を最優先
     if "idx_mar" in df.columns:
         vals = pd.to_numeric(df["idx_mar"], errors="coerce").values
         if not np.isnan(vals).all():
-            return np.where(np.isnan(vals), 0.0, vals)
+            valid = ~np.isnan(vals)
+            v = vals[valid]
+            std = v.std()
+            if std > 1e-6:
+                z = (vals - v.mean()) / std
+            else:
+                z = vals - v.mean()
+            return np.where(valid, z, 0.0)
     # v3_score フォールバック（オッズ50%ブレンド）
     if "v3_score" in df.columns:
         vals = pd.to_numeric(df["v3_score"], errors="coerce").values
