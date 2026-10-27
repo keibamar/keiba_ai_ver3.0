@@ -22,7 +22,7 @@ cd C:\keiba_ai\keiba_ai_ver3.0
 
 %WINSCP_PATH% /command ^
   "open %SITE_NAME%" ^
-  "synchronize remote public_html %REMOTE_PATH%" ^
+  "synchronize remote C:\keiba_ai\keiba_ai_ver3.0\public_html %REMOTE_PATH%" ^
   "exit"
 
 echo.

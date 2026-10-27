@@ -114,6 +114,8 @@ def _get_race_mar_top(card_df: pd.DataFrame) -> dict | None:
                                card_df["rank_mar"].astype(float).idxmin()]
         except Exception:
             return None
+    if top.empty:
+        return None
     row = top.iloc[0]
     return {
         "name": row.get("馬名", ""),
