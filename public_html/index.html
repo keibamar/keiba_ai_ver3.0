@@ -29,6 +29,76 @@
   </script>
   <title>MAR(まーる)|競馬AIデータサイト</title>
   <link rel="stylesheet" href="assets/css/styles.css">
+  <style>
+    .home-sections {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin: 0 0 32px;
+    }
+    @media (max-width: 820px) {
+      .home-sections { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .home-sections { grid-template-columns: repeat(2, 1fr); }
+    }
+    .home-section-card {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      padding: 16px 14px;
+      border: 1px solid #e2d9f3;
+      border-radius: 10px;
+      text-decoration: none;
+      color: inherit;
+      background: #faf8ff;
+      transition: box-shadow .15s, transform .15s, background .15s;
+    }
+    .home-section-card:hover {
+      background: #f0eaff;
+      box-shadow: 0 4px 14px rgba(106,27,154,.13);
+      transform: translateY(-2px);
+    }
+    .home-section-icon { font-size: 1.6em; line-height: 1; }
+    .home-section-title {
+      font-weight: 700;
+      font-size: 0.88em;
+      color: #3d1a6e;
+      line-height: 1.3;
+    }
+    .home-section-desc {
+      font-size: 0.74em;
+      color: #666;
+      line-height: 1.45;
+    }
+
+    /* 右サイドバー内「今週の開催場」 */
+    .page-calendar-tab-venues {
+      padding: 8px 0;
+      margin: 4px 0;
+      border-top: 1px dashed #ccc;
+    }
+    .page-calendar-tab-venues-label {
+      font-size: 0.78em;
+      font-weight: 700;
+      color: #999;
+      padding: 0 2px 5px;
+    }
+    .page-calendar-tab-venue-item {
+      display: block;
+      padding: 4px 4px;
+      font-size: 0.88em;
+      color: var(--mar-primary);
+      text-decoration: none;
+      border-radius: 4px;
+    }
+    .page-calendar-tab-venue-item:hover { background: var(--mar-bg-accent-strong); }
+    .page-calendar-tab-venue-sub {
+      font-size: 0.82em;
+      color: #aaa;
+      margin-left: 4px;
+    }
+  </style>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 </head>
 <body>
@@ -44,6 +114,27 @@
 <script src="assets/js/page-search-index.js"></script>
 <script src="assets/js/page-search.js"></script>
 <div class="page-calendar-tab-backdrop"></div>
+<aside class="page-left-sidebar" aria-label="サイトナビゲーション">
+  <div class="plsb-brand">
+    <a href="./" class="plsb-brand-link">
+      <img src="assets/favicon.svg" class="plsb-brand-icon" alt="MAR">
+      <span class="plsb-brand-text">MAR<span class="plsb-brand-kana">(まーる)</span></span>
+    </a>
+    <p class="plsb-brand-tagline">競馬AIデータサイト</p>
+  </div>
+  <div class="plsb-section-label">MENU</div>
+  <ul class="page-calendar-tab-location plsb-nav">
+    <li><span class="nav-icon">📅</span> <a href="races/index.html">レースカレンダー</a></li>
+<li><span class="nav-icon">🏟️</span> <a href="courses/index.html">コース詳細データ</a></li>
+<li><span class="nav-icon">📊</span> <a href="performance/index.html">AI成績</a></li>
+<li><span class="nav-icon">📈</span> <a href="trend/index.html">傾向分析</a></li>
+<li><span class="nav-icon">🏇</span> <a href="diary/index.html">MARの競馬コラム</a></li>
+
+  </ul>
+  <div class="plsb-links">
+    <a href="about.html" class="plsb-link">このサイトについて</a>
+  </div>
+</aside>
 <aside class="page-calendar-tab">
   <button type="button" class="page-calendar-tab-close" aria-label="閉じる">&times;</button>
   <div class="page-calendar-tab-calendar">
@@ -61,6 +152,12 @@
 <script src="assets/js/raceDays.js?v=1792667668"></script>
 <script src="assets/js/calendar.js?v=1782765283"></script>
 
+  </div>
+  <div class="page-calendar-tab-venues">
+    <div class="page-calendar-tab-venues-label">今週の開催場</div>
+    <a href="courses/04_nigata/index.html" class="page-calendar-tab-venue-item">新潟<span class="page-calendar-tab-venue-sub">第4回</span></a>
+    <a href="courses/05_tokyo/index.html" class="page-calendar-tab-venue-item">東京<span class="page-calendar-tab-venue-sub">第4回</span></a>
+    <a href="courses/08_kyoto/index.html" class="page-calendar-tab-venue-item">京都<span class="page-calendar-tab-venue-sub">第4回</span></a>
   </div>
   <ul class="page-calendar-tab-location">
     <li><span class="page-calendar-tab-current">HOME</span>
@@ -99,6 +196,34 @@
       </div>
       <p class="home-concept-desc">JRAの過去レースデータで学習したAIが出馬表を分析。予想成績・コース傾向データを無料公開しています。<a href="about.html">AIの仕組みを見る &rarr;</a></p>
     </div>
+
+    <nav class="home-sections" aria-label="コンテンツ一覧">
+      <a href="races/index.html" class="home-section-card">
+        <span class="home-section-icon">📅</span>
+        <span class="home-section-title">レースカレンダー</span>
+        <span class="home-section-desc">出馬表・AI指数を開催日別に確認</span>
+      </a>
+      <a href="courses/index.html" class="home-section-card">
+        <span class="home-section-icon">🏟️</span>
+        <span class="home-section-title">コース詳細データ</span>
+        <span class="home-section-desc">競馬場・コース別の傾向データ</span>
+      </a>
+      <a href="performance/index.html" class="home-section-card">
+        <span class="home-section-icon">📊</span>
+        <span class="home-section-title">AI成績</span>
+        <span class="home-section-desc">単勝・複勝の的中率・回収率を公開</span>
+      </a>
+      <a href="trend/index.html" class="home-section-card">
+        <span class="home-section-icon">📈</span>
+        <span class="home-section-title">傾向分析</span>
+        <span class="home-section-desc">騎手・血統・枠順のデータトレンド</span>
+      </a>
+      <a href="diary/index.html" class="home-section-card">
+        <span class="home-section-icon">🏇</span>
+        <span class="home-section-title">競馬コラム</span>
+        <span class="home-section-desc">週末振り返りと注目レース展望</span>
+      </a>
+    </nav>
 
     <h2>今週の開催</h2>
     <ul class="weekly-meeting-list">

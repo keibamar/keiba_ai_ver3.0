@@ -159,32 +159,26 @@ NAV_COLOR_CLASSES = {
 }
 
 
-def site_nav_html(base_path="", current_path=None, breadcrumb_items=None, show_calendar=True):
+def site_nav_html(base_path="", current_path=None, breadcrumb_items=None, show_calendar=True,
+                  left_sidebar_extra=""):
     """サイト共通ナビゲーションのHTML断片を返す
 
     競馬場・コースのページ検索ボックス（search_box_html）、それを動かすための
-    スクリプトタグ、右側の小さなカレンダータブ（page_calendar_tab_html）も併せて
-    返す。主要セクションへのリンクは右側タブに一本化しているため、画面上部のnav
-    本体には検索ボックスのみを置く。site_nav_htmlはサイト内の全ページで必ず1回
-    呼ばれるため、ここにまとめることでページ生成側の個別対応なしに全ページへ
-    行き渡らせる（ヘッダー・フッター・右側タブの統一はsite_footer_htmlと合わせて
-    この2つの共通部品だけで実現する）。
+    スクリプトタグ、左サイドバー（left_sidebar_html）、右側の小さなカレンダータブ
+    （page_calendar_tab_html）も併せて返す。
+    左サイドバー: ブランド表示・メインナビ・現在地階層（PC幅で常時表示）。
+    右サイドバー: カレンダー・SNS・広告（PC幅で常時表示、モバイルはドロワー）。
+    site_nav_htmlはサイト内の全ページで必ず1回呼ばれるため、ここにまとめることで
+    ページ生成側の個別対応なしに全ページへ行き渡らせる。
 
     Args:
-        base_path (str): 埋め込み先ページからpublic_html直下までの相対パス
-            （Home直下なら""、1階層下なら"../"、2階層下なら"../../"等）。
+        base_path (str): 埋め込み先ページからpublic_html直下までの相対パス。
         current_path (str | None): NAV_LINKSのpathのうち、現在表示中のページに
-            対応するもの（例: "courses/index.html"）。breadcrumb_items未指定時の
-            フォールバックとして使う（一致するものを右側タブの現在地表示で強調する）。
-        breadcrumb_items (list[tuple[str, str | None]] | None): breadcrumb_htmlと
-            同じ形式の階層パス（例: [("コース詳細データ", "courses/index.html"),
-            ("東京", "courses/05_tokyo/index.html"), ("芝1800m", None)]）。指定すると
-            右側タブの現在地表示がNAV_LINKSの大分類だけでなく、その下の階層
-            （競馬場・コース等）まで含めて表示し、各階層へ直接遷移できるようになる。
-        show_calendar (bool): Falseにすると右側タブの小カレンダーを省略し、
-            階層表示のみにする（レースカレンダーページ自身は大きな月表示
-            カレンダーを別途持つため、右側タブで同じカレンダーを二重に
-            表示しないようにする用途）。
+            対応するもの（例: "courses/index.html"）。
+        breadcrumb_items (list[tuple[str, str | None]] | None): 階層パス。
+        show_calendar (bool): Falseにすると右側タブの小カレンダーを省略する。
+        left_sidebar_extra (str): 左サイドバーに追加するページ固有のHTML
+            （例: home_generatorが渡す今週の重賞セクション）。
     """
     return f"""<nav class="site-nav">
   {site_brand_html(base_path)}
@@ -194,6 +188,7 @@ def site_nav_html(base_path="", current_path=None, breadcrumb_items=None, show_c
 <script src="{base_path}assets/js/page-search-index.js"></script>
 <script src="{base_path}assets/js/page-search.js"></script>
 <div class="page-calendar-tab-backdrop"></div>
+{left_sidebar_html(base_path, current_path, breadcrumb_items, extra_html=left_sidebar_extra)}
 {page_calendar_tab_html(base_path, current_path, breadcrumb_items, show_calendar=show_calendar)}
 <script src="{base_path}assets/js/calendar-tab-height.js"></script>
 <script src="{base_path}assets/js/sidebar-toggle.js"></script>"""
@@ -488,23 +483,11 @@ def _get_diary_nav_links(base_path: str, recent_only: bool = False) -> list:
     return groups
 
 
-def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
-    """HOMEを根に、NAV_LINKSの3項目を1段下にネストした、常時表示用の階層ツリーを返す
+def _nav_sections_html(base_path="", current_path=None, breadcrumb_items=None):
+    """NAV_LINKS[1:]の5セクション分のナビ<li>要素を返す共通ヘルパー。
 
-    HOME・レースカレンダー・コース詳細データ・AI成績はどのページからも常にリンク
-    として表示する。breadcrumb_itemsが指定され、その先頭ラベルがNAV_LINKSの
-    いずれかと一致する場合は、その項目の下にさらにページ固有の階層を入れ子で続ける。
-    各大分類にはアイコン（NAV_ICONS）を常に付け、現在その大分類の中にいる場合は
-    専用の差し色（NAV_COLOR_CLASSES、CSS側で定義）でその枝全体（入れ子の下の階層も
-    含む）を強調し、今どのページ系列にいるかを色とアイコンの両方で分かるようにする。
+    _location_tree_html（右サイドバー）と left_sidebar_html（左サイドバー）の両方から呼ばれる。
     """
-    home_is_current = breadcrumb_items == [] or (breadcrumb_items is None and current_path == "index.html")
-    home_crumb = (
-        '<span class="page-calendar-tab-current">HOME</span>'
-        if home_is_current
-        else f'<a href="{_home_href(base_path)}">HOME</a>'
-    )
-
     active_label = breadcrumb_items[0][0] if breadcrumb_items else None
     sub_rows = ""
     for label, path in NAV_LINKS[1:]:
@@ -518,7 +501,6 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
             is_active = True
         elif label == "傾向分析":
             is_current = breadcrumb_items is None and current_path == path
-            # 個別ページ（trend/YYYYMMDD.html 等）にいる場合も展開する
             is_in_trend_detail = (
                 breadcrumb_items is None
                 and current_path is not None
@@ -529,7 +511,6 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
             crumb = _crumb_item_html(label, None if is_current else path, base_path)
 
             if is_active:
-                # 現在ページの月キーを特定（個別ページ時のみ使用）
                 cur_month = ""
                 if is_in_trend_detail and current_path:
                     cur_fname = current_path[len("trend/"):]
@@ -547,7 +528,6 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
                         is_cur_month = is_in_trend_detail and grp["header"] == cur_month
                         entries_html = ""
                         for tl, tp in grp["entries"]:
-                            # 現在ページのエントリはリンクなし（現在地表示）
                             is_cur_entry = (
                                 is_in_trend_detail
                                 and current_path is not None
@@ -561,10 +541,8 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
                             f'<ul class="page-calendar-tab-sublevel">\n{entries_html}</ul>'
                         )
                         if is_in_trend_detail:
-                            # 個別ページ: 現在月はデフォルト展開、他は閉じる
                             open_attr = " open" if is_cur_month else ""
                         else:
-                            # index ページ: 全月デフォルト折りたたみ
                             open_attr = ""
                         inner += (
                             f"<li><details{open_attr}>"
@@ -594,7 +572,6 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
             crumb = _crumb_item_html(label, None if is_current else path, base_path)
 
             if is_in_diary:
-                # 日記ページ内: 傾向分析と同様に月別インデックスを展開
                 cur_month = ""
                 if is_in_diary_detail and current_path:
                     date_key = current_path[len("diary/"):].replace(".html", "")
@@ -631,7 +608,6 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
                     )
                 nested_html = inner
             else:
-                # 他ページ: ナビはリンクのみ（右サイドバーで最新記事を表示するため展開しない）
                 nested_html = ""
         else:
             is_current = breadcrumb_items is None and current_path == path
@@ -646,7 +622,53 @@ def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
         else:
             sub_rows += f"<li{li_class}>{icon_html}{crumb}</li>\n"
 
+    return sub_rows
+
+
+def _location_tree_html(base_path="", current_path=None, breadcrumb_items=None):
+    """HOMEを根に、NAV_LINKSの5項目を1段下にネストした、常時表示用の階層ツリーを返す
+
+    右サイドバー（page_calendar_tab_html）用。各セクションの<li>は _nav_sections_html
+    で生成し、HOME ラッパーを付けて返す。左サイドバーには left_sidebar_html を使う。
+    """
+    home_is_current = breadcrumb_items == [] or (breadcrumb_items is None and current_path == "index.html")
+    home_crumb = (
+        '<span class="page-calendar-tab-current">HOME</span>'
+        if home_is_current
+        else f'<a href="{_home_href(base_path)}">HOME</a>'
+    )
+    sub_rows = _nav_sections_html(base_path, current_path, breadcrumb_items)
     return f'<li>{home_crumb}\n<ul class="page-calendar-tab-sublevel">\n{sub_rows}</ul></li>\n'
+
+
+def left_sidebar_html(base_path="", current_path=None, breadcrumb_items=None, extra_html=""):
+    """ページ左側に常時表示する左サイドバーのHTML断片を返す（PC幅960px以上のみ表示）。
+
+    Args:
+        base_path (str): 埋め込み先ページからpublic_html直下までの相対パス。
+        current_path (str | None): NAV_LINKSのpathのうち、現在地として強調するもの。
+        breadcrumb_items (list | None): 階層パス（page_calendar_tab_htmlと同じ形式）。
+        extra_html (str): ページ固有の追加コンテンツHTML
+            （例: home_generatorが渡す今週の重賞セクション）。
+    """
+    nav_sections = _nav_sections_html(base_path, current_path, breadcrumb_items)
+    extra = f"\n  {extra_html}" if extra_html else ""
+    return f"""<aside class="page-left-sidebar" aria-label="サイトナビゲーション">
+  <div class="plsb-brand">
+    <a href="{_home_href(base_path)}" class="plsb-brand-link">
+      <img src="{base_path}assets/favicon.svg" class="plsb-brand-icon" alt="MAR">
+      <span class="plsb-brand-text">{SITE_NAME}<span class="plsb-brand-kana">({SITE_NAME_READING})</span></span>
+    </a>
+    <p class="plsb-brand-tagline">{SITE_TAGLINE}</p>
+  </div>
+  <div class="plsb-section-label">MENU</div>
+  <ul class="page-calendar-tab-location plsb-nav">
+    {nav_sections}
+  </ul>{extra}
+  <div class="plsb-links">
+    <a href="{base_path}about.html" class="plsb-link">このサイトについて</a>
+  </div>
+</aside>"""
 
 
 def _hierarchy_crumbs(items, base_path="", current_class="breadcrumb-current"):

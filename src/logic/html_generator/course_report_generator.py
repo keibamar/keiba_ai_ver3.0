@@ -1810,7 +1810,6 @@ def course_report_to_html(report, ai_df=None):
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/{race_type}-{course_len}.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../../">&larr; HOMEへ戻る</a></p>
   </main>
-  {diary_sidebar_html("../../")}
   </div>
   {site_footer_html(base_path="../../")}
   <script src="../../assets/js/sortable-table.js"></script>
@@ -1889,7 +1888,6 @@ def make_course_index_page():
 
   <p><a href="../">&larr; HOMEへ戻る</a></p>
   </main>
-  {diary_sidebar_html("../")}
   </div>
   {site_footer_html(base_path="../")}
 </body>
@@ -2008,7 +2006,6 @@ def make_track_page(place_id):
   <p><a href="../../performance/course/{PLACE_LIST[place_id - 1]}/index.html">&larr; このコースのAI成績を見る</a></p>
   <p><a href="../index.html">&larr; コース詳細データ一覧へ</a></p>
   </main>
-  {diary_sidebar_html("../../")}
   </div>
   {site_footer_html(base_path="../../")}
   <script src="../../assets/js/sortable-table.js"></script>

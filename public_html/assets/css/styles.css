@@ -2449,6 +2449,122 @@ body.section-calendar .calendar-widget {
   }
 }
 
+/* ===== 左サイドバー（全ページ共通、PC幅960px以上のみ表示） ===== */
+.page-left-sidebar {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .page-left-sidebar {
+    display: block;
+    float: left;
+    width: 192px;
+    margin: 0 24px 16px 0;
+    padding: 16px;
+    background: var(--mar-bg-accent);
+    border: 1px solid var(--mar-bg-accent-strong);
+    border-top: 3px solid var(--mar-primary);
+    border-radius: 8px;
+    font-size: 0.9em;
+    min-height: 100vh;
+  }
+
+  /* PC幅では左サイドバーにナビを置くため、右サイドバーのナビ部分を非表示 */
+  .page-calendar-tab .page-calendar-tab-location {
+    display: none;
+  }
+}
+
+/* 800px〜960px: 右サイドバーはfloatのまま表示されるが
+   左サイドバーがまだ出ないため、ナビだけは右サイドバーに残すと
+   コース詳細データ等で一覧が長くなりすぎる。
+   右サイドバーへの常時埋め込みナビは 800px 以上で非表示にして
+   カレンダー・SNS・広告のみに絞る。 */
+@media (min-width: 800px) {
+  .page-calendar-tab .page-calendar-tab-location {
+    display: none;
+  }
+}
+
+/* 左サイドバー — ブランド表示 */
+.plsb-brand {
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--mar-bg-accent-strong);
+}
+
+.plsb-brand-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.plsb-brand-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+
+.plsb-brand-text {
+  font-size: 1.3em;
+  font-weight: 800;
+  color: var(--mar-primary);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.plsb-brand-kana {
+  font-size: 0.6em;
+  font-weight: 400;
+  color: #aaa;
+  margin-left: 2px;
+}
+
+.plsb-brand-tagline {
+  font-size: 0.72em;
+  color: #bbb;
+  margin: 4px 0 0 42px;
+}
+
+/* 左サイドバー — セクションラベル */
+.plsb-section-label {
+  font-size: 0.72em;
+  font-weight: 700;
+  color: #bbb;
+  letter-spacing: 0.07em;
+  padding: 0 4px;
+  margin: 0 0 4px;
+}
+
+/* 左サイドバー — ナビリスト（page-calendar-tab-location スタイルを継承） */
+.plsb-nav {
+  border-top: none !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  margin-bottom: 14px;
+}
+
+/* 左サイドバー — Aboutリンク */
+.plsb-links {
+  padding-top: 12px;
+  border-top: 1px solid var(--mar-bg-accent-strong);
+  margin-top: 4px;
+}
+
+.plsb-link {
+  display: block;
+  font-size: 0.78em;
+  color: #999;
+  text-decoration: none;
+  padding: 3px 4px;
+}
+
+.plsb-link:hover {
+  color: var(--mar-primary);
+}
+
 /* --- レースカレンダーページの「本日の開催」（出馬表・コース詳細データへのリンク） --- */
 
 .today-meeting-list {
