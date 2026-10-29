@@ -325,6 +325,49 @@ def home_template(target_date=None):
   {ga4_script_html()}
   <title>{SITE_TITLE}</title>
   <link rel="stylesheet" href="assets/css/styles.css">
+  <style>
+    .home-sections {{
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin: 0 0 32px;
+    }}
+    @media (max-width: 820px) {{
+      .home-sections {{ grid-template-columns: repeat(3, 1fr); }}
+    }}
+    @media (max-width: 480px) {{
+      .home-sections {{ grid-template-columns: repeat(2, 1fr); }}
+    }}
+    .home-section-card {{
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      padding: 16px 14px;
+      border: 1px solid #e2d9f3;
+      border-radius: 10px;
+      text-decoration: none;
+      color: inherit;
+      background: #faf8ff;
+      transition: box-shadow .15s, transform .15s, background .15s;
+    }}
+    .home-section-card:hover {{
+      background: #f0eaff;
+      box-shadow: 0 4px 14px rgba(106,27,154,.13);
+      transform: translateY(-2px);
+    }}
+    .home-section-icon {{ font-size: 1.6em; line-height: 1; }}
+    .home-section-title {{
+      font-weight: 700;
+      font-size: 0.88em;
+      color: #3d1a6e;
+      line-height: 1.3;
+    }}
+    .home-section-desc {{
+      font-size: 0.74em;
+      color: #666;
+      line-height: 1.45;
+    }}
+  </style>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 </head>
 <body>
@@ -339,6 +382,34 @@ def home_template(target_date=None):
       </div>
       <p class="home-concept-desc">JRAの過去レースデータで学習したAIが出馬表を分析。予想成績・コース傾向データを無料公開しています。<a href="about.html">AIの仕組みを見る &rarr;</a></p>
     </div>
+
+    <nav class="home-sections" aria-label="コンテンツ一覧">
+      <a href="races/index.html" class="home-section-card">
+        <span class="home-section-icon">📅</span>
+        <span class="home-section-title">レースカレンダー</span>
+        <span class="home-section-desc">出馬表・AI指数を開催日別に確認</span>
+      </a>
+      <a href="courses/index.html" class="home-section-card">
+        <span class="home-section-icon">🏟️</span>
+        <span class="home-section-title">コース詳細データ</span>
+        <span class="home-section-desc">競馬場・コース別の傾向データ</span>
+      </a>
+      <a href="performance/index.html" class="home-section-card">
+        <span class="home-section-icon">📊</span>
+        <span class="home-section-title">AI成績</span>
+        <span class="home-section-desc">単勝・複勝の的中率・回収率を公開</span>
+      </a>
+      <a href="trend/index.html" class="home-section-card">
+        <span class="home-section-icon">📈</span>
+        <span class="home-section-title">傾向分析</span>
+        <span class="home-section-desc">騎手・血統・枠順のデータトレンド</span>
+      </a>
+      <a href="diary/index.html" class="home-section-card">
+        <span class="home-section-icon">🏇</span>
+        <span class="home-section-title">競馬コラム</span>
+        <span class="home-section-desc">週末振り返りと注目レース展望</span>
+      </a>
+    </nav>
 
     <h2>今週の開催{"（土日月・3日間）" if has_monday_race else ""}</h2>
     {_weekly_meeting_summary_html(weekly_meetings)}
