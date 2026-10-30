@@ -2089,7 +2089,7 @@ window.raceMeetings = {
       "race_name": "ファンタジーS",
       "times": 4,
       "day_number": 10,
-      "race_card_url": null,
+      "race_card_url": "races/20261031/08_kyotoR11.html",
       "grade": "G3"
     },
     {
@@ -2097,7 +2097,7 @@ window.raceMeetings = {
       "race_name": "3歳以上1勝クラス",
       "times": 4,
       "day_number": 10,
-      "race_card_url": null,
+      "race_card_url": "races/20261031/05_tokyoR12.html",
       "grade": null
     }
   ],
