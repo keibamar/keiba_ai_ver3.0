@@ -2103,20 +2103,20 @@ window.raceMeetings = {
   ],
   "20261101": [
     {
+      "place_name": "京都",
+      "race_name": "まほろばS",
+      "times": 4,
+      "day_number": 11,
+      "race_card_url": "races/20261101/08_kyotoR11.html",
+      "grade": null
+    },
+    {
       "place_name": "東京",
       "race_name": "天皇賞(秋)",
       "times": 4,
       "day_number": 11,
       "race_card_url": "races/20261101/05_tokyoR11.html",
       "grade": "G1"
-    },
-    {
-      "place_name": "京都",
-      "race_name": "3歳以上2勝クラス",
-      "times": 4,
-      "day_number": 11,
-      "race_card_url": "races/20261101/08_kyotoR12.html",
-      "grade": null
     }
   ]
 };
