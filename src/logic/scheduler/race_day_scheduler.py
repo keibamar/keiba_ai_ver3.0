@@ -147,8 +147,14 @@ def _commit_and_upload_race_day():
 
 def _extract_race_time(info):
     """scrape_race_cardのinfoから発走時刻(HHMM形式の文字列)を取り出す"""
-    race_time_str = str(info[1]) + str(info[2][0]) + str(info[2][1])
-    return "".join(re.findall(r"\d+", race_time_str))
+    # レース名が括弧付き（天皇賞(秋)など）で複数トークンになる場合があるため、
+    # 位置固定ではなく「時:分」パターンを動的に探す
+    for i, token in enumerate(info[1:], 1):
+        if re.fullmatch(r'\d{1,2}', token) and i + 1 < len(info):
+            next_token = info[i + 1]
+            if re.match(r'\d{2}', next_token):
+                return token.zfill(2) + next_token[:2]
+    return ""
 
 
 def _extract_race_name(info):
