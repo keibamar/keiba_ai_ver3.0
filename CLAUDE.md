@@ -57,6 +57,8 @@ HTML ページを生成して ConoHa VPS にアップロードする。
 
 セットアップ: `bat\Deploy\setup_task_scheduler.ps1` を管理者 PowerShell で実行（ユーザー名は自動取得）
 
+**監視:** 全タスクは `scripts/run_task_with_notify.py` 経由で bat を実行する。開始時と完了時に Gmail（`.env` の `GMAIL_*`）で通知する。完了メールは ✅成功 / ⚠要確認（終了コードは 0 だがログにエラーらしき行がある）/ ❌失敗（終了コードが 0 以外）のいずれか。ログは `logs/tasks/<タスク名>_YYYYMMDD_HHMMSS.log` に保存し、60日で自動削除。テスト送信: `python scripts\run_task_with_notify.py --test`
+
 ## 予想モデル体制
 
 ### 本番モデル（3モデル体制）
