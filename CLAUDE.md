@@ -101,8 +101,10 @@ WinSCP にサイト名 `mar-keiba` として SFTP 設定を保存。
 
 ### Python パッケージ
 ```
-pip install anthropic lightgbm numpy pandas requests torch tweepy beautifulsoup4 scipy tqdm python-dotenv Pillow
+pip install anthropic lightgbm numpy pandas requests tweepy beautifulsoup4 scipy tqdm python-dotenv Pillow jpholiday
 ```
+- `jpholiday` は HTML 生成系（`src/utils/format_data.py`）が import するため必須。無いと15タスク中12タスクが起動直後に失敗する
+- `torch` は研究用モデル（v13 MLP / v14 LSTM の学習・評価）のみで使用。本番の自動化には不要
 
 ## よくある作業パターン
 
