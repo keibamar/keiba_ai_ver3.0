@@ -2124,9 +2124,6 @@ body.section-calendar .calendar-widget {
   border-radius: 8px;
   background: #fafafa;
   font-size: 0.8em;
-  /* floatの高さがカレンダー＋階層表示自体の高さしかないと、本文がそこで
-     右側いっぱいに広がってしまい、グラフ等の終端位置が途中でズレて見える。
-     画面の高さ分だけは必ず確保し、本文の折り返し幅を画面下まで揃える。 */
   min-height: 100vh;
 }
 
@@ -2455,18 +2452,61 @@ body.section-calendar .calendar-widget {
 }
 
 @media (min-width: 960px) {
+  /* 3カラムグリッドレイアウト: 左サイドバー(224px) + コンテンツ(残り) + 右カレンダータブ(auto) */
+  body {
+    display: grid;
+    grid-template-columns: 224px minmax(0, 1fr) auto;
+    column-gap: 24px;
+    align-items: start;
+  }
+
+  /* ナビ・バックドロップは全幅 */
+  .site-nav,
+  .page-calendar-tab-backdrop {
+    grid-column: 1 / -1;
+  }
+
+  /* 左サイドバー: 1列目、全コンテンツ行にまたがり sticky で常時表示 */
   .page-left-sidebar {
     display: block;
-    float: left;
-    width: 192px;
-    margin: 0 24px 16px 0;
-    padding: 16px;
-    background: var(--mar-bg-accent);
-    border: 1px solid var(--mar-bg-accent-strong);
-    border-top: 3px solid var(--mar-primary);
+    float: none;
+    grid-column: 1;
+    grid-row: 3 / span 1000;
+    align-self: stretch;
+    position: sticky;
+    top: 0;
+    width: auto;
+    margin: 0;
+    padding: 10px 14px;
+    background: #fafafa;
+    border: 1px solid #ddd;
     border-radius: 8px;
-    font-size: 0.9em;
-    min-height: 100vh;
+    font-size: 0.8em;
+  }
+
+  /* サイドバー以降の要素: 2列目（コンテンツ列） */
+  .page-left-sidebar ~ * {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  /* 右カレンダータブ: 3列目、全コンテンツ行にまたがり sticky で常時表示 */
+  .page-left-sidebar ~ .page-calendar-tab {
+    grid-column: 3;
+    grid-row: 3 / span 1000;
+    align-self: stretch;
+    float: none;
+    position: sticky;
+    top: 0;
+    width: 230px;
+    min-height: unset;
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  /* フッターは全幅 */
+  .page-left-sidebar ~ footer {
+    grid-column: 1 / -1;
   }
 
   /* PC幅では左サイドバーにナビを置くため、右サイドバーのナビ部分を非表示 */
