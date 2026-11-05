@@ -2118,5 +2118,57 @@ window.raceMeetings = {
       "race_card_url": "races/20261101/05_tokyoR11.html",
       "grade": "G1"
     }
+  ],
+  "20261107": [
+    {
+      "place_name": "福島",
+      "race_name": "キビタキS",
+      "times": 3,
+      "day_number": 1,
+      "race_card_url": "races/20261107/03_fukushimaR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "東京",
+      "race_name": "京王杯2歳S",
+      "times": 5,
+      "day_number": 1,
+      "race_card_url": "races/20261107/05_tokyoR11.html",
+      "grade": "G2"
+    },
+    {
+      "place_name": "京都",
+      "race_name": "室町S",
+      "times": 5,
+      "day_number": 1,
+      "race_card_url": "races/20261107/08_kyotoR11.html",
+      "grade": null
+    }
+  ],
+  "20261108": [
+    {
+      "place_name": "福島",
+      "race_name": "みちのくS",
+      "times": 3,
+      "day_number": 2,
+      "race_card_url": "races/20261108/03_fukushimaR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "東京",
+      "race_name": "アルゼンチン共和国杯",
+      "times": 5,
+      "day_number": 2,
+      "race_card_url": "races/20261108/05_tokyoR11.html",
+      "grade": "G2"
+    },
+    {
+      "place_name": "京都",
+      "race_name": "みやこS",
+      "times": 5,
+      "day_number": 2,
+      "race_card_url": "races/20261108/08_kyotoR11.html",
+      "grade": "G3"
+    }
   ]
 };
