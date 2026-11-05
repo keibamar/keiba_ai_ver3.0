@@ -12,8 +12,10 @@ data/race_card/ の全件スキャンを避けて高速に生成できる
 ai_performance_calculator を直接使う）。
 """
 
+import os
 from datetime import date, datetime, timedelta
 
+from src.config import paths
 from src.config.constants import NAME_LIST, PLACE_LIST
 from src.logic.calculators import ai_performance_calculator as calc
 from src.logic.html_generator.ai_performance_report_generator import _performance_table_html, _rank_color_style
@@ -313,6 +315,12 @@ def home_template(target_date=None):
     # （水曜日になった時点で1週間分更新される。詳細はcurrent_results_weekend_end参照）。
     last_week_races = calc.get_weekend_main_race_details(calc.current_results_weekend_end(today))
 
+    _css_path = os.path.join(paths.PUBLIC_HTML_ASSETS_PATH, "css", "styles.css")
+    try:
+        _css_ver = int(os.path.getmtime(_css_path))
+    except OSError:
+        _css_ver = 0
+
     return f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -324,7 +332,7 @@ def home_template(target_date=None):
   {adsense_script_html()}
   {ga4_script_html()}
   <title>{SITE_TITLE}</title>
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/styles.css?v={_css_ver}">
   <style>
     .home-sections {{
       display: grid;
