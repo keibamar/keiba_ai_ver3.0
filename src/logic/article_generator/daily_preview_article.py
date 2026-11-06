@@ -33,7 +33,8 @@ _SYSTEM_PROMPT = """あなたは競馬情報サイト「MAR（まーる）」の
 
 【指数・予想の表現について】
 - 指数はあくまで「前日段階の数値」であることを自然に示す（断言しない）
-- MAR-hitやMAR-valの最終予想は当日にならないとわからないことを、さりげなく示す
+- 前日段階ではMAR-val（回収率重視モデル）のみ計算済み。MAR-hit・MARバランス型は当日オッズ確定後に算出されることを、さりげなく示す
+- 新馬戦は前日から全指数（MAR-hit・MAR-val・MAR）が揃っている
 - 馬場状態・天候は前日予報ベースの評価であることを読者が分かるよう暗に示す
 - 嘘をつかず、かつ過度に強調もしない
 
@@ -124,9 +125,19 @@ def _get_race_info(race_id: str) -> dict:
 
 
 def _get_top_horses(card: pd.DataFrame, n: int = 3) -> list[dict]:
-    if card.empty or "idx_mar" not in card.columns:
+    if card.empty:
         return []
-    top = card.nlargest(n, "idx_mar")
+    # 有効なスコア列を優先順に選択（前日モードでは idx_mar が NaN のため idx_value を使う）
+    sort_col = None
+    for col in ("idx_mar", "idx_value", "idx_hitrate"):
+        if col in card.columns:
+            numeric = pd.to_numeric(card[col], errors="coerce")
+            if numeric.notna().any():
+                sort_col = col
+                break
+    if sort_col is None:
+        return []
+    top = card.nlargest(n, sort_col)
     horses = []
     for _, r in top.iterrows():
         idx_h = _safe_float(r.get("idx_hitrate", 0))
@@ -224,18 +235,34 @@ def _format_horse_detail(h: dict) -> str:
     elif gap < -0.05:
         gap_note = "（市場評価より低い・高人気）"
 
-    diff = h["idx_value"] - h["idx_hitrate"]
-    if diff > 10:
-        idx_note = "→ 回収率重視で特に評価"
-    elif diff < -10:
-        idx_note = "→ 的中率重視で特に評価"
+    idx_m = h["idx_mar"]
+    idx_h = h["idx_hitrate"]
+    idx_v = h["idx_value"]
+    mar_valid = idx_m == idx_m  # NaN != NaN で False
+
+    if not mar_valid:
+        # 前日モード: MAR-val のみ計算済み
+        idx_str = (
+            f"MAR-val指数:{idx_v:.0f}"
+            "（前日段階・回収率重視モデルのみ。的中率軸・MARは当日オッズ確定後に算出）"
+        )
     else:
-        idx_note = "→ 的中率・回収率ともバランス型"
+        diff = idx_v - idx_h
+        if diff > 10:
+            idx_note = "→ 回収率重視で特に評価"
+        elif diff < -10:
+            idx_note = "→ 的中率重視で特に評価"
+        else:
+            idx_note = "→ 的中率・回収率ともバランス型"
+        idx_str = (
+            f"MAR指数:{idx_m:.0f}"
+            f"（的中率軸:{idx_h:.0f} / 回収率軸:{idx_v:.0f}）{idx_note}"
+        )
 
     return (
         f"  - {h['name']}（{h['sex_age']}） 騎手:{h['jockey']} 厩舎:{h['trainer']}\n"
         f"    父:{h['sire']} 母父:{h['msire']} 馬体重:{h['weight']}\n"
-        f"    MAR指数:{h['idx_mar']:.0f}（的中率軸:{h['idx_hitrate']:.0f} / 回収率軸:{h['idx_value']:.0f}）{idx_note}\n"
+        f"    {idx_str}\n"
         f"    推定{h['popularity']}番人気 / オッズ:{h['odds']}{gap_note}"
     )
 
@@ -416,7 +443,14 @@ def build_prompt(data: dict) -> str:
         info = r.get("info", {})
         cond = f"{info.get('race_type','')}{info.get('course_len','')}m"
         th = r["top_horses"][0] if r["top_horses"] else None
-        mar_str = f"MAR1位:{th['name']}(指数{th['idx_mar']:.0f})" if th else ""
+        if th:
+            idx_m = th["idx_mar"]
+            if idx_m == idx_m:  # NaN チェック
+                mar_str = f"MAR1位:{th['name']}(指数{idx_m:.0f})"
+            else:
+                mar_str = f"MAR-val1位:{th['name']}(指数{th['idx_value']:.0f})"
+        else:
+            mar_str = ""
         all_lines.append(
             f"- {r['venue']} R{r['race_num']} {r['race_name']} {cond} {r['entry_count']}頭 {mar_str}"
         )
