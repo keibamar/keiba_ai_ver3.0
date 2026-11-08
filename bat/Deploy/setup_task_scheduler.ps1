@@ -159,3 +159,50 @@ Register-ScheduledTask -TaskName "generate_daily_preview" -TaskPath "\keiba\" -A
 
 Write-Output "Done. Current tasks under \keiba\:"
 Get-ScheduledTask -TaskPath "\keiba\" | Select-Object TaskName, State | Format-Table -AutoSize
+
+# --- 傾向分析・オッズ更新タスク（ルート \ フォルダ） ---
+# \keiba\ 外のタスク。既存があれば上書き。
+foreach ($t in @("KeibaTrend_Daily_Mon","KeibaTrend_Daily_Sat","KeibaTrend_Daily_Sun","keiba_refresh_prev_day_odds")) {
+    Unregister-ScheduledTask -TaskName $t -Confirm:$false -ErrorAction SilentlyContinue
+}
+
+# 月曜 20:00
+$a = New-ScheduledTaskAction -Execute "cmd.exe" `
+    -Argument "/c `"$root\bat\MakeHTML\generate_daily_trend.bat`"" `
+    -WorkingDirectory $root
+$tr = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At "20:00"
+Register-ScheduledTask -TaskName "KeibaTrend_Daily_Mon" -Action $a `
+    -Trigger $tr -Principal $principal -Settings (New-Settings) -Force | Out-Null
+Write-Output "Registered: KeibaTrend_Daily_Mon (Mon 20:00)"
+
+# 土曜 20:00
+$a = New-ScheduledTaskAction -Execute "cmd.exe" `
+    -Argument "/c `"$root\bat\MakeHTML\generate_daily_trend.bat`"" `
+    -WorkingDirectory $root
+$tr = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Saturday -At "20:00"
+Register-ScheduledTask -TaskName "KeibaTrend_Daily_Sat" -Action $a `
+    -Trigger $tr -Principal $principal -Settings (New-Settings) -Force | Out-Null
+Write-Output "Registered: KeibaTrend_Daily_Sat (Sat 20:00)"
+
+# 日曜 20:00
+$a = New-ScheduledTaskAction -Execute "cmd.exe" `
+    -Argument "/c `"$root\bat\MakeHTML\generate_daily_trend.bat`"" `
+    -WorkingDirectory $root
+$tr = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Sunday -At "20:00"
+Register-ScheduledTask -TaskName "KeibaTrend_Daily_Sun" -Action $a `
+    -Trigger $tr -Principal $principal -Settings (New-Settings) -Force | Out-Null
+Write-Output "Registered: KeibaTrend_Daily_Sun (Sun 20:00)"
+
+# 金・土 20:00（前日オッズ更新）
+$a = New-ScheduledTaskAction -Execute "cmd.exe" `
+    -Argument "/c `"$root\bat\MakeHTML\refresh_prev_day_odds.bat`"" `
+    -WorkingDirectory $root
+$tr = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Friday, Saturday -At "20:00"
+Register-ScheduledTask -TaskName "keiba_refresh_prev_day_odds" -Action $a `
+    -Trigger $tr -Principal $principal -Settings (New-Settings) -Force | Out-Null
+Write-Output "Registered: keiba_refresh_prev_day_odds (Fri+Sat 20:00)"
+
+Write-Output ""
+Write-Output "Done. Root-folder tasks:"
+Get-ScheduledTask | Where-Object { $_.TaskPath -eq "\" -and $_.TaskName -like "*eiba*" } |
+    Select-Object TaskName, State | Format-Table -AutoSize
