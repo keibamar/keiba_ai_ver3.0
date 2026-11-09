@@ -36,7 +36,7 @@ HTML ページを生成して ConoHa VPS にアップロードする。
 - `src/managers/race_card_dataset_manager.py` - データ読み書き
 - `src/managers/race_schedule_dataset_manager.py` - 開催スケジュール管理
 
-### タスクスケジューラ（15タスク、`\keiba\` フォルダ）
+### タスクスケジューラ（17タスク、`\keiba\` フォルダ）
 | タスク名 | 実行日時 | 内容 |
 |---|---|---|
 | weekly_update | 水 00:30 | 過去データ更新 |
@@ -54,8 +54,12 @@ HTML ページを生成して ConoHa VPS にアップロードする。
 | generate_weekly_review | 火 21:00 | 週次振り返りコラム生成 |
 | post_weekend_summary | 火 20:00 | 週末結果サマリー投稿 |
 | update_today_content | 毎日 00:05 | HOME・カレンダー日次更新 |
+| daily_trend | 土日 20:00 | 当日の傾向分析（開催なしの日は自動スキップ） |
+| daily_trend_mon | 月 20:00 | 月曜の傾向分析 |
 
-セットアップ: `bat\Deploy\setup_task_scheduler.ps1` を管理者 PowerShell で実行（ユーザー名は自動取得）
+セットアップ: `bat\Deploy\setup_task_scheduler.ps1` を右クリック →「PowerShell で実行」（自動で管理者として起動し直し、最後は Enter を押すまで閉じない）。ユーザー名と python.exe のパスは自動で取得する。
+- このファイルは ASCII のみで書くこと（PowerShell 5.1 は BOM なしのファイルを Shift-JIS として読むため、日本語を入れると文法が崩れる）
+- 前日オッズ更新は `generate_daily_preview` の最初の手順で行う。旧PCにあった `keiba_refresh_prev_day_odds` は二重実行になるので廃止した（セットアップ時に削除される）
 
 **監視:** 全タスクは `scripts/run_task_with_notify.py` 経由で bat を実行する。開始時と完了時に Gmail（`.env` の `GMAIL_*`）で通知する。完了メールは ✅成功 / ⚠要確認（終了コードは 0 だがログにエラーらしき行がある）/ ❌失敗（終了コードが 0 以外）のいずれか。ログは `logs/tasks/<タスク名>_YYYYMMDD_HHMMSS.log` に保存し、60日で自動削除。テスト送信: `python scripts\run_task_with_notify.py --test`
 
