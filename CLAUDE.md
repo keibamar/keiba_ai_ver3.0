@@ -57,7 +57,8 @@ HTML ページを生成して ConoHa VPS にアップロードする。
 | daily_trend | 土日 20:00 | 当日の傾向分析（開催なしの日は自動スキップ） |
 | daily_trend_mon | 月 20:00 | 月曜の傾向分析 |
 
-セットアップ: `bat\Deploy\setup_task_scheduler.ps1` を右クリック →「PowerShell で実行」（自動で管理者として起動し直し、最後は Enter を押すまで閉じない）。ユーザー名と python.exe のパスは自動で取得する。
+セットアップ: `bat\Deploy\setup_task_scheduler.bat` をダブルクリック（中で `setup_task_scheduler.ps1` を実行ポリシー回避付きで起動し、自動で管理者として起動し直す。最後は Enter を押すまで閉じない）。ユーザー名と python.exe のパスは自動で取得する。
+- `.ps1` を右クリック →「PowerShell で実行」は使わない（実行ポリシーが Restricted のため、スクリプトがブロックされて画面がすぐ消える）
 - このファイルは ASCII のみで書くこと（PowerShell 5.1 は BOM なしのファイルを Shift-JIS として読むため、日本語を入れると文法が崩れる）
 - 前日オッズ更新は `generate_daily_preview` の最初の手順で行う。旧PCにあった `keiba_refresh_prev_day_odds` は二重実行になるので廃止した（セットアップ時に削除される）
 

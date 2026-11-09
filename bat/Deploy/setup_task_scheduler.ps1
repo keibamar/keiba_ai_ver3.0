@@ -1,8 +1,12 @@
 # Task Scheduler setup script for MAR (17 tasks under \keiba\)
 #
-# How to run (either works):
-#   - Right-click this file -> "Run with PowerShell"  (it re-launches itself as Administrator)
-#   - powershell -ExecutionPolicy Bypass -File C:\keiba_ai\keiba_ai_ver3.0\bat\Deploy\setup_task_scheduler.ps1
+# How to run:
+#   Double-click bat\Deploy\setup_task_scheduler.bat
+#   (it bypasses the execution policy for this run; this script then re-launches
+#    itself as Administrator)
+#
+#   Do NOT use right-click -> "Run with PowerShell": with the default Restricted
+#   execution policy the script is blocked and the window closes immediately.
 #
 # The window stays open at the end so you can read the result.
 #
