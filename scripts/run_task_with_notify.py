@@ -1,8 +1,12 @@
 """タスクスケジューラ用ラッパー：bat を実行し、開始・完了をメール通知する
 
 使い方:
-    python scripts\\run_task_with_notify.py <タスク名> <batのパス>
+    python scripts\\run_task_with_notify.py <タスク名> <batのパス> [--timeout-min 分]
     python scripts\\run_task_with_notify.py --test      # テストメール送信のみ
+
+- --timeout-min を指定すると、その時間を超えた時点で bat をプロセスツリーごと終了し、
+  「❌タイムアウト」メールを送る。タスクスケジューラの実行時間上限より少し短く設定し、
+  上限で黙って強制終了される（完了メールが届かない）のを防ぐ。
 
 - 開始時に「▶開始」メールを送信
 - bat の出力を logs\\tasks\\<タスク名>_YYYYMMDD_HHMMSS.log に保存
@@ -23,6 +27,7 @@ import socket
 import ssl
 import subprocess
 import sys
+import threading
 import time
 from email.mime.text import MIMEText
 from pathlib import Path
@@ -113,7 +118,7 @@ def fmt_duration(sec: float) -> str:
     return f"{s}秒"
 
 
-def run(task_name: str, bat_path: str) -> int:
+def run(task_name: str, bat_path: str, timeout_min: int = 0) -> int:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     cleanup_old_logs()
 
@@ -136,9 +141,14 @@ def run(task_name: str, bat_path: str) -> int:
     lines: list[str] = []
     exit_code = -1
     launch_error = ""
+    timed_out = threading.Event()
+    timer = None
     with open(log_path, "w", encoding="utf-8") as log:
         log.write(f"# {task_name} start {start:%Y/%m/%d %H:%M:%S} on {host}\n")
-        log.write(f"# bat: {bat_path}\n\n")
+        log.write(f"# bat: {bat_path}\n")
+        if timeout_min:
+            log.write(f"# timeout: {timeout_min} min\n")
+        log.write("\n")
         log.flush()
         try:
             proc = subprocess.Popen(
@@ -147,6 +157,17 @@ def run(task_name: str, bat_path: str) -> int:
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 stdin=subprocess.DEVNULL,
             )
+            if timeout_min:
+                def _on_timeout() -> None:
+                    timed_out.set()
+                    # bat 配下の python 等も含めてプロセスツリーごと終了
+                    subprocess.run(
+                        ["taskkill", "/T", "/F", "/PID", str(proc.pid)],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    )
+                timer = threading.Timer(timeout_min * 60, _on_timeout)
+                timer.daemon = True
+                timer.start()
             for raw in proc.stdout:
                 line = _decode_line(raw).rstrip("\r\n")
                 lines.append(line)
@@ -156,13 +177,24 @@ def run(task_name: str, bat_path: str) -> int:
         except Exception as e:
             launch_error = f"bat の起動に失敗しました: {e}"
             log.write(launch_error + "\n")
+        finally:
+            if timer:
+                timer.cancel()
+        if timed_out.is_set():
+            timeout_msg = (f"タイムアウト: {timeout_min}分を超えたため強制終了しました"
+                           "（以降の手順は実行されていません）")
+            log.write("\n" + timeout_msg + "\n")
 
     end = datetime.datetime.now()
     duration = fmt_duration((end - start).total_seconds())
 
     matched = [ln for ln in lines if any(p in ln for p in ERROR_PATTERNS)]
 
-    if launch_error or exit_code != 0:
+    if timed_out.is_set():
+        status = "❌タイムアウト"
+        if exit_code == 0:
+            exit_code = 1
+    elif launch_error or exit_code != 0:
         status = "❌失敗"
     elif matched:
         status = "⚠要確認"
@@ -178,6 +210,8 @@ def run(task_name: str, bat_path: str) -> int:
         f"終了コード: {exit_code}",
         f"ログ  : {log_path}",
     ]
+    if timed_out.is_set():
+        body += ["", timeout_msg]
     if launch_error:
         body += ["", launch_error]
     if matched:
@@ -202,10 +236,20 @@ def main() -> int:
         )
         print("テストメールを送信しました")
         return 0
-    if len(sys.argv) != 3:
+    args = sys.argv[1:]
+    timeout_min = 0
+    if "--timeout-min" in args:
+        i = args.index("--timeout-min")
+        try:
+            timeout_min = int(args[i + 1])
+        except (IndexError, ValueError):
+            print(__doc__)
+            return 2
+        del args[i:i + 2]
+    if len(args) != 2:
         print(__doc__)
         return 2
-    return run(sys.argv[1], sys.argv[2])
+    return run(args[0], args[1], timeout_min)
 
 
 if __name__ == "__main__":

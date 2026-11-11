@@ -77,20 +77,20 @@ New-Item -ItemType Directory -Force -Path "$root\logs\tasks" | Out-Null
 
 $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType S4U -RunLevel Highest
 
-function New-Settings([switch]$LongRunning) {
-    if ($LongRunning) {
-        New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
-            -StartWhenAvailable -WakeToRun -ExecutionTimeLimit (New-TimeSpan -Hours 14)
-    } else {
-        New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
-            -StartWhenAvailable -WakeToRun -ExecutionTimeLimit (New-TimeSpan -Hours 2)
-    }
+# Task Scheduler execution time limit (hours). Default 2h.
+# The notify wrapper gets its own timeout 10 minutes shorter, so that it can stop
+# the bat itself and send a "timeout" mail. (If Task Scheduler kills the task at
+# its limit, the wrapper dies too and no finish mail is sent.)
+function New-Settings([int]$hours) {
+    New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+        -StartWhenAvailable -WakeToRun -ExecutionTimeLimit (New-TimeSpan -Hours $hours)
 }
 
 # action: run the bat through the notify wrapper
-function New-NotifyAction([string]$name, [string]$batRel) {
+function New-NotifyAction([string]$name, [string]$batRel, [int]$hours) {
+    $timeoutMin = $hours * 60 - 10
     New-ScheduledTaskAction -Execute $python `
-        -Argument "`"$root\scripts\run_task_with_notify.py`" $name `"$root\bat\$batRel`"" `
+        -Argument "`"$root\scripts\run_task_with_notify.py`" $name `"$root\bat\$batRel`" --timeout-min $timeoutMin" `
         -WorkingDirectory $root
 }
 
@@ -98,14 +98,14 @@ $expected = @()
 $failed = @()
 
 # register one task under \keiba\ (output suppressed; failures collected)
-function Add-KeibaTask([string]$name, [string]$batRel, $triggers, [switch]$LongRunning) {
+function Add-KeibaTask([string]$name, [string]$batRel, $triggers, [int]$Hours = 2) {
     $script:expected += $name
     try {
         Register-ScheduledTask -TaskName $name -TaskPath "\keiba\" `
-            -Action (New-NotifyAction $name $batRel) -Trigger $triggers `
-            -Principal $principal -Settings (New-Settings -LongRunning:$LongRunning) `
+            -Action (New-NotifyAction $name $batRel $Hours) -Trigger $triggers `
+            -Principal $principal -Settings (New-Settings $Hours) `
             -Force -ErrorAction Stop | Out-Null
-        Write-Output ("  OK    {0}" -f $name)
+        Write-Output ("  OK    {0} (limit {1}h)" -f $name, $Hours)
     } catch {
         $script:failed += $name
         Write-Output ("  FAIL  {0}: {1}" -f $name, $_.Exception.Message)
@@ -116,16 +116,16 @@ function W([string]$day, [string]$at) { New-ScheduledTaskTrigger -Weekly -DaysOf
 
 Write-Output "Registering tasks under \keiba\ ..."
 
-# 1. weekly_update: Wed 00:30
-Add-KeibaTask "weekly_update" "Datasets\update_weekly.bat" (W Wednesday "00:30")
+# 1. weekly_update: Wed 00:30 (6h: step 1 alone takes ~1h45m on this laptop)
+Add-KeibaTask "weekly_update" "Datasets\update_weekly.bat" (W Wednesday "00:30") -Hours 6
 # 2. weekly_schedule: Thu 20:00
 Add-KeibaTask "weekly_schedule" "MakeHTML\update_weekly_schedule.bat" (W Thursday "20:00")
 # 3. make_html_prev_day: Fri 18:00 + Sat 16:00
 Add-KeibaTask "make_html_prev_day" "MakeHTML\make_html_prev_day.bat" @((W Friday "18:00"), (W Saturday "16:00"))
 # 4. post_today_race: Sat 09:00 + Sun 09:00 (long-running live loop)
-Add-KeibaTask "post_today_race" "TodayRace\post_today_race.bat" @((W Saturday "09:00"), (W Sunday "09:00")) -LongRunning
+Add-KeibaTask "post_today_race" "TodayRace\post_today_race.bat" @((W Saturday "09:00"), (W Sunday "09:00")) -Hours 14
 # 5. post_today_race_mon: Mon 09:00 (long-running live loop)
-Add-KeibaTask "post_today_race_mon" "TodayRace\post_today_race.bat" (W Monday "09:00") -LongRunning
+Add-KeibaTask "post_today_race_mon" "TodayRace\post_today_race.bat" (W Monday "09:00") -Hours 14
 # 6. today_race_returns: Sat 18:00 + Sun 18:00
 Add-KeibaTask "today_race_returns" "TodayRace\today_race_rerturns.bat" @((W Saturday "18:00"), (W Sunday "18:00"))
 # 7. today_race_returns_mon: Mon 18:00
