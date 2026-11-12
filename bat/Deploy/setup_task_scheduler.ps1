@@ -1,4 +1,4 @@
-# Task Scheduler setup script for MAR (17 tasks under \keiba\)
+# Task Scheduler setup script for MAR (16 tasks under \keiba\)
 #
 # How to run:
 #   Double-click bat\Deploy\setup_task_scheduler.bat
@@ -118,7 +118,7 @@ Write-Output "Registering tasks under \keiba\ ..."
 
 # 1. weekly_update: Wed 00:30 (6h: step 1 alone takes ~1h45m on this laptop)
 Add-KeibaTask "weekly_update" "Datasets\update_weekly.bat" (W Wednesday "00:30") -Hours 6
-# 2. weekly_schedule: Thu 20:00
+# 2. weekly_schedule: Thu 20:00 (schedule + weekend HTML, then weekend preview column)
 Add-KeibaTask "weekly_schedule" "MakeHTML\update_weekly_schedule.bat" (W Thursday "20:00")
 # 3. make_html_prev_day: Fri 18:00 + Sat 16:00
 Add-KeibaTask "make_html_prev_day" "MakeHTML\make_html_prev_day.bat" @((W Friday "18:00"), (W Saturday "16:00"))
@@ -140,8 +140,8 @@ Add-KeibaTask "post_weekend_preview" "TodayRace\post_weekend_preview.bat" (W Fri
 Add-KeibaTask "post_weekend_summary" "TodayRace\post_weekend_summary.bat" (W Tuesday "20:00")
 # 12. update_today_content: every day 00:05
 Add-KeibaTask "update_today_content" "MakeHTML\update_today_content.bat" (New-ScheduledTaskTrigger -Daily -At "00:05")
-# 13. generate_weekend_preview: Thu 20:00
-Add-KeibaTask "generate_weekend_preview" "TodayRace\generate_weekend_preview.bat" (W Thursday "20:00")
+# 13. (generate_weekend_preview is now step 3 of weekly_schedule: the preview needs
+#     the weekend entries that weekly_schedule fetches, so it must run after it)
 # 14. generate_weekly_review: Tue 21:00
 Add-KeibaTask "generate_weekly_review" "TodayRace\generate_weekly_review.bat" (W Tuesday "21:00")
 # 15. generate_daily_preview: Fri 20:00 + Sat 20:00 (also refreshes next-day odds)

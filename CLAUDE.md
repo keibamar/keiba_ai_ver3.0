@@ -36,12 +36,11 @@ HTML ページを生成して ConoHa VPS にアップロードする。
 - `src/managers/race_card_dataset_manager.py` - データ読み書き
 - `src/managers/race_schedule_dataset_manager.py` - 開催スケジュール管理
 
-### タスクスケジューラ（17タスク、`\keiba\` フォルダ）
+### タスクスケジューラ（16タスク、`\keiba\` フォルダ）
 | タスク名 | 実行日時 | 内容 |
 |---|---|---|
 | weekly_update | 水 00:30 | 過去データ更新 |
-| weekly_schedule | 木 20:00 | 翌週開催スケジュール作成 |
-| generate_weekend_preview | 木 20:00 | 週末展望コラム生成（Claude API） |
+| weekly_schedule | 木 20:00 | 翌週開催スケジュール・週末出馬表 HTML 作成 → 続けて週末展望コラム生成（Claude API） |
 | make_html_prev_day | 金 18:00・土 16:00 | 翌日出馬表 HTML 生成 |
 | post_weekend_preview | 金 12:00 | X (Twitter) 週末展望投稿 |
 | generate_daily_preview | 金 20:00・土 20:00 | 当日AI予想コラム生成 |
