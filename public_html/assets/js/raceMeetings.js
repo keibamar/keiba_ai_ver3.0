@@ -2170,5 +2170,57 @@ window.raceMeetings = {
       "race_card_url": "races/20261108/08_kyotoR11.html",
       "grade": "G3"
     }
+  ],
+  "20261114": [
+    {
+      "place_name": "福島",
+      "race_name": "フルーツラインC",
+      "times": 3,
+      "day_number": 3,
+      "race_card_url": "races/20261114/03_fukushimaR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "東京",
+      "race_name": "武蔵野S",
+      "times": 5,
+      "day_number": 3,
+      "race_card_url": "races/20261114/05_tokyoR11.html",
+      "grade": "G3"
+    },
+    {
+      "place_name": "京都",
+      "race_name": "デイリー杯2歳S",
+      "times": 5,
+      "day_number": 3,
+      "race_card_url": "races/20261114/08_kyotoR11.html",
+      "grade": "G2"
+    }
+  ],
+  "20261115": [
+    {
+      "place_name": "福島",
+      "race_name": "福島民友C",
+      "times": 3,
+      "day_number": 4,
+      "race_card_url": "races/20261115/03_fukushimaR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "東京",
+      "race_name": "オーロC",
+      "times": 5,
+      "day_number": 4,
+      "race_card_url": "races/20261115/05_tokyoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "京都",
+      "race_name": "エリザベス女王杯",
+      "times": 5,
+      "day_number": 4,
+      "race_card_url": "races/20261115/08_kyotoR11.html",
+      "grade": "G1"
+    }
   ]
 };
