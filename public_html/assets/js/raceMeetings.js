@@ -2222,5 +2222,41 @@ window.raceMeetings = {
       "race_card_url": "races/20261115/08_kyotoR11.html",
       "grade": "G1"
     }
+  ],
+  "20261121": [
+    {
+      "place_name": "福島",
+      "race_name": "福島記念",
+      "times": 3,
+      "day_number": 5,
+      "race_card_url": "races/20261121/03_fukushimaR11.html",
+      "grade": "G3"
+    },
+    {
+      "place_name": "京都",
+      "race_name": "シトリンS",
+      "times": 5,
+      "day_number": 5,
+      "race_card_url": "races/20261121/08_kyotoR11.html",
+      "grade": null
+    }
+  ],
+  "20261122": [
+    {
+      "place_name": "東京",
+      "race_name": "霜月S",
+      "times": 5,
+      "day_number": 5,
+      "race_card_url": "races/20261122/05_tokyoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "京都",
+      "race_name": "マイルCS",
+      "times": 5,
+      "day_number": 6,
+      "race_card_url": "races/20261122/08_kyotoR11.html",
+      "grade": "G1"
+    }
   ]
 };
