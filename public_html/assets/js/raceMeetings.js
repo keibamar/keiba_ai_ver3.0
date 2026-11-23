@@ -2258,5 +2258,23 @@ window.raceMeetings = {
       "race_card_url": "races/20261122/08_kyotoR11.html",
       "grade": "G1"
     }
+  ],
+  "20261123": [
+    {
+      "place_name": "福島",
+      "race_name": "奥羽S",
+      "times": 3,
+      "day_number": 6,
+      "race_card_url": "races/20261123/03_fukushimaR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "東京",
+      "race_name": "東スポ杯2歳S",
+      "times": 5,
+      "day_number": 6,
+      "race_card_url": "races/20261123/05_tokyoR11.html",
+      "grade": "G2"
+    }
   ]
 };

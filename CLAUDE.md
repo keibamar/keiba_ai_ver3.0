@@ -41,9 +41,9 @@ HTML ページを生成して ConoHa VPS にアップロードする。
 |---|---|---|
 | weekly_update | 水 00:30 | 過去データ更新 |
 | weekly_schedule | 木 20:00 | 翌週開催スケジュール・週末出馬表 HTML 作成 → 続けて週末展望コラム生成（Claude API） |
-| make_html_prev_day | 金 18:00・土 16:00 | 翌日出馬表 HTML 生成 |
+| make_html_prev_day | 金 18:00・土日 16:00 | 翌日出馬表 HTML 生成（日曜分は月曜開催用。翌日に開催がなければ何もしない） |
 | post_weekend_preview | 金 12:00 | X (Twitter) 週末展望投稿 |
-| generate_daily_preview | 金 20:00・土 20:00 | 当日AI予想コラム生成 |
+| generate_daily_preview | 金土日 20:00 | 前日オッズ更新＋翌日AI予想コラム生成（翌日に開催がなければスキップ） |
 | post_today_race | 土日 09:00 | 当日レース実況投稿（長時間ループ） |
 | post_today_race_mon | 月 09:00 | 月曜レース実況投稿 |
 | today_race_returns | 土日 18:00 | レース結果取得 |

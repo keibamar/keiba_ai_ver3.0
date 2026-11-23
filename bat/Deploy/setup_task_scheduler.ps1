@@ -120,8 +120,10 @@ Write-Output "Registering tasks under \keiba\ ..."
 Add-KeibaTask "weekly_update" "Datasets\update_weekly.bat" (W Wednesday "00:30") -Hours 6
 # 2. weekly_schedule: Thu 20:00 (schedule + weekend HTML, then weekend preview column)
 Add-KeibaTask "weekly_schedule" "MakeHTML\update_weekly_schedule.bat" (W Thursday "20:00")
-# 3. make_html_prev_day: Fri 18:00 + Sat 16:00
-Add-KeibaTask "make_html_prev_day" "MakeHTML\make_html_prev_day.bat" @((W Friday "18:00"), (W Saturday "16:00"))
+# 3. make_html_prev_day: Fri 18:00 + Sat 16:00 + Sun 16:00
+#    (Sun is for Monday holiday races; it does nothing when Monday has no races.
+#     Without it, Monday race cards have no MAR-val base and MAR/MAR-hit stay empty.)
+Add-KeibaTask "make_html_prev_day" "MakeHTML\make_html_prev_day.bat" @((W Friday "18:00"), (W Saturday "16:00"), (W Sunday "16:00"))
 # 4. post_today_race: Sat 09:00 + Sun 09:00 (long-running live loop)
 Add-KeibaTask "post_today_race" "TodayRace\post_today_race.bat" @((W Saturday "09:00"), (W Sunday "09:00")) -Hours 14
 # 5. post_today_race_mon: Mon 09:00 (long-running live loop)
@@ -144,8 +146,9 @@ Add-KeibaTask "update_today_content" "MakeHTML\update_today_content.bat" (New-Sc
 #     the weekend entries that weekly_schedule fetches, so it must run after it)
 # 14. generate_weekly_review: Tue 21:00
 Add-KeibaTask "generate_weekly_review" "TodayRace\generate_weekly_review.bat" (W Tuesday "21:00")
-# 15. generate_daily_preview: Fri 20:00 + Sat 20:00 (also refreshes next-day odds)
-Add-KeibaTask "generate_daily_preview" "TodayRace\generate_daily_preview.bat" @((W Friday "20:00"), (W Saturday "20:00"))
+# 15. generate_daily_preview: Fri 20:00 + Sat 20:00 + Sun 20:00 (also refreshes next-day odds;
+#     skips by itself when the next day has no races)
+Add-KeibaTask "generate_daily_preview" "TodayRace\generate_daily_preview.bat" @((W Friday "20:00"), (W Saturday "20:00"), (W Sunday "20:00"))
 # 16-17. daily trend analysis: Sat / Sun / Mon 20:00 (skips by itself on non-race days)
 Add-KeibaTask "daily_trend" "MakeHTML\generate_daily_trend.bat" @((W Saturday "20:00"), (W Sunday "20:00"))
 Add-KeibaTask "daily_trend_mon" "MakeHTML\generate_daily_trend.bat" (W Monday "20:00")
