@@ -59,8 +59,24 @@ def make_race_card(race_id, race_day=None):
         horse_ped = horse_peds_dataset_manager.get_horse_peds_dataset(horse_id)
         horse_peds_df = pd.concat([horse_peds_df, horse_ped], axis=1)
 
+    # 障害戦は全場共通の障害戦専用モデル（コース別モデルが無いため）
+    is_shogai = race_prediction_engine.is_shogai_race(race_info_df)
+
     # 枠番、馬番を取得してAI予想（枠順抽せん前は「枠」列が無い/全NaNのため予想をスキップする）
-    if race_card_transform.is_waku_decided(race_card_df):
+    if is_shogai and race_card_transform.is_waku_decided(race_card_df):
+        rank_df = race_prediction_engine.shogai_blended_rank_prediction(
+            race_id, horse_ids, race_info_df, race_card_df, race_day=race_day,
+        )
+        multi_df = race_prediction_engine.shogai_multi_rank_prediction(
+            race_id, horse_ids, race_info_df, race_card_df, race_day=race_day,
+        )
+        if rank_df.empty:
+            rank_df = race_card_transform.blank_rank_df(len(race_card_df))
+        if not multi_df.empty and len(multi_df) == len(rank_df):
+            overlap = [c for c in multi_df.columns if c in rank_df.columns]
+            rank_df = pd.concat([rank_df.drop(columns=overlap).reset_index(drop=True),
+                                 multi_df.reset_index(drop=True)], axis=1)
+    elif race_card_transform.is_waku_decided(race_card_df):
         waku_df = pd.concat(
             [race_card_df["枠"].reset_index(drop=True), race_card_df["馬番"].reset_index(drop=True)], axis=1
         )
@@ -118,9 +134,18 @@ def make_race_card(race_id, race_day=None):
     else:
         print(f"ℹ️ [スキップ/エラーではありません] 枠順未確定のためAI予想をスキップ: {race_id}")
         rank_df = race_card_transform.blank_rank_df(len(race_card_df))
+        # 障害戦・枠順未確定: 障害戦モデルの指数（idx_*）だけ出す（新馬戦と同じ扱い）
+        if is_shogai:
+            multi_df_val = race_prediction_engine.shogai_multi_rank_prediction(
+                race_id, horse_ids, race_info_df, race_card_df, race_day=race_day,
+            )
+            if not multi_df_val.empty and len(multi_df_val) == len(rank_df):
+                overlap = [c for c in multi_df_val.columns if c in rank_df.columns]
+                rank_df = pd.concat([rank_df.drop(columns=overlap).reset_index(drop=True),
+                                     multi_df_val.reset_index(drop=True)], axis=1)
         # 前日モード(race_day=None)かつ枠順未確定の場合: val指数(odds不要モデル)のみ計算する
         # waku/umaban はNaN(-1)として渡すが、_v12_noddsはオッズ不要なので有意なスコアが出る
-        if race_day is None:
+        elif race_day is None:
             try:
                 waku_df_for_val = (
                     race_card_df[["枠", "馬番"]].reset_index(drop=True)

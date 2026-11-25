@@ -1338,3 +1338,127 @@ def shinba_rank_prediction(race_id, horse_ids, race_info_df, waku_df,
     except Exception as e:
         prediction_error(e)
         return pd.DataFrame()
+
+
+# ============================================================
+# 障害戦専用モデル（全場共通。scripts/train_shogai_model.py で学習）
+# ============================================================
+
+_shogai_model_cache: dict = {}
+_shogai_score_cache: dict = {}
+
+
+def is_shogai_race(race_info_df):
+    try:
+        return "障" in str(race_info_df.at[0, "race_type"])
+    except Exception:
+        return False
+
+
+def _shogai_get_model(model_type):
+    """障害戦モデルをロード（キャッシュ済み）。model_type は hit / val"""
+    if model_type not in _shogai_model_cache:
+        mp = os.path.join(paths.PREDICTION_MODEL_PATH, "shogai", f"shogai_{model_type}.txt")
+        if not os.path.isfile(mp):
+            raise FileNotFoundError(f"障害戦{model_type}モデル未学習: {mp}")
+        _shogai_model_cache[model_type] = lgb.Booster(model_file=mp)
+    return _shogai_model_cache[model_type]
+
+
+def _shogai_scores(race_id, horse_ids, race_info_df, card_df, race_day=None):
+    """障害戦モデルの hit / val 生スコアと MAR 指数を計算する（同じ入力ならキャッシュを返す）
+
+    Returns:
+        dict: hit, val（生スコア np.array）, idx_hit, idx_val, idx_mar（list）, odds（np.array）
+    """
+    from datetime import datetime, timedelta
+    from src.PredictionModels.LightGBM import make_dataset_shogai as _sg
+
+    card_df = card_df.reset_index(drop=True)
+
+    def _col(name):
+        return card_df[name].tolist() if name in card_df.columns else None
+
+    odds = pd.to_numeric(card_df["オッズ"], errors="coerce").values if "オッズ" in card_df.columns \
+        else np.full(len(horse_ids), np.nan)
+    # 対象日: 当日モードは開催日、前日モードは翌日（過去成績は対象日より前だけを使う）
+    rd = race_day or (date.today() + timedelta(days=1))
+    key = (str(race_id), rd, tuple(np.nan_to_num(odds, nan=-1.0)), tuple(_col("馬番") or []))
+    if key in _shogai_score_cache:
+        return _shogai_score_cache[key]
+
+    race_date = datetime(rd.year, rd.month, rd.day)
+    race_info = {
+        "course_len": race_info_df.at[0, "course_len"],
+        "ground_state": race_info_df.at[0, "ground_state"],
+        "class": race_info_df.at[0, "class"],
+    }
+    weight_col = next((c for c in card_df.columns if "馬体重" in c), None)
+    card = {
+        "枠": _col("枠"), "馬番": _col("馬番"), "斤量": _col("斤量"), "性齢": _col("性齢"),
+        "馬体重": _col(weight_col) if weight_col else None, "jockey_id": _col("jockey_id"),
+        "オッズ": _col("オッズ"), "人気": _col("人気"),
+    }
+    _sg.clear_cache()
+    X = _sg.make_rows_for_prediction(
+        race_id, race_date, [str(h) for h in horse_ids], race_info, card,
+        past_loader=past_performance_dataset_manager.ensure_past_performance_dataset,
+    )
+    s_hit = np.asarray(_shogai_get_model("hit").predict(X[_sg.HIT_FEATURES].values), dtype=float)
+    s_val = np.asarray(_shogai_get_model("val").predict(X[_sg.VAL_FEATURES].values), dtype=float)
+    idx_hit = [score_to_index(v) for v in _zscore(pd.Series(s_hit))]
+    idx_val = [score_to_index(v) for v in _zscore(pd.Series(s_val))]
+    mar_raw = [0.6 * h + 0.4 * v for h, v in zip(idx_hit, idx_val)]
+    idx_mar = [score_to_index(v) for v in _zscore(pd.Series(mar_raw))]
+    out = {"hit": s_hit, "val": s_val, "idx_hit": idx_hit, "idx_val": idx_val,
+           "idx_mar": idx_mar, "mar_raw": mar_raw, "odds": odds}
+    _shogai_score_cache.clear()
+    _shogai_score_cache[key] = out
+    return out
+
+
+def shogai_multi_rank_prediction(race_id, horse_ids, race_info_df, card_df, race_day=None):
+    """障害戦: multi_model_rank_prediction と同じ列（idx_* / rank_*）を返す
+
+    新馬戦と同じく hit / val を同時に計算する（MAR = 0.6 × hit + 0.4 × val）。
+    """
+    try:
+        s = _shogai_scores(race_id, horse_ids, race_info_df, card_df, race_day)
+        return pd.DataFrame({
+            "idx_hitrate":  s["idx_hit"],
+            "rank_hitrate": rank_index(s["idx_hit"]),
+            "idx_value":    s["idx_val"],
+            "rank_value":   rank_index(s["idx_val"]),
+            "idx_mar":      s["idx_mar"],
+            "rank_mar":     rank_index(s["mar_raw"]),
+        })
+    except Exception as e:
+        prediction_error(e)
+        return pd.DataFrame()
+
+
+def shogai_blended_rank_prediction(race_id, horse_ids, race_info_df, card_df, race_day=None):
+    """障害戦: blended_rank_prediction と同じ列（score / rank / v3_score / p_ai 等）を返す
+
+    メインの score / rank は MAR（hit 0.6 + val 0.4）。v3_score には hit の生スコアを入れ、
+    p_ai / p_market は v3 と同じ方法（softmax / 1/オッズ）で出す。
+    """
+    try:
+        s = _shogai_scores(race_id, horse_ids, race_info_df, card_df, race_day)
+        _, p_ai, p_market = _blend_proba_v3(pd.Series(s["hit"]), pd.Series(s["odds"]))
+        score = _zscore(pd.Series(s["mar_raw"])).values
+        df = pd.DataFrame({"score": score, "rank": rank_index(score)})
+        df["rank"] = df["rank"].astype("Int64")
+        df["score_hitrate"] = _zscore(pd.Series(s["hit"])).values
+        df["rank_hitrate"]  = rank_index(s["hit"])
+        df["score_value"]   = _zscore(pd.Series(s["val"])).values
+        df["rank_value"]    = rank_index(s["val"])
+        df["v3_score"]      = s["hit"]
+        df["v3_rank"]       = rank_index(s["hit"])
+        df["p_ai"]          = p_ai
+        df["p_market"]      = p_market
+        print(f"  ✓ 障害戦モデル予想 (race_id={race_id})")
+        return df
+    except Exception as e:
+        prediction_error(e)
+        return pd.DataFrame()

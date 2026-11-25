@@ -74,6 +74,13 @@ HTML ページを生成して ConoHa VPS にアップロードする。
 
 モデル関連コード: `src/managers/ai_performance_dataset_manager.py`（`MODEL_PREFIX`, `MODEL_LABELS`）
 
+### 障害戦専用モデル（2026-11-25 追加）
+- 障害戦はコース別モデルが無いため、全場共通の専用モデルで予想する（新馬戦専用モデルと同じ考え方）。hit（過去成績＋当日オッズ）/ val（過去成績のみ）の2モデルで、MAR = 0.6×hit + 0.4×val
+- 特徴量: 障害戦・平地戦それぞれの過去成績、今回の条件、騎手の障害戦成績（`src/PredictionModels/LightGBM/make_dataset_shogai.py`）
+- 学習・評価: `python scripts/train_shogai_model.py`（約5分。特徴量キャッシュを作り直すときは `--rebuild`）→ `data/prediction/models/shogai/shogai_hit.txt` / `shogai_val.txt`
+- 前進評価 2023〜2026年 451R（MAR の1位馬）: 単勝 的中35.0%・回収84.8% / 複勝 的中68.7%・回収87.8% / 3連複（上位3頭1点）的中10.4%・回収90.6%。比較の1番人気は 単勝回収72.4%・複勝回収82.5%・3連複回収83.6%
+- 予想の入口: `race_card_builder.make_race_card` で障害戦を判定し `race_prediction_engine.shogai_blended_rank_prediction` / `shogai_multi_rank_prediction` を呼ぶ
+
 ### モデル性能ベースライン（2026年全場1707R）
 | モデル | 単勝的中率 | 単勝回収率 | 3連複的中率 | 3連複回収率 |
 |---|---|---|---|---|
