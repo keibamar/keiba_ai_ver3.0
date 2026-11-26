@@ -2276,5 +2276,41 @@ window.raceMeetings = {
       "race_card_url": "races/20261123/05_tokyoR11.html",
       "grade": "G2"
     }
+  ],
+  "20261128": [
+    {
+      "place_name": "東京",
+      "race_name": "キャピタルS",
+      "times": 5,
+      "day_number": 7,
+      "race_card_url": "races/20261128/05_tokyoR11.html",
+      "grade": null
+    },
+    {
+      "place_name": "京都",
+      "race_name": "京都2歳S",
+      "times": 5,
+      "day_number": 7,
+      "race_card_url": "races/20261128/08_kyotoR11.html",
+      "grade": "G3"
+    }
+  ],
+  "20261129": [
+    {
+      "place_name": "東京",
+      "race_name": "ジャパンC",
+      "times": 5,
+      "day_number": 8,
+      "race_card_url": "races/20261129/05_tokyoR12.html",
+      "grade": "G1"
+    },
+    {
+      "place_name": "京都",
+      "race_name": "京阪杯",
+      "times": 5,
+      "day_number": 8,
+      "race_card_url": "races/20261129/08_kyotoR12.html",
+      "grade": "G3"
+    }
   ]
 };
